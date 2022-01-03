@@ -47,12 +47,13 @@ class LeaveBalanceTransformer extends TransformerAbstract
         $business_members->each(function ($business_member) use (&$employee_wise_leave_balance) {
             /** @var BusinessMember $business_member */
             $this->businessMember = $business_member;
-
+            $profile = $business_member->profile();
             array_push($employee_wise_leave_balance, [
                 'id' => $this->businessMember->id,
                 'employee_id' => $this->businessMember->employee_id ?: null,
                 'department' => $this->businessMember->role ? $this->businessMember->role->businessDepartment->name : null,
-                'employee_name' => $business_member->member->profile->name,
+                'employee_name' => $profile->name,
+                'employee_profile_pic' => $profile->pro_pic,
                 'leave_balance' => $this->calculate()
             ]);
         });

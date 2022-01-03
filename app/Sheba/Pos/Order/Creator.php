@@ -10,6 +10,7 @@ use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
+use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
@@ -31,6 +32,7 @@ use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Validators\OrderCreateValidator;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 use DB;
 use Throwable;
@@ -168,6 +170,9 @@ class Creator
      * @throws NotEnoughStockException
      * @throws PartnerPosCustomerNotFoundException
      * @throws PosCustomerNotFoundException|ExpenseTrackingServerError|Throwable
+     * @throws ExpenseTrackingServerError
+     * @throws DoNotReportException
+     * @throws NotAssociativeArray
      */
     public function create()
     {
@@ -248,6 +253,16 @@ class Creator
             throw $e;
         }
 
+    }
+
+    /**
+     * @throws NotAssociativeArray
+     */
+    private function generateInvoice($order)
+    {
+        /** @var InvoiceService $invoiceService */
+        $invoiceService = app(InvoiceService::class)->setPosOrder($order);
+        $invoiceService->generateInvoice()->saveInvoiceLink();
     }
 
     /**

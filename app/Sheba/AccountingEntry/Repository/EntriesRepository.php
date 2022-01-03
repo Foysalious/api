@@ -2,10 +2,9 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
-
-use App\Models\PartnerPosCustomer;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Pos\Customer\PosCustomerResolver;
 
 class EntriesRepository extends BaseRepository
 {
@@ -39,16 +38,20 @@ class EntriesRepository extends BaseRepository
             if ($data["attachments"]) {
                 $data["attachments"] = json_decode($data["attachments"]);
             }
+            $data["customer_details"] = null;
             if ($data["customer_id"]) {
-                /** @var PartnerPosCustomer $partner_pos_customer */
-                $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where(
-                    'customer_id',
-                    $data["customer_id"]
-                )->first();
-                $customer_details = $partner_pos_customer ? $partner_pos_customer->details(): null;
-                $data["customer_details"] = $customer_details;
-            } else {
-                $data["customer_details"] = null;
+                /** @var PosCustomerResolver $posCustomerResolver */
+                $posCustomerResolver = app(PosCustomerResolver::class);
+                $posCustomer = $posCustomerResolver->setCustomerId($data["customer_id"])->setPartner($this->partner)->get();
+                if ($posCustomer) {
+                    $data["customer_details"] = [
+                        'id' => $posCustomer->id,
+                        'name' => $posCustomer->name,
+                        'phone' => $posCustomer->mobile,
+                        'image' => $posCustomer->pro_pic,
+                        'is_supplier' => $posCustomer->is_supplier
+                    ];
+                }
             }
             return $data;
         } catch (AccountingEntryServerError $e) {
@@ -66,10 +69,18 @@ class EntriesRepository extends BaseRepository
                 return true;
             }
             $url = "api/entries/" . $this->entry_id;
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+            $data =  $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->delete($url);
+            if (is_array($data)){
+                foreach ($data as $datum) {
+                    //pos order reconcile while storing entry
+                    if ($datum['source_type'] == 'pos') {
+                        $this->removePosOrderPayment(abs($datum['amount_cleared']), $datum['source_id'], 'advance_balance');
+                    }
+                }
+            }
+
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
     }
-
 }

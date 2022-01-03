@@ -162,6 +162,7 @@ class Route
             $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
                 $api->get('/vendor/{user?}', 'TopUp\TopUpController@getVendor')->where('user', "(business|partner|affiliate)");
                 $api->post('/get-topup-token', 'TopUp\TopUpController@generateJwt');
+                $api->get('/check-topup-token', 'TopUp\TopUpController@checkJwt');
                 $api->post('/{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
                 $api->get('/history', 'TopUp\TopUpController@topUpHistory');
@@ -218,8 +219,8 @@ class Route
             });
             // $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
-            $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
-            $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
+            $api->post('due-tracker/create-pos-order-payment', 'Pos\OrderController@createPayment');
+            $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\OrderController@removePayment');
             $api->group(['prefix' => 'voucher'], function ($api) {
                 $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
             });

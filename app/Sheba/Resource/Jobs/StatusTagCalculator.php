@@ -3,7 +3,7 @@
 
 use App\Models\Job;
 use Carbon\Carbon;
-use Sheba\NumberLanguageConverter;
+use Sheba\Helpers\Converters\NumberLanguageConverter;
 use Sheba\Jobs\JobStatuses;
 
 class StatusTagCalculator
