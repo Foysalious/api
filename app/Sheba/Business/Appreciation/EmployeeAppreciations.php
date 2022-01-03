@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\Business\Appreciation;
 
 use App\Models\BusinessMember;
-use Carbon\Carbon;
 use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 
 class EmployeeAppreciations
@@ -12,9 +11,9 @@ class EmployeeAppreciations
     /*** @var BusinessMemberBadgeRepository $businessMemberBadgeRepo*/
     private $businessMemberBadgeRepo;
 
-    public function __construct(BusinessMemberBadgeRepository $business_member_badge_repo)
+    public function __construct()
     {
-        $this->businessMemberBadgeRepo = $business_member_badge_repo;
+        $this->businessMemberBadgeRepo = app(BusinessMemberBadgeRepository::class);
     }
 
     /**
