@@ -197,10 +197,10 @@ class PaymentLinkController extends Controller
             $target           = new Target(TargetType::POS_ORDER, $request->pos_order_id);
             $this->deActivatePreviousLink($target);
             if (!empty($pos_order)) $this->creator->setPayerId($pos_order->customer_id)->setPayerType('pos_customer');
-            if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
+//            if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
                 $interest                = $this->creator->getInterest();
                 $bank_transaction_charge = $this->creator->getBankTransactionCharge();
-            }
+//            }
         }
 
         if ($request->filled('customer_id') && $request->customer_id) {
