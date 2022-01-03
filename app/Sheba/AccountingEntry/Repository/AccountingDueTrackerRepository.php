@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
@@ -34,7 +35,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $type
      * @param bool $with_update
      * @return mixed
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|PosCustomerNotFoundException
      */
     public function storeEntry(Request $request, $type, bool $with_update = false)
     {
@@ -44,15 +45,18 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $posOrder = $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id);
-        $request->merge(['source_id' =>  $posOrder? $posOrder->id : null]);
-        $data = $this->createEntryData($request, $type);
+        $posOrder = ($type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id) : null;
+        $request->merge(['source_id' =>  $posOrder ? $posOrder->id : null]);
+        $data = $this->createEntryData($request, $type, $with_update);
+        if (!$request->customer_id) {
+            throw new PosCustomerNotFoundException('Sorry! Cannot create entry without customer', 404);
+        }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
-        if ($type == "deposit" && !$with_update) {
+        if ($type == EntryTypes::DEPOSIT && !$with_update) {
             foreach ($data as $datum) {
-                if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
+                if ($datum['source_type'] == EntryTypes::POS && $datum['amount_cleared'] > 0) {
                     $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'advance_balance');
                 }
             }
@@ -94,7 +98,8 @@ class AccountingDueTrackerRepository extends BaseRepository
      */
     public function getDuelistBalance($request): array
     {
-        $url = "api/due-list/balance";
+        $url = "api/due-list/balance/?";
+        $url=$this->updateRequestParam($request, $url);
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         return [
             'total_transactions' => $result['total_transactions'],
@@ -124,7 +129,7 @@ class AccountingDueTrackerRepository extends BaseRepository
                 }
                 $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
                 $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = $this->posOrderByOrderId($item['source_id']);
+                $pos_order = $item['source_id'] && $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
                 $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
                 if ($pos_order) {
                     $item['source_type'] = 'PosOrder';
@@ -151,9 +156,12 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @throws InvalidPartnerPosCustomer
      * @throws \Exception
      */
-    public function dueListBalanceByCustomer($customerId): array
+    public function dueListBalanceByCustomer($customerId,$request=null): array
     {
-        $url = "api/due-list/" . $customerId . "/balance";
+        $url = "api/due-list/" . $customerId . "/balance/?";
+        if ($request){
+            $url=$this->updateRequestParam($request, $url);
+        }
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         $customer = [];
 
@@ -236,7 +244,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $type
      * @return array
      */
-    private function createEntryData(Request $request, $type): array
+    private function createEntryData(Request $request, $type,$withUpdate=false): array
     {
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount'] = (double)$request->amount;
@@ -250,7 +258,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data['customer_pro_pic'] = $request->pro_pic;
         $data['source_id'] = $request->source_id;
         $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
-        $data['attachments'] = $this->uploadAttachments($request);
+        $data['attachments'] =$withUpdate?$this->updateAttachments($request): $this->uploadAttachments($request);
         return $data;
     }
 

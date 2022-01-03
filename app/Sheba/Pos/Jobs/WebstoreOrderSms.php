@@ -130,7 +130,7 @@ class WebstoreOrderSms extends Job implements ShouldQueue
         if ($this->template == 'pos-order-place-customer')
             $this->data['message'] = [
                 'order_id' => $this->order['partner_wise_order_id'],
-                'net_bill' => $this->order['price']['original_price'],
+                'net_bill' => $this->order['price']['discounted_price'],
                 'payment_status' => $this->order['price']['due'] > 0 ? 'প্রদত্ত' : 'বকেয়া',
                 'store_name' => $this->partner->name,
                 'invoice_link' => $this->order['invoice']
