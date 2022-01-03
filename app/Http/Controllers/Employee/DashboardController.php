@@ -109,7 +109,7 @@ class DashboardController extends Controller
         $approval_requests = $approval_request_repository->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $approval_request_repository->countPendingLeaveApprovalRequests($business_member);
         $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED]);
+            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED])->where('schedule_date', '<=', Carbon::now());
         $pending_visit_count = $pending_visit->count();
         $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
         $is_manager = $manager ? 1 : 0;
