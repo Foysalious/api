@@ -192,6 +192,9 @@ class PaymentLinkController extends Controller
                 if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
                     $interest = $this->creator->getInterest();
                     $bank_transaction_charge = $this->creator->getBankTransactionCharge();
+                } else {
+                    $interest = $this->creator->getInterest();
+                    $bank_transaction_charge = $this->creator->getBankTransactionCharge();
                 }
             }
             if ($request->has('customer_id') && $request->customer_id) {
