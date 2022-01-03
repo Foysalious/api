@@ -12,6 +12,7 @@ use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -155,6 +156,7 @@ class PaymentLinkController extends Controller
 
     public function store(Request $request)
     {
+        Log::debug("PAYMENT LINK STORE");
         $this->validate($request, [
             'amount'             => 'required',
             'purpose'            => 'required',
@@ -191,16 +193,17 @@ class PaymentLinkController extends Controller
         $interest                = 0;
         $bank_transaction_charge = 0;
         if ($request->filled('pos_order_id') && $request->pos_order_id) {
+            Log::debug([$this->creator->getInterest(), $this->creator->getBankTransactionCharge()]);
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = (app(PosOrderResolver::class));
             $pos_order        = $posOrderResolver->setOrderId($request->pos_order_id)->get();
             $target           = new Target(TargetType::POS_ORDER, $request->pos_order_id);
             $this->deActivatePreviousLink($target);
             if (!empty($pos_order)) $this->creator->setPayerId($pos_order->customer_id)->setPayerType('pos_customer');
-//            if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
+            if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
                 $interest                = $this->creator->getInterest();
                 $bank_transaction_charge = $this->creator->getBankTransactionCharge();
-//            }
+            }
         }
 
         if ($request->filled('customer_id') && $request->customer_id) {
