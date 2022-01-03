@@ -192,17 +192,16 @@ class PaymentLinkController extends Controller
         $interest                = 0;
         $bank_transaction_charge = 0;
         if ($request->filled('pos_order_id') && $request->pos_order_id) {
-            Log::debug($this->creator->getPaidBy());
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = (app(PosOrderResolver::class));
             $pos_order        = $posOrderResolver->setOrderId($request->pos_order_id)->get();
             $target           = new Target(TargetType::POS_ORDER, $request->pos_order_id);
             $this->deActivatePreviousLink($target);
             if (!empty($pos_order)) $this->creator->setPayerId($pos_order->customer_id)->setPayerType('pos_customer');
-//            if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
+            if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
                 $interest                = $this->creator->getInterest();
                 $bank_transaction_charge = $this->creator->getBankTransactionCharge();
-//            }
+            }
         }
 
         if ($request->filled('customer_id') && $request->customer_id) {
@@ -221,7 +220,6 @@ class PaymentLinkController extends Controller
             }
             $payment_link['interest']                = $interest;
             $payment_link['bank_transaction_charge'] = $bank_transaction_charge;
-            Log::debug($payment_link);
             if (isset($request->partner) && isset($pos_order)) {
                 $this->dispatch(app(PosApiAfterPaymentLinkCreated::class)->setPartnerId($request->partner->id)
                     ->setPosOrderId($pos_order->id)->setPaymentLink($payment_link));
