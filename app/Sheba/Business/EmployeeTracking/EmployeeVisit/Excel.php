@@ -8,6 +8,7 @@ class Excel
 
     private $employeesVisitData;
     private $data = [];
+    private $note_counts;
 
     public function setEmployeeVisitData(array $employee_visit_data)
     {
@@ -17,17 +18,17 @@ class Excel
 
     public function get()
     {
-        $header = $this->getHeaders();
         $this->makeData();
+        $header = $this->getHeaders();
         $file_name = 'Employee_visit_report_' . Carbon::now()->timestamp;
         EmployeeVisitExcel::create($file_name, function ($excel) use ($header) {
             $excel->sheet('data', function ($sheet) use ($header) {
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($header);
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:S1', function ($cells) {
+               /* $sheet->cell('A1:S1', function ($cells) {
                     $cells->setFontWeight('bold');
-                });
+                });*/
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
                     array('horizontal' => 'left')
                 );
@@ -49,8 +50,9 @@ class Excel
 
     private function makeData()
     {
+        $max_note_counts = 0;
         foreach ($this->employeesVisitData as $visit) {
-            array_push($this->data, [
+            $this->data[] = [
                     'schedule_date' => $visit['schedule_date'],
                     'employee_id' => $visit['profile']['employee_id'],
                     'employee_name' => $visit['profile']['name'],
@@ -70,9 +72,10 @@ class Excel
                     'cancelled_note' => $visit['visit_cancelled_note'],
                     'rescheduled_at' => $visit['visit_reschedule_dates'],
                     'rescheduled_notes' => $visit['visit_reschedule_notes'],
-                ] + $visit['all_notes']);
+                ] + $visit['all_notes'];
+            $max_note_counts = max($max_note_counts, count($visit['all_notes']));
         }
-
+        $this->note_counts = $max_note_counts;
     }
 
     /**
@@ -80,10 +83,16 @@ class Excel
      */
     private function getHeaders()
     {
-        return [
+        $headers = [
             'Visit Date', 'Employee Id', 'Employee Name', 'Department', 'Title', 'Description', 'Status',
             'Pictures', 'Start Location', 'Start Time', 'Reached Location', 'Reached Time', 'End Location', 'End Time',
             'Total Visit Time', 'Cancelled At', 'Cancelled Reason', 'Rescheduled At', 'Rescheduled Reason'
         ];
+        $notes_header = [];
+        for ($start = 1; $start <= $this->note_counts; $start++) {
+            $notes_header[] = 'Note ' . $start;
+        }
+
+        return array_merge($headers, $notes_header);
     }
 }
