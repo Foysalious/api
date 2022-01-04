@@ -41,7 +41,7 @@ class BaseRepository
         if (!isset($request->customer_id) || $request->customer_id == null) {
             return $request;
         }
-        if (isset($request->customer_name) && isset($request->customer_mobile)) {
+        if (isset($request->customer_name)) {
             return $request;
         }
         $partner = $this->getPartner($request);
