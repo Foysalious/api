@@ -129,7 +129,6 @@ class AppreciateController extends Controller
         $fractal = new Manager();
         $resource = new Collection($sticker_categories, new StickerCategoryList());
         $sticker_categories = $fractal->createData($resource)->toArray()['data'];
-
         return api_response($request, $sticker_categories, 200, ['stickers' => $sticker_categories]);
     }
 

@@ -1121,4 +1121,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->morphMany(PgwStoreAccount::class, 'user');
     }
+
+    public function lastUpdatedPGWStore()
+    {
+        return $this->pgwStoreAccounts->max('updated_at') ?? null;
+    }
 }
