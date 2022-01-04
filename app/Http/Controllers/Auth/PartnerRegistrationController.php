@@ -272,13 +272,13 @@ class PartnerRegistrationController extends Controller
             $partner->basicInformations()->save(new PartnerBasicInformation(array_merge($by, ['is_verified' => 0])));
             (new Referral($partner));
             $this->walletSetting($partner, $by);
-            if (isset($data['billing_type']) && isset($data['package_id']))
-                $partner->subscribe($data['package_id'], $data['billing_type']);
         });
         $partner = Partner::find($partner->id);
         /** @var UserMigrationRepository $umRepo */
         $umRepo = app(UserMigrationRepository::class);
         $umRepo->autoMigrate($partner);
+        if (isset($data['billing_type']) && isset($data['package_id']))
+            $partner->subscribe($data['package_id'], $data['billing_type']);
         return $partner;
     }
 
