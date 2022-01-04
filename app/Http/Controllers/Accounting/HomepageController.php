@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\AccountingReport;
 use App\Sheba\AccountingEntry\Repository\HomepageRepository;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -211,6 +212,9 @@ class HomepageController extends Controller
 
     public function homePageStat(Request $request): JsonResponse
     {
+        if (!$request->partner->isMigrated(Modules::EXPENSE)) {
+            return api_response($request, null, 200, ['data' => null]);
+        }
         $dateTime = Carbon::now();
         $today = $dateTime->format('Y-m-d');
         $month = $dateTime->month;
