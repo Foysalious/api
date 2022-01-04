@@ -1,6 +1,8 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Models\Partner;
+use Exception;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\AccountingEntry\Repository\UserMigrationRepository;
@@ -32,7 +34,7 @@ class BaseRepository
     /**
      * @param $request
      * @return mixed
-     * @throws AccountingEntryServerError|\Exception
+     * @throws Exception
      */
     public function getCustomer($request)
     {
@@ -46,14 +48,14 @@ class BaseRepository
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
         $partner_pos_customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($partner)->get();
-
-        if ($partner_pos_customer) {
-            $request->customer_id = $partner_pos_customer->id;
-            $request->customer_name = $partner_pos_customer->name;
-            $request->customer_mobile = $partner_pos_customer->mobile;
-            $request->customer_pro_pic = $partner_pos_customer->pro_pic;
-            $request->customer_is_supplier = $partner_pos_customer->is_supplier;
+        if (!$partner_pos_customer) {
+            throw new PosCustomerNotFoundException('Sorry! customer not found', 404);
         }
+        $request->customer_id = $partner_pos_customer->id;
+        $request->customer_name = $partner_pos_customer->name;
+        $request->customer_mobile = $partner_pos_customer->mobile;
+        $request->customer_pro_pic = $partner_pos_customer->pro_pic;
+        $request->customer_is_supplier = $partner_pos_customer->is_supplier;
         return $request;
     }
 

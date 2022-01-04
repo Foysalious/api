@@ -7,6 +7,7 @@ use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -36,6 +37,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param bool $with_update
      * @return mixed
      * @throws AccountingEntryServerError|PosCustomerNotFoundException
+     * @throws Exception
      */
     public function storeEntry(Request $request, $type, bool $with_update = false)
     {
@@ -49,7 +51,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $request->merge(['source_id' =>  $posOrder ? $posOrder->id : null]);
         $data = $this->createEntryData($request, $type, $with_update);
         if (!$request->customer_id) {
-            throw new PosCustomerNotFoundException('Sorry! Cannot create entry without customer', 404);
+            throw new PosCustomerNotFoundException('Sorry! cannot create entry without customer', 404);
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -151,10 +153,10 @@ class AccountingDueTrackerRepository extends BaseRepository
 
     /**
      * @param $customerId
+     * @param null $request
      * @return array
      * @throws AccountingEntryServerError
      * @throws InvalidPartnerPosCustomer
-     * @throws \Exception
      */
     public function dueListBalanceByCustomer($customerId,$request=null): array
     {
@@ -242,9 +244,10 @@ class AccountingDueTrackerRepository extends BaseRepository
     /**
      * @param Request $request
      * @param $type
+     * @param bool $withUpdate
      * @return array
      */
-    private function createEntryData(Request $request, $type,$withUpdate=false): array
+    private function createEntryData(Request $request, $type, $withUpdate = false): array
     {
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount'] = (double)$request->amount;
@@ -286,7 +289,7 @@ class AccountingDueTrackerRepository extends BaseRepository
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = app(PosOrderResolver::class);
             return $posOrderResolver->setPartnerWiseOrderId($partner->id, $partnerWiseOrderId)->get();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return null;
         }
     }
@@ -301,7 +304,7 @@ class AccountingDueTrackerRepository extends BaseRepository
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = app(PosOrderResolver::class);
             return $posOrderResolver->setOrderId($orderId)->get();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return null;
         }
     }
