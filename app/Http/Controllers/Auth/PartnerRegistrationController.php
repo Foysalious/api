@@ -261,7 +261,7 @@ class PartnerRegistrationController extends Controller
 
     private function store($resource, $data, $by, $partner)
     {
-        DB::transaction(function () use ($resource, $data, $by, $partner) {
+        DB::transaction(function () use ($resource, $data, $by, &$partner) {
             $partner = $partner->fill(array_merge($data, $by));
             $partner->save();
             $partner->resources()->attach($resource->id, array_merge($by, ['resource_type' => 'Admin']));
