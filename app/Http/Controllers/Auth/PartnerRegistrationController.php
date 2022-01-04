@@ -193,10 +193,8 @@ class PartnerRegistrationController extends Controller
             $partner->refer_code = $partner->referCode();
             $partner->save();
         }
-
         app()->make(ActionRewardDispatcher::class)->run('partner_creation_bonus', $partner, $partner);
 
-        $this->storeExpense($partner);
         return $partner;
     }
 
