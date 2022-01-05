@@ -98,7 +98,8 @@ class LeaveController extends Controller
             $requestable = $leave_approval_request->requestable;
             /** @var BusinessMember $business_member */
             $business_member = $requestable->businessMember;
-            if (!$business_member || $business_member->status != 'active') continue;
+            $business_member_status = $business_member ? $business_member->status : null;
+            if (!$business_member || $business_member_status != 'active') continue;
             $leave_approval_requests->push($leave_approval_request);
         }
 
