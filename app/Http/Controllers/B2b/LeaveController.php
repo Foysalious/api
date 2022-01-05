@@ -97,6 +97,7 @@ class LeaveController extends Controller
         foreach ($approval_requests as $leave_approval_request) {
             /** @var Leave $requestable */
             $requestable = $leave_approval_request->requestable;
+            if (!$requestable) continue;
             /** @var BusinessMember $business_member */
             $business_member = $requestable->businessMember;
             $business_member_status = $business_member ? $business_member->status : null;
