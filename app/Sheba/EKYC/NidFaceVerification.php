@@ -174,6 +174,27 @@ class NidFaceVerification
         }
     }
 
+    /**
+     * @param $request
+     * @param $profileNIDSubmissionRepo
+     */
+    public function updateLivelinessCount($request, $profileNIDSubmissionRepo)
+    {
+        $profile_id = $request->auth_user->getProfile()->id;
+        $submitted_by = get_class($request->auth_user->getResource());
+
+        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
+            ->where('submitted_by', $submitted_by)
+            ->where('nid_no', $request->nid)
+            ->orderBy('id', 'desc')->first();
+
+        if ($porichoyNIDSubmission) {
+            $porichoyNIDSubmission->update([
+                'liveliness_complete' => 1
+            ]);
+        }
+    }
+
     private function makeData($data): array
     {
         $porichoy_data = $data['porichoy_data'];
