@@ -358,7 +358,7 @@ class JobController extends Controller
         $bill = collect();
         $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
-        $bill['original_price'] = (double)$partnerOrder->jobPrices;
+        $bill['original_price'] = (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
         $bill['due'] = (double)$partnerOrder->dueWithLogistic;
         $bill['grand_total'] = (double)$partnerOrder->grandTotal;
