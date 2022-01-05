@@ -532,7 +532,8 @@ class DashboardController extends Controller
 
         foreach ($modules as $key => $module) {
             if ($modules[$key]['function']) {
-                $modules[$key]['updated_at'] = Carbon::parse(call_user_func_array([$partner, $module['function']], []))->toDateTimeString();
+                $modules[$key]['updated_at'] = call_user_func_array([$partner, $module['function']], []) ?
+                    Carbon::parse(call_user_func_array([$partner, $module['function']], []))->toDateTimeString() : '';
             } else {
                 $modules[$key]['updated_at'] = Carbon::now()->toDateString() . ' 00:01:01';
             }
