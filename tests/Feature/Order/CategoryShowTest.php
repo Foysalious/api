@@ -29,9 +29,9 @@ class CategoryShowTest extends FeatureTestCase
             CategoryLocation::class,
             LocationService::class
         ]);
-        $master_category = factory(Category::class)->create();
+        $master_category = Category::factory()->create();
 
-        $this->secondaryCategory = factory(Category::class)->create([
+        $this->secondaryCategory = Category::factory()->create([
             'parent_id' => $master_category->id,
             'publication_status' => 1
         ]);
@@ -64,7 +64,7 @@ class CategoryShowTest extends FeatureTestCase
     private function createService($is_published, $is_tagged)
     {
         /** @var Service $service_1 */
-        $service = factory(Service::class)->create([
+        $service = Service::factory()->create([
             'category_id' => $this->secondaryCategory->id,
             'variable_type' => ServiceType::FIXED,
             'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',

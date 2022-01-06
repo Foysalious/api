@@ -1,10 +1,12 @@
-<?php namespace Feature\sBusinessPayroll;
+<?php
+
+namespace Tests\Feature\sBusinessPayroll;
 
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
-use Illuminate\Foundation\Testing\WithFaker;
+use Faker\Factory;
 use Tests\Feature\FeatureTestCase;
 
 /**
@@ -12,9 +14,7 @@ use Tests\Feature\FeatureTestCase;
  */
 class businessCreatingTest extends FeatureTestCase
 {
-
     private $businessMember;
-//    protected $profile = 0;
     private $join_date = '2021-09-28';
 
     public function testCreatingBusiness()
@@ -23,33 +23,31 @@ class businessCreatingTest extends FeatureTestCase
             Profile::class,
             Business::class,
             Member::class,
-            BusinessMember::class
+            BusinessMember::class,
         ]);
 
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
 
-        $this->business = factory(Business::class)->create();
+        $this->business = Business::factory()->create();
 
-        for ($i = 0; $i < 5; $i++){
-
-            $this->profile = factory(Profile::class)->create([
-                'email'=> $faker->firstname() . '@gmail.com',
-                'mobile' => '0181234567' . $i
+        for ($i = 0; $i < 5; $i++) {
+            $this->profile = Profile::factory()->create([
+                'email'  => $faker->firstname().'@gmail.com',
+                'mobile' => '0181234567'.$i,
             ]);
 
-            $this->member = factory(Member::class)->create([
-                'profile_id' => $this->profile->id,
-                'remember_token' => $faker->firstName()
+            $this->member = Member::factory()->create([
+                'profile_id'     => $this->profile->id,
+                'remember_token' => $faker->firstName(),
             ]);
 
-            $this->businessMember = factory(BusinessMember::class)->create([
+            $this->businessMember = BusinessMember::factory()->create([
                 'business_id' => $this->business->id,
-                'member_id' => $this->member->id,
-                'join_date' => $this->join_date
+                'member_id'   => $this->member->id,
+                'join_date'   => $this->join_date,
             ]);
         }
     }
-
 }
 
 

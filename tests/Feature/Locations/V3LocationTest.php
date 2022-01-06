@@ -71,7 +71,7 @@ class V3LocationTest extends FeatureTestCase
         $location_cache_request = app(LocationCacheRequest::class);
         $cache_aside->setCacheRequest($location_cache_request)->deleteEntity();
 
-        $new_location = factory(Location::class)->create();
+        $new_location = Location::factory()->create();
         $new_location->update(["publication_status" => 0]);
         $response = $this->get("/v3/locations");
         $data = $response->decodeResponseJson();

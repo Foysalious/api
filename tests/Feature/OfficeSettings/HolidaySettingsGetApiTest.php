@@ -21,7 +21,7 @@ class HolidaySettingsGetApiTest extends FeatureTestCase
         $this->logIn();
         $this->truncateTables([BusinessHoliday::class]);
 
-        $this->business_holidays = factory(BusinessHoliday::class)->create([
+        $this->business_holidays = BusinessHoliday::factory()->create([
             'business_id' => $this->business->id,
         ]);
     }

@@ -11,9 +11,7 @@ use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
-/**
- * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
- */
+
 class ServiceLocationTest extends featureTestCase
 {
     protected $location;
@@ -22,6 +20,7 @@ class ServiceLocationTest extends featureTestCase
     private $service1;
     private $service2;
     private $location2;
+
 
     public function setUp(): void
     {
@@ -198,7 +197,6 @@ class ServiceLocationTest extends featureTestCase
             'location_id' => $this->location->id,
         ]);
 
-
         LocationService::create([
             'location_id' => $this->location->id,
             'service_id'  => $this->service1->id,
@@ -210,9 +208,8 @@ class ServiceLocationTest extends featureTestCase
             'service_id'  => $this->service2->id,
             'prices'      => 200,
         ]);
-        $response = $this->get(
-            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
-        );
+
+        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(404, $data["code"]);

@@ -4,19 +4,16 @@ namespace Tests\Feature\Order;
 
 use App\Models\Location;
 use Factory\UniversalSlugsFactory;
-use Illuminate\Support\Facades\Artisan;
-use Sheba\Cache\Category\Tree\CategoryTreeCache;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
 use Sheba\Dal\Service\Service;
-use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 
 use Sheba\Cache\CacheAside;
-use Sheba\Cache\Location\LocationCacheRequest;
 
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
-use Throwable;
 
 /**
  * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
@@ -25,9 +22,13 @@ class CategoryTreeTest extends FeatureTestCase
 {
     protected $location;
     protected $secondaryCategory;
+    protected $secondaryCategory2;
     private $masterCategory;
-    private $secondaryCategory2;
+    private $new_location;
 
+    /**
+     * @var Collection|Model|mixed
+     */
     public function setUp(): void
     {
         parent::setUp();
@@ -49,9 +50,6 @@ class CategoryTreeTest extends FeatureTestCase
         ]);
     }
 
-    /**
-     * @throws Throwable
-     */
     public function testPublishedLocationAndCategoryShowInTheList()
     {
         CategoryLocation::factory()->create([
@@ -220,6 +218,6 @@ class CategoryTreeTest extends FeatureTestCase
         $service->locations()->attach($this->location->id);
 
         $response = $this->get("v3/categories/tree?location_id=".$this->location->id);
-        $response->decodeResponseJson();
+        $data = $response->decodeResponseJson();
     }
 }
