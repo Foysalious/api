@@ -7,7 +7,6 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use App\Sheba\UserMigration\AccountingUserMigration;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\Dal\UserMigration\Model as UserMigration;
 use Sheba\Pos\Product\StockToBatchMigration;
 
 class UserMigrationRepository extends BaseRepository
@@ -52,11 +51,5 @@ class UserMigrationRepository extends BaseRepository
         /** @var AccountingUserMigration $repo */
         $repo = app(AccountingUserMigration::class);
         return $repo->setUserId($userId)->setModuleName(self::MODULE_NAME)->getStatus();
-    }
-
-    public function autoMigrate(Partner $partner)
-    {
-        $payload = ['module_name' => self::MODULE_NAME, 'user_id' => $partner->id, 'status' => 'upgraded'];
-        UserMigration::create($this->withBothModificationFields($payload));
     }
 }
