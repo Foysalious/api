@@ -11,7 +11,7 @@ class Statics
     CONST REJECTED         = "rejected";
     CONST INCOMPLETE       = "incomplete";
     CONST SUCCESS_MESSAGE  = "আপনার NID-এর তথ্য এবং ছবি সফলভাবে বাংলাদেশ সরকার কর্তিক ভেরিফাইড হয়েছে।";
-    CONST FAIL_MESSAGE     = "দুঃখিত! আপনার আবেদনটি সফল হয়নি। যেকোনো তথ্যের জন্য কল করুন ১৬৫১৬ নাম্বারে।";
+    CONST FAIL_MESSAGE     = "সক্রিয়ভাবে প্রাপ্ত তথ্যে কিছু ভুলের কারনে আপনার NID যাচাই করা সম্ভব হয়নি। sManager কর্তৃপক্ষ ম্যানুয়াল ভেরিফিকেশন নিয়ে কাজ করছে সকল তথ্য ঠিক থাকলে আগামী ৩ কার্যদিবসের মধ্যে ভেরিফিকেশন সম্পন্ন হবে।  অথবা আপনি চাইলে সক্রিয়ভাবে";
 
     public static function faceVerificationValidate(): array
     {
@@ -40,7 +40,7 @@ class Statics
         if($status === self::UNVERIFIED) $status = self::REJECTED;
         return [
             'status'  => $status,
-            'title'   => $status === self::VERIFIED ? "আবেদন সফল হয়েছে !" : "আবেদন সফল হয়নি !",
+            'title'   => $status === self::VERIFIED ? "ভেরিফিকেশন সফল হয়েছে !" : "ভেরিফিকেশন প্রক্রিয়াধীন",
             'message' => $status === self::VERIFIED ? self::SUCCESS_MESSAGE : self::FAIL_MESSAGE
         ];
     }
