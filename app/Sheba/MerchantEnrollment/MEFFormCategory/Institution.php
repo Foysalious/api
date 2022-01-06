@@ -6,7 +6,7 @@ use Sheba\MerchantEnrollment\Statics\FormStatics;
 
 class Institution extends MEFFormCategory
 {
-    protected $code = 'institution';
+    protected $category_code = 'institution';
 
     public function completion(): array
     {

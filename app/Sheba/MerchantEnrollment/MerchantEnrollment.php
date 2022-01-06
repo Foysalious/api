@@ -57,6 +57,6 @@ class MerchantEnrollment
     public function getCategoryDetails($category_code)
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
-        $payment_method->categoryDetails((new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->getCategoryByCode($category_code));
+        $payment_method->categoryDetails((new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code));
     }
 }

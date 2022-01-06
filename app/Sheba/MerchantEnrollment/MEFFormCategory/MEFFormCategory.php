@@ -2,13 +2,22 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory;
 
+use Sheba\MerchantEnrollment\PartnerAllInformation;
+
 abstract class MEFFormCategory
 {
-    protected $code;
+    protected $category_code;
     protected $exclude_form_keys = array();
     protected $percentage;
     protected $partner;
     protected $payment_gateway;
+    /** @var PartnerAllInformation */
+    protected $partnerAllInfo;
+
+    public function __construct()
+    {
+        $this->partnerAllInfo = (new PartnerAllInformation());
+    }
 
     /**
      * @param mixed $partner
@@ -54,7 +63,7 @@ abstract class MEFFormCategory
     protected function getFormData($formItems)
     {
         $data      = [];
-//        $formData  = $this->bankAccountData->getByCode($this->code);
+        $formData  = $this->partnerAllInfo->setPartner($this->partner)->getByCode($this->category_code);
         dd($formItems);
     }
 

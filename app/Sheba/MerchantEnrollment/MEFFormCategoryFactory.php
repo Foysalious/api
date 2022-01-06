@@ -30,6 +30,17 @@ class MEFFormCategoryFactory
         return $this;
     }
 
+
+    /**
+     * @param Partner $partner
+     * @return MEFFormCategoryFactory
+     */
+    public function setPartner(Partner $partner): MEFFormCategoryFactory
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
     /**
      * @param $code
      * @return MEFFormCategory
