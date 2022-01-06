@@ -27,8 +27,8 @@ class UserMigrationService
     {
         $payload = [
             $this->withBothModificationFields(['module_name' => Modules::EXPENSE, 'user_id' => $partner->id, 'status' => UserStatus::UPGRADED]),
-            $this->withBothModificationFields(['module_name' => Modules::POS, 'user_id' => $partner->id, 'status' => UserStatus::UPGRADED]),
+            $this->withBothModificationFields(['module_name' => Modules::POS, 'user_id' => $partner->id, 'status' => UserStatus::UPGRADED])
         ];
-        UserMigration::create($payload);
+        UserMigration::insert($payload);
     }
 }
