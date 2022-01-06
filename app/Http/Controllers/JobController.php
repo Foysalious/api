@@ -119,6 +119,12 @@ class JobController extends Controller
         if ($logistic_paid > $logistic_charge) $logistic_paid = $logistic_charge;
         $logistic_due = ($logistic_charge - $logistic_paid);
 
+        $is_inspection_service = 0;
+        foreach ($job->jobServices as $jobService) {
+            if ($jobService->service->is_inspection_service) $is_inspection_service = 1;
+            break;
+        }
+
         $job_collection = collect();
         $job_collection->put('id', $job->id);
         $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
@@ -174,7 +180,7 @@ class JobController extends Controller
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
         $job_collection->put('is_same_service', 0);
         $job_collection->put('is_closed', $job->partnerOrder->closed_at != null ? 1 : 0);
-        $job_collection->put('is_inspection_service', $job->jobServices[0] ? $job->jobServices[0]->service->is_inspection_service :  0);
+        $job_collection->put('is_inspection_service', $is_inspection_service);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         if (count($job->jobServices) == 0) {
@@ -352,6 +358,12 @@ class JobController extends Controller
         $destination_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo, true) : null;
         $destination_thana = $destination_geo ? $from_geo->getThana($destination_geo['lat'], $destination_geo['lng']) : null;
 
+        $is_inspection_service = 0;
+        foreach ($job->jobServices as $jobService) {
+            if ($jobService->service->is_inspection_service) $is_inspection_service = 1;
+            break;
+        }
+
         $bill = collect();
         $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
@@ -390,6 +402,7 @@ class JobController extends Controller
         $bill['is_surcharge_applied'] = count($job->jobServices) > 0 && $job->jobServices[0] ? !!($job->jobServices[0]->surcharge_percentage) ? 1 : 0 : 0;
         $bill['surcharge_percentage'] = count($job->jobServices) > 0 && $job->jobServices[0] ? (double)$job->jobServices[0]->surcharge_percentage : 0;
         $bill['surcharge_amount'] = (double)$job->totalServiceSurcharge;
+        $bill['is_inspection_service'] = $is_inspection_service;
 
         return api_response($request, $bill, 200, ['bill' => $bill]);
     }
