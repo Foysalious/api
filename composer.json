@@ -54,28 +54,33 @@
     "mpdf/mpdf": "^8.0"
   },
   "require-dev": {
-    "nunomaduro/collision": "^5.0",
+    "barryvdh/laravel-ide-helper": "^2.10",
+    "brianium/paratest": "^6.4",
     "facade/ignition": "^2.3.6",
     "fakerphp/faker": "^1.9.1",
-    "mockery/mockery": "1.4.*",
-    "phpunit/phpunit": "^9.0",
+    "haydenpierce/class-finder": "^0.4.3",
     "itsgoingd/clockwork": "5.0.*",
-    "barryvdh/laravel-ide-helper": "^2.10"
+    "jasny/phpdoc-parser": "dev-master",
+    "johnkary/phpunit-speedtrap": "^4.0",
+    "mockery/mockery": "1.4.*",
+    "nunomaduro/collision": "^5.0",
+    "phpunit/phpunit": "^9.0"
   },
   "autoload": {
-    "classmap": [
-      "database"
-    ],
     "files": [
       "app/Helper/helper_functions.php"
     ],
     "psr-4": {
       "App\\": "app/",
       "Sheba\\": "app/Sheba",
-      "Tests\\": "tests"
+      "Database\\Factories\\": "database/factories/",
+      "Database\\Seeders\\": "database/seeders/"
     }
   },
   "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    },
     "classmap": [
       "tests/TestCase.php"
     ]
@@ -85,7 +90,7 @@
       "php -r \"copy('.env.example', '.env');\""
     ],
     "post-create-project-cmd": [
-      "php artisan key:generate"
+      "@php artisan key:generate --ansi"
     ],
     "post-install-cmd": [
       "Illuminate\\Foundation\\ComposerScripts::postInstall"
@@ -102,6 +107,7 @@
   "config": {
     "preferred-install": "dist",
     "optimize-autoloader": true,
+    "sort-packages": true,
     "allow-plugins": {
       "composer/package-versions-deprecated": true
     }

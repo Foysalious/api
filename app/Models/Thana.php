@@ -1,11 +1,16 @@
-<?php namespace App\Models;
+<?php
 
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Thana extends Model
 {
-    protected $guarded = ['id'];
+    use HasFactory;
+    
     public $timestamps = false;
+    protected $guarded = ['id'];
     protected $casts = ['lat' => 'double', 'lng' => 'double'];
 
     public function district()

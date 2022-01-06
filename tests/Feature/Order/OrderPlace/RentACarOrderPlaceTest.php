@@ -1,9 +1,13 @@
-<?php namespace Tests\Feature\Order\OrderPlace;
+<?php
+namespace Tests\Feature\Order\OrderPlace;
 
 use App\Models\Profile;
 use GuzzleHttp\Client;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class RentACarOrderPlaceTest extends FeatureTestCase
 {
     /*public function testHalfDay()
@@ -207,17 +211,17 @@ class RentACarOrderPlaceTest extends FeatureTestCase
     private function getPartner($client, $services, $valid_times)
     {
         $partner_list = $client->get('/v2/locations/11/partners', [
-            'query' =>
-                [
-                    'services' => $services,
-                    'date' => date('Y-m-d'),
-                    'time' => key($valid_times)
+            'query' => [
+                'services' => $services,
+                'date'     => date('Y-m-d'),
+                'time'     => key($valid_times),
 
-                ]
+            ],
         ]);
         $data = json_decode($partner_list->getBody(), true);
         $this->assertEquals(200, $data['code']);
         $this->assertArrayHasKey('partners', $data);
+
         return $data['partners'][0];
     }
 
@@ -225,18 +229,18 @@ class RentACarOrderPlaceTest extends FeatureTestCase
     {
         $profile = Profile::find(11);
         $this->json('POST', '/v2/customers/11/orders', [
-            'services' => $services,
-            'date' => date('Y-m-d'),
-            'time' => key($valid_times),
-            'partner' => $partner['id'],
-            'name' => $profile->name,
-            'mobile' => $profile->mobile,
-            'remember_token' => $profile->customer->remember_token,
-            'sales_channel' => 'Web',
-            'payment_method' => 'cod',
+            'services'               => $services,
+            'date'                   => date('Y-m-d'),
+            'time'                   => key($valid_times),
+            'partner'                => $partner['id'],
+            'name'                   => $profile->name,
+            'mobile'                 => $profile->mobile,
+            'remember_token'         => $profile->customer->remember_token,
+            'sales_channel'          => 'Web',
+            'payment_method'         => 'cod',
             'additional_information' => str_random(50),
-            'location' => 11,
-            'address_id' => $profile->customer->delivery_addresses->first()->id
+            'location'               => 11,
+            'address_id'             => $profile->customer->delivery_addresses->first()->id,
         ])->seeJsonStructure(['message', 'code', 'link', 'job_id', 'order_code']);
     }
 }

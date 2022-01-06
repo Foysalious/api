@@ -1,9 +1,13 @@
-<?php namespace Tests\Feature\DigigoDashboard;
+<?php
 
+namespace Tests\Feature\DigigoDashboard;
 
+/**
+ * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
+ */
 class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->logIn();
@@ -11,11 +15,10 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
 
     public function testDashboardSuccessfulResponseCode()
     {
-        $response = $this->get("/v1/employee/dashboard" , [
-            'Authorization' => "Bearer $this->token"
+        $response = $this->get("/v1/employee/dashboard", [
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        //dd($data);
 
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
@@ -24,7 +27,7 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
     public function testDashboardResponseWhenSessionIsExpired()
     {
         $response = $this->get('/v1/employee/dashboard', [
-            'Authorization' => "Bearer $this->token" . "jksdghfjgjhyv"
+            'Authorization' => "Bearer $this->token"."jksdghfjgjhyv",
         ]);
         $data = $response->decodeResponseJson();
 
@@ -35,11 +38,10 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
     public function testDashboardDataResponse()
     {
         $response = $this->get('/v1/employee/dashboard', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
 
-       //dd($data);
         $this->assertEquals(1, $data['info']['id']);
         $this->assertEquals(0, $data['info']['notification_count']);
         $this->assertEquals(1, $data['info']['attendance']['can_checkin']);
@@ -50,9 +52,4 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
         $this->assertEquals(0, $data['info']['is_profile_complete']);
         $this->assertEquals(null, $data['info']['is_eligible_for_lunch']);
     }
-
-   /* public function testDashboardUpdateCanCheckInDataResponse()
-    {
-        $can_checkin
-    }*/
 }

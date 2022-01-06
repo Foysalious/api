@@ -1,6 +1,8 @@
-<?php namespace App\Models;
+<?php
+namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Log;
 use Sheba\Dal\BaseModel;
@@ -20,7 +22,7 @@ use Sheba\Dal\POSOrder\OrderStatuses;
 
 class PosOrder  extends BaseModel
 {
-    use SoftDeletes;
+    use SoftDeletes, HasFactory;
 
     /** @var bool */
     public $isCalculated;
@@ -55,7 +57,7 @@ class PosOrder  extends BaseModel
         $this->_calculateThisItems();
         $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutService();
         $discount_amount_without_service = $this->discountsAmountWithoutService();
-        $this->appliedDiscount = ( $discount_amount_without_service> $this->totalBill) ? $this->totalBill : $discount_amount_without_service;
+        $this->appliedDiscount = ($discount_amount_without_service > $this->totalBill) ? $this->totalBill : $discount_amount_without_service;
         $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
         if (isset($this->emi_month) && !$this->interest) {
             $data = Calculations::getMonthData($this->originalTotal, (int)$this->emi_month, false);
@@ -63,8 +65,14 @@ class PosOrder  extends BaseModel
             $this->bank_transaction_charge = $data['bank_transaction_fee'];
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
         }
-        $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
-        if ($this->delivery_charge && !in_array($this->status, [POSOrderStatuses::CANCELLED, POSOrderStatuses::DECLINED])) $this->netBill += (double)round($this->delivery_charge, 2);
+        $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round(
+                $this->bank_transaction_charge,
+                2
+            );
+        if ($this->delivery_charge && !in_array($this->status, [POSOrderStatuses::CANCELLED, POSOrderStatuses::DECLINED]
+            )) {
+            $this->netBill += (double)round($this->delivery_charge, 2);
+        }
         $this->_calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
 
@@ -72,12 +80,8 @@ class PosOrder  extends BaseModel
         $this->_setPaymentStatus();
         $this->isCalculated = true;
         $this->_formatAllToTaka();
-        return $this;
-    }
 
-    public function netBill()
-    {
-        return $this->netBill;
+        return $this;
     }
 
     private function _calculateThisItems()
@@ -88,6 +92,7 @@ class PosOrder  extends BaseModel
             $item = $item->calculate();
             $this->_updateTotalPriceAndCost($item);
         }
+
         return $this;
     }
 
@@ -112,19 +117,9 @@ class PosOrder  extends BaseModel
         return $this->discounts()->whereNull('item_id')->get()->sum('amount');
     }
 
-    public function discountsWithoutService()
-    {
-        return $this->discounts()->whereNull('item_id');
-    }
-
     public function discounts()
     {
         return $this->hasMany(PosOrderDiscount::class);
-    }
-
-    public function log()
-    {
-        return $this->has(PosOrderDiscount::class);
     }
 
     private function _calculatePaidAmount()
@@ -157,16 +152,17 @@ class PosOrder  extends BaseModel
 
     private function _setPaymentStatus() {
         $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
-        if ($this->payment_status != $this->paymentStatus) $this->storePaymentStatus();
+        if ($this->payment_status != $this->paymentStatus) {
+            $this->storePaymentStatus();
+        }
+
         return $this;
     }
-
 
     private function storePaymentStatus()
     {
         $this->update(['payment_status' => $this->paymentStatus]);
     }
-
 
     private function _formatAllToTaka()
     {
@@ -174,7 +170,23 @@ class PosOrder  extends BaseModel
         $this->totalVat = formatTakaToDecimal($this->totalVat);
         $this->totalItemDiscount = formatTakaToDecimal($this->totalItemDiscount);
         $this->totalBill = formatTakaToDecimal($this->totalBill);
+
         return $this;
+    }
+
+    public function netBill()
+    {
+        return $this->netBill;
+    }
+
+    public function discountsWithoutService()
+    {
+        return $this->discounts()->whereNull('item_id');
+    }
+
+    public function log()
+    {
+        return $this->has(PosOrderDiscount::class);
     }
 
     public function customer()
@@ -196,7 +208,7 @@ class PosOrder  extends BaseModel
     {
         return $this->logs()->whereIn('type', [
             ReturnNatures::PARTIAL_RETURN,
-            ReturnNatures::FULL_RETURN
+            ReturnNatures::FULL_RETURN,
         ]);
     }
 
@@ -208,6 +220,7 @@ class PosOrder  extends BaseModel
     public function scopeGetPartnerWiseOrderId($query, $id)
     {
         $pos_order = $query->withTrashed()->where('id', $id)->first();
+
         return $pos_order ? $pos_order->partner_wise_order_id : null;
     }
 
@@ -228,9 +241,11 @@ class PosOrder  extends BaseModel
 
     public function scopeByVoucher($query, $voucher_id)
     {
-        if (is_array($voucher_id))
-            return $query->whereIn('voucher_id', $voucher_id); else
+        if (is_array($voucher_id)) {
+            return $query->whereIn('voucher_id', $voucher_id);
+        } else {
             return $query->where('voucher_id', $voucher_id);
+        }
     }
 
     public function getRefundAmount()
@@ -241,6 +256,11 @@ class PosOrder  extends BaseModel
     private function debitPayments()
     {
         return $this->payments()->debit();
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(PosOrderPayment::class);
     }
 
     /**
@@ -339,6 +359,7 @@ class PosOrder  extends BaseModel
             $is_full_returned = ($log->type == Types::FULL_RETURN) ? $log : null;
             $is_partial_return = ($log->type == Types::PARTIAL_RETURN) ? $log : null;
         });
+
         return $is_exchanged ? Natures::EXCHANGED : (($is_full_returned || $is_partial_return) ? Natures::RETURNED : null);
     }
 
@@ -359,29 +380,25 @@ class PosOrder  extends BaseModel
 
     public function scopeOf($query, $partner)
     {
-        if (is_array($partner))
-            $query->whereIn('partner_id', $partner); else $query->where('partner_id', '=', $partner);
+        if (is_array($partner)) {
+            $query->whereIn('partner_id', $partner);
+        } else {
+            $query->where('partner_id', '=', $partner);
+        }
     }
 
     public function scopeOfCustomer($query, $customer)
     {
-        if (is_array($customer))
-            $query->whereIn('customer_id', $customer); else $query->where('customer_id', '=', $customer);
+        if (is_array($customer)) {
+            $query->whereIn('customer_id', $customer);
+        } else {
+            $query->where('customer_id', '=', $customer);
+        }
     }
 
     public function previousOrder()
     {
         return $this->belongsTo(PosOrder::class, 'previous_order_id', 'id');
-    }
-
-    private function creditPayments()
-    {
-        return $this->payments()->credit();
-    }
-
-    public function payments()
-    {
-        return $this->hasMany(PosOrderPayment::class);
     }
 
     public function scopeWebstoreOrders($query)
@@ -427,5 +444,10 @@ class PosOrder  extends BaseModel
     public function getPaymentLinkTarget()
     {
         return new Target(TargetType::POS_ORDER, $this->id);
+    }
+
+    private function creditPayments()
+    {
+        return $this->payments()->credit();
     }
 }

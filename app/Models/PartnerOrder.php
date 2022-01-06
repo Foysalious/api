@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Sheba\Dal\BaseModel;
@@ -19,7 +20,7 @@ use  Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 
 class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 {
-    use ReportUpdater;
+    use ReportUpdater, HasFactory;
 
     protected $guarded = ['id'];
     protected $dates = ['closed_at', 'closed_and_paid_at', 'cancelled_at'];

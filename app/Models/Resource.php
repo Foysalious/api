@@ -1,7 +1,11 @@
-<?php namespace App\Models;
+<?php
+
+namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
@@ -15,19 +19,14 @@ use Sheba\Dal\Category\Category;
 
 class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 {
-    use Wallet;
+    use Wallet, HasFactory;
 
     protected $guarded = ['id'];
     protected $casts = ['wallet' => 'double'];
     /**
-     * @var bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
+     * @var string
      */
     private $remember_token;
-
-    public function partners()
-    {
-        return $this->belongsToMany(Partner::class);
-    }
 
     public function reviews()
     {
@@ -59,19 +58,14 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $this->hasMany(ResourceTransaction::class);
     }
 
-    public function associatePartners()
-    {
-        return $this->partners->unique();
-    }
-
     public function firstPartner()
     {
         return $this->associatePartners()->first();
     }
 
-    public function partnerResources()
+    public function associatePartners()
     {
-        return $this->hasMany(PartnerResource::class);
+        return $this->partners->unique();
     }
 
     public function notifications()
@@ -86,23 +80,13 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     {
         /** @var Profile $profile */
         $profile = $this->profile;
+
         return $profile->retailers();
     }
 
-    public function withdrawalRequests()
+    public function isManager(Partner $partner)
     {
-        Relation::morphMap(['resource' => 'App\Models\Resource']);
-        return $this->morphMany(WithdrawalRequest::class, 'requester');
-    }
-
-    public function typeIn($partner)
-    {
-        $partner = $partner instanceof Partner ? $partner->id : $partner;
-        $types = [];
-        foreach ($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
-            $types[] = $unique_partner->pivot->resource_type;
-        }
-        return $types;
+        return $this->isOfTypesIn($partner, ["Admin", "Operation", "Owner", "Management", "Finance", "Salesman"]);
     }
 
     public function isOfTypesIn(Partner $partner, $types)
@@ -110,9 +94,22 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return boolval(count(array_intersect($types, $this->typeIn($partner))));
     }
 
-    public function isManager(Partner $partner)
+    public function typeIn($partner)
     {
-        return $this->isOfTypesIn($partner, ["Admin", "Operation", "Owner", "Management", "Finance", "Salesman"]);
+        $partner = $partner instanceof Partner ? $partner->id : $partner;
+        $types = [];
+        foreach (
+            $this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner
+        ) {
+            $types[] = $unique_partner->pivot->resource_type;
+        }
+
+        return $types;
+    }
+
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class);
     }
 
     public function isAdmin(Partner $partner)
@@ -130,7 +127,13 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
                 $categories->push($item);
             }
         }
+
         return $categories->unique('id');
+    }
+
+    public function partnerResources()
+    {
+        return $this->hasMany(PartnerResource::class);
     }
 
     public function scopeVerified($query)
@@ -175,24 +178,34 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return !($this->withdrawalRequests()->active()->count() > 0);
     }
 
+    public function withdrawalRequests()
+    {
+        Relation::morphMap(['resource' => 'App\Models\Resource']);
+
+        return $this->morphMany(WithdrawalRequest::class, 'requester');
+    }
+
     public function isAllowedForMicroLoan()
     {
         return $this->retailers->count() > 0;
-    }
-
-    public function leaves()
-    {
-        Relation::morphMap(['resource' => 'App\Models\Resource']);
-        return $this->morphMany(ArtisanLeave::class, 'artisan');
     }
 
     public function runningLeave($date = null)
     {
         $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
         foreach ($this->leaves()->whereDate('start', '<=', $date)->get() as $leave) {
-            if ($leave->isRunning($date))
+            if ($leave->isRunning($date)) {
                 return $leave;
+            }
         }
+
         return null;
+    }
+
+    public function leaves()
+    {
+        Relation::morphMap(['resource' => 'App\Models\Resource']);
+
+        return $this->morphMany(ArtisanLeave::class, 'artisan');
     }
 }

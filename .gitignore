@@ -17,5 +17,7 @@ resources/assets/ebl/*
 .composer/
 storage/exports/*
 _ide_helper.php
-
 .phpunit.result.cache
+results/phpunit/teamcity.txt
+results/phpunit/api-test-result.xml
+results/test_case_author.json

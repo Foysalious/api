@@ -1,12 +1,13 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Location\Geo;
 
 class CustomerDeliveryAddress extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, HasFactory;
 
     protected $table = 'customer_delivery_addresses';
     protected $guarded = ['id'];

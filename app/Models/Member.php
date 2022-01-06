@@ -1,11 +1,14 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Expense\Expense;
 
 class Member extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
 
     public function profile()

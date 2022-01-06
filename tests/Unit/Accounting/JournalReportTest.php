@@ -1,9 +1,10 @@
 <?php
 
+namespace Tests\Unit\Accounting;
 
-namespace Tests\Feature\Accounting;
-
-
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class JournalReportTest extends AccountingFeatureTest
 {
     public function test_response()
@@ -11,18 +12,16 @@ class JournalReportTest extends AccountingFeatureTest
         $response = $this->get(
             config(
                 'sheba.api_url'
-            ) . '/v2/accounting/reports/journal_report?start_date=2021-05-10&end_date=2021-07-15',
+            ).'/v2/accounting/reports/journal_report?start_date=2021-05-10&end_date=2021-07-15',
             [
-                'Authorization' => $this->token ?? $this->generateToken()
+                'Authorization' => $this->token ?? $this->generateToken(),
             ]
         );
         $response->assertResponseOk();
-        $response->seeJsonStructure(
-            [
-                'code',
-                'message',
-                'data'
-            ]
-        );
+        $response->seeJsonStructure([
+            'code',
+            'message',
+            'data',
+        ]);
     }
 }
