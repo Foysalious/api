@@ -51,12 +51,13 @@ class MerchantEnrollment
 
     /**
      * @param $category_code
-     * @return void
-     * @throws InvalidKeyException|Exceptions\InvalidMEFFormCategoryCodeException
+     * @return array
+     * @throws Exceptions\InvalidMEFFormCategoryCodeException
+     * @throws InvalidKeyException
      */
-    public function getCategoryDetails($category_code)
+    public function getCategoryDetails($category_code): array
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
-        $payment_method->categoryDetails((new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code));
+        return $payment_method->categoryDetails((new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code))->toArray();
     }
 }

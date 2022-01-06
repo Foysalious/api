@@ -16,7 +16,7 @@ class Institution extends MEFFormCategory
         ];
     }
 
-    public function get()
+    public function get(): CategoryGetter
     {
         $formItems = FormStatics::institution();
         return $this->getFormData($formItems);

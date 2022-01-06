@@ -45,6 +45,11 @@ class FormItemBuilder
         return $this->initItem()->toArray();
     }
 
+    private function dropdown(): array
+    {
+        return $this->initItem()->toArray();
+    }
+
     private function header(): array
     {
         return $this->initItem()->toArray();

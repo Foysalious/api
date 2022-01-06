@@ -16,6 +16,29 @@ return [
             'documents'   => 'Documents'
         ],
     ],
+    'category_titles'                    => [
+        'nid_selfie'  => [
+            'en' => 'NID and Selfie',
+            'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'
+        ],
+        'institution' => [
+            'en' => 'Institution',
+            'bn' => 'প্রতিষ্ঠান সম্পর্কিত তথ্য'
+        ],
+        'personal'    => [
+            'en' => 'Personal',
+            'bn' => 'ব্যক্তিগত তথ্য '
+        ],
+        'documents'   => [
+            'en' => 'Documents',
+            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট'
+        ],
+        'account'     => [
+            'en' => 'Account',
+            'bn' => 'অ্যাকাউন্ট সম্পর্কিত তথ্য '
+        ]
+
+    ],
     "category_form_items" => [
         'institution' => [
 //            [
