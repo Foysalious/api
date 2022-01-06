@@ -18,13 +18,13 @@ return [
     ],
     "category_form_items" => [
         'institution' => [
-            [
-                'id'          => 'header',
-                'field_type'  => 'header',
-                "title"       => "কোম্পানি প্রোফাইল",
-                'mandatory'   => false,
-                'is_editable' => false,
-            ],
+//            [
+//                'id'          => 'header',
+//                'input_type'  => 'header',
+//                "title"       => "কোম্পানি প্রোফাইল",
+//                'mandatory'   => false,
+//                'is_editable' => false,
+//            ],
             [
                 'label'         => 'কোম্পানির নাম * ',
                 'message'       => 'কোম্পানির নাম লিখুন',
@@ -36,11 +36,13 @@ return [
                 "max_length"    => "",
                 'is_editable'   => true,
                 'mandatory'     => false,
+                'data_source'   => 'partner',
+                'data_source_id'=> 'name'
             ],
             [
                 'label'         => 'ট্রেড লাইসেন্স নং *',
                 'message'       => 'ট্রেড লাইসেন্স নং লিখুন',
-                'id'            => 'trade_licence_no',
+                'id'            => 'trade_license',
                 'error'         => "ট্রেড লাইসেন্স নং পূরণ আবশ্যক",
                 'input_type'    => 'text',
                 'data'          => '',
@@ -48,6 +50,8 @@ return [
                 "max_length"    => "",
                 'is_editable'   => true,
                 'mandatory'     => false,
+                'data_source'   => 'partner_basic_information',
+                'data_source_id'=> 'trade_license'
             ],
             [
                 'label'         => 'কোম্পানির টাইপ *',
@@ -60,6 +64,8 @@ return [
                 "max_length"    => "",
                 'is_editable'   => true,
                 'mandatory'     => false,
+                'data_source'   => 'partner',
+                'data_source_id'=> 'business_type'
             ],
         ],
     ]

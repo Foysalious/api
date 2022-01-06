@@ -15,6 +15,18 @@ class PartnerAllInformation
     /*** @var Resource */
     protected $resource;
 
+    private $formItems;
+
+    /**
+     * @param mixed $formItems
+     * @return PartnerAllInformation
+     */
+    public function setFormItems($formItems): PartnerAllInformation
+    {
+        $this->formItems = $formItems;
+        return $this;
+    }
+
     /**
      * @param Partner $partner
      * @return PartnerAllInformation
@@ -26,9 +38,16 @@ class PartnerAllInformation
         return $this;
     }
 
-    public function institution()
+    public function institution(): array
     {
-        dd("institution");
+        $values = [];
+        foreach($this->formItems as $formItem) {
+            if(isset($formItem['data_source']) && $formItem['data_source'] !== 'json') {
+                $values[$formItem['id']] = $this->{$formItem['data_source']}->{$formItem['data_source_id']};
+            }
+        }
+        return $values;
+//        dd("institution");
 //        if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['institution'])) return $this->information_for_bank_account['institution'];
 //        return [
 //            "mobile"       => $this->partner->getManagerMobile(),

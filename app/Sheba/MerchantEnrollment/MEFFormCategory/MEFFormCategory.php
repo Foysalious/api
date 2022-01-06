@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory;
 
+use Sheba\MerchantEnrollment\MEFForm\FormItemBuilder;
 use Sheba\MerchantEnrollment\PartnerAllInformation;
 
 abstract class MEFFormCategory
@@ -63,7 +64,12 @@ abstract class MEFFormCategory
     protected function getFormData($formItems)
     {
         $data      = [];
-        $formData  = $this->partnerAllInfo->setPartner($this->partner)->getByCode($this->category_code);
+        $formData  = $this->partnerAllInfo->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
+        foreach ($formItems as $item) {
+            $data[] = (new FormItemBuilder())->setData($formData)->build($item);
+        }
+        $this->setData($data);
+        return (new CategoryGetter())->setCategory($this);
         dd($formItems);
     }
 
