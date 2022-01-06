@@ -87,7 +87,7 @@ class AccountController extends Controller
             [
                 'name'            => 'required|string',
                 'name_bn'         => 'required|string',
-                'opening_balance' => 'numeric',
+                'opening_balance' => 'required|numeric',
                 'icon'            => 'string'
             ]
         );
