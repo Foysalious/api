@@ -55,6 +55,16 @@ class FormItemBuilder
         return $this->initItem()->toArray();
     }
 
+    private function phone(): array
+    {
+        return $this->initItem()->toArray();
+    }
+
+    private function date_picker(): array
+    {
+        return $this->initItem()->toArray();
+    }
+
     /**
      * @param $set
      * @return FormItem

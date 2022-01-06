@@ -41,13 +41,13 @@ return [
     ],
     "category_form_items" => [
         'institution' => [
-//            [
-//                'id'          => 'header',
-//                'input_type'  => 'header',
-//                "title"       => "কোম্পানি প্রোফাইল",
-//                'mandatory'   => false,
-//                'is_editable' => false,
-//            ],
+            [
+                'id'          => 'header',
+                'input_type'  => 'header',
+                "message"     => "কোম্পানি প্রোফাইল",
+                'mandatory'   => false,
+                'is_editable' => false,
+            ],
             [
                 'label'         => 'কোম্পানির নাম * ',
                 'message'       => 'কোম্পানির নাম লিখুন',
@@ -90,6 +90,50 @@ return [
                 'data_source'   => 'partner',
                 'data_source_id'=> 'business_type'
             ],
+            [
+                'label'         => 'রেজিস্টার্ড ঠিকানা *',
+                'message'       => 'কোম্পানির ঠিকানা লিখুন',
+                'id'            => 'registered_address',
+                'error'         => "রেজিস্টার্ড ঠিকানা পূরণ আবশ্যক",
+                'input_type'    => 'text',
+                'data'          => "",
+                "min_length"    => "",
+                "max_length"    => "",
+                'is_editable'   => true,
+                'mandatory'     => false,
+                'data_source'   => 'partner',
+                'data_source_id'=> 'address'
+            ],
+            [
+                'label'            => 'সাপোর্ট নাম্বার *',
+                'message'          => '01762180533',
+                'id'               => 'support_number',
+                'error'            => "সাপোর্ট নাম্বার পূরণ আবশ্যক",
+                'input_type'       => 'phone',
+                'data'             => "",
+                "min_length"       => "",
+                "max_length"       => "",
+                'is_editable'      => false,
+                'mandatory'        => false,
+                'data_source'      => 'partner',
+                'data_source_id'   => 'getContactNumber',
+                'data_source_type' => 'function'
+            ],
+            [
+                'label'            => 'আপনি ব্যবসা শুরু করেছেন কবে *',
+                'message'          => '05/11/2012',
+                'id'               => 'registration_year',
+                'error'            => "পূরণ আবশ্যক",
+                'input_type'       => 'date_picker',
+                'data'             => "",
+                "min_length"       => "",
+                "max_length"       => "",
+                'is_editable'      => false,
+                'mandatory'        => false,
+                'data_source'      => 'partner_basic_information',
+                'data_source_id'   => 'registration_year'
+            ],
+
         ],
     ]
 ];

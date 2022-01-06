@@ -43,7 +43,10 @@ class PartnerAllInformation
         $values = [];
         foreach($this->formItems as $formItem) {
             if(isset($formItem['data_source']) && $formItem['data_source'] !== 'json') {
-                $values[$formItem['id']] = $this->{$formItem['data_source']}->{$formItem['data_source_id']};
+                if(isset($formItem['data_source_type']) && $formItem['data_source_type'] === "function")
+                    $values[$formItem['id']] = $this->{$formItem['data_source']}->{$formItem['data_source_id']}();
+                else
+                    $values[$formItem['id']] = $this->{$formItem['data_source']}->{$formItem['data_source_id']};
             }
         }
         return $values;
