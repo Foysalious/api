@@ -1,5 +1,7 @@
 <?php
 
+namespace Tests\Feature\SubscriptionTest;
+
 use App\Models\Bonus;
 use App\Models\BonusLog;
 use App\Models\Partner;
@@ -20,7 +22,6 @@ use Tests\Mocks\MockSmsVendor;
 /**
  * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
  */
-
 class PurchaseSubscriptionApiTest extends FeatureTestCase
 {
     public function setUp(): void
