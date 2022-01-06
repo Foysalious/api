@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6b0dd0872edd0e51a8c015faec252431",
+    "content-hash": "97a9445bf582d18dbfdf4988618df51f",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -2573,7 +2573,7 @@
             ],
             "authors": [
                 {
-                    "name": "Matěj Humpál",
+                    "name": "MatÄ›j HumpÃ¡l",
                     "role": "Developer, maintainer"
                 },
                 {
@@ -3695,6 +3695,10 @@
                 "mime",
                 "mime type"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/image-mime-type-guesser/issues",
+                "source": "https://github.com/rosell-dk/image-mime-type-guesser/tree/0.3"
+            },
             "time": "2019-03-29T09:33:28+00:00"
         },
         {
@@ -3771,6 +3775,10 @@
                 "png",
                 "png2webp"
             ],
+            "support": {
+                "issues": "https://github.com/rosell-dk/webp-convert/issues",
+                "source": "https://github.com/rosell-dk/webp-convert/tree/2.4.0"
+            },
             "time": "2020-11-10T11:24:50+00:00"
         },
         {
@@ -4013,7 +4021,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "858469e65a18b4f201dce8526bc01c38d71091dd"
+                "reference": "45559f1398a52a2b7b513f168f0bdace6f369493"
             },
             "require": {
                 "php": ">=5.4"
@@ -4040,7 +4048,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-12-27T12:41:14+00:00"
+            "time": "2022-01-06T08:01:21+00:00"
         },
         {
             "name": "sheba/elasticsearch",
