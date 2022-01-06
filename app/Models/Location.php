@@ -1,19 +1,22 @@
-<?php namespace App\Models;
+<?php
 
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Jenssegers\Mongodb\Eloquent\HybridRelations;
 use Sheba\Location\Geo;
 
 class Location extends Model
 {
-    use HybridRelations;
+    use HybridRelations, HasFactory;
 
     protected $connection = 'mysql';
 
     protected $fillable = [
         'name',
         'city_id',
-        'publication_status'
+        'publication_status',
     ];
 
     public function partners()
@@ -77,6 +80,7 @@ class Location extends Model
             $lat = isset($geo->center) ? $geo->center->lat : $geo->lat;
             $lng = isset($geo->center) ? $geo->center->lng : $geo->lng;
         }
+
         return new Geo($lat, $lng);
     }
 }
