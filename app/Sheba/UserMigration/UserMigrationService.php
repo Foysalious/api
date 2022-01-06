@@ -26,9 +26,9 @@ class UserMigrationService
     public function autoMigrate(Partner $partner)
     {
         $payload = [
-            ['module_name' => Modules::EXPENSE, 'user_id' => $partner->id, 'status' => UserStatus::UPGRADED],
-            ['module_name' => Modules::POS, 'user_id' => $partner->id, 'status' => UserStatus::UPGRADED],
+            $this->withBothModificationFields(['module_name' => Modules::EXPENSE, 'user_id' => $partner->id, 'status' => UserStatus::UPGRADED]),
+            $this->withBothModificationFields(['module_name' => Modules::POS, 'user_id' => $partner->id, 'status' => UserStatus::UPGRADED]),
         ];
-        UserMigration::create($this->withBothModificationFields($payload));
+        UserMigration::create($payload);
     }
 }
