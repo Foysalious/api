@@ -70,7 +70,7 @@ class LocationTest extends FeatureTestCase
 
     public function testNewlyCreatedAndPublishedForPartnerLocationIsAvailableOnTheList()
     {
-        $new_location = factory(Location::class)->create();
+        $new_location = Location::factory()->create();
         $response = $this->get("/v1/locations?for=partner");
         $data = $response->decodeResponseJson();
         $locations = collect($data['locations']);
