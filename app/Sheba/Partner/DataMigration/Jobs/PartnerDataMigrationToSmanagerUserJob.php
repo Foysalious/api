@@ -44,6 +44,7 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
         try {
             $this->attempts < 2 ? $this->migrate() : $this->storeLogs(0);;
         } catch (Exception $e) {
+            $this->data['message'] = $e->getMessage();
             Redis::set("MigrationFail::" . $this->partner->id . '::customer::' . $this->queueNo, json_encode($this->data));
             $this->storeLogs(0);
             app('sentry')->captureException($e);
@@ -57,14 +58,14 @@ class PartnerDataMigrationToSmanagerUserJob extends Job implements ShouldQueue
     {
         /** @var $client SmanagerUserServerClient */
         $client = app(SmanagerUserServerClient::class);
-        $redis_smanager_user_namespace = 'DataMigration::Partner::'.$this->partner->id.'::SmanagerUser::Queue::';
+        $redis_smanager_user_namespace = 'DataMigration::Partner::' . $this->partner->id . '::SmanagerUser::Queue::';
         $previous_key = $redis_smanager_user_namespace . ($this->queueNo - 1);
         if (!$this->isRedisKeyExists($previous_key)) {
-            $client->post('api/v1/partners/'.$this->partner->id.'/migrate', $this->data);
+            $client->post('api/v1/partners/' . $this->partner->id . '/migrate', $this->data);
             $current_key = $redis_smanager_user_namespace . $this->queueNo;
             $this->deleteRedisKey($current_key);
             $this->storeLogs(1);
-            if($this->shouldQueue) {
+            if ($this->shouldQueue) {
                 /** @var PartnerDataMigrationComplete $migrationComplete */
                 $migrationComplete = app(PartnerDataMigrationComplete::class);
                 $migrationComplete->setPartnerId($this->partner->id)->checkAndUpgrade();
