@@ -62,7 +62,8 @@ class SettingController extends Controller
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             if($partner->isMigrated(Modules::POS))
             {
-                $settings->vat_percentage = $partnerService->setPartner($partner)->get()['partner']['vat_percentage'];
+                $data = ['partner_id' => $partner->id, 'sub_domain' => $partner->sub_domain, 'vat_percentage' => $settings->vat_percentage];
+                $settings->vat_percentage = $partnerService->setPartner($partner)->storeOrGet($data)['partner']['vat_percentage'];
                 $partnerDetailsFromOderService = $orderService->setPartnerId($partner->id)->getPartnerDetails();
                 $settings->has_qr_code = $partnerDetailsFromOderService['partner']['qr_code_account_type'] && $partnerDetailsFromOderService['partner']['qr_code_image'] ?  1 : 0;
             }
