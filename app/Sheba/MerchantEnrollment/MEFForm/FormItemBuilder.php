@@ -65,6 +65,16 @@ class FormItemBuilder
         return $this->initItem()->toArray();
     }
 
+    private function number(): array
+    {
+        return $this->initItem()->toArray();
+    }
+
+    private function decimal_number(): array
+    {
+        return $this->initItem()->toArray();
+    }
+
     /**
      * @param $set
      * @return FormItem

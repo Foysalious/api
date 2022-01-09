@@ -102,9 +102,9 @@ abstract class MEFFormCategory
         $data      = [];
         $formData  = $this->partnerAllInfo->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
         $formItemBuilder = (new FormItemBuilder())->setData($formData);
-        foreach ($formItems as $item) {
+        foreach ($formItems as $item)
             $data[] = $formItemBuilder->build($item);
-        }
+
         $this->setData($data);
         return (new CategoryGetter())->setCategory($this);
     }
