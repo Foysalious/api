@@ -70,7 +70,6 @@ class SettingController extends Controller
             removeRelationsAndFields($settings);
             return $settings;
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return false;
         }
