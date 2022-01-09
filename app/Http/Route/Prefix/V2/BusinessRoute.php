@@ -71,14 +71,6 @@ class BusinessRoute
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
                     $api->post('reconciliation', 'B2b\AttendanceReconciliationController@create');
                 });
-                $api->group(['prefix' => 'office-time'], function ($api) {
-                    $api->get('/', 'B2b\AttendanceController@getOfficeTime');
-                    $api->post('/update', 'B2b\AttendanceController@updateOfficeTime');
-                });
-                $api->group(['prefix' => 'attendance-setting'], function ($api) {
-                    $api->get('/', 'B2b\AttendanceController@getAttendanceSetting');
-                    $api->post('/update', 'B2b\AttendanceController@updateAttendanceSetting');
-                });
                 $api->group(['prefix' => 'half-day-setting'], function ($api) {
                     $api->post('/', 'B2b\AttendanceController@updateHalfDaySetting');
                 });
