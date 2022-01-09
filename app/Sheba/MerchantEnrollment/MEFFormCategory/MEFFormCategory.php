@@ -2,13 +2,27 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory;
 
+use Sheba\MerchantEnrollment\MEFForm\FormItemBuilder;
+use Sheba\MerchantEnrollment\PartnerAllInformation;
+use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
+
 abstract class MEFFormCategory
 {
-    protected $code;
+    protected $title;
+    protected $category_code;
     protected $exclude_form_keys = array();
     protected $percentage;
     protected $partner;
     protected $payment_gateway;
+    /** @var PartnerAllInformation */
+    protected $partnerAllInfo;
+    protected $data;
+
+    public function __construct()
+    {
+        $this->partnerAllInfo = (new PartnerAllInformation());
+        $this->setTitle(PaymentMethodStatics::categoryTitles($this->category_code));
+    }
 
     /**
      * @param mixed $partner
@@ -40,9 +54,41 @@ abstract class MEFFormCategory
         return $this;
     }
 
+    /**
+     * @param array $data
+     * @return $this
+     */
+    public function setData(array $data): MEFFormCategory
+    {
+        $this->data = $data;
+        return $this;
+    }
+
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * @param mixed $title
+     */
+    public function setTitle($title)
+    {
+        $this->title = $title;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTitle()
+    {
+        return $this->title;
+    }
+
+
     abstract public function completion();
 
-    abstract public function get();
+    abstract public function get(): CategoryGetter;
 
     abstract public function post($data);
 
@@ -51,11 +97,16 @@ abstract class MEFFormCategory
         return convertNumbersToBangla($this->percentage, false);
     }
 
-    protected function getFormData($formItems)
+    protected function getFormData($formItems): CategoryGetter
     {
         $data      = [];
-//        $formData  = $this->bankAccountData->getByCode($this->code);
-        dd($formItems);
+        $formData  = $this->partnerAllInfo->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
+        $formItemBuilder = (new FormItemBuilder())->setData($formData);
+        foreach ($formItems as $item)
+            $data[] = $formItemBuilder->build($item);
+
+        $this->setData($data);
+        return (new CategoryGetter())->setCategory($this);
     }
 
 }

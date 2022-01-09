@@ -25,4 +25,11 @@ class PaymentMethodStatics
         if (isset($categoryList[$paymentGatewayCode])) return $categoryList[$paymentGatewayCode];
         throw new InvalidKeyException();
     }
+
+    public static function categoryTitles($category_code)
+    {
+        $titles = config('reseller_payment.category_titles');
+        if (isset($titles[$category_code])) return $titles[$category_code];
+        return ['en' => '', 'bn' => ''];
+    }
 }

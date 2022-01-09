@@ -6,7 +6,7 @@ use Sheba\MerchantEnrollment\Statics\FormStatics;
 
 class Institution extends MEFFormCategory
 {
-    protected $code = 'institution';
+    protected $category_code = 'institution';
 
     public function completion(): array
     {
@@ -16,7 +16,7 @@ class Institution extends MEFFormCategory
         ];
     }
 
-    public function get()
+    public function get(): CategoryGetter
     {
         $formItems = FormStatics::institution();
         return $this->getFormData($formItems);

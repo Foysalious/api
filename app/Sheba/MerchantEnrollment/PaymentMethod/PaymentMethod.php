@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\PaymentMethod;
 
+use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 
 abstract class PaymentMethod
@@ -18,5 +19,5 @@ abstract class PaymentMethod
         return $this;
     }
 
-    abstract public function categoryDetails(MEFFormCategory $category);
+    abstract public function categoryDetails(MEFFormCategory $category): CategoryGetter;
 }
