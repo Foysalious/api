@@ -222,5 +222,6 @@ return [
                 'input_type'    => 'number'
             ]
         ],
-    ]
+    ],
+
 ];
