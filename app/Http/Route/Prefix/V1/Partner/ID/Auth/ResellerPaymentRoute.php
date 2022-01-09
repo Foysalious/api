@@ -14,6 +14,9 @@ class ResellerPaymentRoute
 
                 $api->get('/emi-info/manager', 'ResellerPayment\\PaymentServiceController@emiInformationForManager');
             });
+            $api->group(["prefix" => 'merchant-on-boarding'], function ($api) {
+                $api->get('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@getCategoryWiseDetails");
+            });
         });
     }
 }
