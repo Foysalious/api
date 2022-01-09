@@ -176,7 +176,7 @@ class JobController extends Controller
         $job_collection->put('can_take_review', $this->canTakeReview($job));
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
-        $job_collection->put('can_reschedule', $job->canReschedule() && ($this->checkPreparationTime($job) || $job->isScheduleDue()) ? 1 : 0);
+        $job_collection->put('can_reschedule', $job->canReschedule() && ($this->checkPreparationTime($job) && !$job->isScheduleDue()) ? 1 : 0);
         $job_collection->put('can_cancel', $job->canCancel() ? 1 : 0);
         $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
