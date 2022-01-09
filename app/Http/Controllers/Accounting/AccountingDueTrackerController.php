@@ -31,6 +31,9 @@ class AccountingDueTrackerController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        if ($request->has('date') && $request->date) {
+            $request->merge(['date' => b2EnDateFormatter($request->date)]);
+        }
         $this->validate($request, [
 
             'amount'                => 'required',
@@ -52,6 +55,9 @@ class AccountingDueTrackerController extends Controller
      */
     public function update(Request $request, $entry_id): JsonResponse
     {
+        if ($request->has('date') && $request->date) {
+            $request->merge(['date' => b2EnDateFormatter($request->date)]);
+        }
         $this->validate($request, [
             'amount'                   => 'required',
             'entry_type'               => 'required|in:due,deposit',
@@ -123,7 +129,7 @@ class AccountingDueTrackerController extends Controller
             (($request->has('share_pdf')) && ($request->share_pdf == 1))) {
             $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
             $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
-            $balanceData        = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId,$request);
+            $balanceData        = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId, $request);
             $data               = array_merge($data, $balanceData);
             $pdf_link           = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
             if (($request->filled('download_pdf')) && ($request->download_pdf == 1)) {
@@ -140,7 +146,7 @@ class AccountingDueTrackerController extends Controller
      */
     public function dueListBalanceByCustomer(Request $request, $customerId): JsonResponse
     {
-        $data = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId,$request);
+        $data = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId, $request);
         return api_response($request, null, 200, ['data' => $data]);
     }
 
