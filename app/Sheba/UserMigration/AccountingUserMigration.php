@@ -69,7 +69,7 @@ class AccountingUserMigration extends UserMigrationRepository
     {
         return [
             "migrating_icon" => Constants::$accounting_migration_url . "/accounting_upgrading.png",
-            "migrating_text" => "হিসাব খাতা আপগ্রেড হচ্ছে। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করুন।",
+            "migrating_text" => "হলাভ / লস এবং ক্যাশ একাউন্ট এর মত সুবিধা পেতে নতুন সিস্টেম আপগ্রেড হচ্ছে আনুগ্রহ করে অপেক্ষা করুন ...",
             "dialog_cancelable" => false
         ];
     }
