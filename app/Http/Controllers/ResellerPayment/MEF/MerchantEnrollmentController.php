@@ -45,9 +45,9 @@ class MerchantEnrollmentController extends Controller
     {
         try {
             $this->validate($request, MEFGeneralStatics::category_store_validation());
-            $partner = $request->partner;
-            $detail = $merchantEnrollment->setPartner($partner)->setKey($request->key)->postCategoryDetails($request->category_code);
-            return api_response($request, $detail, 200, ['data' => $detail]);
+            $merchantEnrollment->setPartner($request->partner)->setKey($request->key)
+                ->setPostData($request->data)->postCategoryDetails($request->category_code);
+            return api_response($request, null, 200);
         } catch (ResellerPaymentException $e) {
             logError($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
@@ -55,6 +55,7 @@ class MerchantEnrollmentController extends Controller
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }

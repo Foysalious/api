@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory;
 
+use Sheba\MerchantEnrollment\InstitutionInformation;
 use Sheba\MerchantEnrollment\Statics\FormStatics;
 
 class Institution extends MEFFormCategory
@@ -18,12 +19,19 @@ class Institution extends MEFFormCategory
 
     public function get(): CategoryGetter
     {
-        $formItems = FormStatics::institution();
-        return $this->getFormData($formItems);
+        $formItems = $this->getStaticFormData();
+        $formData  = (new InstitutionInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
+        return $this->getFormData($formItems, $formData);
     }
 
     public function post($data)
     {
-        // TODO: Implement post() method.
+        $formItems = FormStatics::institution();
+        (new InstitutionInformation())->setPartner($this->partner)->setFormItems($formItems)->postByCode($this->category_code, $data);
+    }
+
+    public function getStaticFormData()
+    {
+        return FormStatics::institution();
     }
 }
