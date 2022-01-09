@@ -175,8 +175,6 @@ class PosCustomerService
     public function deleteUser()
     {
         $this->deleteCustomerFromSmanagerUserService();
-        $this->deleteCustomerFromPosOrderService();
-        $this->deleteUserFromAccountingService();
         return true;
     }
 
