@@ -64,7 +64,9 @@ class SettingController extends Controller
             {
                 $data = ['partner_id' => $partner->id, 'sub_domain' => $partner->sub_domain, 'vat_percentage' => $settings->vat_percentage];
                 $settings->vat_percentage = $partnerService->setPartner($partner)->storeOrGet($data)['partner']['vat_percentage'];
-                $partnerDetailsFromOderService = $orderService->setPartnerId($partner->id)->getPartnerDetails();
+                $pos_order_settings_data = ['partner_id' => $partner->id, 'sub_domain' => $partner->sub_domain, 'qr_code_account_type' => $partner->qr_code_account_type,
+                    'qr_code_image' => $partner->qr_code_image];
+                $partnerDetailsFromOderService = $orderService->setPartnerId($partner->id)->storeOrGet($pos_order_settings_data);
                 $settings->has_qr_code = $partnerDetailsFromOderService['partner']['qr_code_account_type'] && $partnerDetailsFromOderService['partner']['qr_code_image'] ?  1 : 0;
             }
 
