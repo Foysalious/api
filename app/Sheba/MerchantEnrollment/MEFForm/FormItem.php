@@ -10,6 +10,7 @@ class FormItem implements Arrayable
     protected $input_type = '';
     protected $label = '';
     protected $message = '';
+    protected $hint = '';
     protected $id = '';
     protected $error = '';
     protected $data = '';

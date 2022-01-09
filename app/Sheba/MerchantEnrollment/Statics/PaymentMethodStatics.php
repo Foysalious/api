@@ -32,4 +32,16 @@ class PaymentMethodStatics
         if (isset($titles[$category_code])) return $titles[$category_code];
         return ['en' => '', 'bn' => ''];
     }
+
+    /**
+     * @param $paymentGatewayKey
+     * @return mixed
+     * @throws InvalidKeyException
+     */
+    public static function paymentMethodWiseExcludedKeys($paymentGatewayKey)
+    {
+        $categoryList = config('reseller_payment.exclude_form_keys');
+        if (isset($categoryList[$paymentGatewayKey])) return $categoryList[$paymentGatewayKey];
+        throw new InvalidKeyException();
+    }
 }

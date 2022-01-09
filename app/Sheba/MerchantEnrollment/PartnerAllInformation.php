@@ -50,7 +50,7 @@ class PartnerAllInformation
     }
 
     /**
-     * @param $category_code = "institution" | ""
+     * @param $category_code = "institution" | "personal" | ""
      * @return mixed
      */
     public function getByCode($category_code)
