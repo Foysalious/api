@@ -1,31 +1,27 @@
 <?php
 
+namespace Tests\Unit\Accounting;
 
-namespace Tests\Feature\Accounting;
-
-
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class BalanceSheetReportTest extends AccountingFeatureTest
 {
     public function test_report_response()
     {
-        $response = $this->get(
-            config(
+        $response = $this->get(config(
                 'sheba.api_url'
-            ) . '/v2/accounting/reports/balance_sheet_report',
-            [
-                'Authorization' => $this->token ?? $this->generateToken()
-            ]
-        );
+            ).'/v2/accounting/reports/balance_sheet_report', [
+                'Authorization' => $this->token ?? $this->generateToken(),
+            ]);
         $response->assertResponseOk();
-        $response->seeJsonStructure(
-            [
+        $response->seeJsonStructure([
                 'code',
                 'message',
                 'data' => [
                     "asset",
-                    "liability"
-                ]
-            ]
-        );
+                    "liability",
+                ],
+            ]);
     }
 }

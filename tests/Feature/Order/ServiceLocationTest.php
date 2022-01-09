@@ -23,7 +23,7 @@ class ServiceLocationTest extends featureTestCase
     private $location2;
 
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $cache_aside = app(CacheAside::class);
@@ -193,7 +193,6 @@ class ServiceLocationTest extends featureTestCase
             'location_id'=>$this->location->id
         ]);
 
-
         LocationService::create([
             'location_id'=>$this->location->id,
             'service_id'=>$this->service1->id,
@@ -205,7 +204,8 @@ class ServiceLocationTest extends featureTestCase
             'service_id'=>$this->service2->id,
             'prices'=> 200
         ]);
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+
+        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(404, $data["code"]);

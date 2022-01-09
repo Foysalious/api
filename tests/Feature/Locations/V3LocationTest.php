@@ -21,8 +21,8 @@ class V3LocationTest extends FeatureTestCase
         $location_cache_request = app(LocationCacheRequest::class);
         $cache_aside->setCacheRequest($location_cache_request)->deleteEntity();
 
-        $new_location = factory(Location::class)->create();
-        $new_location -> update(["publication_status" => 1]);
+        $new_location = Location::factory()->create();
+        $new_location->update(["publication_status" => 1]);
         $response = $this->get("/v3/locations");
         $data = $response->decodeResponseJson();
         $city_wise_location_id = $data['cities'][0]['locations'];
@@ -64,18 +64,13 @@ class V3LocationTest extends FeatureTestCase
     public function testNewlyCreatedButUnpublishedLocationUnavailableOnTheList()
     {
 
-            $cache_aside = app(CacheAside::class);
-            $location_cache_request = app(LocationCacheRequest::class);
-            $cache_aside->setCacheRequest($location_cache_request)->deleteEntity();
-
-            $new_location = factory(Location::class)->create();
-            $new_location -> update(["publication_status" => 0]);
-            $response = $this->get("/v3/locations");
-            $data = $response->decodeResponseJson();
-            $city_wise_location_id = $data['cities'][0]['locations'];
-            $location_ids_under_city = array_pluck($city_wise_location_id, 'id');
-            $this->assertNotTrue(in_array($new_location->id, $location_ids_under_city));
-
+        $new_location = Location::factory()->create();
+        $new_location->update(["publication_status" => 0]);
+        $response = $this->get("/v3/locations");
+        $data = $response->decodeResponseJson();
+        $city_wise_location_id = $data['cities'][0]['locations'];
+        $location_ids_under_city = array_pluck($city_wise_location_id, 'id');
+        $this->assertNotTrue(in_array($new_location->id, $location_ids_under_city));
     }
 
     public function  testWithoutPolygonLocationsNotAvailableOnList()

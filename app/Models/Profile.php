@@ -1,14 +1,20 @@
-<?php namespace App\Models;
+<?php
+namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Retailer\Retailer;
 use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
+use Tymon\JWTAuth\Contracts\JWTSubject;
 
-class Profile extends BaseModel
+class Profile extends Model implements JWTSubject
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
+
     protected $fillable = [
         'name',
         'bn_name',
@@ -108,6 +114,7 @@ class Profile extends BaseModel
         } elseif ($this->mobile) {
             return $this->mobile;
         }
+
         return $this->email;
     }
 
@@ -158,6 +165,26 @@ class Profile extends BaseModel
 
     public function searchOtherUsingVerifiedNid($nid)
     {
-        return self::where('nid_no',$nid)->where('id','!=',$this->id)->where('nid_verified', 1)->first();
+        return self::where('nid_no', $nid)->where('id', '!=', $this->id)->where('nid_verified', 1)->first();
+    }
+
+    /**
+     * Get the identifier that will be stored in the subject claim of the JWT.
+     *
+     * @return mixed
+     */
+    public function getJWTIdentifier()
+    {
+        return $this->getKey();
+    }
+
+    /**
+     * Return a key value array, containing any custom claims to be added to the JWT.
+     *
+     * @return array
+     */
+    public function getJWTCustomClaims(): array
+    {
+        return [];
     }
 }

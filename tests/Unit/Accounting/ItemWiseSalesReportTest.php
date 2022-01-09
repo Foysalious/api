@@ -1,9 +1,10 @@
 <?php
 
+namespace Tests\Unit\Accounting;
 
-namespace Tests\Feature\Accounting;
-
-
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class ItemWiseSalesReportTest extends AccountingFeatureTest
 {
     public function test_report_response()
@@ -11,20 +12,18 @@ class ItemWiseSalesReportTest extends AccountingFeatureTest
         $response = $this->get(
             config(
                 'sheba.api_url'
-            ) . '/v2/accounting/reports/pos/product-wise?start_date=2021-05-10&end_date=2021-07-15&range=custom',
+            ).'/v2/accounting/reports/pos/product-wise?start_date=2021-05-10&end_date=2021-07-15&range=custom',
             [
-                'Authorization' => $this->token ?? $this->generateToken()
+                'Authorization' => $this->token ?? $this->generateToken(),
             ]
         );
         $response->assertResponseOk();
-        $response->seeJsonStructure(
-            [
-                'code',
-                'message',
-                'result' => [
-                    "data"
-                ]
-            ]
-        );
+        $response->seeJsonStructure([
+            'code',
+            'message',
+            'result' => [
+                "data",
+            ],
+        ]);
     }
 }

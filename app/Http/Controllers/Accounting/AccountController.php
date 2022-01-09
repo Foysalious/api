@@ -76,22 +76,27 @@ class AccountController extends Controller
     }
 
     /**
-     * @throws AccountingEntryServerError
+     * @param $accountId
+     * @param Request $request
+     * @return JsonResponse
      */
     public function updateAccount($accountId, Request $request): JsonResponse
     {
         $this->validate(
             $request,
             [
-                'name' => 'required|string',
-                'name_bn' => 'required|string',
-                'icon' => 'string'
+                'name'            => 'required|string',
+                'name_bn'         => 'required|string',
+                'opening_balance' => 'required|numeric',
+                'icon'            => 'string'
             ]
         );
         $response = $this->accountRepo
             ->setName($request->name)
             ->setNameBn($request->name_bn)
             ->setIcon($request->icon)
+            ->setOpeningBalance($request->opening_balance)
+            ->setBalanceType($request->balance_type)
             ->updateAccount($accountId, $request->partner->id);
         return api_response($request, $response, 200, ['data' => $response]);
     }

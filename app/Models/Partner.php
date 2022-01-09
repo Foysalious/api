@@ -10,6 +10,7 @@ use App\Sheba\UserMigration\UserMigrationRepository;
 use Carbon\Carbon;
 use DB;
 use Exception;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -62,11 +63,10 @@ use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 use Sheba\Dal\PartnerGeneralSetting\Model as PartnerGeneralSetting;
 use Sheba\Dal\UserMigration\Model as UserMigration;
 
-
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
     CONST NOT_ELIGIBLE = 'not_eligible';
-    use Wallet, TopUpTrait, MovieTicketTrait;
+    use Wallet, TopUpTrait, MovieTicketTrait, HasFactory;
 
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
@@ -918,7 +918,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function getTotalCreditExistsForSubscription()
     {
-        list($remaining, $wallet, $bonus_wallet, $threshold) = $this->getCreditBreakdown();
+        [$remaining, $wallet, $bonus_wallet, $threshold] = $this->getCreditBreakdown();
         return round($bonus_wallet + $wallet) - $threshold;
     }
 

@@ -4,6 +4,7 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use App\Sheba\Transactions\Wallet\RobiTopUpWalletTransactionHandler;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Sheba\Dal\Affiliate\Events\AffiliateSaved;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\RobiTopupWalletTransaction\Model as RobiTopupWalletTransaction;
@@ -31,7 +32,7 @@ use Sheba\Voucher\VoucherGeneratorTrait;
 
 class Affiliate extends BaseModel implements Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, HasWalletTransaction, PayableUser
 {
-    use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields, VoucherGeneratorTrait;
+    use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields, VoucherGeneratorTrait, HasFactory;
 
     public static $savedEventClass = AffiliateSaved::class;
     protected $guarded = ['id'];
@@ -125,7 +126,7 @@ class Affiliate extends BaseModel implements Rewardable, TopUpAgent, MovieAgent,
     public function scopeAgentsWithoutFilter($query, $request)
     {
         $affiliate = $request->affiliate;
-        list($sort, $order) = calculateSort($request);
+        [$sort, $order] = calculateSort($request);
         return $query->select('affiliates.profile_id', 'affiliates.id', 'affiliates.under_ambassador_since', 'affiliates.ambassador_id', 'affiliates.total_gifted_number', 'affiliates.total_gifted_amount', 'profiles.name', 'profiles.pro_pic as picture', 'profiles.mobile')->leftJoin('profiles', 'profiles.id', '=', 'affiliates.profile_id')->orderBy('affiliates.total_gifted_amount', $order)->where('affiliates.ambassador_id', $affiliate->id);
     }
 

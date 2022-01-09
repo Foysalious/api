@@ -1,24 +1,27 @@
 <?php namespace Tests\Feature\CustomerTransactionWallet;
 
 use Tests\Feature\FeatureTestCase;
-use Sheba\Dal\PaymentGateway\Model;
+use Sheba\Dal\PaymentGateway\Model as PaymentGateway;
+use Throwable;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class CustomerTransactionWalletTest extends FeatureTestCase
 {
-
     private $shebaCredit;
     private $bkash;
     private $nagad;
     private $cityBank;
     private $otherCards;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
-        $this->truncateTable(Model::class);
+        $this->truncateTable(PaymentGateway::class);
 
-        $this->shebaCredit = factory(Model::class)->create([
+        $this->shebaCredit = PaymentGateway::factory()->create([
             'service_type' => 'App\Models\Customer',
             'method_name' => 'wallet',
             'name_en' => 'Sheba Credit',
@@ -28,7 +31,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
             'order' => '1'
         ]);
 
-        $this->bkash = factory(Model::class)->create([
+        $this->bkash = PaymentGateway::factory()->create([
             'service_type' => 'App\Models\Customer',
             'method_name' => 'bkash',
             'name_en' => 'bKash',
@@ -38,7 +41,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
             'order' => '2'
         ]);
 
-        $this->nagad = factory(Model::class)->create([
+        $this->nagad = PaymentGateway::factory()->create([
             'service_type' => 'App\Models\Customer',
             'method_name' => 'nagad',
             'name_en' => 'Nagad',
@@ -48,7 +51,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
             'order' => '3'
         ]);
 
-        $this->cityBank = factory(Model::class)->create([
+        $this->cityBank = PaymentGateway::factory()->create([
             'service_type' => 'App\Models\Customer',
             'method_name' => 'cbl',
             'name_en' => 'City Bank (American Express)',
@@ -58,7 +61,7 @@ class CustomerTransactionWalletTest extends FeatureTestCase
             'order' => '4'
         ]);
 
-        $this->otherCards = factory(Model::class)->create([
+        $this->otherCards = PaymentGateway::factory()->create([
             'service_type' => 'App\Models\Customer',
             'method_name' => 'online',
             'name_en' => 'Other Cards',
@@ -70,173 +73,165 @@ class CustomerTransactionWalletTest extends FeatureTestCase
 
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckDiscountMessageForShebaCredit()
     {
-        //arrange
         $this->shebaCredit -> update(['discount_message' => '10% discount on Sheba Credit!']);
 
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('10% discount on Sheba Credit!', $data_main["payments"][0]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckDiscountMessageForBkash()
     {
-        //arrange
         $this->bkash -> update(['discount_message' => 'Hi Pay with your bkash app Get upto 50% cashback!']);
 
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('Hi Pay with your bkash app Get upto 50% cashback!', $data_main["payments"][1]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckDiscountMessageForNagad()
     {
-        //arrange
         $this->nagad -> update(['discount_message' => 'Hi Pay with your nagad app Get upto 30% cashback!']);
 
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('Hi Pay with your nagad app Get upto 30% cashback!', $data_main["payments"][2]["discount_message"]);
     }
 
-    //Failed
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckDiscountMessageForCityBank()
     {
-        //arrange
         $this->cityBank -> update(['discount_message' => '১০ হাজার টাকার মধ্যে ভালো মোবাইল ২০২১  ২০২১!']);
 
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('১০ হাজার টাকার মধ্যে ভালো মোবাইল ২০২১  ২০২১!', $data_main["payments"][3]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckDiscountMessageForOtherCards()
     {
-        //arrange
         $this->otherCards -> update(['discount_message' => 'Hi Pay with your card to Get upto 70% cashback']);
 
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('Hi Pay with your card to Get upto 70% cashback', $data_main["payments"][4]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckEmptyDiscountMessageForShebaCredit()
     {
-        //arrange
-
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('', $data_main["payments"][0]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckEmptyDiscountMessageForBkash()
     {
-        //arrange
-
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('', $data_main["payments"][1]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckEmptyDiscountMessageForNagad()
     {
-        //arrange
-
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('', $data_main["payments"][2]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckEmptyDiscountMessageForCityBank()
     {
-        //arrange
-
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('', $data_main["payments"][3]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIToCheckEmptyDiscountMessageForOtherCards()
     {
-        //arrange
-
-        //act
         $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data_main["code"]);
         $this->assertEquals('Successful', $data_main["message"]);
         $this->assertEquals('', $data_main["payments"][4]["discount_message"]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testCustomerTransactionWalletAPIWithInvalidUrl()
     {
-        //arrange
-
-        //act
-        $response_main = $this->get('/v2/paymentss?payable_type=order');
+        $response_main = $this->get('/v2/payments?payable_type=order');
 
         $data_main = $response_main->decodeResponseJson();
 
-        //assert
         $this->assertEquals('404 Not Found', $data_main["message"]);
     }
-
 }

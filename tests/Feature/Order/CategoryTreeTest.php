@@ -2,15 +2,13 @@
 
 use App\Models\Location;
 use Factory\UniversalSlugsFactory;
-use Illuminate\Support\Facades\Artisan;
-use Sheba\Cache\Category\Tree\CategoryTreeCache;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Cache\Category\Tree\CategoryTreeCacheRequest;
 use Sheba\Dal\Service\Service;
-use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 
 use Sheba\Cache\CacheAside;
-use Sheba\Cache\Location\LocationCacheRequest;
 
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
@@ -19,22 +17,16 @@ use Sheba\Dal\CategoryLocation\CategoryLocation;
 
 class CategoryTreeTest extends FeatureTestCase
 {
-    /* publish location
-     * publish category
-     * tag category with that location
-     */
-
-    private $location;
+    protected $location;
+    protected $secondaryCategory;
+    protected $secondaryCategory2;
     private $masterCategory;
-    private $secondaryCategory;
-    private $secondaryCategory2;
     private $new_location;
+
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
-
-
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -227,10 +219,8 @@ class CategoryTreeTest extends FeatureTestCase
         ]);
         $service->locations()->attach($this->location->id);
 
-        $response = $this->get("v3/categories/tree?location_id=" . $this->location->id);
+        $response = $this->get("v3/categories/tree?location_id=".$this->location->id);
         $data = $response->decodeResponseJson();
-        //dd($data);
-        //dd($data);
     }
 
    /* public function testSlugWithValueOnSecondaryCategoryArray()

@@ -1,50 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit backupGlobals="false"
-         backupStaticAttributes="false"
-         bootstrap="bootstrap/autoload.php"
-         colors="true"
-         convertErrorsToExceptions="true"
-         convertNoticesToExceptions="true"
-         convertWarningsToExceptions="true"
-         processIsolation="true"
-         stopOnFailure="false"
-         stopOnError="false">
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true">
     <testsuites>
-        <testsuite name="Application Test Suite">
-            <directory suffix="Test.php">./tests</directory>
+        <testsuite name="Unit">
+            <directory suffix="Test.php">./tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Feature">
+            <directory suffix="Test.php">./tests/Feature</directory>
         </testsuite>
     </testsuites>
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
+    <coverage processUncoveredFiles="true">
+        <include>
             <directory suffix=".php">./app</directory>
-            <exclude>
-                <file>./app/Http/routes.php</file>
-            </exclude>
-        </whitelist>
-    </filter>
+        </include>
+    </coverage>
     <php>
-        <env name="DB_DATABASE" value="sheba_testing"/>
-        <env name="APP_ENV" value="testing"/>
-        <ini name="memory_limit" value="4G"/>
+        <server name="APP_ENV" value="testing"/>
+        <server name="BCRYPT_ROUNDS" value="4"/>
+        <server name="CACHE_DRIVER" value="array"/>
+        <server name="DB_CONNECTION" value="mysql"/>
+        <server name="DB_DATABASE" value="sheba_testing"/>
+        <server name="MAIL_MAILER" value="array"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
+        <server name="SESSION_DRIVER" value="array"/>
+        <server name="TELESCOPE_ENABLED" value="false"/>
     </php>
     <logging>
-        <log type="junit" target="results/phpunit/api-test-result.xml" logIncompleteSkipped="true"/>
+        <junit outputFile="results/phpunit/api-test-result.xml"/>
+        <teamcity outputFile="results/phpunit/teamcity.txt"/>
+        <text outputFile="results/phpunit/logfile.txt"/>
     </logging>
     <listeners>
-        <listener class="JohnKary\PHPUnit\Listener\SpeedTrapListener">
-            <arguments>
-                <array>
-                    <element key="slowThreshold">
-                        <integer>500</integer>
-                    </element>
-                    <element key="reportLength">
-                        <integer>500</integer>
-                    </element>
-                    <element key="stopOnSlow">
-                        <boolean>false</boolean>
-                    </element>
-                </array>
-            </arguments>
-        </listener>
+        <listener class="JohnKary\PHPUnit\Listener\SpeedTrapListener"/>
     </listeners>
 </phpunit>
