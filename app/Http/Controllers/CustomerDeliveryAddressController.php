@@ -56,8 +56,8 @@ class CustomerDeliveryAddressController extends Controller
             $q->select('id', 'name', 'mobile');
         }]);
         $location = null;
-        $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
-        if ($request->filled('lat') && $request->filled('lng')) {
+        $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no', 'house_no', 'road_no', 'area', 'landmark')->get();
+        if ($request->has('lat') && $request->has('lng')) {
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
