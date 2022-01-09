@@ -322,6 +322,163 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessOfficeHoursRepoInterface $office_hours
+     * @return JsonResponse
+     */
+    public function getOfficeTime($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
+    {
+        $business = $request->business;
+        $weekends = $business_weekend_repo->getAllByBusiness($business);
+        $weekend_days = $weekends->pluck('weekday_name')->toArray();
+        $weekend_days = array_map('ucfirst', $weekend_days);
+        $office_time = $office_hours->getOfficeTime($business);
+        $half_day_leave_types = $business->leaveTypes()->isHalfDayEnable();
+        $data = [
+            'office_hour_type' => 'Fixed Time',
+            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
+            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
+            'weekends' => $weekend_days,
+            'is_half_day_enable' => $business->is_half_day_enable,
+            'half_day_leave_types_count' => $half_day_leave_types->count(),
+            'half_day_leave_types' => $half_day_leave_types->pluck('title'),
+            'half_day_initial_timings' => $this->getHalfDayTimings($business)
+        ];
+
+        return api_response($request, null, 200, ['office_timing' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param OfficeTimingUpdater $updater
+     * @return JsonResponse
+     */
+    public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
+    {
+        $this->validate($request, [
+            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array',
+            'half_day' => 'required', 'half_day_config' => 'string'
+        ], [
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ]);
+        $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
+
+        $business_member = $request->business_member;
+        $office_timing = $updater->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setOfficeHourType($request->office_hour_type)
+            ->setStartTime($start_time)
+            ->setEndTime($end_time)
+            ->setWeekends($request->weekends)
+            ->setHalfDayTimings($request)
+            ->update();
+
+        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessAttendanceTypesRepoInterface $attendance_types_repo
+     * @param BusinessOfficeRepoInterface $business_office_repo
+     * @param AttendanceSettingTransformer $transformer
+     * @return JsonResponse
+     */
+    public function getAttendanceSetting($business, Request $request,
+                                         BusinessAttendanceTypesRepoInterface $attendance_types_repo,
+                                         BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
+    {
+        $business = $request->business;
+        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
+        $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
+
+        return api_response($request, null, 200, [
+            'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
+            'business_attendance_types' => $attendance_setting_data["attendance_types"],
+            'business_offices' => $attendance_setting_data["business_offices"]
+        ]);
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param TypeUpdater $type_updater
+     * @param SettingCreator $creator
+     * @param SettingUpdater $updater
+     * @param SettingDeleter $deleter
+     * @return JsonResponse
+     */
+    public function updateAttendanceSetting($business, Request $request, TypeUpdater $type_updater,
+                                            SettingCreator $creator, SettingUpdater $updater, SettingDeleter $deleter)
+    {
+        $this->validate($request, ['attendance_types' => 'required|string', 'business_offices' => 'required|string']);
+
+        $business_member = $request->business_member;
+        $business = $request->business;
+        $this->setModifier($business_member->member);
+        $errors = [];
+
+        $attendance_types = json_decode($request->attendance_types);
+        if (!is_null($attendance_types)) {
+            foreach ($attendance_types as $attendance_type) {
+                $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : null;
+
+                $type_updater->setBusiness($business)
+                    ->setTypeId($attendance_type_id)
+                    ->setType($attendance_type->type)
+                    ->setAction($attendance_type->action)
+                    ->update();
+            }
+        }
+
+        $business_offices = json_decode($request->business_offices);
+
+        if (!is_null($business_offices)) {
+            $offices = collect($business_offices);
+            $deleted_offices = $offices->where('action', ActionType::DELETE);
+            $deleted_offices->each(function ($deleted_office) use ($deleter) {
+                $deleter->setBusinessOfficeId($deleted_office->id);
+                $deleter->delete();
+            });
+
+            $added_offices = $offices->where('action', ActionType::ADD);
+            $added_offices->each(function ($added_office) use ($creator, $business, &$errors) {
+                $creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
+                if ($creator->hasError()) {
+                    array_push($errors, $creator->getErrorMessage());
+                    $creator->resetError();
+                    return;
+                }
+                $creator->create();
+            });
+
+            $edited_offices = $offices->where('action', ActionType::EDIT);
+            $edited_offices->each(function ($edited_office) use ($updater, $business, &$errors) {
+                $updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                if ($updater->hasError()) {
+                    array_push($errors, $updater->getErrorMessage());
+                    $updater->resetError();
+                    return;
+                }
+                $updater->update();
+            });
+        }
+
+        if ($errors) {
+            if ($this->isFailedToUpdateAllSettings($errors, $business_offices))
+                return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
+
+            return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
+        }
+
+        return api_response($request, null, 200, ['message' => "Update Successful"]);
+    }
+
     public function getHolidays(Request $request)
     {
         $holiday_list = new HolidayList($request->business, $this->holidayRepository);
