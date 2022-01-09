@@ -189,7 +189,11 @@ class CustomerDeliveryAddressController extends Controller
     {
         $mobile = trim(str_replace(' ', '', $request->mobile));
         $request->merge(['address' => trim($request->address), 'mobile' => $mobile ?: $request->customer->profile->mobile]);
-        $this->validate($request, ['address' => 'required|string']);
+        $this->validate($request, [
+            'address' => 'required|string',
+            'house_no' => 'required|string',
+            'area' => 'required|string',
+        ]);
         $customer = $request->customer;
         $delivery_address = $this->_create($request, $customer);
         try {
@@ -206,15 +210,18 @@ class CustomerDeliveryAddressController extends Controller
      */
     private function setAddressProperties(CustomerDeliveryAddress $delivery_address, $request)
     {
-        if ($request->filled('address')) $delivery_address->address = trim($request->address);
-        if ($request->filled('name')) $delivery_address->name = trim(ucwords($request->name));
-        if ($request->filled('location_id')) $delivery_address->location_id = $request->location_id;
-        if ($request->filled('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
-        if ($request->filled('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
-        if ($request->filled('street_address')) $delivery_address->street_address = trim($request->street_address);
-        if ($request->filled('landmark')) $delivery_address->landmark = trim($request->landmark);
-        if ($request->filled('lat') && $request->filled('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
-        if ($request->filled('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
+        if ($request->has('address')) $delivery_address->address = trim($request->address);
+        if ($request->has('name')) $delivery_address->name = trim(ucwords($request->name));
+        if ($request->has('location_id')) $delivery_address->location_id = $request->location_id;
+        if ($request->has('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
+        if ($request->has('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
+        if ($request->has('street_address')) $delivery_address->street_address = trim($request->street_address);
+        if ($request->has('landmark')) $delivery_address->landmark = trim($request->landmark);
+        if ($request->has('lat') && $request->has('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+        if ($request->has('house_no')) $delivery_address->house_no = trim($request->house_no);
+        if ($request->has('road_no')) $delivery_address->road_no = trim($request->road_no);
+        if ($request->has('area')) $delivery_address->area = trim($request->area);
+        if ($request->has('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
         return $delivery_address;
     }
 
