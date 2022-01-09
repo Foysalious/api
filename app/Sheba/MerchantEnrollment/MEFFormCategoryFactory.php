@@ -48,14 +48,14 @@ class MEFFormCategoryFactory
      */
     public function getCategoryByCode($code): MEFFormCategory
     {
-//        $this->bank->loadInfo();
         $categoryList = PaymentMethodStatics::paymentGatewayCategoryList($this->payment_gateway->key);
         if (isset($categoryList[$code])) {
+            $exclude_keys_list = PaymentMethodStatics::paymentMethodWiseExcludedKeys($this->payment_gateway->key);
+            $exclude_keys = $exclude_keys_list[$code];
             $category = $categoryList[$code];
             /** @var MEFFormCategory $cls */
             $cls = app("$this->classPath$category");
-            $cls->setPartner($this->partner)->setPaymentGateway($this->payment_gateway);
-//            $cls->setBankAccountData($this->bank->getBankInfo());
+            $cls->setPartner($this->partner)->setExcludeFormKeys($exclude_keys)->setPaymentGateway($this->payment_gateway);
             return $cls;
         }
         throw new InvalidMEFFormCategoryCodeException();

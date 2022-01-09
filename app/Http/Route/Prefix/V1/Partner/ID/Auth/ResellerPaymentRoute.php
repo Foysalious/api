@@ -16,6 +16,7 @@ class ResellerPaymentRoute
             });
             $api->group(["prefix" => 'merchant-on-boarding'], function ($api) {
                 $api->get('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@getCategoryWiseDetails");
+                $api->post('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@postCategoryWiseDetails");
             });
         });
     }

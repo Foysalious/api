@@ -16,6 +16,20 @@ return [
             'documents'   => 'Documents'
         ],
     ],
+    'exclude_form_keys' => [
+        'ssl' => [
+            'institution' => [],
+            'nid_selfie' => [],
+            'personal' => [],
+            'documents' => [],
+        ],
+        'bkash' => [
+            'institution' => [],
+            'nid_selfie' => [],
+            'personal' => [],
+            'documents' => [],
+        ]
+    ],
     'category_titles'                    => [
         'nid_selfie'  => [
             'en' => 'NID and Selfie',
@@ -40,12 +54,14 @@ return [
                 'id'          => 'header',
                 'input_type'  => 'header',
                 "message"     => "কোম্পানি প্রোফাইল",
+                "hint"        => "",
                 'mandatory'   => false,
                 'is_editable' => false,
             ],
             [
                 'label'         => 'কোম্পানির নাম * ',
-                'message'       => 'কোম্পানির নাম লিখুন',
+                'message'       => '',
+                'hint'          => 'কোম্পানির নাম লিখুন',
                 'id'            => 'company_name',
                 'error'         => "কোম্পানির নাম পূরণ আবশ্যক",
                 'input_type'    => 'text',
@@ -59,7 +75,8 @@ return [
             ],
             [
                 'label'         => 'ট্রেড লাইসেন্স নং *',
-                'message'       => 'ট্রেড লাইসেন্স নং লিখুন',
+                'message'       => '',
+                'hint'          => 'ট্রেড লাইসেন্স নং লিখুন',
                 'id'            => 'trade_license',
                 'error'         => "ট্রেড লাইসেন্স নং পূরণ আবশ্যক",
                 'input_type'    => 'text',
@@ -74,6 +91,7 @@ return [
             [
                 'label'         => 'কোম্পানির টাইপ *',
                 'message'       => '',
+                'hint'          => '',
                 'id'            => 'company_type',
                 'error'         => "কোম্পানির টাইপ পূরণ আবশ্যক",
                 'input_type'    => 'dropdown',
@@ -87,7 +105,8 @@ return [
             ],
             [
                 'label'         => 'রেজিস্টার্ড ঠিকানা *',
-                'message'       => 'কোম্পানির ঠিকানা লিখুন',
+                'message'       => "",
+                'hint'          => 'কোম্পানির ঠিকানা লিখুন',
                 'id'            => 'registered_address',
                 'error'         => "রেজিস্টার্ড ঠিকানা পূরণ আবশ্যক",
                 'input_type'    => 'text',
@@ -101,7 +120,8 @@ return [
             ],
             [
                 'label'            => 'সাপোর্ট নাম্বার *',
-                'message'          => '01762180533',
+                'message'          => '',
+                'hint'             => '01762180533',
                 'id'               => 'support_number',
                 'error'            => "সাপোর্ট নাম্বার পূরণ আবশ্যক",
                 'input_type'       => 'phone',
@@ -116,7 +136,8 @@ return [
             ],
             [
                 'label'            => 'আপনি ব্যবসা শুরু করেছেন কবে *',
-                'message'          => '05/11/2012',
+                'message'          => '',
+                'hint'             => '05/11/2012',
                 'id'               => 'registration_year',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'date_picker',
@@ -130,7 +151,8 @@ return [
             ],
             [
                 'label'            => 'কোম্পানির মোট মূল্য (আনুমানিক) *',
-                'message'          => 'কোম্পানির মোট মূল্য লিখুন',
+                'message'          => "",
+                'hint'             => 'কোম্পানির মোট মূল্য লিখুন',
                 'id'               => 'company_total_value',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'number',
@@ -144,6 +166,7 @@ return [
             [
                 'label'            => "মার্চেন্টের ধরণ",
                 'message'          => '',
+                'hint'             => '',
                 'id'               => 'type_of_merchant',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'text',
@@ -158,12 +181,14 @@ return [
                 'id'          => 'header',
                 'input_type'  => 'header',
                 "message"     => "কোম্পানির ব্যাংক তথ্য",
+                "hint"        => "",
                 'mandatory'   => false,
                 'is_editable' => false,
             ],
             [
                 'label'            => "ব্যাংক অ্যাকাউন্টের নাম *  ",
-                'message'          => 'অ্যাকাউন্টের নাম লিখুন',
+                'message'          => "",
+                'hint'             => 'অ্যাকাউন্টের নাম লিখুন',
                 'id'               => 'acc_name',
                 'error'            => "অ্যাকাউন্টের নাম পূরণ আবশ্যক",
                 'input_type'       => 'text',
@@ -177,7 +202,8 @@ return [
             ],
             [
                 'label'            => "ব্যাংকের নাম",
-                'message'          => 'ব্যাংকের নাম লিখুন',
+                'message'          => "",
+                'hint'             => 'ব্যাংকের নাম লিখুন',
                 'id'               => 'bank_name',
                 'error'            => "ব্যাংকের নাম পূরণ আবশ্যক",
                 'input_type'       => 'text',
@@ -191,7 +217,8 @@ return [
             ],
             [
                 'label'            => "ব্যাংকের ঠিকানা ",
-                'message'          => "ব্যাংকের ঠিকানা লিখুন",
+                'message'          => "",
+                'hint'             => "ব্যাংকের ঠিকানা লিখুন",
                 'id'               => 'bank_address',
                 'error'            => "ব্যাংকের ঠিকানা পূরণ আবশ্যক",
                 'input_type'       => 'text',
@@ -205,7 +232,8 @@ return [
             ],
             [
                 'label'            => "ব্যাংক অ্যাকাউন্ট নং *",
-                'message'          => "অ্যাকাউন্ট নং লিখুন",
+                'message'          => "",
+                'hint'             => "অ্যাকাউন্ট নং লিখুন",
                 'id'               => 'acc_no',
                 'error'            => "ব্যাংক অ্যাকাউন্ট নং পূরণ আবশ্যক",
                 'input_type'       => 'text',
@@ -219,7 +247,8 @@ return [
             ],
             [
                 'label'            => "ব্যাংক রাউটিং নাম্বার *",
-                'message'          => "রাউটিং নাম্বার লিখুন",
+                'message'          => "",
+                'hint'             => "রাউটিং নাম্বার লিখুন",
                 'id'               => 'routing_no',
                 'error'            => "ব্যাংক রাউটিং নাম্বার পূরণ আবশ্যক",
                 'input_type'       => 'text',
@@ -235,12 +264,14 @@ return [
                 'id'          => 'header',
                 'input_type'  => 'header',
                 "message"     => "লেনদেন সম্পর্কিত তথ্য",
+                "hint"        => "",
                 'mandatory'   => false,
                 'is_editable' => false,
             ],
             [
                 'label'            => "আপনার ব্যবসাতে প্রতি মাসে কয়টি লেনদেন হয় * ",
-                'message'          => "মাসিক লেনদেনের পরিমাণ লিখুন",
+                'message'          => "",
+                'hint'             => "মাসিক লেনদেনের পরিমাণ লিখুন",
                 'id'               => 'monthly_transaction_numbers',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'number',
@@ -253,7 +284,8 @@ return [
             ],
             [
                 'label'            => "আপনার ব্যবসাতে প্রতি মাসে কত টাকার লেনদেন হয় * ",
-                'message'          => "মাসিক লেনদেনের পরিমাণ লিখুন",
+                'message'          => "",
+                'hint'             => "মাসিক লেনদেনের পরিমাণ লিখুন",
                 'id'               => 'monthly_transaction_amount',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'decimal_number',
@@ -266,7 +298,8 @@ return [
             ],
             [
                 'label'            => "আপনার ব্যবসাতে ১ টি লেনদেন এ সর্বোচ্চ লেনদেন হয় *",
-                'message'          => "সর্বোচ্চ ১তি লেনদেনের পরিমাণ লেখুন",
+                'message'          => "",
+                'hint'             => "সর্বোচ্চ ১তি লেনদেনের পরিমাণ লেখুন",
                 'id'               => 'height_transaction_amount',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'decimal_number',
@@ -279,7 +312,8 @@ return [
             ],
             [
                 'label'            => "আপনার ব্যবসাতে প্রতি দিনে কয়টি লেনদেন হয় *",
-                'message'          => "প্রতিদিনের লেনদেনের পরিমাণ লিখুন",
+                'message'          => "",
+                'hint'             => "প্রতিদিনের লেনদেনের পরিমাণ লিখুন",
                 'id'               => 'daily_transaction_number',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'number',
@@ -292,7 +326,8 @@ return [
             ],
             [
                 'label'            => "আপনার ব্যবসাতে প্রতি দিনে কত টাকার লেনদেন হয় *",
-                'message'          => "দৈনিক লেনদেনের পরিমাণ লিখুন",
+                'message'          => "",
+                'hint'             => "দৈনিক লেনদেনের পরিমাণ লিখুন",
                 'id'               => 'daily_transaction_amount',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'decimal_number',

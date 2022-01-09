@@ -60,4 +60,16 @@ class MerchantEnrollment
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
         return $payment_method->categoryDetails((new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code))->toArray();
     }
+
+    public function postCategoryDetails($category_code): array
+    {
+        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        dd($payment_method);
+//        $bank     = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+//        $category = (new BankFormCategoryFactory())->setBank($bank)->setPartner($this->partner)->getCategoryByCode($category_code);
+//        if ($single_document === true)
+//            return $bank->loadInfo()->postCategoryDetail($category, $this->post_data);
+//
+//        return $bank->loadInfo()->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
+    }
 }

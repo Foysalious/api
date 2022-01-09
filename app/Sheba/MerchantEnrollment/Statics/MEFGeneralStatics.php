@@ -16,4 +16,11 @@ class MEFGeneralStatics
             "category_code" => 'required|string'
         ];
     }
+
+    public static function category_store_validation(): array
+    {
+        return array_merge(self::get_category_validation(), [
+            "data" => "required"
+        ]);
+    }
 }
