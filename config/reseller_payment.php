@@ -84,7 +84,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => true,
-                'mandatory'     => false,
+                'mandatory'     => true,
                 'data_source'   => 'partner_basic_information',
                 'data_source_id'=> 'trade_license'
             ],

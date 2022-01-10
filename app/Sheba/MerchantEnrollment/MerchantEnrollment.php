@@ -13,6 +13,7 @@ class MerchantEnrollment
     /*** @var PgwStore */
     private $payment_gateway;
     private $key;
+    private $post_data;
 
     /**
      * @param mixed $partner
@@ -32,6 +33,16 @@ class MerchantEnrollment
     {
         $this->key = $key;
         $this->setPaymentGatewayAccount();
+        return $this;
+    }
+
+    /**
+     * @param mixed $post_data
+     * @return MerchantEnrollment
+     */
+    public function setPostData($post_data): MerchantEnrollment
+    {
+        $this->post_data = $post_data;
         return $this;
     }
 
@@ -58,18 +69,21 @@ class MerchantEnrollment
     public function getCategoryDetails($category_code): array
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
-        return $payment_method->categoryDetails((new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code))->toArray();
+        $category = (new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code);
+        return $payment_method->categoryDetails($category)->toArray();
     }
 
-    public function postCategoryDetails($category_code): array
+    /**
+     * @param $category_code
+     * @return void
+     * @throws Exceptions\InvalidCategoryPostDataException
+     * @throws Exceptions\InvalidMEFFormCategoryCodeException
+     * @throws InvalidKeyException
+     */
+    public function postCategoryDetails($category_code)
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
-        dd($payment_method);
-//        $bank     = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
-//        $category = (new BankFormCategoryFactory())->setBank($bank)->setPartner($this->partner)->getCategoryByCode($category_code);
-//        if ($single_document === true)
-//            return $bank->loadInfo()->postCategoryDetail($category, $this->post_data);
-//
-//        return $bank->loadInfo()->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
+        $category = (new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code);
+        $payment_method->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
     }
 }

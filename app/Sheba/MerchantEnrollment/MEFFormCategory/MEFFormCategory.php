@@ -20,7 +20,6 @@ abstract class MEFFormCategory
 
     public function __construct()
     {
-        $this->partnerAllInfo = (new PartnerAllInformation());
         $this->setTitle(PaymentMethodStatics::categoryTitles($this->category_code));
     }
 
@@ -90,6 +89,8 @@ abstract class MEFFormCategory
 
     abstract public function get(): CategoryGetter;
 
+    abstract public function getFormFields();
+
     abstract public function post($data);
 
     protected function getBengaliPercentage(): string
@@ -97,10 +98,9 @@ abstract class MEFFormCategory
         return convertNumbersToBangla($this->percentage, false);
     }
 
-    protected function getFormData($formItems): CategoryGetter
+    protected function getFormData($formItems, $formData): CategoryGetter
     {
         $data      = [];
-        $formData  = $this->partnerAllInfo->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
         $formItemBuilder = (new FormItemBuilder())->setData($formData);
         foreach ($formItems as $item)
             $data[] = $formItemBuilder->build($item);
