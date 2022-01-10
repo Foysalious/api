@@ -643,7 +643,7 @@ class OrderController extends Controller
         $this->validate($request, [
             'api_key' => 'required',
         ]);
-        if($request->api_key != config('sheba_xyz_acc_key'))
+        if($request->api_key != 'sheba_xyz_acc_key')
             throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         $result = $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $request->amount);
         $message = null;
