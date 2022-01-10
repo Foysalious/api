@@ -35,7 +35,9 @@ class InstitutionInformation extends PartnerAllInformation
                 }
             }
         }
-        $data = count($this->additional_information) ? json_encode(array_merge($this->additional_information, $json_data)) : json_encode($json_data);
+        $data = ($this->additional_information && count($this->additional_information)) ?
+            json_encode(array_merge($this->additional_information, $json_data)) : json_encode($json_data);
+
         $this->partner->save();
         $this->partner_basic_information->additional_information = $data;
         $this->partner_basic_information->save();
