@@ -1,14 +1,14 @@
 <?php namespace App\Sheba\Business\Payslip;
 
-use App\Models\Business;
+use App\Sheba\Business\Attendance\AttendanceBasicInfo;
 use App\Sheba\Business\PayrollComponent\Components\Deductions\Tax\TaxCalculator;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\PayrollComponent\Components\PayrollComponentSchedulerCalculation;
 use App\Sheba\Business\PayrollSetting\PayrollCommonCalculation;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\BusinessWorkingDayHistory\BusinessWorkingDayHistoryRepository;
 use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
-use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\TaxHistory\TaxHistoryRepository;
 use Sheba\Helpers\TimeFrame;
@@ -18,7 +18,7 @@ use Throwable;
 class BusinessWisePayslip
 {
 
-    use ModificationFields, PayrollCommonCalculation;
+    use ModificationFields, PayrollCommonCalculation, AttendanceBasicInfo;
 
     /*** @var GrossSalaryBreakdownCalculate */
     private $grossSalaryBreakdownCalculate;
@@ -37,6 +37,10 @@ class BusinessWisePayslip
     private $period;
     private $businessMembers;
     private $generatedBusinessMemberIds;
+    /*** @var BusinessWorkingDayHistoryRepository $businessWorkingDayRepository */
+    private $businessWorkingDayRepository;
+    private $business;
+    private $payrollSetting;
 
     public function __construct()
     {
@@ -47,10 +51,8 @@ class BusinessWisePayslip
         $this->taxCalculator = app(TaxCalculator::class);
         $this->timeFrame = app(TimeFrame::class);
         $this->taxHistoryRepository = app(TaxHistoryRepository::class);
+        $this->businessWorkingDayRepository = app(BusinessWorkingDayHistoryRepository::class);
     }
-
-    private $business;
-    private $payrollSetting;
 
     public function setBusiness($business)
     {
@@ -88,6 +90,9 @@ class BusinessWisePayslip
         $schedule_date = $this->period ? Carbon::parse($this->period) : null;
         $start_date = $this->period ? Carbon::parse($this->period) : null;
         $end_date = $this->period ? Carbon::parse($this->period) : null;
+        $business_office = $this->business->officeHour;
+        $business_working_day_data = [];
+        $total_policy_working_days = null;
         foreach ($this->businessMembers as $business_member) {
             try {
                 if ($this->generatedBusinessMemberIds && in_array($business_member->id, $this->generatedBusinessMemberIds)) continue;
@@ -96,14 +101,26 @@ class BusinessWisePayslip
                 $prorated_time_frame = null;
                 $start_date = $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d'));
                 $end_date = $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d');
+                if (empty($business_working_day_data)) {
+                    $total_policy_working_days = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($start_date, $end_date), $business_office);
+                    $business_working_day_data = [
+                        'business_id' => $this->business->id,
+                        'total_working_days' => $total_policy_working_days,
+                        'start_date' => $start_date,
+                        'end_date' => $end_date
+                    ];
+                }
                 $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
                 if ($joining_date) {
                     $prorated_time_frame = app(TimeFrame::class);
                     $prorated_time_frame = $prorated_time_frame->forDateRange($joining_date, $end_date);
+                    $total_policy_working_days = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($joining_date, $end_date), $business_office);
                 }
                 $gross_salary_breakdown_percentage = $this->grossSalaryBreakdownCalculate->payslipComponentPercentageBreakdown($business_member);
                 $payroll_component_calculation = $this->payrollComponentSchedulerCalculation
                     ->setBusiness($this->business)
+                    ->setBusinessOffice($business_office)
+                    ->setTotalWorkingDay($total_policy_working_days)
                     ->setBusinessMember($business_member)
                     ->setProratedTimeFrame($prorated_time_frame)
                     ->setTimeFrame($time_frame)
@@ -149,7 +166,8 @@ class BusinessWisePayslip
         }
         $package_generate_information = $this->payrollComponentSchedulerCalculation->getPackageGenerateData();
         if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
-        $this->updatePayDay($this->payrollSetting, $this->business);
+        $this->updatePayDay();
+        $this->updateBusinessWorkingDaysHistory($business_working_day_data);
     }
 
     private function updatePackageGenerateDate($package_generate_information)
@@ -162,12 +180,16 @@ class BusinessWisePayslip
         }
     }
 
-    private function updatePayDay(PayrollSetting $payroll_setting, Business $business)
+    private function updatePayDay()
     {
-        $next_pay_day = $this->nextPayslipGenerationDay($business);
+        $next_pay_day = $this->nextPayslipGenerationDay($this->business);
         $data['next_pay_day'] = $next_pay_day;
         $data['last_pay_day'] = $this->period ? Carbon::parse($next_pay_day)->subMonth()->toDateString() : Carbon::now()->format('Y-m-d');
-        $payroll_setting->update($data);
+        $this->payrollSetting->update($data);
     }
 
+    private function updateBusinessWorkingDaysHistory($business_working_day_data)
+    {
+        $this->businessWorkingDayRepository->create($business_working_day_data);
+    }
 }

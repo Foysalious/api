@@ -27,6 +27,8 @@ class BusinessMemberPolicyRulesCalculator
     /*** @var PeriodWiseInformation */
     private $periodWiseInformation;
     private $proratedTimeFrame;
+    private $businessOffice;
+    private $totalWorkingDay;
 
     public function __construct()
     {
@@ -40,6 +42,18 @@ class BusinessMemberPolicyRulesCalculator
         $this->business = $business;
         $this->payrollSetting = $this->business->payrollSetting;
         $this->businessPayDay = $this->payrollSetting->pay_day;
+        return $this;
+    }
+
+    public function setBusinessOffice($business_office)
+    {
+        $this->businessOffice = $business_office;
+        return $this;
+    }
+
+    public function setTotalWorkingDay($total_working_day)
+    {
+        $this->totalWorkingDay = $total_working_day;
         return $this;
     }
 
@@ -69,22 +83,21 @@ class BusinessMemberPolicyRulesCalculator
 
     public function calculate()
     {
-        $business_office = $this->business->officeHour;
-        $is_grace_period_policy_enable = $business_office->is_grace_period_policy_enable;
-        $is_late_checkin_early_checkout_policy_enable = $business_office->is_late_checkin_early_checkout_policy_enable;
-        $is_for_late_checkin = $business_office->is_for_late_checkin;
-        $is_for_early_checkout = $business_office->is_for_early_checkout;
-        $is_unpaid_leave_policy_enable = $business_office->is_unpaid_leave_policy_enable;
+        $is_grace_period_policy_enable = $this->businessOffice->is_grace_period_policy_enable;
+        $is_late_checkin_early_checkout_policy_enable = $this->businessOffice->is_late_checkin_early_checkout_policy_enable;
+        $is_for_late_checkin = $this->businessOffice->is_for_late_checkin;
+        $is_for_early_checkout = $this->businessOffice->is_for_early_checkout;
+        $is_unpaid_leave_policy_enable = $this->businessOffice->is_unpaid_leave_policy_enable;
         $time_frame = $this->proratedTimeFrame ? $this->proratedTimeFrame : $this->timeFrame;
         $attendances = $this->attendanceRepositoryInterface->getAllAttendanceByBusinessMemberFilteredWithYearMonth($this->businessMember, $time_frame);
         $business_member_leave = $this->businessMember->leaves()->accepted()->between($time_frame)->get();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray($business_member_leave);
         $period = $this->createPeriodByTime($time_frame->start, $this->timeFrame->end);
-        $total_policy_working_days = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($this->timeFrame->start, $this->timeFrame->end), $business_office);
-        $business_member_attendance = $this->getBusinessMemberAttendanceTime($attendances, $business_office);
+
+        $business_member_attendance = $this->getBusinessMemberAttendanceTime($attendances, $this->businessOffice);
         $period_wise_information = $this->periodWiseInformation
             ->setPeriod($period)
-            ->setBusinessOffice($business_office)
+            ->setBusinessOffice($this->businessOffice)
             ->setBusinessMemberLeave($leaves)
             ->setAttendance($business_member_attendance)
             ->setIsCalculateAttendanceInfo(1)
@@ -101,7 +114,7 @@ class BusinessMemberPolicyRulesCalculator
             ->setBusinessMember($this->businessMember)
             ->setPayrollSetting($this->payrollSetting)
             ->setAdditionBreakdown($this->additionBreakdown)
-            ->setTotalWorkingDays($total_policy_working_days);
+            ->setTotalWorkingDays($this->totalWorkingDay);
         if ($is_grace_period_policy_enable) $attendance_adjustment += $this->policyActionTaker->setPolicyType(Type::GRACE_PERIOD)->setPenaltyDays($period_wise_information->grace_time_over)->takeAction();
         if ($is_late_checkin_early_checkout_policy_enable) $attendance_adjustment += $this->policyActionTaker->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)->setPenaltyDays($late_checkin_early_checkout_days)->takeAction();
         $leave_adjustment += $this->policyActionTaker->setPolicyType(Type::UNPAID_LEAVE)->setPenaltyDays($total_absent)->setIsUnpaidLeaveEnable($is_unpaid_leave_policy_enable)->takeAction();
