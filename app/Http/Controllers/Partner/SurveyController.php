@@ -1,10 +1,11 @@
-<?php namespace App\Http\Controllers\ResellerPayment;
+<?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Survey\SurveyTypes;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\SurveyInterface;
 use Sheba\Survey\SurveyService;
+
 
 class SurveyController extends Controller
 {
