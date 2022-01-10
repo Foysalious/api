@@ -15,6 +15,6 @@ class SslGateway extends PaymentMethod
 
     public function getStaticCategoryFormData(MEFFormCategory $category)
     {
-        return $category->getStaticFormData();
+        return $category->getFormFields();
     }
 }

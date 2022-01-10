@@ -19,19 +19,27 @@ class Institution extends MEFFormCategory
 
     public function get(): CategoryGetter
     {
-        $formItems = $this->getStaticFormData();
+        $formItems = $this->getFormFields();
         $formData  = (new InstitutionInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
         return $this->getFormData($formItems, $formData);
     }
 
     public function post($data)
     {
-        $formItems = FormStatics::institution();
+        $formItems = $this->getFormFields();
         (new InstitutionInformation())->setPartner($this->partner)->setFormItems($formItems)->postByCode($this->category_code, $data);
     }
 
-    public function getStaticFormData()
+    public function getFormFields()
     {
-        return FormStatics::institution();
+        $form_fields = FormStatics::institution();
+        if(count($this->exclude_form_keys)) {
+            foreach ($form_fields as $key => $item) {
+                if(in_array($item['id'], $this->exclude_form_keys))
+                    unset($form_fields[$key]);
+
+            }
+        }
+        return $form_fields;
     }
 }

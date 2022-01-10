@@ -89,7 +89,7 @@ abstract class MEFFormCategory
 
     abstract public function get(): CategoryGetter;
 
-    abstract public function getStaticFormData();
+    abstract public function getFormFields();
 
     abstract public function post($data);
 

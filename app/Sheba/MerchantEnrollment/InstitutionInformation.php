@@ -22,17 +22,16 @@ class InstitutionInformation extends PartnerAllInformation
         $post_data = json_decode($post_data, 1);
         foreach ($this->formItems as $item) {
             if($item['input_type'] !== 'header') {
-                foreach ($post_data as $key => $value) {
-                    if($item['id'] === $key) {
-                        if(isset($item['data_source']) && $item['data_source'] != 'json') {
-                            if(isset($item['data_source_type']) && $item['data_source_type'] === 'function')
-                                continue;
-                            else
-                                $this->{$item['data_source']}->{$item['data_source_id']} = $value;
-                        } else
-                            $json_data[$key] = $value;
+                if(isset($post_data[$item['id']])) {
+                    $key = $item['id'];
+                    if(isset($item['data_source']) && $item['data_source'] != 'json') {
+                        if(isset($item['data_source_type']) && $item['data_source_type'] === 'function')
+                            continue;
+                        else
+                            $this->{$item['data_source']}->{$item['data_source_id']} = $post_data[$key];
+                    } else
+                        $json_data[$key] = $post_data[$key];
 
-                    }
                 }
             }
         }
