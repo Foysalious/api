@@ -56,6 +56,7 @@ class MerchantEnrollmentController extends Controller
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }

@@ -75,6 +75,11 @@ class FormItemBuilder
         return $this->initItem()->toArray();
     }
 
+    public function document(): array
+    {
+        return $this->initItem()->toArray();
+    }
+
     /**
      * @param $set
      * @return FormItem
