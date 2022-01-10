@@ -300,7 +300,7 @@ return [
                 'label'            => "আপনার ব্যবসাতে ১ টি লেনদেন এ সর্বোচ্চ লেনদেন হয় *",
                 'message'          => "",
                 'hint'             => "সর্বোচ্চ ১তি লেনদেনের পরিমাণ লেখুন",
-                'id'               => 'height_transaction_amount',
+                'id'               => 'highest_transaction_amount',
                 'error'            => "পূরণ আবশ্যক",
                 'input_type'       => 'decimal_number',
                 'data'             => "",
