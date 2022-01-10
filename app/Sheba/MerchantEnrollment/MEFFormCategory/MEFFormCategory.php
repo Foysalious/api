@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory;
 
+use App\Sheba\MerchantEnrollment\PaymentMethod\CompletionDetail;
 use Sheba\MerchantEnrollment\MEFForm\FormItemBuilder;
 use Sheba\MerchantEnrollment\PartnerAllInformation;
 use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
@@ -9,7 +10,7 @@ use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
 abstract class MEFFormCategory
 {
     protected $title;
-    protected $category_code;
+    public $category_code;
     protected $exclude_form_keys = array();
     protected $percentage;
     protected $partner;
@@ -107,6 +108,11 @@ abstract class MEFFormCategory
 
         $this->setData($data);
         return (new CategoryGetter())->setCategory($this);
+    }
+
+    public function getCompletionDetails(): CompletionDetail
+    {
+        return (new CompletionDetail())->setTitle($this->getTitle())->setCategoryCode($this->category_code)->setCompletionPercentage($this->completion());
     }
 
 }

@@ -86,4 +86,14 @@ class MerchantEnrollment
         $category = (new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code);
         $payment_method->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
     }
+
+    /**
+     * @return PaymentMethod\PaymentMethodCompletion
+     * @throws InvalidKeyException
+     */
+    public function getCompletion(): PaymentMethod\PaymentMethodCompletion
+    {
+        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        return $payment_method->completion();
+    }
 }
