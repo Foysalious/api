@@ -22,6 +22,8 @@ class PayrollComponentSchedulerCalculation
     private $taxComponentData = [];
     private $timeFrame;
     private $proratedTimeFrame;
+    private $businessOffice;
+    private $totalWorkingDay;
 
     /**
      * PayrollComponentSchedulerCalculation constructor.
@@ -41,6 +43,18 @@ class PayrollComponentSchedulerCalculation
         $this->business = $business;
         $this->payrollSetting = $this->business->payrollSetting;
         $this->businessPayDay = $this->payrollSetting->pay_day;
+        return $this;
+    }
+
+    public function setBusinessOffice($business_office)
+    {
+        $this->businessOffice = $business_office;
+        return $this;
+    }
+
+    public function setTotalWorkingDay($total_working_day)
+    {
+        $this->totalWorkingDay = $total_working_day;
         return $this;
     }
 
@@ -119,6 +133,8 @@ class PayrollComponentSchedulerCalculation
         })->orderBy('type')->get();
         $default_deduction_component_data = $this->businessMemberPolicyRulesCalculator
                                             ->setBusiness($this->business)
+                                            ->setBusinessOffice($this->businessOffice)
+                                            ->setTotalWorkingDay($this->totalWorkingDay)
                                             ->setBusinessMember($this->businessMember)
                                             ->setProratedTimeFrame($this->proratedTimeFrame)
                                             ->setTimeFrame($this->timeFrame)
