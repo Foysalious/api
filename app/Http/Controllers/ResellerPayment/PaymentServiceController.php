@@ -168,4 +168,14 @@ class PaymentServiceController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function bannerAndStatus(Request $request)
+    {
+        $data = [
+            'banner' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png',
+            'status' => null,
+            'pgw_status' => 0,
+        ];
+        return api_response($request, null, 200, ['data' => $data]);
+    }
 }
