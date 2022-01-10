@@ -11,7 +11,8 @@ use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 abstract class PaymentMethod
 {
     /*** @var Partner */
-    private $partner;
+    protected $partner;
+    protected $payment_method;
 
     /**
      * @param mixed $partner
@@ -23,9 +24,21 @@ abstract class PaymentMethod
         return $this;
     }
 
+    /**
+     * @param mixed $payment_method
+     * @return PaymentMethod
+     */
+    public function setPaymentMethod($payment_method): PaymentMethod
+    {
+        $this->payment_method = $payment_method;
+        return $this;
+    }
+
     abstract public function categoryDetails(MEFFormCategory $category): CategoryGetter;
 
     abstract public function getStaticCategoryFormData(MEFFormCategory $category);
+
+    abstract public function completion(): PaymentMethodCompletion;
 
 
     public function postCategoryDetail(MEFFormCategory $category, $data)

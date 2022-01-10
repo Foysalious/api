@@ -1,13 +1,15 @@
 <?php
 
-namespace Sheba\MerchantEnrollment\MEFFormCategory;
+namespace Sheba\MerchantEnrollment\MEFFormCategory\Category;
 
 use Sheba\MerchantEnrollment\InstitutionInformation;
+use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
+use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 use Sheba\MerchantEnrollment\Statics\FormStatics;
 
 class Institution extends MEFFormCategory
 {
-    protected $category_code = 'institution';
+    public $category_code = 'institution';
 
     public function completion(): array
     {
