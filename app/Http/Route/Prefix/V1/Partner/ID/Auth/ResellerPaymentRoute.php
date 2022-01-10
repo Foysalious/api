@@ -19,8 +19,8 @@ class ResellerPaymentRoute
                 $api->post('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@postCategoryWiseDetails");
             });
             $api->group(["prefix" => 'survey'], function ($api) {
-                $api->get('/', "ResellerPayment\\SurveyController@getQuestions");
-                $api->post('/', "ResellerPayment\\SurveyController@storeResult");
+                $api->get('/', "Partner\\SurveyController@getQuestions");
+                $api->post('/', "Partner\\SurveyController@storeResult");
             });
         });
     }

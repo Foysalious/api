@@ -24,7 +24,8 @@ class PartnerController extends Controller
 
     public function findById($partner, Request $request)
     {
-        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain')->with('posSetting')->first();
+        /** delivery_charge is used only in pos-order */
+        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain', 'delivery_charge')->with('posSetting')->first();
         if (!$partner) return http_response($request, null, 404);
         list($is_registered_for_sdelivery,$delivery_method,$delivery_charge) = $this->getDeliveryInformation($partner);
         $partner->is_registered_for_sdelivery = $is_registered_for_sdelivery;
@@ -40,7 +41,7 @@ class PartnerController extends Controller
         $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $partner->id)->first();
         $is_registered_for_sdelivery = !(empty($partnerDeliveryInformation))  ? 1 : 0;
         $delivery_method = (empty($partnerDeliveryInformation) || ($partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY)) ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
-        $delivery_charge = $delivery_method == Methods::OWN_DELIVERY ? (double)$this->getDeliveryCharge($partner) : null;
+        $delivery_charge = $delivery_method == Methods::OWN_DELIVERY ? (double)$partner->delivery_charge : null;
         return [$is_registered_for_sdelivery,$delivery_method,$delivery_charge];
     }
     public function getDeliveryCharge(Partner $partner)

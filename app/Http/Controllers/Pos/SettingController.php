@@ -62,15 +62,17 @@ class SettingController extends Controller
             $settings['has_qr_code'] = ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
             if($partner->isMigrated(Modules::POS))
             {
-                $settings->vat_percentage = $partnerService->setPartner($partner)->get()['partner']['vat_percentage'];
-                $partnerDetailsFromOderService = $orderService->setPartnerId($partner->id)->getPartnerDetails();
+                $data = ['partner_id' => $partner->id, 'sub_domain' => $partner->sub_domain, 'vat_percentage' => $settings->vat_percentage];
+                $settings->vat_percentage = $partnerService->setPartner($partner)->storeOrGet($data)['partner']['vat_percentage'];
+                $pos_order_settings_data = ['partner_id' => $partner->id, 'sub_domain' => $partner->sub_domain, 'qr_code_account_type' => $partner->qr_code_account_type,
+                    'qr_code_image' => $partner->qr_code_image];
+                $partnerDetailsFromOderService = $orderService->setPartnerId($partner->id)->storeOrGet($pos_order_settings_data);
                 $settings->has_qr_code = $partnerDetailsFromOderService['partner']['qr_code_account_type'] && $partnerDetailsFromOderService['partner']['qr_code_image'] ?  1 : 0;
             }
 
             removeRelationsAndFields($settings);
             return $settings;
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return false;
         }

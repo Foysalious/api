@@ -62,29 +62,34 @@ class PartnerDataMigrationComplete
      */
     private function isDataCountMatched(): bool
     {
-        $partner_pos_service = PartnerPosService::where('partner_id', $this->partnerId)->withTrashed()->count();
-        $inventoryClient = app(InventoryServerClient::class);
-        $inventoryResponse = $inventoryClient->get('api/v1/partners/' . $this->partnerId . '/partner-product-count');
-        if ($inventoryResponse['count'] < $partner_pos_service) {
-            app('sentry')->captureException(new DataMismatchException('Partner #' . $this->partnerId .
-                ' inventory data mismatch!. Previous: '. $partner_pos_service. '. After Migration: '. $inventoryResponse['count']));
-            return false;
-        }
-        $pos_orders = PosOrder::where('partner_id', $this->partnerId)->withTrashed()->count();
-        $posOrderClient = app(PosOrderServerClient::class);
-        $posOrderResponse = $posOrderClient->get('api/v1/partners/' . $this->partnerId . '/partner-order-count');
-        if ($posOrderResponse['count'] < $pos_orders) {
-            app('sentry')->captureException(new DataMismatchException('Partner #' . $this->partnerId .
-                ' orders data mismatch!. Previous: '. $pos_orders. '. After Migration: '. $posOrderResponse['count']));
-            return false;
-        }
-        $partner_pos_customers = PartnerPosCustomer::where('partner_id', $this->partnerId)->count();
-        $smanagerUserClient = app(SmanagerUserServerClient::class);
-        $smanagerUserResponse = $smanagerUserClient->get('api/v1/partners/' . $this->partnerId . '/user-counts');
-        if ($smanagerUserResponse['count'] < $partner_pos_customers) {
-            app('sentry')->captureException(new DataMismatchException('Partner #' . $this->partnerId .
-                ' customers data mismatch!. Previous: '. $partner_pos_customers. '. After Migration: '. $smanagerUserResponse['count']));
-            return false;
+        try {
+            $partner_pos_service = PartnerPosService::where('partner_id', $this->partnerId)->withTrashed()->count();
+            $inventoryClient = app(InventoryServerClient::class);
+            $inventoryResponse = $inventoryClient->get('api/v1/partners/' . $this->partnerId . '/partner-product-count');
+            if ($inventoryResponse['count'] < $partner_pos_service) {
+                app('sentry')->captureException(new DataMismatchException('Partner #' . $this->partnerId .
+                    ' inventory data mismatch!. Previous: '. $partner_pos_service. '. After Migration: '. $inventoryResponse['count']));
+                return false;
+            }
+            $pos_orders = PosOrder::where('partner_id', $this->partnerId)->withTrashed()->count();
+            $posOrderClient = app(PosOrderServerClient::class);
+            $posOrderResponse = $posOrderClient->get('api/v1/partners/' . $this->partnerId . '/partner-order-count');
+            if ($posOrderResponse['count'] < $pos_orders) {
+                app('sentry')->captureException(new DataMismatchException('Partner #' . $this->partnerId .
+                    ' orders data mismatch!. Previous: '. $pos_orders. '. After Migration: '. $posOrderResponse['count']));
+                return false;
+            }
+            $partner_pos_customers = PartnerPosCustomer::where('partner_id', $this->partnerId)->count();
+            $smanagerUserClient = app(SmanagerUserServerClient::class);
+            $smanagerUserResponse = $smanagerUserClient->get('api/v1/partners/' . $this->partnerId . '/user-counts');
+            if ($smanagerUserResponse['count'] < $partner_pos_customers) {
+                app('sentry')->captureException(new DataMismatchException('Partner #' . $this->partnerId .
+                    ' customers data mismatch!. Previous: '. $partner_pos_customers. '. After Migration: '. $smanagerUserResponse['count']));
+                return false;
+            }
+        } catch (Exception $e) {
+            app('sentry')->captureException($e);
+            $this->updateStatusTo(UserStatus::FAILED);
         }
         return true;
     }
