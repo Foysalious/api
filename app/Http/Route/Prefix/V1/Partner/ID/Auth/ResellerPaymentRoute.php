@@ -11,12 +11,15 @@ class ResellerPaymentRoute
                 $api->get('/payment-gateways', 'ResellerPayment\\PaymentServiceController@getPaymentGateway');
                 $api->get('/payment-service-charge', 'ResellerPayment\\PaymentServiceController@getPaymentServiceCharge');
                 $api->post('payment-service-charge', 'ResellerPayment\\PaymentServiceController@storePaymentServiceCharge');
-
                 $api->get('/emi-info/manager', 'ResellerPayment\\PaymentServiceController@emiInformationForManager');
             });
             $api->group(["prefix" => 'merchant-on-boarding'], function ($api) {
                 $api->get('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@getCategoryWiseDetails");
                 $api->post('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@postCategoryWiseDetails");
+            });
+            $api->group(["prefix" => 'survey'], function ($api) {
+                $api->get('/', "ResellerPayment\\SurveyController@getQuestions");
+                $api->post('/', "ResellerPayment\\SurveyController@storeResult");
             });
         });
     }

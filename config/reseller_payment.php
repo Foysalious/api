@@ -339,5 +339,6 @@ return [
                 'data_source'      => 'json',
             ],
         ],
-    ]
+    ],
+
 ];
