@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
+use App\Sheba\Business\Salary\History\Creator as GrossSalaryHistoryCreator;
 use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
 use Exception;
@@ -411,7 +412,7 @@ class CoWorkerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function salaryInfoEdit($business, $business_member_id, Request $request)
+    public function salaryInfoEdit($business, $business_member_id, Request $request, GrossSalaryHistoryCreator $gross_salary_history_creator)
     {
         $business_member = $this->businessMemberRepository->find($business_member_id);
         $manager_member = $request->manager_member;
@@ -421,6 +422,11 @@ class CoWorkerController extends Controller
             ->setBreakdownPercentage($request->breakdown_percentage)
             ->setManagerMember($manager_member)
             ->createOrUpdate();
+        $gross_salary_history_creator
+            ->setBusinessMember($business_member)
+            ->setManagerMember($manager_member)
+            ->setGrossSalary($request->gross_salary)
+            ->update();
         return api_response($request, null, 200);
     }
 
