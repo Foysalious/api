@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "27e4063a1e709e354c688e46ff84abef",
+    "content-hash": "379f41999e8f7bb34db6d094cb69113e",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -7155,7 +7155,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "b3e4b1286102587ed990ccc5db11da5990cd6a9e"
+                "reference": "ad6edb5ea7b83beccd57d9543e71296627d41cbf"
             },
             "require": {
                 "php": ">=5.4"
@@ -7182,7 +7182,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2022-01-10T00:45:14+00:00"
+            "time": "2022-01-11T05:03:04+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -14713,5 +14713,5 @@
         "ext-intl": "*"
     },
     "platform-dev": [],
-    "plugin-api-version": "2.2.0"
+    "plugin-api-version": "2.1.0"
 }

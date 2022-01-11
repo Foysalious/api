@@ -264,7 +264,7 @@ class PaymentLinkController extends Controller
                 if (!count($available_methods))
                     return api_response($request, null, 404, ['message' => "No active payment method found"]);
             }
-            if ($request->has('customer_id') && $request->customer_id) {
+            if ($request->filled('customer_id') && $request->customer_id) {
                 /** @var PosCustomerResolver $posCustomerResolver */
                 $posCustomerResolver = app(PosCustomerResolver::class);
                 $customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();

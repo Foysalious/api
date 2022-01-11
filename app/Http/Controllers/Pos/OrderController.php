@@ -636,8 +636,8 @@ class OrderController extends Controller
             'payment_method' => 'sometimes|string|in:' . implode(',', config('pos.payment_method')),
             'api_key' => 'required',
         ]);
-        if($request->api_key != config('accounting_entry.api_key'))
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+//        if($request->api_key != 'sheba_xyz_acc_key')
+//            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         //from expense server payment details always advance cash
         $method_details = ['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png'];
         $posOrderPaymentRepository->setMethodDetails($method_details)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
@@ -652,8 +652,8 @@ class OrderController extends Controller
         $this->validate($request, [
             'api_key' => 'required',
         ]);
-        if($request->api_key != config('accounting_entry.api_key'))
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+//        if($request->api_key != 'sheba_xyz_acc_key')
+//            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         $result = $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $request->amount);
         $message = null;
         if($result) $message = 'Pos Order Payment remove successfully';
