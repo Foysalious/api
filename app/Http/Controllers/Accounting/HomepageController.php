@@ -210,6 +210,9 @@ class HomepageController extends Controller
             strtotime('tomorrow midnight') - 1;
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function homePageStat(Request $request): JsonResponse
     {
         if (!$request->partner->isMigrated(Modules::EXPENSE)) {
@@ -231,12 +234,11 @@ class HomepageController extends Controller
         $monthlyIncome = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $monthlyStartDate, $monthlyEndDate);
 
         $dueTrackerBalance = $this->homepageRepo->getDueCollectionBalance($request->partner->id, $this->convertStartDate(), $this->convertEndDate());
-
         $data = [
             "daily_income" => $dailyIncome['total_income_balance'],
             "monthly_income" => $monthlyIncome['total_income_balance'],
-            "receivable" => $dueTrackerBalance['account_receivable'],
-            "payable"    => $dueTrackerBalance['account_payable'],
+            "receivable" => $dueTrackerBalance['account_payable'],
+            "payable"    => $dueTrackerBalance['account_receivable'],
             "date" => en2bnNumber($dateTime->day),
             "month" => banglaMonth($month),
             "api_time" => Carbon::now()->toDateTimeString()
