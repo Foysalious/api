@@ -5,6 +5,7 @@ namespace Sheba\MerchantEnrollment;
 use App\Models\Partner;
 use Sheba\MerchantEnrollment\Exceptions\InvalidMEFFormCategoryCodeException;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
+use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategoryList;
 use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
@@ -17,7 +18,7 @@ class MEFFormCategoryFactory
 
     public function __construct()
     {
-        $this->classPath = "Sheba\\MerchantEnrollment\\MEFFormCategory\\";
+        $this->classPath = "Sheba\\MerchantEnrollment\\MEFFormCategory\\Category\\";
     }
 
     /**
@@ -59,5 +60,25 @@ class MEFFormCategoryFactory
             return $cls;
         }
         throw new InvalidMEFFormCategoryCodeException();
+    }
+
+    /**
+     * @return MEFFormCategoryList
+     * @throws Exceptions\InvalidListInsertionException
+     * @throws InvalidKeyException
+     */
+    public function getAllCategory(): MEFFormCategoryList
+    {
+        $categoryList = PaymentMethodStatics::paymentGatewayCategoryList($this->payment_gateway->key);
+        $listData     = new MEFFormCategoryList();
+        foreach ($categoryList as $class) {
+            $exclude_keys_list = PaymentMethodStatics::paymentMethodWiseExcludedKeys($this->payment_gateway->key);
+            /** @var MEFFormCategory $cls */
+            $cls = app("$this->classPath$class");
+            $exclude_keys = $exclude_keys_list[$cls->category_code];
+            $cls->setPartner($this->partner)->setExcludeFormKeys($exclude_keys)->setPaymentGateway($this->payment_gateway);
+            $listData->append($cls);
+        }
+        return $listData;
     }
 }

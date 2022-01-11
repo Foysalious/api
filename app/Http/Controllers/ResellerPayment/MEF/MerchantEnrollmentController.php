@@ -17,6 +17,31 @@ class MerchantEnrollmentController extends Controller
      * @param MerchantEnrollment $merchantEnrollment
      * @return JsonResponse
      */
+    public function categoryListWithCompletion(Request $request, MerchantEnrollment $merchantEnrollment): JsonResponse
+    {
+        try {
+            $this->validate($request, MEFGeneralStatics::payment_gateway_key_validation());
+            $partner = $request->partner;
+            $detail = $merchantEnrollment->setPartner($partner)->setKey($request->key)->getCompletion()->toArray();
+            return api_response($request, $detail, 200, ['data' => $detail]);
+        } catch (ResellerPaymentException $e) {
+            logError($e);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
+    /**
+     * @param Request $request
+     * @param MerchantEnrollment $merchantEnrollment
+     * @return JsonResponse
+     */
     public function getCategoryWiseDetails(Request $request, MerchantEnrollment $merchantEnrollment): JsonResponse
     {
         try {
@@ -31,6 +56,7 @@ class MerchantEnrollmentController extends Controller
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
@@ -45,9 +71,9 @@ class MerchantEnrollmentController extends Controller
     {
         try {
             $this->validate($request, MEFGeneralStatics::category_store_validation());
-            $partner = $request->partner;
-            $detail = $merchantEnrollment->setPartner($partner)->setKey($request->key)->postCategoryDetails($request->category_code);
-            return api_response($request, $detail, 200, ['data' => $detail]);
+            $merchantEnrollment->setPartner($request->partner)->setKey($request->key)
+                ->setPostData($request->data)->postCategoryDetails($request->category_code);
+            return api_response($request, null, 200);
         } catch (ResellerPaymentException $e) {
             logError($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
@@ -59,5 +85,4 @@ class MerchantEnrollmentController extends Controller
             return api_response($request, null, 500);
         }
     }
-
 }

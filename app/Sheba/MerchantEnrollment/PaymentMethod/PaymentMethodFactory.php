@@ -11,6 +11,7 @@ class PaymentMethodFactory
     /*** @var PgwStore */
     private $payment_gateway;
     private $partner;
+    private $paymentMethodClassPath = "Sheba\\MerchantEnrollment\\PaymentMethod\\";
 
     /**
      * @param $payment_gateway
@@ -39,13 +40,12 @@ class PaymentMethodFactory
     public function get(): PaymentMethod
     {
         $class_map = PaymentMethodStatics::classMap();
-        $paymentMethodClassPath = "Sheba\\MerchantEnrollment\\PaymentMethod\\";
         $key = $this->payment_gateway->key;
         if (isset($class_map[$key])) {
             $class=$class_map[$key];
             /** @var PaymentMethod $payment_method */
-            $payment_method = app("$paymentMethodClassPath$class\\$class");
-            return $payment_method->setPartner($this->partner);
+            $payment_method = app("$this->paymentMethodClassPath$class\\$class");
+            return $payment_method->setPartner($this->partner)->setPaymentMethod($this->payment_gateway);
         }
 
         throw new InvalidKeyException();

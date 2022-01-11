@@ -7,7 +7,7 @@ use App\Models\PartnerBankInformation;
 use App\Models\PartnerBasicInformation;
 use App\Models\Resource;
 
-class PartnerAllInformation
+abstract class PartnerAllInformation
 {
     /** @var Partner $partner */
     protected $partner;
@@ -20,7 +20,7 @@ class PartnerAllInformation
 
     protected $additional_information;
 
-    private $formItems;
+    protected $formItems;
 
     /**
      * @param mixed $formItems
@@ -44,21 +44,7 @@ class PartnerAllInformation
         return $this;
     }
 
-    public function institution(): array
-    {
-        return $this->getFormFieldValues();
-    }
-
-    /**
-     * @param $category_code = "institution" | "personal" | ""
-     * @return mixed
-     */
-    public function getByCode($category_code)
-    {
-        return $this->$category_code();
-    }
-
-    private function getFormFieldValues(): array
+    protected function getFormFieldValues(): array
     {
         $this->additional_information = (json_decode($this->partner_basic_information->additional_information));
         $values = [];
@@ -77,4 +63,8 @@ class PartnerAllInformation
         }
         return $values;
     }
+
+    public abstract function getByCode($category_code): array;
+
+    public abstract function postByCode($category_code, $post_data);
 }

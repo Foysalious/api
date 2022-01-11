@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory;
 
+use App\Sheba\MerchantEnrollment\PaymentMethod\CompletionDetail;
 use Sheba\MerchantEnrollment\MEFForm\FormItemBuilder;
 use Sheba\MerchantEnrollment\PartnerAllInformation;
 use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
@@ -9,7 +10,7 @@ use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
 abstract class MEFFormCategory
 {
     protected $title;
-    protected $category_code;
+    public $category_code;
     protected $exclude_form_keys = array();
     protected $percentage;
     protected $partner;
@@ -20,7 +21,6 @@ abstract class MEFFormCategory
 
     public function __construct()
     {
-        $this->partnerAllInfo = (new PartnerAllInformation());
         $this->setTitle(PaymentMethodStatics::categoryTitles($this->category_code));
     }
 
@@ -90,6 +90,8 @@ abstract class MEFFormCategory
 
     abstract public function get(): CategoryGetter;
 
+    abstract public function getFormFields();
+
     abstract public function post($data);
 
     protected function getBengaliPercentage(): string
@@ -97,16 +99,20 @@ abstract class MEFFormCategory
         return convertNumbersToBangla($this->percentage, false);
     }
 
-    protected function getFormData($formItems): CategoryGetter
+    protected function getFormData($formItems, $formData): CategoryGetter
     {
         $data      = [];
-        $formData  = $this->partnerAllInfo->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
         $formItemBuilder = (new FormItemBuilder())->setData($formData);
         foreach ($formItems as $item)
             $data[] = $formItemBuilder->build($item);
 
         $this->setData($data);
         return (new CategoryGetter())->setCategory($this);
+    }
+
+    public function getCompletionDetails(): CompletionDetail
+    {
+        return (new CompletionDetail())->setTitle($this->getTitle())->setCategoryCode($this->category_code)->setCompletionPercentage($this->completion());
     }
 
 }
