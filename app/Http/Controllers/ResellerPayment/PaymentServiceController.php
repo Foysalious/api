@@ -175,6 +175,7 @@ class PaymentServiceController extends Controller
             'banner' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png',
             'status' => null,
             'pgw_status' => 0,
+            'digital_sales_setup_detail_link' => ''
         ];
         return api_response($request, null, 200, ['data' => $data]);
     }
