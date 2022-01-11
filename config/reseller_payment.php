@@ -340,5 +340,13 @@ return [
             ],
         ],
     ],
+    "status_wise_banner" => [
+        "ekyc_completed" => '',
+        'survey_completed' => '',
+        'mef_completed' => '',
+        'mef_pending' => '',
+        'mef_verified' => '',
+        'fresh' => ''
+    ]
 
 ];
