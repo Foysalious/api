@@ -29,4 +29,12 @@ class MEFGeneralStatics
             "data" => "required"
         ]);
     }
+
+    public static function document_upload_validation(): array
+    {
+        return array_merge(self::get_category_validation(), [
+            'document'    => 'required|file',
+            'document_id' => 'required'
+        ]);
+    }
 }

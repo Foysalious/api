@@ -30,7 +30,7 @@ return [
             'documents' => [],
         ]
     ],
-    'category_titles'                    => [
+    'category_titles' => [
         'nid_selfie'  => [
             'en' => 'NID and Selfie',
             'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'
@@ -341,20 +341,6 @@ return [
         ],
         'documents' => [
             [
-                'label'         => 'নিজের ছবি',
-                'message'       => 'হেল্পার টেক্সট',
-                'hint'          => '',
-                'id'            => 'personal_photo',
-                'error'         => "Personal photo is required",
-                'input_type'    => 'document',
-                'data'          => '',
-                "min_length"    => "",
-                "max_length"    => "",
-                'is_editable'   => true,
-                'mandatory'     => false,
-                'data_source'   => 'json'
-            ],
-            [
                 'label'          => 'ট্রেড লাইসেন্সের ছবি',
                 'message'        => '',
                 'hint'           => '',
@@ -367,22 +353,23 @@ return [
                 'is_editable'    => true,
                 'mandatory'      => false,
                 'data_source'    => 'partner_basic_information',
-                'data_source_id' => 'trade_license_attachment'
+                'data_source_id' => 'trade_license_attachment',
+                'upload_folder'  => 'getTradeLicenceDocumentsFolder'
             ],
             [
                 'label'          => 'টিন অথবা ভ্যাট সার্টিফিকেটের ছবি',
                 'message'        => '',
                 'hint'           => '',
-                'id'             => 'personal_photo',
-                'error'          => "Personal photo is required",
+                'id'             => 'tin_certificate',
+                'error'          => "Tin photo is required",
                 'input_type'     => 'document',
                 'data'           => '',
                 "min_length"     => "",
                 "max_length"     => "",
                 'is_editable'    => true,
                 'mandatory'      => false,
-                'data_source'    => 'partner_basic_information',
-                'data_source_id' => 'tin_licence_photo'
+                'data_source'    => 'first_admin_profile',
+                'data_source_id' => 'tin_certificate'
             ],
         ]
     ],

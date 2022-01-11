@@ -4,6 +4,7 @@ namespace Sheba\MerchantEnrollment;
 
 use Sheba\Dal\PgwStore\Contract as PgwStoreRepository;
 use Sheba\Dal\PgwStore\Model as PgwStore;
+use Sheba\MerchantEnrollment\Exceptions\InvalidMEFFormCategoryCodeException;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethodFactory;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
@@ -14,6 +15,7 @@ class MerchantEnrollment
     private $payment_gateway;
     private $key;
     private $post_data;
+    private $category_code;
 
     /**
      * @param mixed $partner
@@ -61,6 +63,16 @@ class MerchantEnrollment
     }
 
     /**
+     * @param mixed $category_code
+     * @return MerchantEnrollment
+     */
+    public function setCategoryCode($category_code): MerchantEnrollment
+    {
+        $this->category_code = $category_code;
+        return $this;
+    }
+
+    /**
      * @param $category_code
      * @return array
      * @throws Exceptions\InvalidMEFFormCategoryCodeException
@@ -95,5 +107,14 @@ class MerchantEnrollment
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
         return $payment_method->completion();
+    }
+
+    public function uploadDocument($file, $key): MerchantEnrollment
+    {
+        $form_field = (new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->getFormField($this->category_code, $key);
+        if(!isset($form_field)) throw new InvalidMEFFormCategoryCodeException("Invalid category code or id");
+        (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($file, $form_field)->getUploadedUrl();
+        dd($file, $key);
+        return $this;
     }
 }
