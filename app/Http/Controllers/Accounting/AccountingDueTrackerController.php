@@ -70,6 +70,7 @@ class AccountingDueTrackerController extends Controller
         ]);
         $request->merge(['entry_id' => $entry_id]);
         $response = $this->dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type, true);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_ENTRY_UPDATE)->create($request->auth_user);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
