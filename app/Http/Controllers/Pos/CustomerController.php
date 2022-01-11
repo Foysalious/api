@@ -29,6 +29,7 @@ use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class CustomerController extends Controller
@@ -139,7 +140,7 @@ class CustomerController extends Controller
             /**
              * USAGE LOG
              */
-//            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

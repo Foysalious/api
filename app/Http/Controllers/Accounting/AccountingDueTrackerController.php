@@ -122,7 +122,7 @@ class AccountingDueTrackerController extends Controller
             (($request->filled('share_pdf')) && ($request->share_pdf == 1))) {
             $data['start_date'] = $request->filled("start_date") ? $request->start_date : null;
             $data['end_date']   = $request->filled("end_date") ? $request->end_date : null;
-            $balanceData        = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId);
+            $balanceData        = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId, $request);
             $data               = array_merge($data, $balanceData);
             $pdf_link           = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
             if (($request->filled('download_pdf')) && ($request->download_pdf == 1)) {
@@ -139,7 +139,7 @@ class AccountingDueTrackerController extends Controller
      */
     public function dueListBalanceByCustomer(Request $request, $customerId): JsonResponse
     {
-        $data = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId);
+        $data = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($customerId,$request);
         return api_response($request, null, 200, ['data' => $data]);
     }
 }

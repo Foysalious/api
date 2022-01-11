@@ -246,7 +246,40 @@ class ExternalPayments
      */
     public function getGatewayStatus($partner = null): bool
     {
+        if(!$partner && !$this->client) return false;
         $partner = $partner ? : $this->client->partner;
         return (bool)$partner->pgwStoreAccounts()->published()->first();
+    }
+
+    /**
+     * @param $partner
+     * @param int $for_emi
+     * @return bool
+     */
+    public function getPaymentLinkStatus($partner, $for_emi = 0): bool
+    {
+        if(!isset($partner)) return false;
+        $partner_store_accounts = $partner->pgwStoreAccounts()->published()->get();
+        if (isset($partner_store_accounts) && count($partner_store_accounts)) {
+            foreach ($partner_store_accounts as $account) {
+                $pgw_store = $account->pgw_store;
+                if ($for_emi === 1 && $pgw_store->is_emi_enabled) return true;
+            }
+            return !$for_emi;
+        }
+        return false;
+    }
+
+    /**
+     * @param $partner
+     * @return array
+     */
+    public function getPaymentGatewayStatus($partner): array
+    {
+        $regular_payment_link = $this->getPaymentLinkStatus($partner);
+        $emi_payment_link = $this->getPaymentLinkStatus($partner, 1);
+        $status = $this->getGatewayStatus($partner);
+        return ['data' => $status, "regular_payment_link" => $regular_payment_link,
+            "emi_payment_link" => $emi_payment_link, "message" => "Successful", "code" => 200];
     }
 }
