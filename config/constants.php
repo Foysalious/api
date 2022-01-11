@@ -175,7 +175,7 @@ return [
         'Cancelled' => [
             'sheba' => 'Cancelled',
             'partner' => 'Cancelled',
-            'customer' => 'Order Cancelled'
+            'customer' => 'Cancelled'
         ]
     ],
     'JOB_STATUSES_COLOR' => [
