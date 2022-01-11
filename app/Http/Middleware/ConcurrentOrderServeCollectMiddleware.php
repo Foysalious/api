@@ -36,7 +36,7 @@ class ConcurrentOrderServeCollectMiddleware
     private function generateMsg($redisData)
     {
         $msg = '';
-        if ($redisData->action === 'collection') $msg = 'Money collection for this job is under processing. ';
+        if ($redisData->action === 'collection') $msg = 'Money collection for this job is under process. ';
         elseif ($redisData->action === 'status') $msg = 'Status update for this job is under process. ';
         return $msg . 'Please try again after a few seconds.';
     }
