@@ -42,7 +42,7 @@ class Completion
     public function get(): PaymentMethodCompletion
     {
         $completion = $this->completionPercentage();
-        return (new PaymentMethodCompletion())->setCanApply(1)->setCompletion($completion)->setMessage('');
+        return (new PaymentMethodCompletion())->setCanApply(1)->setCategories($completion)->setMessage('');
     }
 
     /**

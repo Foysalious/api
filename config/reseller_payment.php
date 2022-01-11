@@ -18,8 +18,8 @@ return [
     ],
     'exclude_form_keys' => [
         'ssl' => [
-            'institution' => [],
             'nid_selfie' => [],
+            'institution' => [],
             'personal' => [],
             'documents' => [],
         ],
@@ -45,7 +45,7 @@ return [
         ],
         'documents'   => [
             'en' => 'Documents',
-            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট'
+            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট আপলোড'
         ]
     ],
     "category_form_items" => [
@@ -339,6 +339,52 @@ return [
                 'data_source'      => 'json',
             ],
         ],
+        'documents' => [
+            [
+                'label'         => 'নিজের ছবি',
+                'message'       => 'হেল্পার টেক্সট',
+                'hint'          => '',
+                'id'            => 'personal_photo',
+                'error'         => "Personal photo is required",
+                'input_type'    => 'document',
+                'data'          => '',
+                "min_length"    => "",
+                "max_length"    => "",
+                'is_editable'   => true,
+                'mandatory'     => false,
+                'data_source'   => 'json'
+            ],
+            [
+                'label'          => 'ট্রেড লাইসেন্সের ছবি',
+                'message'        => '',
+                'hint'           => '',
+                'id'             => 'trade_licence_photo',
+                'error'          => "Trade licence photo is required",
+                'input_type'     => 'document',
+                'data'           => '',
+                "min_length"     => "",
+                "max_length"     => "",
+                'is_editable'    => true,
+                'mandatory'      => false,
+                'data_source'    => 'partner_basic_information',
+                'data_source_id' => 'trade_license_attachment'
+            ],
+            [
+                'label'          => 'টিন অথবা ভ্যাট সার্টিফিকেটের ছবি',
+                'message'        => '',
+                'hint'           => '',
+                'id'             => 'personal_photo',
+                'error'          => "Personal photo is required",
+                'input_type'     => 'document',
+                'data'           => '',
+                "min_length"     => "",
+                "max_length"     => "",
+                'is_editable'    => true,
+                'mandatory'      => false,
+                'data_source'    => 'partner_basic_information',
+                'data_source_id' => 'tin_licence_photo'
+            ],
+        ]
     ],
 
 ];

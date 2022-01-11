@@ -9,17 +9,17 @@ class PaymentMethodCompletion
 {
     use ProtectedGetterTrait;
 
-    protected $completion;
+    protected $categories;
     protected $can_apply;
     protected $message = '';
 
     /**
-     * @param $completion
+     * @param $categories
      * @return $this
      */
-    public function setCompletion($completion): PaymentMethodCompletion
+    public function setCategories($categories): PaymentMethodCompletion
     {
-        $this->completion = $completion;
+        $this->categories = $categories;
         return $this;
     }
 
@@ -50,5 +50,4 @@ class PaymentMethodCompletion
     {
         return $this->can_apply;
     }
-
 }
