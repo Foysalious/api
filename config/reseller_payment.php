@@ -45,7 +45,7 @@ return [
         ],
         'documents'   => [
             'en' => 'Documents',
-            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট'
+            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট আপলোড'
         ]
     ],
     "category_form_items" => [
