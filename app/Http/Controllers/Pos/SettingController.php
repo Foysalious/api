@@ -72,6 +72,7 @@ class SettingController extends Controller
                     'auto_printing' => $settings->auto_printing,
                     'printer_name' => $settings->printer_name,
                     'printer_model' => $settings->printer_model,
+                    'delivery_charge' => $partner->delivery_charge,
                     'qr_code_account_type' => $partner->qr_code_account_type,
                     'qr_code_image' => $partner->qr_code_image
                 ];
