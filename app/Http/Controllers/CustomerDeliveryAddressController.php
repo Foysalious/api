@@ -190,9 +190,7 @@ class CustomerDeliveryAddressController extends Controller
         $mobile = trim(str_replace(' ', '', $request->mobile));
         $request->merge(['address' => trim($request->address), 'mobile' => $mobile ?: $request->customer->profile->mobile]);
         $this->validate($request, [
-            'address' => 'required|string',
-            'house_no' => 'required|string',
-            'area' => 'required|string',
+            'address' => 'required|string'
         ]);
         $customer = $request->customer;
         $delivery_address = $this->_create($request, $customer);
