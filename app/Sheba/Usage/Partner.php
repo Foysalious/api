@@ -17,6 +17,8 @@ class Partner
 
 
     const CREATE_CUSTOMER             = 'customer_create';
+    const UPDATE_CUSTOMER             = 'customer_update';
+    const DELETE_CUSTOMER             = 'customer_delete';
 
     const PAYMENT_COLLECT             = 'payment_collect';
 }
