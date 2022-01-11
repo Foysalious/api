@@ -119,10 +119,12 @@ class BusinessRepository
         } else {
             return false;
         }
+
         $joinRequest->organization_id = $request->business;
         $joinRequest->organization_type = $joinRequest->requester_type = "App\Models\Business";
         $joinRequest->status = 'Pending';
         $joinRequest->save();
+
         if ($joinRequest->profile_email != '') {
             $this->dispatch(new SendBusinessRequestEmail($joinRequest->profile_email));
             $joinRequest->mail_sent = 1;

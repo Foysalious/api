@@ -4,6 +4,11 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Sheba\PartnerGeneralSettings;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
+use Exception;
+use Illuminate\Support\Str;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -13,10 +18,8 @@ use App\Models\Location;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerPosCustomer;
-use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
-use Sheba\Dal\Service\Service;
 use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
 use App\Repositories\FileRepository;
@@ -37,6 +40,8 @@ use Illuminate\Support\Facades\Redis;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
 use Sheba\Checkout\Partners\LitePartnerList;
 use Sheba\Checkout\Requests\PartnerListRequest;
+use Sheba\Dal\PartnerService\PartnerService;
+use Sheba\Dal\Service\Service;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
@@ -48,6 +53,7 @@ use Sheba\Partner\Updater;
 use Sheba\Reward\PartnerReward;
 use Throwable;
 use Validator;
+
 
 class PartnerController extends Controller
 {
@@ -98,7 +104,7 @@ class PartnerController extends Controller
 
         try {
             $details->setPartner($partner);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return api_response($request, null, 404);
         }
 
@@ -109,7 +115,23 @@ class PartnerController extends Controller
 
         return api_response($request, $details, 200, ['info' => $details]);
     }
-    
+
+    public function showByDomain(Request $request, PartnerDetails $details)
+    {
+        $this->validate($request, ['domain_name' => 'required|string']);
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 660);
+        try {
+            $details->setPartnerFromDomain($request->domain_name);
+        } catch (\Exception $e) {
+            return api_response($request, null, 404);
+        }
+        $loc = getLocationFromRequest($request);
+        if ($loc) $details->setLocationId($loc->id);
+        $info = $details->get();
+        return api_response($request, $info, 200, ['info' => $info]);
+    }
+
     public function getServices($partner, $category, Request $request)
     {
         $partner = Partner::find((int)$partner);
@@ -985,7 +1007,7 @@ class PartnerController extends Controller
             'delivery_charge'            => $request->has('is_home_delivery_applied') ? $request->delivery_charge : 0,
             'uses_sheba_logistic'        => $this->doesUseShebaLogistic($category, $request),
         ];
-        return [ $old, $new ];
+        return [$old, $new];
     }
 
     private function doesUseShebaLogistic(Category $category, Request $request)
@@ -1029,7 +1051,7 @@ class PartnerController extends Controller
         PartnerPosCustomer::with('customer.profile')->byPartner($partner)->get()->each(function ($pos_customer) use ($served_customers) {
             $customer = $pos_customer->customer->profile;
             $served_customers->push([
-                'name'     => $customer->name,
+                'name'     => $pos_customer->nick_name ? : $customer->name,
                 'mobile'   => $customer->mobile,
                 'image'    => $customer->pro_pic,
                 'category' => 'Pos Category'
@@ -1053,21 +1075,26 @@ class PartnerController extends Controller
      */
     public function addVatRegistrationNumber(Request $request)
     {
-        $this->validate($request, ['vat_registration_number' => 'required']);
-        /** @var Partner $partner */
-        $partner = $request->partner;
-        $this->setModifier($request->manager_resource);
-        $partner->basicInformations()->update($this->withUpdateModificationField(['vat_registration_number' => $request->vat_registration_number]));
+        $this->saveVatRegistrationNumber($request);
         return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
     }
 
-    public function changeLogo($partner, Request $request)
+    public function addVatRegistrationNumberV2(Request $request)
     {
-        $this->validate($request, ['logo' => 'required|file|image']);
-        $partner = Partner::find($partner);
-        $repo = new PartnerRepository($partner);
-        $logo = $repo->updateLogo($request);
+        $this->saveVatRegistrationNumber($request);
+        return http_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
+    }
+
+    public function changeLogo(Request $request)
+    {
+        $logo = $this->updateLogo($request);
         return api_response($request, $logo, 200, ['logo' => $logo]);
+    }
+
+    public function changeLogoV2(Request $request)
+    {
+        $logo = $this->updateLogo($request);
+        return http_response($request, $logo, 200, ['logo' => $logo]);
     }
 
     /**
@@ -1112,53 +1139,46 @@ class PartnerController extends Controller
         return api_response($request, null, 200, ['wallet_balance' => $wallet_balance]);
     }
 
-    public function setQRCode(Request $request)
+    /**
+     * @throws Exception
+     */
+    public function setQRCode(Request $request, OrderService $orderService)
     {
-        $account_type = array_keys(config('partner.qr_code.account_types'));
-        $account_type = implode(',', $account_type);
-        $this->validate($request, [
-            'account_type' => "required|in:$account_type",
-            'image'        => "required|mimes:jpeg,png,jpg",
-        ]);
-        $image   = $request->file('image');
-        $partner = $request->partner;
-        if ($partner->qr_code_image) {
-            $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
-            $this->fileRepository->deleteFileFromCDN($file_name);
-        }
-        $file_name  = $partner->id . '_QR_code' . '.' . $image->extension();
-        $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
-        $this->setModifier($partner);
-        $partner->update($this->withUpdateModificationField([
-            'qr_code_account_type' => $request->account_type,
-            'qr_code_image'        => $image_link,
-        ]));
+        $this->saveQRCodeData($request, $orderService);
         return api_response($request, null, 200, ['message' => 'QR code set successfully']);
     }
 
-    public function getQRCode(Request $request)
+    /**
+     * @throws Exception
+     */
+    public function setQRCodeV2(Request $request, OrderService $orderService)
     {
-        $partner = $request->partner;
-        $data    = [
-            'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
-            'image'        => $partner->qr_code_image ?: null
-        ];
+        $this->saveQRCodeData($request,$orderService);
+        return http_response($request, null, 200);
+    }
+
+    public function getQRCode(Request $request,OrderService $orderService)
+    {
+        $data = $this->getQRCodeData($request,$orderService);
         return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    public function getQRCodeV2(Request $request,OrderService $orderService)
+    {
+        $data = $this->getQRCodeData($request,$orderService);
+        return http_response($request, null, 200, ['data' => $data]);
     }
 
     public function getSliderDetailsAndAccountTypes(Request $request)
     {
-        $account_types     = [];
-        $all_account_types = config('partner.qr_code.account_types');
-        foreach ($all_account_types as $key => $type) {
-            array_push($account_types, $type);
-        }
-        $data = [
-            'description'   => config('partner.qr_code.description'),
-            'slider_image'  => config('partner.qr_code.slider_image'),
-            'account_types' => $account_types
-        ];
+        $data = $this->getSliderDetailsAndAccountTypesData();
         return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    public function getSliderDetailsAndAccountTypesV2(Request $request)
+    {
+        $data = $this->getSliderDetailsAndAccountTypesData();
+        return http_response($request, null, 200, ['data' => $data]);
     }
 
     public function dashboardByToken(Request $request)
@@ -1185,18 +1205,151 @@ class PartnerController extends Controller
 
     public function updateAddress(Request $request, $partner, Updater $updater)
     {
-        $this->validate($request, ['address' => 'required'], ['required' => 'ঠিকানা আবশ্যক']);
-        $partner = $request->partner;
-        $updater->setPartner($partner)->setAddress($request->address)->update();
+        $this->updateAddressCore($request,$updater);
         return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
     }
 
-    public function toggleSmsActivation(Request $request, $partner, Updater $updater)
+    public function updateAddressV2(Request $request, Updater $updater)
     {
-        /** @var Partner $partner */
-        $partner = $request->partner;
-        $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
-        $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
+        $this->updateAddressCore($request,$updater);
+        return http_response($request, null, 200);
+    }
+
+
+    public function toggleSmsActivation(Request $request, Updater $updater)
+    {
+        $this->updateToggleSmsActivation($request,$updater);
         return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
     }
+
+    public function toggleSmsActivationV2(Request $request, Updater $updater)
+    {
+        $this->updateToggleSmsActivation($request,$updater);
+        return http_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+    }
+
+    private function updateToggleSmsActivation(Request $request, Updater $updater)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+        $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
+        $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
+    }
+
+    private function saveVatRegistrationNumber(Request $request)
+    {
+        $this->validate($request, [
+            'vat_registration_number' => 'required',
+            'show_vat_registration_number' => 'sometimes|required|max:1|numeric'
+        ]);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+        $partner->basicInformations()->update($this->withUpdateModificationField(
+            [
+                'vat_registration_number' => $request->vat_registration_number,
+                'show_vat_registration_number' => (int)$request->show_vat_registration_number ?: 0
+            ]
+        ));
+    }
+
+    private function getQRCodeData(Request $request, OrderService $orderService)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        if(!$partner->isMigrated(Modules::POS))
+        return [
+            'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
+            'image'        => $partner->qr_code_image ?: null
+        ];
+        $partnerInfo = $orderService->setPartnerId($partner->id)->getPartnerDetails();
+        return [
+            'account_type' => $partnerInfo['partner']['qr_code_account_type'] ? config('partner.qr_code.account_types')[$partnerInfo['partner']['qr_code_account_type']] : null,
+            'image'        => $partnerInfo['partner']['qr_code_image'] ?: null
+        ];
+
+    }
+
+    private function getSliderDetailsAndAccountTypesData()
+    {
+        $account_types     = [];
+        $all_account_types = config('partner.qr_code.account_types');
+        foreach ($all_account_types as $key => $type) {
+            array_push($account_types, $type);
+        }
+        return [
+            'description'   => config('partner.qr_code.description'),
+            'slider_image'  => config('partner.qr_code.slider_image'),
+            'account_types' => $account_types
+        ];
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function saveQRCodeData(Request $request, OrderService $orderService)
+    {
+        $account_type = array_keys(config('partner.qr_code.account_types'));
+        $account_type = implode(',', $account_type);
+        $this->validate($request, [
+            'account_type' => "required|in:$account_type",
+            'image' => "required|mimes:jpeg,png,jpg",
+        ]);
+        $image = $request->file('image');
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $qr_code_image = $this->resolveQrCodeImage($partner, $orderService);
+        if ($qr_code_image) {
+            $file_name = substr($partner->qr_code_image, strlen(env('S3_URL')));
+            $this->fileRepository->deleteFileFromCDN($file_name);
+        }
+        $file_name = $partner->id . '_QR_code' . '.' . $image->extension();
+        $image_link = $this->fileRepository->uploadToCDN($file_name, $request->file('image'), 'partner/qr-code/');
+        $this->setModifier($partner);
+        if (!$partner->isMigrated(Modules::POS)) {
+            return $partner->update($this->withUpdateModificationField([
+                'qr_code_account_type' => $request->account_type,
+                'qr_code_image' => $image_link,
+            ]));
+        }
+        return $orderService->setPartnerId($partner->id)->setQrCodeAccountType($request->account_type)->setQrCodeImage($image_link)->updatePartnerDetails();
+    }
+
+    private function resolveQrCodeImage($partner, OrderService $orderService)
+    {
+        if(!$partner->isMigrated(Modules::POS))
+            return $partner->qr_code_image;
+        return $orderService->setPartnerId($partner->id)->getPartnerDetails()['partner']['qr_code_image'];
+
+    }
+
+    private function updateLogo(Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+        $this->validate($request, ['logo' => 'required|file|image']);
+        $repo = new PartnerRepository($partner);
+        return $repo->updateLogo($request);
+    }
+
+    public function generalSettings(Request $request, PartnerGeneralSettings $generalSettings)
+    {
+        $partner = $request->auth_user->getPartner();
+        $generalSettings = $generalSettings->setToken($this->bearerToken($request))->setPartner($partner)->getGeneralSettings();
+        return http_response($request, $generalSettings,200, ['generalSettings' => $generalSettings]);
+    }
+    private function bearerToken($request)
+    {
+        $header = $request->header('Authorization', '');
+        if (Str::startsWith($header, 'Bearer ')) {
+            return Str::substr($header, 7);
+        }
+        return false;
+    }
+
+    private function updateAddressCore(Request $request, Updater $updater)
+    {
+        $this->validate($request, ['address' => 'required'], ['required' => 'ঠিকানা আবশ্যক']);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $updater->setPartner($partner)->setAddress($request->address)->update();
+    }
+
+
 }

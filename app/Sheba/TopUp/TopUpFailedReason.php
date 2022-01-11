@@ -1,7 +1,7 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\TopUpOrder;
-use Sheba\TopUp\FailedReason\FailedReasonFactory;
+use Sheba\TopUp\Gateway\GatewayFactory;
 use Throwable;
 
 class TopUpFailedReason
@@ -20,10 +20,10 @@ class TopUpFailedReason
         if (!$this->topUpOrder->isFailed()) return null;
         if (!$this->topUpOrder->transaction_details) return null;
         try {
-            $topup_failed_reason = FailedReasonFactory::make($this->topUpOrder);
+            $topup_failed_reason = GatewayFactory::getByOrder($this->topUpOrder)->getFailedReason();
             return $topup_failed_reason->setTransaction($this->topUpOrder->transaction_details)->getReason();
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return null;
         }
     }

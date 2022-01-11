@@ -6,10 +6,14 @@ use App\Models\PartnerResource;
 use App\Models\ReviewQuestionAnswer;
 use App\Repositories\ReviewRepository;
 use App\Sheba\Partner\Delivery\Methods;
+use App\Sheba\PosOrderService\Services\OrderService;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\PartnerWebstoreDomainInfo\Repository\PartnerWebstoreDomainInfoContract;
 use Sheba\Jobs\JobStatuses;
 
 class PartnerDetails
@@ -21,21 +25,26 @@ class PartnerDetails
     /** @var int */
     private $locationId;
     private $days;
-    /** @var ReviewRepository  */
+    /** @var ReviewRepository */
     private $reviewRepository;
 
     private $workingInfo = [];
+    /**
+     * @var PartnerWebstoreDomainInfoContract
+     */
+    private $domainInfoRepo;
 
-    public function __construct(ReviewRepository $review_repo)
+    public function __construct(ReviewRepository $review_repo, PartnerWebstoreDomainInfoContract $domainInfoRepo)
     {
         $this->reviewRepository = $review_repo;
-        $this->days = constants('WEEK_DAYS');
+        $this->days             = constants('WEEK_DAYS');
+        $this->domainInfoRepo   = $domainInfoRepo;
     }
 
     /**
      * @param $identifier
      * @return $this
-     * @throws \Exception
+     * @throws Exception
      */
     public function setPartner($identifier)
     {
@@ -44,8 +53,23 @@ class PartnerDetails
         } else {
             $this->partner = Partner::where('sub_domain', $identifier)->first();
         }
-        if (!$this->partner) throw new \Exception("Invalid Partner");
+        if (!$this->partner) throw new Exception("Invalid Partner");
 
+        return $this;
+    }
+
+    /**
+     * @param $domain
+     * @return $this
+     * @throws Exception
+     */
+    public function setPartnerFromDomain($domain)
+    {
+        $info = $this->domainInfoRepo->where('domain_name', $domain)->first();
+        if (empty($info)) {
+            throw  new Exception("Invalid Partner");
+        }
+        $this->partner = $info->partner;
         return $this;
     }
 
@@ -55,11 +79,14 @@ class PartnerDetails
         return $this;
     }
 
+    /**
+     * @throws Exception
+     */
     public function get()
     {
         // $this->loadPartnerRelations();
-        $partner      = $this->partner;
-        $info         = collect($partner)->only([
+        $partner = $this->partner;
+        $info    = collect($partner)->only([
             'id',
             'name',
             'sub_domain',
@@ -68,12 +95,14 @@ class PartnerDetails
             'status',
             'logo',
             'address',
-            'delivery_charge',
             'is_webstore_published'
         ]);
         $info->put('mobile', $partner->getContactNumber());
         $info->put('banner', $this->getWebStoreBanner());
+        $info->put('delivery_charge', (double) $this->getdeliveryCharge());
         $info->put('delivery_method', $this->getDeliveryMethod());
+        $can_use_webstore = $partner->isMigrated(Modules::POS) ? 1 : 0;
+        $info->put('can_use_webstore', $can_use_webstore);
         // $this->calculateWorkingDaysInfo();
         // $info->put('working_days', $this->workingInfo);
         // $info->put('is_available', $this->isOpenToday() ? 1 : 0);
@@ -94,10 +123,19 @@ class PartnerDetails
         return $info;
     }
 
+    public function getDeliveryCharge()
+    {
+        if(!$this->partner->isMigrated(Modules::POS))
+            return $this->partner->delivery_charge;
+        /** @var OrderService $orderService */
+        $orderService = app(OrderService::class);
+        return $orderService->setPartnerId($this->partner->id)->getPartnerDetails()['partner']['delivery_charge'];
+    }
+
     private function getDeliveryMethod()
     {
         $partnerDeliveryInformation =  PartnerDeliveryInformation::where('partner_id', $this->partner->id)->first();
-        return !empty($partnerDeliveryInformation) ? $partnerDeliveryInformation->delivery_vendor : Methods::OWN_DELIVERY;
+        return (empty($partnerDeliveryInformation) || ($partnerDeliveryInformation->delivery_vendor == Methods::OWN_DELIVERY)) ? Methods::OWN_DELIVERY : Methods::SDELIVERY;
     }
 
     private function loadPartnerRelations()
@@ -143,30 +181,30 @@ class PartnerDetails
         /** @var PartnerWebstoreBanner $web_store_banner */
         $web_store_banner = $this->partner->webstoreBanner;
 
-        if(!$web_store_banner) return null;
+        if (!$web_store_banner) return null;
 
         return [
-            'image_link' => $web_store_banner->banner->image_link,
+            'image_link'       => $web_store_banner->banner->image_link,
             'small_image_link' => $web_store_banner->banner->small_image_link,
-            'title'  => $web_store_banner->title,
-            'description' => $web_store_banner->description,
-            'is_published' => $web_store_banner->is_published
+            'title'            => $web_store_banner->title,
+            'description'      => $web_store_banner->description,
+            'is_published'     => $web_store_banner->is_published
         ];
     }
 
     private function getResources()
     {
         $resources = PartnerResource::join('resources', 'resources.id', '=', 'partner_resource.resource_id')
-            ->join('profiles', 'resources.profile_id', '=', 'profiles.id')
-            ->join('reviews', 'reviews.resource_id', '=', 'resources.id')
-            ->where('reviews.partner_id', $this->partner->id)
-            ->where('partner_resource.partner_id', $this->partner->id)
-            ->where('resources.is_verified', 1)
-            ->groupBy('partner_resource.id')
-            ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic,  avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
-            ->orderBy(DB::raw('avg(reviews.rating)'), 'desc')
-            ->take(5)
-            ->get();
+                                    ->join('profiles', 'resources.profile_id', '=', 'profiles.id')
+                                    ->join('reviews', 'reviews.resource_id', '=', 'resources.id')
+                                    ->where('reviews.partner_id', $this->partner->id)
+                                    ->where('partner_resource.partner_id', $this->partner->id)
+                                    ->where('resources.is_verified', 1)
+                                    ->groupBy('partner_resource.id')
+                                    ->selectRaw('distinct(resources.id), profiles.name, profiles.mobile, profiles.pro_pic,  avg(reviews.rating) as avg_rating, count(rating) as total_rating, (select count(jobs.id) from jobs where jobs.status = "Served" and jobs.resource_id = resources.id) as served_jobs')
+                                    ->orderBy(DB::raw('avg(reviews.rating)'), 'desc')
+                                    ->take(5)
+                                    ->get();
 
         foreach ($resources as $resource) {
             $resource['avg_rating'] = (float)round($resource->avg_rating, 2);
@@ -178,12 +216,12 @@ class PartnerDetails
     {
         $partner_review = $this->partner->reviews()->pluck('id')->toArray();
         $partner_review = ReviewQuestionAnswer::where('review_type', 'App\Models\Review')
-            ->whereIn('review_id', $partner_review)
-            ->where('rate_answer_text', '<>', '')
-            ->orderBy('created_at', 'desc')
-            ->take(5)
-            ->pluck('rate_answer_text', 'review_id')
-            ->toArray();
+                                              ->whereIn('review_id', $partner_review)
+                                              ->where('rate_answer_text', '<>', '')
+                                              ->orderBy('created_at', 'desc')
+                                              ->take(5)
+                                              ->pluck('rate_answer_text', 'review_id')
+                                              ->toArray();
 
         $reviews = [];
 
@@ -280,7 +318,7 @@ class PartnerDetails
 
     private function getGeoInfo()
     {
-        $geo_information          = $this->partner->geo_informations;
+        $geo_information = $this->partner->geo_informations;
         $geo_information = json_decode($geo_information);
         if ($geo_information) {
             $geo_information = [

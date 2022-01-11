@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Sheba\Gender\Gender;
 use Carbon\Carbon;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -176,15 +177,14 @@ class CoWorkerStatusController extends Controller
     {
         $this->validate($request, [
             'name' => 'required|string',
-            'gender' => 'required|string|in:Female,Male,Other',
+            'gender' => 'required|string|in:' . Gender::implodeEnglish(),
             'department' => 'required|integer',
             'role' => 'required|string',
             'join_date' => 'required|date|date_format:Y-m-d',
             'status' => 'required|string|in:' . implode(',', Statuses::get())
         ]);
-
         $requester_business_member = $request->business_member;
-        if ($requester_business_member->id == $business_member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
+        if ($requester_business_member->id == $business_member_id && $request->status != Statuses::ACTIVE) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as super admin.']);
 
         $business = $request->business;
         $manager_member = $request->manager_member;

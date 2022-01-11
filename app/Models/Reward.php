@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Reward\ActionEventInitiator;
 use Sheba\Reward\CampaignEventInitiator;
+use \Sheba\Dal\RewardTargets\Model as RewardTargets;
 
 class Reward extends Model
 {
@@ -19,6 +20,11 @@ class Reward extends Model
     public function constraints()
     {
         return $this->hasMany(RewardConstraint::class);
+    }
+
+    public function rewardTargets()
+    {
+        return $this->hasMany(RewardTargets::class);
     }
 
     public function noConstraints()

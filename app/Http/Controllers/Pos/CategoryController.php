@@ -3,12 +3,12 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
+use App\Sheba\UserMigration\Modules;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use App\Sheba\Pos\Category\Category;
-use Illuminate\Validation\ValidationException;
-use Sheba\ModificationFields;
 
 
 class CategoryController extends Controller
@@ -17,7 +17,10 @@ class CategoryController extends Controller
     {
         ini_set('memory_limit', '2048M');
         try {
-            $partner = $request->partner;
+            /** @var Partner $partner */
+            $partner = $request->partner->load(['posServices' => function($q){
+                $q->with('batches')->published();
+            }]);
             $total_items = 0.00;
             $total_buying_price = 0.00;
 
@@ -50,13 +53,13 @@ class CategoryController extends Controller
 
             $partner_categories = $this->getPartnerCategories($partner);
 
-            $master_categories = PosCategory::whereIn('id', $partner_categories)->select($this->getSelectColumnsOfCategory())->get()
-                ->load(['children' => function ($q) use ($request, $service_where_query, $deleted_service_where_query, $updated_after_clause, $deleted_after_clause) {
+            $master_categories = PosCategory::whereIn('id', $partner_categories)->select($this->getSelectColumnsOfCategory())
+                ->with(['children' => function ($q) use ($request, $service_where_query, $deleted_service_where_query, $updated_after_clause, $deleted_after_clause) {
                     $q->whereHas('services', $service_where_query)
                         ->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
                             $service_query->where($service_where_query);
 
-                            $service_query->with(['discounts' => function ($discounts_query) use ($updated_after_clause) {
+                            $service_query->with(['imageGallery','discounts' => function ($discounts_query) use ($updated_after_clause) {
                                 $discounts_query->runningDiscounts()
                                     ->select($this->getSelectColumnsOfServiceDiscount());
 
@@ -69,7 +72,7 @@ class CategoryController extends Controller
                             $deleted_service_query->where($deleted_after_clause)->where($deleted_service_where_query)->select($this->getSelectColumnsOfDeletedService());
                         }]);
                     }
-                }]);
+                }])->get();
 
             $all_services = [];
             $deleted_services = [];
@@ -77,7 +80,7 @@ class CategoryController extends Controller
             $master_categories->each(function ($category) use ($request, &$all_services, &$deleted_services) {
                 $category->children->each(function ($child) use ($request, &$children, &$all_services, &$deleted_services) {
                     array_push($all_services, $child->services->all());
-                    array_push($deleted_services, $child->deletedServices->all());
+                    array_push($deleted_services,$request->has('updated_after') ?  $child->deletedServices->all() : [] );
                 });
                 removeRelationsAndFields($category);
                 if (!empty($all_services)) $all_services = array_merge(... $all_services);
@@ -90,13 +93,16 @@ class CategoryController extends Controller
                 $deleted_services = [];
             });
 
-            $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
+            $is_migrated_to_accounting = $partner->isMigrated(Modules::EXPENSE);
+
+            $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price,$is_migrated_to_accounting) {
                 $category_id = $category->id;
                 $category->total_services = count($category->services);
-                $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
+                $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price,$is_migrated_to_accounting) {
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
+                    $service->stock = $is_migrated_to_accounting ? $service->batches->sum('stock') : $service->stock;
                     $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
                         return [
                             'id' =>   $image->id,
@@ -105,7 +111,7 @@ class CategoryController extends Controller
                     }) : [];
                     $total_items++;
                     if ($service->cost) $items_with_buying_price++;
-                    $total_buying_price += $service->cost * $service->stock;
+                    $total_buying_price += $this->getBuyingPriceOfService($service,$is_migrated_to_accounting);
                 });
             });
 
@@ -134,10 +140,10 @@ class CategoryController extends Controller
     private function getPartnerCategories(Partner $partner)
     {
         $masters = [];
-        $children = array_unique($partner->posServices()->published()->pluck('pos_category_id')->toArray());
-        PosCategory::whereIn('id',$children)->get()->each(function($child) use(&$masters){
-            if($child->parent()->first())
-                array_push($masters,$child->parent()->first()->id);
+        $children = array_unique($partner->posServices->pluck('pos_category_id')->toArray());
+        PosCategory::whereIn('id',$children)->with('parent')->get()->each(function($child) use(&$masters){
+            if($child->parent)
+                array_push($masters,$child->parent->id);
         });
         return array_unique($masters);
 
@@ -264,4 +270,20 @@ class CategoryController extends Controller
         $category->update($modifier, $pos_category, $request->name);
         return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
     }
+
+    public function getBuyingPriceOfService($service,$is_migrated_to_accounting)
+    {
+        /** @var $partner Partner */
+        if($is_migrated_to_accounting) {
+            $batches = $service->batches;
+            $total_buying_price = 0.0;
+            foreach ($batches as $batch) {
+                $total_buying_price += $batch->cost * $batch->stock;
+            }
+            return $total_buying_price;
+        }
+        return $service->cost * $service->stock;
+
+    }
+
 }

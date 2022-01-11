@@ -68,6 +68,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'attendances'], function ($api) {
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
+                    $api->post('reconciliation', 'B2b\AttendanceReconciliationController@create');
                 });
                 $api->group(['prefix' => 'office-time'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getOfficeTime');
@@ -89,6 +90,7 @@ class BusinessRoute
                         $api->delete('/', 'B2b\AttendanceController@destroy');
                     });
                 });
+
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
@@ -97,6 +99,10 @@ class BusinessRoute
                     $api->post('/invite', 'B2b\CoWorkerInviteController@sendInvitation');
                     $api->post('/single-invite', 'B2b\CoWorkerInviteController@sendSingleInvitation');
                     $api->get('/report', 'B2b\CoWorkerController@downloadEmployeesReport');
+                    $api->get('/gross-salary-report', 'B2b\CoWorkerGrossSalaryController@grossSalaryReport');
+                    $api->post('/gross-salary-upload', 'B2b\CoWorkerGrossSalaryController@bulkGrossSalaryUpload');
+                    $api->get('/bkash-number-report', 'B2b\CoWorkerBkashController@bulkBakshInfoReport');
+                    $api->post('/bkash-number-upload', 'B2b\CoWorkerBkashController@bulkBakshInfoUpload');
                     $api->group(['prefix' => '{employee}'], function ($api) {
                         $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
                         $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');
@@ -152,9 +158,12 @@ class BusinessRoute
                         $api->post('/', 'B2b\ProrateController@store');
                         $api->get('/', 'B2b\ProrateController@index');
                         $api->post('/delete', 'B2b\ProrateController@delete');
+                        $api->post('/run-prorate', 'B2b\ProrateController@runAutoProrate');
+                        $api->post('/leave-type-auto-prorate', 'B2b\ProrateController@leaveTypeAutoProrate');
                         $api->group(['prefix' => '{prorate}'], function ($api) {
                             $api->post('/', 'B2b\ProrateController@edit');
                         });
+
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
@@ -369,6 +378,7 @@ class BusinessRoute
                     $api->get('/pending-months','B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
+                    $api->get('/bkash-salary-report','B2b\PayReportController@bkashSalaryReport');
                     $api->get('/', 'B2b\PayReportController@index');
                     $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');
@@ -386,6 +396,13 @@ class BusinessRoute
                     $api->get('/tax-report', 'B2b\TaxHistoryController@index');
                     $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
                     $api->get('download-tax-certificate/{business_member_id}/tax-report/{id}', 'B2b\TaxHistoryController@downloadBusinessMemberTaxCertificate');
+                });
+                $api->group(['prefix' => 'employee-visit'], function ($api) {
+                    $api->post('settings', 'B2b\VisitSettingController@settings');
+                    $api->get('settings', 'B2b\VisitSettingController@getSettings');
+                    $api->get('team-visits', 'B2b\VisitController@getTeamVisits');
+                    $api->get('my-visits', 'B2b\VisitController@getMyVisits');
+                    $api->get('/{id}', 'B2b\VisitController@show');
                 });
             });
         });

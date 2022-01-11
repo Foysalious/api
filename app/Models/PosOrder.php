@@ -5,7 +5,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
 use Sheba\Dal\POSOrder\OrderStatuses as POSOrderStatuses;
-use Sheba\Dal\POSOrder\SalesChannels as POSOrderSalesChannel;
 use Sheba\EMI\Calculations;
 use Sheba\Helpers\TimeFrame;
 use Sheba\PaymentLink\Target;
@@ -48,13 +47,14 @@ class PosOrder extends BaseModel
     private $netBill;
     private $originalTotal;
 
-    public static $createdEventClass = PosOrderSavedEvent::class;
+    // public static $createdEventClass = PosOrderSavedEvent::class;
 
     public function calculate()
     {
         $this->_calculateThisItems();
         $this->totalDiscount = $this->totalItemDiscount + $this->discountsAmountWithoutService();
-        $this->appliedDiscount = ($this->discountsAmountWithoutService() > $this->totalBill) ? $this->totalBill : $this->discountsAmountWithoutService();
+        $discount_amount_without_service = $this->discountsAmountWithoutService();
+        $this->appliedDiscount = ( $discount_amount_without_service> $this->totalBill) ? $this->totalBill : $discount_amount_without_service;
         $this->originalTotal = round($this->totalBill - $this->appliedDiscount, 2);
         if (isset($this->emi_month) && !$this->interest) {
             $data = Calculations::getMonthData($this->originalTotal, (int)$this->emi_month, false);
@@ -108,7 +108,7 @@ class PosOrder extends BaseModel
 
     public function discountsAmountWithoutService()
     {
-        return $this->discountsWithoutService()->sum('amount');
+        return $this->discounts()->whereNull('item_id')->get()->sum('amount');
     }
 
     public function discountsWithoutService()
@@ -119,6 +119,11 @@ class PosOrder extends BaseModel
     public function discounts()
     {
         return $this->hasMany(PosOrderDiscount::class);
+    }
+
+    public function log()
+    {
+        return $this->has(PosOrderDiscount::class);
     }
 
     private function _calculatePaidAmount()
@@ -152,8 +157,16 @@ class PosOrder extends BaseModel
     private function _setPaymentStatus()
     {
         $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        if ($this->payment_status != $this->paymentStatus) $this->storePaymentStatus();
         return $this;
     }
+
+
+    private function storePaymentStatus()
+    {
+        $this->update(['payment_status' => $this->paymentStatus]);
+    }
+
 
     private function _formatAllToTaka()
     {

@@ -11,6 +11,7 @@ use Sheba\QueueMonitor\MonitoredJob;
 use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCompletedEvent;
+use Sheba\Usage\Usage;
 
 class TopUpJob extends MonitoredJob implements ShouldQueue
 {
@@ -32,6 +33,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         $this->agent = $this->topUpOrder->agent;
         $this->connection = $this->getConnectionName();
         $this->queue = $this->connection;
+        parent::__construct();
     }
 
     /**
@@ -40,6 +42,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
      * @param TopUpRechargeManager $top_up
      * @param FailedJobProviderInterface|null $logger
      * @return void
+     * @throws \Throwable
      */
     public function handle(TopUpRechargeManager $top_up, FailedJobProviderInterface $logger = null)
     {
@@ -58,7 +61,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     /**
      * @return string
      */
-    private function getConnectionName()
+    private function getConnectionName(): string
     {
         $connections = config('topup_queues.agent_connections');
         $agent_type = strtolower(class_basename($this->agent));
@@ -97,6 +100,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         if ($this->topUp->isNotSuccessful()) {
             $this->takeUnsuccessfulAction();
         } else {
+            (new Usage())->setUser($this->agent)->setType(Usage::Partner()::TOPUP_COMPLETE)->create();
             $this->takeSuccessfulAction();
         }
     }
@@ -129,18 +133,12 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         ]);
     }
 
-    /**
-     * @return TopUpVendor
-     */
-    public function getVendor()
+    public function getVendor(): TopUpVendor
     {
         return $this->topUpOrder->vendor;
     }
 
-    /**
-     * @return TopUpAgent
-     */
-    public function getAgent()
+    public function getAgent(): TopUpAgent
     {
         return $this->topUpOrder->agent;
     }
@@ -154,7 +152,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         ]);
     }
 
-    protected function getTitle()
+    protected function getTitle(): string
     {
         $agent = $this->getAgent();
         return "Top up to " . $this->topUpOrder->payee_mobile . " by " . class_basename($agent) . "#" . $agent->id;

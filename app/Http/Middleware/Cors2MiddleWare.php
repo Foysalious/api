@@ -3,6 +3,7 @@
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Sheba\Dal\PartnerWebstoreDomainInfo\PartnerWebstoreDomainInfo;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class Cors2MiddleWare
@@ -108,6 +109,7 @@ class Cors2MiddleWare
             "http://payment-link-web.sheba.test:3031",
             "https://v3.sheba.xyz",
             "https://www.smanager.xyz",
+            "https://smanager.xyz",
             "https://retailers.dev-sheba.xyz",
             "https://bkash-client.dev-sheba.xyz",
             "https://v2.sheba.xyz",
@@ -120,20 +122,25 @@ class Cors2MiddleWare
             "https://payment.smanager.xyz",
             "https://testsecureacceptance.cybersource.com",
             "https://secureacceptance.cybersource.com",
+            "https://new-smanager-webstore.dev-sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
-        $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
-        $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
-        $headers['Access-Control-Allow-Origin'] = '*';
+        $headers['Access-Control-Allow-Methods']     = 'POST, GET, PUT, DELETE';
+        $headers['Access-Control-Allow-Headers']     = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
+        $headers['Access-Control-Allow-Origin']      = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
-            return response()->json(['message' => 'Unauthorized domain :' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
+            $domain_name=preg_replace('/^https:\/\/|^http:\/\//','',$request->server('HTTP_ORIGIN'));
+            $exists = app(PartnerWebstoreDomainInfo::class)->where('domain_name',$domain_name)->first();
+            if (empty($exists)) {
+                return response()->json(['message' => 'Unauthorized domain : ' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
+            }
         }
 
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Methods'] = 'POST, GET, PUT, DELETE';
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
-        $response = $next($request);
+        $response                                = $next($request);
         foreach ($headers as $key => $value) {
             if ($response instanceof BinaryFileResponse) {
             } else $response->header($key, $value);

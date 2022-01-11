@@ -2,11 +2,22 @@
 
 use App\Http\Route\Prefix\V1\Partner\PartnerRoute;
 use App\Http\Route\Prefix\V1\Resource\ResourceRoute;
+use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 
 class Route
 {
     public function set($api)
     {
+        $api->get('test', function (SmsCampaignOrderRepository $orderRepository){
+            $order = $orderRepository->create([
+                'title' => 'title',
+                'message' => 'message',
+                'partner_id' => 216648,
+                'rate_per_sms' => .01,
+                'bulk_id' => null
+            ]);
+            return $order->id;
+        });
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             $api->get('hour-logs', 'ShebaController@getHourLogs');
             $api->group(['middleware' => 'terminate'], function ($api) {
@@ -77,7 +88,7 @@ class Route
                 $api->get('{offer}', 'OfferController@show');
             });
             $api->group(['prefix' => 'blogs'], function ($api) {
-                $api->get('/', 'BlogController@index');
+                $api->get('/', 'BlogController@index')->name('blogs.get');
             });
             $api->group(['prefix' => 'feedback', 'middleware' => ['manager.auth']], function ($api) {
                 $api->post('/', 'FeedbackController@create');
@@ -320,6 +331,16 @@ class Route
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
 
             $api->post('register-mobile', 'ShebaController@registerCustomer');
+
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->post('nid-ocr-data', 'EKYC\NidOcrController@storeNidOcrData');
+                $api->post('face-verification', 'EKYC\FaceVerificationController@faceVerification');
+                $api->get('get-liveliness-credentials', 'EKYC\FaceVerificationController@getLivelinessCredentials');
+                $api->get('get-user-data', 'EKYC\FaceVerificationController@getUserNidData');
+            });
+            $api->group(['prefix'=>'ekyc', 'middleware' => 'shebaServer'], function ($api) {
+                $api->get('resubmit-nid/{id}', 'EKYC\FaceVerificationController@resubmitToPorichoy');
+            });
         });
         return $api;
     }

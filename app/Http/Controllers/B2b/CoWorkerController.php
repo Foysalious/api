@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
+use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
 use Exception;
 use Illuminate\Http\UploadedFile;
@@ -208,7 +209,7 @@ class CoWorkerController extends Controller
             'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
-            'gender' => 'required|string|in:Female,Male,Other',
+            'gender' => 'required|string|in:' . Gender::implodeEnglish(),
             'join_date' => 'required|date|date_format:Y-m-d'
         ]);
 
@@ -311,7 +312,7 @@ class CoWorkerController extends Controller
     public function personalInfoEdit($business, $business_member_id, Request $request)
     {
         $validation_data = [
-            'gender' => 'required|string|in:Female,Male,Other',
+            'gender' => 'required|string|in:' . Gender::implodeEnglish(),
             'mobile' => 'sometimes|required',
             'date_of_birth' => 'sometimes|required',
             'address' => 'sometimes|required',
@@ -375,7 +376,8 @@ class CoWorkerController extends Controller
      */
     public function financialInfoEdit($business, $business_member_id, Request $request)
     {
-        $validation_data = ['tin_number ' => 'sometimes|required', 'bank_name ' => 'sometimes|required', 'bank_account_number ' => 'sometimes|required'];
+        $validation_data = [
+            'tin_number ' => 'sometimes|required', 'bank_name ' => 'sometimes|required', 'bank_account_number ' => 'sometimes|required', 'bkash_number'=> 'sometimes|required'];
         $validation_data ['tin_certificate '] = $this->isFile($request->tin_certificate) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
 
@@ -387,7 +389,8 @@ class CoWorkerController extends Controller
         $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
             ->setTinCertificate($request->tin_certificate)
             ->setBankName($request->bank_name)
-            ->setBankAccNumber($request->bank_account_number);
+            ->setBankAccNumber($request->bank_account_number)
+            ->setBkashNumber($request->bkash_number);
 
         list($profile, $image_name, $image_link) = $this->coWorkerUpdater
             ->setFinancialRequest($financial_request)

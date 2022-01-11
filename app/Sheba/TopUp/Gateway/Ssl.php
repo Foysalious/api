@@ -2,16 +2,16 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
-use Sheba\TopUp\Vendor\Internal\SslVrClient;
+use Sheba\TopUp\Gateway\FailedReason\SslFailedReason;
+use Sheba\TopUp\Gateway\Clients\SslVrClient;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
-class Ssl implements Gateway
+class Ssl implements Gateway, HasIpn
 {
     CONST SHEBA_COMMISSION = 0.0;
 
@@ -36,7 +36,7 @@ class Ssl implements Gateway
             "action" => SslVrClient::VR_PROXY_RECHARGE_ACTION,
             'guid' => $this->getRefId($topup_order),
             'payee_mobile' => $topup_order->payee_mobile,
-            'operator_id' => $this->getOperatorId($topup_order->payee_mobile),
+            'operator_id' => $this->getOperatorId($topup_order->vendor_id),
             'connection_type' => $topup_order->payee_mobile_type,
             'sender_id' => "redwan@sslwireless.com",
             'priority' => 1,
@@ -77,7 +77,7 @@ class Ssl implements Gateway
      * @return IpnResponse
      * @throws Exception
      */
-    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $response = $this->getRecharge($this->getRefId($topup_order));
         /** @var IpnResponse $ipn_response */
@@ -95,16 +95,15 @@ class Ssl implements Gateway
         return str_pad($topup_order->getGatewayRefId(), 20, '0', STR_PAD_LEFT);
     }
 
-    private function getOperatorId($mobile_number)
+    private function getOperatorId($vendor_id)
     {
-        $mobile_number = formatMobile($mobile_number);
-
-        if (preg_match("/^(\+88017)/", $mobile_number) || preg_match("/^(\+88013)/", $mobile_number)) return 1;
-        if (preg_match("/^(\+88019)/", $mobile_number) || preg_match("/^(\+88014)/", $mobile_number)) return 2;
-        if (preg_match("/^(\+88018)/", $mobile_number)) return 3;
-        if (preg_match("/^(\+88016)/", $mobile_number)) return 6;
-        if (preg_match("/^(\+88015)/", $mobile_number)) return 5;
-
+        if ($vendor_id == 2) return 3;
+        if ($vendor_id == 3) return 6;
+        if ($vendor_id == 4) return 1;
+        if ($vendor_id == 5) return 2;
+        if ($vendor_id == 6) return 5;
+        if ($vendor_id == 7) return 13;
+        
         throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
     }
 
@@ -116,5 +115,19 @@ class Ssl implements Gateway
     public function getName()
     {
         return Names::SSL;
+    }
+
+    public function getFailedReason(): FailedReason
+    {
+        return new SslFailedReason();
+    }
+
+    public function buildIpnResponse($request_data)
+    {
+        if( $request_data['is_from_success_url']) {
+            return app(SslSuccessResponse::class);
+        } else {
+            return app(SslFailResponse::class);
+        }
     }
 }

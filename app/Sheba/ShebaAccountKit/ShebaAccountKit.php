@@ -31,10 +31,9 @@ class ShebaAccountKit
 
     public function getMobile(AccessTokenRequest $access_token_request)
     {
-        $response = $this->client->getAccessToken($access_token_request);
-        $data = json_decode($response->getBody());
-        if (!$data || !isset($data->access_token)) return null;
-        $jws = JWS::load($data->access_token);
+        $token = $this->getAccessToken($access_token_request);
+        if ($token == null) return null;
+        $jws = JWS::load($token);
         $payload = $jws->getPayload();
         return formatMobile($payload['sub']);
     }

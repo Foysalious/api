@@ -7,7 +7,9 @@ use App\Models\PosOrderDiscount;
 use App\Models\Tag;
 use App\Models\Taggable;
 use App\Models\Voucher;
+use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
+use App\Sheba\Voucher\VoucherService;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
 use App\Transformers\VoucherTransformer;
@@ -29,6 +31,18 @@ use Illuminate\Validation\Rule;
 class VoucherController extends Controller
 {
     use ModificationFields;
+
+    protected $orderService;
+    /**
+     * @var VoucherService
+     */
+    private $voucherService;
+
+    public function __construct(OrderService $orderService, VoucherService $voucherService)
+    {
+        $this->orderService = $orderService;
+        $this->voucherService = $voucherService;
+    }
 
     /**
      * @param Request $request
@@ -292,36 +306,25 @@ class VoucherController extends Controller
     }
 
     /**
-     * @param Request $request
-     * @return JsonResponse
      * @throws Exception
      */
-    public function validateVoucher($partner, Request $request)
+    public function validateVoucher(Request $request, $partner)
     {
-        try {
-            $pos_customer = $request->pos_customer ? PosCustomer::find($request->pos_customer) : new PosCustomer();
-            $pos_order_params = (new CheckParamsForPosOrder());
-            $pos_order_params->setOrderAmount($request->amount)->setApplicant($pos_customer)->setPartnerPosService($request->pos_services);
-            $result = voucher($request->code)->checkForPosOrder($pos_order_params)->reveal();
-            if (!$result['is_valid'] || $result['voucher']['created_by'] != $partner)
-                return api_response($request, null, 403, ['message' => 'প্রোমো কোডটি সঠিক নয়!']);
-            if ($result['is_valid']) {
-                $voucher = $result['voucher'];
-                $voucher = [
-                    'amount' => (double)$result['amount'],
-                    'code' => $voucher->code,
-                    'id' => $voucher->id,
-                    'title' => $voucher->title
-                ];
+        $response = $this->voucherService->validateVoucher($partner, $request);
+        if (empty($response))
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+        return api_response($request, null, 200, ['voucher' => $response]);
+    }
 
-                return api_response($request, null, 200, ['voucher' => $voucher]);
-            } else {
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+
+    public function getVoucherDetails(Request $request)
+    {
+        $voucher_id = $request->voucher_id;
+        $voucher = Voucher::findOrFail($voucher_id);
+//        dd($voucher);
+//        app(VoucherDiscount::class)->setVoucher($voucher)->
+//        $voucher_id = $request->voucher_id;
+        return $voucher;
     }
 
     /**
@@ -391,8 +394,8 @@ class VoucherController extends Controller
     public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository, VendorVoucherDataGenerator $voucher_generator)
     {
         // need to handle this in a Request Class
-        if (!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
-        if (!isset($request['channel']) || !in_array($request->channel, ['xtra'])) return api_response($request, null, 403, ['message' => 'invalid channel']);
+        if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
+        if(!isset($request['channel']) || !in_array($request->channel, ['xtra'])  ) return api_response($request, null, 403, ['message' => 'invalid channel']);
         $this->validate($request, [
             'mobile' => 'mobile:bd',
             'amount' => 'required|numeric',
