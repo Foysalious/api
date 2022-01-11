@@ -103,7 +103,6 @@ class ResourceJobController extends Controller
     public function updateStatus(Job $job, Request $request, StatusUpdater $status_updater, UserAgentInformation $user_agent_information, JobConcurrencyHandler $jobConcurrencyHandler)
     {
         try {
-            sleep(50);
             $this->validate($request, ['status' => 'string|in:process,served']);
             /** @var AuthUser $auth_user */
             $auth_user = $request->auth_user;
