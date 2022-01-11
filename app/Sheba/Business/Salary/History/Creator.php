@@ -37,7 +37,7 @@ class Creator
 
     public function update()
     {
-        $existing_settings = $this->grossSalaryHistoryRepository->where('business_id', $this->businessMember->business->id)->where('end_date', null)->first();
+        $existing_settings = $this->grossSalaryHistoryRepository->where('business_member_id', $this->businessMember->id)->where('end_date', null)->first();
         DB::beginTransaction();
         $this->grossSalaryHistoryRepository->update($existing_settings, ['end_date' => Carbon::now()->toDateString()]);
         $this->grossSalaryHistoryRepository->create([
