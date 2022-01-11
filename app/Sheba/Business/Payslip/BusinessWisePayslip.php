@@ -20,6 +20,9 @@ class BusinessWisePayslip
 
     use ModificationFields, PayrollCommonCalculation, AttendanceBasicInfo;
 
+    const AUTO_GENERATED_PAYSLIP = "App\\Console\\Commands\\Payslip";
+    const MANUALLY_GENERATED_PAYSLIP = "App\\Console\\Commands\\GeneratePayslip";
+
     /*** @var GrossSalaryBreakdownCalculate */
     private $grossSalaryBreakdownCalculate;
     /*** @var PayslipRepository */
@@ -37,6 +40,8 @@ class BusinessWisePayslip
     private $period;
     private $businessMembers;
     private $generatedBusinessMemberIds;
+    private $className;
+    private $generatedFor;
     /*** @var BusinessWorkingDayHistoryRepository $businessWorkingDayRepository */
     private $businessWorkingDayRepository;
     private $business;
@@ -84,12 +89,24 @@ class BusinessWisePayslip
         return $this;
     }
 
+    public function setClass($class_name)
+    {
+        $this->className = $class_name;
+        return $this;
+    }
+
+    public function setGeneratedFor($generated_for)
+    {
+        $this->generatedFor = $generated_for;
+        return $this;
+    }
+
     public function calculate()
     {
-        $last_pay_day = $this->period ? Carbon::parse($this->period)->subMonth()->toDateString() : $this->payrollSetting->last_pay_day;
-        $schedule_date = $this->period ? Carbon::parse($this->period) : null;
-        $start_date = $this->period ? Carbon::parse($this->period) : null;
-        $end_date = $this->period ? Carbon::parse($this->period) : null;
+        $last_pay_day = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period)->subMonth()->toDateString() : $this->payrollSetting->last_pay_day;
+        $schedule_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
+        $start_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
+        $end_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $business_office = $this->business->officeHour;
         $business_working_day_data = [];
         $total_policy_working_days = null;
@@ -151,6 +168,10 @@ class BusinessWisePayslip
                     'status' => 'pending',
                     'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
                 ];
+                if ($this->className === self::MANUALLY_GENERATED_PAYSLIP) {
+                    $payslip_data['generation_type'] = 'manual';
+                    $payslip_data['generated_for'] = $this->generatedFor;
+                }
                 if ($joining_date) $payslip_data['joining_log'] = Carbon::parse($joining_date)->format('Y-m-d');
                 DB::transaction(function () use ($payslip_data) {
                     $this->payslipRepository->create($payslip_data);
@@ -184,8 +205,8 @@ class BusinessWisePayslip
     {
         $next_pay_day = $this->nextPayslipGenerationDay($this->business);
         $data['next_pay_day'] = $next_pay_day;
-        $data['last_pay_day'] = $this->period ? Carbon::parse($next_pay_day)->subMonth()->toDateString() : Carbon::now()->format('Y-m-d');
-        $this->payrollSetting->update($data);
+        $data['last_pay_day'] = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($next_pay_day)->subMonth()->toDateString() : Carbon::now()->format('Y-m-d');
+        $payroll_setting->update($data);
     }
 
     private function updateBusinessWorkingDaysHistory($business_working_day_data)
