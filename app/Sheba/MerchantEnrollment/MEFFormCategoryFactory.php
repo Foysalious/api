@@ -83,6 +83,12 @@ class MEFFormCategoryFactory
         return $listData;
     }
 
+    /**
+     * @param $category_code
+     * @param $id
+     * @return mixed
+     * @throws InvalidMEFFormCategoryCodeException
+     */
     public function getFormField($category_code, $id)
     {
         $form_field = null;
@@ -93,7 +99,7 @@ class MEFFormCategoryFactory
                 break;
             }
         }
-
+        if(!isset($form_field)) throw new InvalidMEFFormCategoryCodeException("Invalid category code or id");
         return $form_field;
 
     }

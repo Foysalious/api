@@ -9,10 +9,10 @@ class MerchantEnrollmentFileHandler
 {
     use FileManager, CdnFileManager;
 
-    private $uploadFolder;
     private $partner;
     private $uploadedUrl;
     private $partner_basic_information;
+    private $first_admin_profile;
 
     /**
      * @param mixed $partner
@@ -22,12 +22,7 @@ class MerchantEnrollmentFileHandler
     {
         $this->partner = $partner;
         $this->partner_basic_information = $partner->basicInformations;
-        return $this;
-    }
-
-    public function setUploadFolder($upload_folder_key): MerchantEnrollmentFileHandler
-    {
-        $this->uploadFolder = getNeoBankingFolder(). $this->partner->id . '/';
+        $this->first_admin_profile = $this->partner->getFirstAdminResource()->profile;
         return $this;
     }
 
@@ -36,8 +31,8 @@ class MerchantEnrollmentFileHandler
         if(!empty($this->{$form_field['data_source']}->{$form_field['data_source_id']})) {
             $this->deleteFile($this->{$form_field['data_source']}->{$form_field['data_source_id']});
         }
-        list($file, $filename) = $this->makeAttachment($file, $form_field['data_source_id'].$this->partner->id);
-        $this->uploadedUrl = $this->saveFileToCDN($file, $form_field['getTradeLicenceDocumentsFolder'](), $filename);
+        list($file, $filename) = $this->makeAttachment($file, $form_field['data_source_id']."-".$this->partner->id);
+        $this->uploadedUrl = $this->saveFileToCDN($file, $form_field['upload_folder'](), $filename);
         return $this;
     }
 

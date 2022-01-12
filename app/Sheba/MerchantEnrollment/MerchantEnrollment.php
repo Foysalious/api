@@ -109,12 +109,17 @@ class MerchantEnrollment
         return $payment_method->completion();
     }
 
+    /**
+     * @param $file
+     * @param $key
+     * @return $this
+     * @throws InvalidMEFFormCategoryCodeException
+     */
     public function uploadDocument($file, $key): MerchantEnrollment
     {
         $form_field = (new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->getFormField($this->category_code, $key);
-        if(!isset($form_field)) throw new InvalidMEFFormCategoryCodeException("Invalid category code or id");
-        (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($file, $form_field)->getUploadedUrl();
-        dd($file, $key);
+        $url = (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($file, $form_field)->getUploadedUrl();
+        $this->setPostData(json_encode([$key => $url]));
         return $this;
     }
 }
