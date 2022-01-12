@@ -11,4 +11,5 @@ class PaymentLinkStatus
 
     const ACTIVE = 'active';
     const INACTIVE = 'inactive';
+    const UNREGISTERED = 'unregistered';
 }
