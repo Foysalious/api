@@ -34,11 +34,11 @@ class NidOcr
         return $data;
     }
 
-    public function storeData($request, $nidOcrData, $nid_no, $business_name = "sManager", $feature_name = "NID Verification")
+    public function storeData($request, $nid_ocr_data, $nid_no, $user_agent, $business_name = "sManager", $feature_name = "NID Verification")
     {
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
-        $ocrData = $nidOcrData['data'];
+        $ocrData = $nid_ocr_data['data'];
         $ocrData = json_encode(array_except($ocrData, ['id_front_image', 'id_back_image', 'id_front_name', 'id_back_name']));
         $log = "NID submitted by the user";
 
@@ -47,9 +47,11 @@ class NidOcr
             "nid_no"     => $nid_no,
             'submitted_by' => $submitted_by,
             'nid_ocr_data' => $ocrData,
+            'verification_status' => Statics::INCOMPLETE,
+            'user_agent' => $user_agent,
+            'log' => $log,
             'business_name' => $business_name,
             'feature_name' => $feature_name,
-            'log' => $log
         ];
 
         $this->profileNIDSubmissionRepo->create($data);
