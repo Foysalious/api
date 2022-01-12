@@ -19,7 +19,7 @@ class TeamVisitsTransformer extends  TransformerAbstract
         /** @var Profile $profile */
         $profile = $member->profile;
         $department = $visitor->department();
-
+        $visit_time_duration_in_hour = $team_visit->total_time_in_minutes ? $this->formatMinute($team_visit->total_time_in_minutes) : null;
         return [
             'id' =>   $team_visit->id,
             'title' => $team_visit->title,
@@ -29,7 +29,7 @@ class TeamVisitsTransformer extends  TransformerAbstract
             'timings' => [
                 'start_time' => $team_visit->start_date_time ? $team_visit->start_date_time->format('h:i A') : $team_visit->schedule_date->format('h:i A'),
                 'end_time' => $team_visit->end_date_time ? $team_visit->end_date_time->format('h:i A') : null,
-                'visit_duration' => $team_visit->total_time_in_minutes ? $this->formatMinute($team_visit->total_time_in_minutes) : null
+                'visit_duration' =>  $team_visit->total_time_in_minutes < 60 ? intval($team_visit->total_time_in_minutes).'m' : $visit_time_duration_in_hour
             ],
             'profile' => [
                 'id' => $profile->id,
