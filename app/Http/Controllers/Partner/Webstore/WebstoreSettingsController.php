@@ -139,6 +139,7 @@ class WebstoreSettingsController extends Controller
         /** @var WebstoreBannerSettings $webstoreBannerSettings */
         $webstoreBannerSettings = app(WebstoreBannerSettings::class);
         $webstoreBannerSettings->setData($data)->store();
+        return http_response($request, null, 200, ['message' => 'Successful']);
 
     }
 
