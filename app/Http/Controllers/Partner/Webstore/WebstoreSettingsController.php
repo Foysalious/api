@@ -99,6 +99,25 @@ class WebstoreSettingsController extends Controller
         }
     }
 
+    public function updateBannerV3($id, Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
+        $this->setModifier($manager_resource);
+        $data = [
+            'banner_id' => $request->banner_id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'is_published' => $request->is_published
+        ];
+        $banner_settings_updated = $this->updateBannerSettingsV3($id, $partner, $data);
+        if (!$banner_settings_updated) {
+            return http_response($request, null, 400, ['message' => 'Banner Settings not found'] );
+        } else{
+            return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+        }
+    }
+
     /**
      * @param Request $request
      * @return JsonResponse
@@ -188,6 +207,19 @@ class WebstoreSettingsController extends Controller
 
         else {
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
+            return true;
+        }
+    }
+
+    private function updateBannerSettingsV3($id, $partner, $data)
+    {
+        $banner_settings = PartnerWebstoreBanner::find($id);
+        if(!$banner_settings) {
+            return false;
+        } else {
+            /** @var WebstoreBannerSettings $webstoreBannerSettings */
+            $webstoreBannerSettings = app(WebstoreBannerSettings::class);
+            $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($data)->update();
             return true;
         }
     }
