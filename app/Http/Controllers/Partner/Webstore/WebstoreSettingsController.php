@@ -1,15 +1,16 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
 use App\Exceptions\DoNotReportException;
-use App\Jobs\WebstoreSettingsSyncJob;
 use App\Sheba\InventoryService\Services\ProductService;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
+use App\Transformers\Partner\WebstoreBannerTransformer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\ModificationFields;
@@ -96,6 +97,21 @@ class WebstoreSettingsController extends Controller
         } else{
             return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBanners(Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner->id)->get();
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Collection($partnerBanners, new WebstoreBannerTransformer());
+        $banners = $fractal->createData($resource)->toArray()['data'];
+        return http_response($request, $resource, 200, ['banners' => $banners]);
     }
 
     private function getWebstoreSettingsData(Request $request)
