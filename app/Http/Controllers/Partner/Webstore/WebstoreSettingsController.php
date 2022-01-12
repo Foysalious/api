@@ -153,7 +153,7 @@ class WebstoreSettingsController extends Controller
         /** @var UploadedFile $avatar */
         /** @var string $avatar_filename */
         list($avatar, $avatar_filename) = $this->makeWebstoreBanner($file, $filename);
-        $banner_link = $this->saveFileToCDN($avatar, getPosServiceThumbFolder(), $avatar_filename);
+        $banner_link = $this->saveFileToCDN($avatar, getWebstoreBannerFolder(), $avatar_filename);
         $data = [
             'image_link' => $banner_link,
             'small_image_link' => $banner_link,
