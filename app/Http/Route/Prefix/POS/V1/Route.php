@@ -164,7 +164,9 @@ class Route
                 $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboardV2');
                 $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivationV2');
                 $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerListV2');
-                $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
+                $api->get('webstore/banners', 'Partner\Webstore\WebstoreSettingsController@getBanners');
+                $api->post('webstore/banners/{id}', 'Partner\Webstore\WebstoreSettingsController@updateBannerV3');
+                $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@store');
                 $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBannerV2');
                 $api->get('/settings', 'Pos\SettingController@getSettingsV2');
                 $api->post('/settings', 'Pos\SettingController@storePosSettingV2');
