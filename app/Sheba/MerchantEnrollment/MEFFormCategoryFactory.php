@@ -6,6 +6,7 @@ use App\Models\Partner;
 use Sheba\MerchantEnrollment\Exceptions\InvalidMEFFormCategoryCodeException;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategoryList;
+use Sheba\MerchantEnrollment\Statics\FormStatics;
 use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
@@ -80,5 +81,26 @@ class MEFFormCategoryFactory
             $listData->append($cls);
         }
         return $listData;
+    }
+
+    /**
+     * @param $category_code
+     * @param $id
+     * @return mixed
+     * @throws InvalidMEFFormCategoryCodeException
+     */
+    public function getFormField($category_code, $id)
+    {
+        $form_field = null;
+        $category = FormStatics::$category_code();
+        foreach ($category as $field) {
+            if ($field['id'] === $id) {
+                $form_field = $field;
+                break;
+            }
+        }
+        if(!isset($form_field)) throw new InvalidMEFFormCategoryCodeException("Invalid category code or id");
+        return $form_field;
+
     }
 }

@@ -22,30 +22,44 @@ class PaymentServiceController extends Controller
     public function getPaymentGateway(Request $request, PgwStore $pgwStore)
     {
         try {
+            $completion = $request->query('completion');
+            $header_message = 'সর্বাধিক ব্যবহৃত';
             $pgwData = [];
             $partner = Partner::where('id', $request->partner->id)->first();
-            $partner_account = $partner->pgwStoreAccounts()->published()->first();
+            $partner_account = $partner->pgwStoreAccounts()->select('status')->first();
 
             $pgwStores = $pgwStore->select('id', 'name', 'key', 'name_bn', 'icon')->get();
-
-            if ($partner_account) {
-                foreach ($pgwStores as $pgwStore) {
+            foreach ($pgwStores as $pgwStore) {
+                if (!$partner_account) {
                     $pgwData[] = [
                         'id' => $pgwStore->id,
                         'name' => $pgwStore->name,
                         'key' => $pgwStore->key,
                         'name_bn' => $pgwStore->name_bn,
+                        'header' => $pgwStore->key === 'ssl' ? $header_message : null,
+                        'completion' => $completion == 1 ? '' : null,
+                        'icon' => $pgwStore->icon,
+                        'status' => PaymentLinkStatus::UNREGISTERED
+                    ];
+                } else if ($partner_account->status == 1) {
+                    $pgwData[] = [
+                        'id' => $pgwStore->id,
+                        'name' => $pgwStore->name,
+                        'key' => $pgwStore->key,
+                        'name_bn' => $pgwStore->name_bn,
+                        'header' => $pgwStore->key === 'ssl' ? $header_message : null,
+                        'completion' => $completion == 1 ? '' : null,
                         'icon' => $pgwStore->icon,
                         'status' => PaymentLinkStatus::ACTIVE
                     ];
-                }
-            } else {
-                foreach ($pgwStores as $pgwStore) {
+                } else {
                     $pgwData[] = [
                         'id' => $pgwStore->id,
                         'name' => $pgwStore->name,
                         'key' => $pgwStore->key,
                         'name_bn' => $pgwStore->name_bn,
+                        'header' => $pgwStore->key === 'ssl' ? $header_message : null,
+                        'completion' => $completion == 1 ? '' : null,
                         'icon' => $pgwStore->icon,
                         'status' => PaymentLinkStatus::INACTIVE
                     ];

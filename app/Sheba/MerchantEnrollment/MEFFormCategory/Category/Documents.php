@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory\Category;
 
+use Sheba\MerchantEnrollment\DocumentInformation;
 use Sheba\MerchantEnrollment\InstitutionInformation;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
@@ -22,13 +23,14 @@ class Documents extends MEFFormCategory
     public function get(): CategoryGetter
     {
         $formItems = $this->getFormFields();
-        $formData  = (new InstitutionInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
+        $formData  = (new DocumentInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
         return $this->getFormData($formItems, $formData);
     }
 
     public function post($data)
     {
-
+        $formItems = $this->getFormFields();
+        (new DocumentInformation())->setPartner($this->partner)->setFormItems($formItems)->postByCode($this->category_code, $data);
     }
 
     public function getFormFields()

@@ -30,7 +30,7 @@ return [
             'documents' => [],
         ]
     ],
-    'category_titles'                    => [
+    'category_titles' => [
         'nid_selfie'  => [
             'en' => 'NID and Selfie',
             'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'
@@ -144,7 +144,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'partner_basic_information',
                 'data_source_id'   => 'registration_year'
@@ -159,7 +159,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'json'
             ],
@@ -173,7 +173,7 @@ return [
                 'data'             => "MSME",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'json'
             ],
@@ -195,7 +195,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'partner_bank_information',
                 'data_source_id'   => 'acc_name'
@@ -210,7 +210,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'partner_bank_information',
                 'data_source_id'   => 'bank_name'
@@ -225,7 +225,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'partner_bank_information',
                 'data_source_id'   => 'bank_address'
@@ -240,7 +240,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'partner_bank_information',
                 'data_source_id'   => 'acc_no'
@@ -255,7 +255,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'partner_bank_information',
                 'data_source_id'   => 'routing_no'
@@ -278,7 +278,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'json',
             ],
@@ -292,7 +292,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'json',
             ],
@@ -306,7 +306,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'json',
             ],
@@ -320,7 +320,7 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'json',
             ],
@@ -334,31 +334,17 @@ return [
                 'data'             => "",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => false,
+                'is_editable'      => true,
                 'mandatory'        => false,
                 'data_source'      => 'json',
             ],
         ],
         'documents' => [
             [
-                'label'         => 'নিজের ছবি',
-                'message'       => 'হেল্পার টেক্সট',
-                'hint'          => '',
-                'id'            => 'personal_photo',
-                'error'         => "Personal photo is required",
-                'input_type'    => 'document',
-                'data'          => '',
-                "min_length"    => "",
-                "max_length"    => "",
-                'is_editable'   => true,
-                'mandatory'     => false,
-                'data_source'   => 'json'
-            ],
-            [
                 'label'          => 'ট্রেড লাইসেন্সের ছবি',
                 'message'        => '',
                 'hint'           => '',
-                'id'             => 'trade_licence_photo',
+                'id'             => 'trade_license_attachment',
                 'error'          => "Trade licence photo is required",
                 'input_type'     => 'document',
                 'data'           => '',
@@ -367,22 +353,24 @@ return [
                 'is_editable'    => true,
                 'mandatory'      => false,
                 'data_source'    => 'partner_basic_information',
-                'data_source_id' => 'trade_license_attachment'
+                'data_source_id' => 'trade_license_attachment',
+                'upload_folder'  => 'getTradeLicenceDocumentsFolder'
             ],
             [
                 'label'          => 'টিন অথবা ভ্যাট সার্টিফিকেটের ছবি',
                 'message'        => '',
                 'hint'           => '',
-                'id'             => 'personal_photo',
-                'error'          => "Personal photo is required",
+                'id'             => 'tin_certificate',
+                'error'          => "Tin photo is required",
                 'input_type'     => 'document',
                 'data'           => '',
                 "min_length"     => "",
                 "max_length"     => "",
                 'is_editable'    => true,
                 'mandatory'      => false,
-                'data_source'    => 'partner_basic_information',
-                'data_source_id' => 'tin_licence_photo'
+                'data_source'    => 'first_admin_profile',
+                'data_source_id' => 'tin_certificate',
+                'upload_folder'  => 'getVatRegistrationImagesFolder'
             ],
         ]
     ],
