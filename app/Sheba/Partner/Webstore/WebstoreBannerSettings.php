@@ -49,9 +49,13 @@ class WebstoreBannerSettings
     /**
      * @return mixed
      */
-    public function getBannerList()
+    public function getBannerList($partner)
     {
-      return $banners = WebstoreBanner::get()->map(function($banner){
+        $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner->id)->orWhereHas('banner' , function($q) {
+            $q->where('is_published_for_sheba', 1);
+        })->pluck('banner_id')->toArray();
+
+      return $banners = WebstoreBanner::whereIn('id', array_unique($partnerBanners))->orWhere('is_published_for_sheba', 1)->get()->map(function($banner){
             return [
               'id' => $banner->id,
               'image_link' => $banner->image_link

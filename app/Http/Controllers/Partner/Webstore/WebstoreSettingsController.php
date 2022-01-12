@@ -171,7 +171,8 @@ class WebstoreSettingsController extends Controller
 
     private function getBannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        return $webstoreBannerSettings->getBannerList();
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        return $webstoreBannerSettings->getBannerList($partner);
     }
 
     private function updateBannerSettings(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
