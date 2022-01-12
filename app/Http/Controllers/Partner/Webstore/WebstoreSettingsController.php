@@ -109,11 +109,14 @@ class WebstoreSettingsController extends Controller
 
     public function updateBannerV3($id, Request $request)
     {
+        $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image']);
         $partner = resolvePartnerFromAuthMiddleware($request);
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
+        $banner_id = $request->banner_id;
+        if ($request->file('image')) $banner_id = $this->createWebstoreBanner($request->file('image'), $request->title);
         $data = [
-            'banner_id' => $request->banner_id,
+            'banner_id' => $banner_id,
             'title' => $request->title,
             'description' => $request->description,
             'is_published' => $request->is_published
@@ -128,16 +131,18 @@ class WebstoreSettingsController extends Controller
 
     public function store(Request $request)
     {
+        $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image']);
         $partner = resolvePartnerFromAuthMiddleware($request);
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
-        $bannerImage = $this->createWebstoreBanner($request->file('image'), $request->title);
+        $banner_id = $request->banner_id;
+        if ($request->file('image')) $banner_id = $this->createWebstoreBanner($request->file('image'), $request->title);
         $data = [
             'partner_id' => $partner->id,
-            'image' => $bannerImage->id,
             'title' => $request->title,
             'description' => $request->description,
-            'is_published' => $request->is_published
+            'is_published' => $request->is_published,
+            'banner_id' => $banner_id
         ];
 
         /** @var WebstoreBannerSettings $webstoreBannerSettings */
@@ -159,7 +164,8 @@ class WebstoreSettingsController extends Controller
             'is_published' => 1,
             'is_published_for_sheba' => 0
         ];
-        return WebstoreBanner::create($this->withCreateModificationField($data));
+        $banner = WebstoreBanner::create($this->withCreateModificationField($data));
+        return $banner->id;
     }
 
     /**
@@ -258,7 +264,7 @@ class WebstoreSettingsController extends Controller
 
     private function updateBannerSettingsV3($id, $partner, $data)
     {
-        $banner_settings = PartnerWebstoreBanner::find($id);
+        $banner_settings = PartnerWebstoreBanner::where('id', $id)->where('partner_id', $partner->id)->first();
         if(!$banner_settings) {
             return false;
         } else {
