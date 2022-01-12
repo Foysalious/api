@@ -30,6 +30,28 @@ return [
             'documents' => [],
         ]
     ],
+    'required_documents' => [
+        'ssl' => [
+            [
+                'name' => 'trade_licence',
+                'name_bn' => 'ট্রেড লাইসেন্স',
+                'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/trade_licence_icon.png'
+            ],
+            [
+                'name' => 'tin_certificate',
+                'name_bn' => 'টিন সার্টিফিকেট',
+                'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/tin_certificate_icon.png'
+            ],
+            [
+                'name' => 'vat_certificate',
+                'name_bn' => 'ভ্যাট সার্টিফিকেট',
+                'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+            ]
+        ],
+        'bkash' => [
+
+        ]
+    ],
     'category_titles' => [
         'nid_selfie'  => [
             'en' => 'NID and Selfie',
@@ -84,7 +106,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => true,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_basic_information',
                 'data_source_id'=> 'trade_license'
             ],

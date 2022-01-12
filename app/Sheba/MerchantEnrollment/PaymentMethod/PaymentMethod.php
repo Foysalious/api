@@ -40,6 +40,7 @@ abstract class PaymentMethod
 
     abstract public function completion(): PaymentMethodCompletion;
 
+    abstract public function requiredDocuments();
 
     public function postCategoryDetail(MEFFormCategory $category, $data)
     {

@@ -122,4 +122,10 @@ class MerchantEnrollment
         $this->setPostData(json_encode([$key => $url]));
         return $this;
     }
+
+    public function getRequiredDocuments()
+    {
+        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        return $payment_method->requiredDocuments();
+    }
 }
