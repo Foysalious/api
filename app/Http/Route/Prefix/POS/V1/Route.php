@@ -160,7 +160,7 @@ class Route
                 $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerListV2');
                 $api->get('webstore/banners', 'Partner\Webstore\WebstoreSettingsController@getBanners');
                 $api->post('webstore/banners/{id}', 'Partner\Webstore\WebstoreSettingsController@updateBannerV3');
-                $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
+                $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@store');
                 $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBannerV2');
                 $api->get('/settings', 'Pos\SettingController@getSettingsV2');
                 $api->post('/settings', 'Pos\SettingController@storePosSettingV2');

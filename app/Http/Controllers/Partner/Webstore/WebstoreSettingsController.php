@@ -9,10 +9,14 @@ use App\Transformers\Partner\WebstoreSettingsTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\UploadedFile;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\WebstoreBanner\Model as WebstoreBanner;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 use Sheba\Subscription\Partner\Access\AccessManager;
@@ -21,7 +25,7 @@ use Throwable;
 
 class WebstoreSettingsController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, FileManager, CdnFileManager;
 
     public function index(Request $request)
     {
@@ -116,6 +120,41 @@ class WebstoreSettingsController extends Controller
         } else{
             return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
         }
+    }
+
+    public function store(Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
+        $this->setModifier($manager_resource);
+        $bannerImage = $this->createWebstoreBanner($request->file('image'), $request->title);
+        $data = [
+            'partner_id' => $partner->id,
+            'image' => $bannerImage->id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'is_published' => $request->is_published
+        ];
+
+        /** @var WebstoreBannerSettings $webstoreBannerSettings */
+        $webstoreBannerSettings = app(WebstoreBannerSettings::class);
+        $webstoreBannerSettings->setData($data)->store();
+
+    }
+
+    public function createWebstoreBanner($file, $filename)
+    {
+        /** @var UploadedFile $avatar */
+        /** @var string $avatar_filename */
+        list($avatar, $avatar_filename) = $this->makeWebstoreBanner($file, $filename);
+        $banner_link = $this->saveFileToCDN($avatar, getPosServiceThumbFolder(), $avatar_filename);
+        $data = [
+            'image_link' => $banner_link,
+            'small_image_link' => $banner_link,
+            'is_published' => 1,
+            'is_published_for_sheba' => 0
+        ];
+        return WebstoreBanner::create($this->withCreateModificationField($data));
     }
 
     /**
@@ -222,5 +261,11 @@ class WebstoreSettingsController extends Controller
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($data)->update();
             return true;
         }
+    }
+
+    protected function makeWebstoreBanner($file, $name): array
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        return [$file, $filename];
     }
 }
