@@ -7,10 +7,8 @@ class PaymentService
 {
     private $partner;
     private $status;
-    private $mefStatus;
-    private $surveyStatus;
-    private $eKycStatus;
     private $pgwStatus;
+    private $key;
 
     /**
      * @param mixed $partner
@@ -20,6 +18,36 @@ class PaymentService
     {
         $this->partner = $partner;
         return $this;
+    }
+
+
+    /**
+     * @param mixed $key
+     */
+    public function setKey($key)
+    {
+        $this->key = $key;
+        return $this;
+    }
+
+    public function getPGWDetails()
+    {
+       // $this->getResellerPaymentStatus();
+        //$this->getPgwStatus();
+        return [
+            'banner' =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/payment_gateway_banner/app-banner+(1)+2.png',
+            'faq' => [
+                'আপনার ব্যবসার প্রোফাইল সম্পন্ন করুন',
+                'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
+                'পেমেন্ট সার্ভিস কনফিগার করুন'
+            ],
+            'status' => 'ekyc_completed',//$this->status ?? null,
+            'mor_status_wise_text' => null,//config('reseller_payment.mor_status_wise_text')[$this->key][$this->status],
+            'pgw_status' =>  null,//$this->pgwStatus ?? null,
+            'pgw_inactive_text' => 'নিষ্ক্রিয় থাকা অবস্থায় SSL কমার্সের গেটওয় থেকে ডিজিটাল উপায়ে টাকা গ্রহণ করা যাবে না।',
+            'how_to_use_link' => ''
+        ];
+
     }
 
     public function getStatusAndBanner()
@@ -36,12 +64,14 @@ class PaymentService
 
     private function getBanner()
     {
-
+        if(!$this->status)
+            $this->status  = 'None';
+      return  config('reseller_payment.status_wise_home_banner')[$this->status];
     }
 
     private function getResellerPaymentStatus()
     {
-       $this->getMefStatus();
+       $this->getMORStatus();
        if(isset($this->status))
            return;
        $this->getSurveyStatus();
@@ -51,9 +81,21 @@ class PaymentService
 
     }
 
-    private function getMefStatus()
+    private function getMORStatus()
     {
-        return;
+        /** @var MORServiceClient $morClient */
+        $morClient = app(MORServiceClient::class);
+        $morStatus = $morClient->get('applications/status?user_id='.$this->partner->id.'&user_type=partner')['status'];
+        if($morStatus)
+            return $this->status = $morStatus;
+       return $this->checkMefCompletion();
+
+    }
+
+    private function checkMefCompletion()
+    {
+        //check mef completion
+       return $this->status = 'pending';
     }
 
     private function getSurveyStatus()
