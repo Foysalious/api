@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment;
 
+use App\Models\Partner;
 use App\Models\PartnerBankInformation;
 use Sheba\ModificationFields;
 
@@ -12,6 +13,14 @@ class InstitutionInformation extends PartnerAllInformation
     public function institution_get(): array
     {
         return $this->getFormFieldValues();
+    }
+
+    public function setPartner(Partner $partner): InstitutionInformation
+    {
+        $this->partner = $partner;
+        $this->partner_basic_information = $this->partner->basicInformations;
+        $this->partner_bank_information  = $this->partner->bankInformations()->first();
+        return $this;
     }
 
     public function institution_post($post_data)
