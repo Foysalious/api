@@ -138,6 +138,12 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
+        /* \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+         $this->artisan('migrate');
+         $this->beforeApplicationDestroyed(function () {
+             \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+         });*/
+
         $this->beforeApplicationDestroyed(function () {
             foreach ($this->app->make('db')->getConnections() as $connection) {
                 $connection->disconnect();
