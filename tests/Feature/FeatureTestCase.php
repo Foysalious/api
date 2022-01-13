@@ -34,9 +34,9 @@ use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
-use TestCase;
 use Tests\Mocks\MockInventoryServerClient;
 use Tests\Mocks\MockPosOrderServerClient;
+use Tests\TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
