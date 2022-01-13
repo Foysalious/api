@@ -479,13 +479,14 @@ return [
 
         ],
     ],
-    "status_wise_banner" => [
-        "ekyc_completed" => '',
-        'survey_completed' => '',
-        'mef_completed' => '',
-        'mef_pending' => '',
-        'mef_verified' => '',
-        'fresh' => ''
+    "status_wise_home_banner" => [
+        'verified' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/verified.png',
+        'processing' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/processing.png',
+        'pending' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pending.png',
+        'rejected' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/rejected.png',
+        'survey_completed' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/survey_completed.png',
+        "ekyc_completed" => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/ekyc_completed.png',
+        'none' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png'
     ],
 
     "payment_gateway_status_message" => [

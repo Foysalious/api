@@ -7,9 +7,6 @@ class PaymentService
 {
     private $partner;
     private $status;
-    private $mefStatus;
-    private $surveyStatus;
-    private $eKycStatus;
     private $pgwStatus;
 
     /**
@@ -36,12 +33,14 @@ class PaymentService
 
     private function getBanner()
     {
-
+        if(!$this->status)
+            $this->status  = 'None';
+      return  config('reseller_payment.status_wise_home_banner')[$this->status];
     }
 
     private function getResellerPaymentStatus()
     {
-       $this->getMefStatus();
+       $this->getMORStatus();
        if(isset($this->status))
            return;
        $this->getSurveyStatus();
@@ -51,9 +50,21 @@ class PaymentService
 
     }
 
-    private function getMefStatus()
+    private function getMORStatus()
     {
-        return;
+        /** @var MORServiceClient $morClient */
+        $morClient = app(MORServiceClient::class);
+        $morStatus = $morClient->get('applications/status?user_id='.$this->partner->id.'&user_type=partner')['status'];
+        if($morStatus)
+            return $this->status = $morStatus;
+       return $this->checkMefCompletion();
+
+    }
+
+    private function checkMefCompletion()
+    {
+        //check mef completion
+       return $this->status = 'pending';
     }
 
     private function getSurveyStatus()
