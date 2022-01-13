@@ -108,4 +108,22 @@ class MerchantEnrollmentController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function requiredDocuments(Request $request, MerchantEnrollment $merchantEnrollment): JsonResponse
+    {
+        try {
+            $this->validate($request, MEFGeneralStatics::payment_gateway_key_validation());
+            $data = $merchantEnrollment->setKey($request->key)->getRequiredDocuments();
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (ResellerPaymentException $e) {
+            logError($e);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

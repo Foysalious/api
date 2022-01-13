@@ -37,4 +37,9 @@ class MEFGeneralStatics
             'document_id' => 'required'
         ]);
     }
+
+    public static function required_documents(): array
+    {
+        return config('reseller_payment.required_documents');
+    }
 }

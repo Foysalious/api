@@ -409,6 +409,24 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return null;
     }
 
+    public function getNidNo()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->nid_no;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->nid_no;
+        return null;
+    }
+
+    public function getDob()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->dob;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->dob;
+        return null;
+    }
+
     public function operationResources()
     {
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Operation'])->withPivot($this->resourcePivotColumns);
