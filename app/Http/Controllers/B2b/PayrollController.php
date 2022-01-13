@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Business\UpdateGlobalGrossSalaryHistory;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\ComponentPackage\Creator as PackageCreator;
@@ -186,7 +187,7 @@ class PayrollController extends Controller
         $creator->setPayrollComponentRequester($this->payrollComponentRequester)->create();
         $updater->setPayrollComponentRequester($this->payrollComponentRequester)->update();
         $updater->setPayrollComponentRequester($this->payrollComponentRequester)->delete();
-
+        dispatch(new UpdateGlobalGrossSalaryHistory($payroll_setting, $request->delete_data));
         return api_response($request, null, 200);
     }
 

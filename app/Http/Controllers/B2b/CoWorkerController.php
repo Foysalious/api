@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
-use App\Sheba\Business\PayrollComponent\Components\GrossComponents\GrossBreakdownHistory\Creator as GrossSalaryBreakdownHistoryCreator;
+use App\Sheba\Business\PayrollComponent\Components\GrossComponents\GrossBreakdownHistory\IndividualHistoryCreator as GrossSalaryBreakdownHistoryCreator;
 use App\Sheba\Business\Salary\History\Creator as GrossSalaryHistoryCreator;
 use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;

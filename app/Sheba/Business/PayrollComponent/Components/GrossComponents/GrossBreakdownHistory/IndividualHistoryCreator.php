@@ -3,7 +3,7 @@
 use Carbon\Carbon;
 use Sheba\Dal\GrossSalaryBreakdownHistory\GrossSalaryBreakdownHistoryRepository;
 
-class Creator
+class IndividualHistoryCreator
 {
 
     const INDIVIDUAL_SALARY = 'individual_salary';
@@ -39,10 +39,12 @@ class Creator
                 'name' => $breakdown['name'],
                 'value' => $breakdown['value'],
                 'is_taxable' => $breakdown['is_default'] ? 1 : $breakdown['is_taxable'],
-                'is_active' => $breakdown['is_default'] ? 1 : $breakdown['is_active']
+                'is_active' => $breakdown['is_default'] ? 1 : $breakdown['is_active'],
+                'is_deleted' => 0
             ];
         }
-        $existing_setting = $this->grossSalaryBreakdownHistoryRepository->where('business_member_id', $this->businessMember->id)->where('end_date', null)->first();
+        $existing_setting = $this->grossSalaryBreakdownHistoryRepository->where('business_member_id', $this->businessMember->id)->where('setting_form_where', self::INDIVIDUAL_SALARY)->where('end_date', null)->first();
+        if (!$existing_setting) return;
         $this->grossSalaryBreakdownHistoryRepository->update($existing_setting, ['end_date' => Carbon::now()->toDateString()]);
         $this->grossSalaryBreakdownHistoryRepository->create([
             'business_member_id' => $this->businessMember->id,
