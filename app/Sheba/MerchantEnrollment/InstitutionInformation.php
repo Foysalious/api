@@ -53,6 +53,7 @@ class InstitutionInformation extends PartnerAllInformation
         $post_data = json_decode($post_data, 1);
         foreach ($this->formItems as $item) {
             if($item['input_type'] !== 'header') {
+                dd($post_data);
                 if(isset($post_data[$item['id']])) {
                     $key = $item['id'];
                     if(isset($item['data_source']) && $item['data_source'] != 'json') {

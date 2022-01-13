@@ -396,7 +396,7 @@ return [
                 'data'          => '',
                 "min_length"    => "",
                 "max_length"    => "",
-                'is_editable'   => true,
+                'is_editable'   => false,
                 'mandatory'     => true,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'name'
@@ -426,7 +426,7 @@ return [
                 'data'          => '',
                 "min_length"    => "",
                 "max_length"    => "",
-                'is_editable'   => true,
+                'is_editable'   => false,
                 'mandatory'     => true,
                 'data_source'      => 'partner_resource_profile',
                 'data_source_id'   => 'mobile'
