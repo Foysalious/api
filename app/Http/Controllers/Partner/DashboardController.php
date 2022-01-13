@@ -182,9 +182,10 @@ class DashboardController extends Controller
             $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
         return api_response($request, $dashboard, 200, ['data' => $dashboard]);
     }
+
     private function hasQrCode(OrderService $orderService, Partner $partner)
     {
-        if(!$partner->isMigrated(Modules::POS))
+        if (!$partner->isMigrated(Modules::POS))
             return ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
         $partnerInfo = $orderService->setPartnerId($partner->id)->getPartnerDetails();
         return $partnerInfo['partner']['qr_code_account_type'] && $partnerInfo['partner']['qr_code_image'] ? 1 : 0;
@@ -280,12 +281,12 @@ class DashboardController extends Controller
 
     public function getV3(Request $request, OrderService $orderService)
     {
-            /** @var Partner $partner */
-            $partner = $request->partner;
-            /** @var Resource $resource */
-            $resource = $request->manager_resource;
-            $data = (new PartnerRepository($partner))->getDashboard($resource,$orderService);
-            return api_response($request, $data, 200, ['data' => $data]);
+        /** @var Partner $partner */
+        $partner = $request->partner;
+        /** @var Resource $resource */
+        $resource = $request->manager_resource;
+        $data = (new PartnerRepository($partner))->getDashboard($resource, $orderService);
+        return api_response($request, $data, 200, ['data' => $data]);
     }
 
     public function getFeatureVideos(Request $request)
@@ -451,6 +452,16 @@ class DashboardController extends Controller
 
     public function settingLastUpdatedDetails(Request $request)
     {
+        return api_response($request, null, 200, ['data' => [
+            [
+                'key' => "home_settings",
+                'updated_at' => "2022-01-11 18:45:32"
+            ],
+            [
+                'key' => "pos_settings",
+                'updated_at' => "2022-01-11 18:45:32"
+            ]
+        ]]);
         $partner = $request->partner;
         if (!$partner instanceof Partner) {
             return api_response($request, null, 404);
@@ -467,6 +478,11 @@ class DashboardController extends Controller
 
             unset($modules[$key]['function']);
         }
-        return api_response($request, $modules, 200, ['data' => $modules]);
+        return api_response($request, $modules, 200, ['data' => [
+            [
+                'key' => "home_settings",
+                'updated_at' => "2022-01-11 18:45:32"
+            ]
+        ]]);
     }
 }
