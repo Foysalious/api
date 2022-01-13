@@ -50,13 +50,13 @@ class WebstoreSettingsController extends Controller
      */
     public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
-        $this->updateWebstoreSettings($request,$webstoreSettingsUpdateRequest);
+        $this->updateWebstoreSettings($request, $webstoreSettingsUpdateRequest);
         return api_response($request, null, 200, ['message' => 'Successful']);
     }
 
     public function updateV2(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
-        $this->updateWebstoreSettings($request,$webstoreSettingsUpdateRequest);
+        $this->updateWebstoreSettings($request, $webstoreSettingsUpdateRequest);
         return http_response($request, null, 200, ['message' => 'Successful']);
     }
 
@@ -68,13 +68,13 @@ class WebstoreSettingsController extends Controller
      */
     public function bannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $list = $this->getBannerList($request,$webstoreBannerSettings);
+        $list = $this->getBannerList($request, $webstoreBannerSettings);
         return api_response($request, null, 200, ['data' => $list]);
     }
 
     public function bannerListV2(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $list = $this->getBannerList($request,$webstoreBannerSettings);
+        $list = $this->getBannerList($request, $webstoreBannerSettings);
         return http_response($request, null, 200, ['data' => $list]);
     }
 
@@ -85,20 +85,20 @@ class WebstoreSettingsController extends Controller
      */
     public function updateBanner(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $banner_settings_updated = $this->updateBannerSettings($request,$webstoreBannerSettings);
+        $banner_settings_updated = $this->updateBannerSettings($request, $webstoreBannerSettings);
         if (!$banner_settings_updated) {
-            return api_response($request, null, 400, ['message' => 'Banner Settings not found'] );
-        } else{
-           return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+            return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        } else {
+            return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
         }
     }
 
     public function updateBannerV2(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $banner_settings_updated = $this->updateBannerSettings($request,$webstoreBannerSettings);
+        $banner_settings_updated = $this->updateBannerSettings($request, $webstoreBannerSettings);
         if (!$banner_settings_updated) {
-            return http_response($request, null, 400, ['message' => 'Banner Settings not found'] );
-        } else{
+            return http_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        } else {
             return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
         }
     }
@@ -119,15 +119,15 @@ class WebstoreSettingsController extends Controller
         ];
         $banner_settings_updated = $this->updateBannerSettingsV3($id, $partner, $data);
         if (!$banner_settings_updated) {
-            return http_response($request, null, 400, ['message' => 'Banner Settings not found'] );
-        } else{
+            return http_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        } else {
             return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
         }
     }
 
     public function store(Request $request)
     {
-        $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image']);
+        $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image', 'is_published' => 'required']);
         $partner = resolvePartnerFromAuthMiddleware($request);
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
@@ -247,11 +247,9 @@ class WebstoreSettingsController extends Controller
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
-        if(!$banner_settings) {
+        if (!$banner_settings) {
             return false;
-        }
-
-        else {
+        } else {
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
             return true;
         }
@@ -260,7 +258,7 @@ class WebstoreSettingsController extends Controller
     private function updateBannerSettingsV3($id, $partner, $data)
     {
         $banner_settings = PartnerWebstoreBanner::where('id', $id)->where('partner_id', $partner->id)->first();
-        if(!$banner_settings) {
+        if (!$banner_settings) {
             return false;
         } else {
             /** @var WebstoreBannerSettings $webstoreBannerSettings */
