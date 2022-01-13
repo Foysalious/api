@@ -452,16 +452,6 @@ class DashboardController extends Controller
 
     public function settingLastUpdatedDetails(Request $request)
     {
-        return api_response($request, null, 200, ['data' => [
-            [
-                'key' => "home_settings",
-                'updated_at' => "2022-01-11 18:45:32"
-            ],
-            [
-                'key' => "pos_settings",
-                'updated_at' => "2022-01-11 18:45:32"
-            ]
-        ]]);
         $partner = $request->partner;
         if (!$partner instanceof Partner) {
             return api_response($request, null, 404);
