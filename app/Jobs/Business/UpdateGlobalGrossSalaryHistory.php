@@ -34,7 +34,6 @@ class UpdateGlobalGrossSalaryHistory extends Job implements ShouldQueue
         $data = $this->makeData();
         $active_business_members = $this->business->getActiveBusinessMember()->get();
         foreach ($active_business_members as $business_member) {
-            if($business_member->id != 590) continue;
             $existing_setting = $this->grossSalaryBreakdownHistoryRepository->where('business_member_id', $business_member->id)->where('setting_form_where', self::BREAKDOWN_GROSS_SALARY)->where('end_date', null)->first();
             $this->grossSalaryBreakdownHistoryRepository->update($existing_setting, ['end_date' => Carbon::now()->toDateString()]);
             $this->grossSalaryBreakdownHistoryRepository->create([
