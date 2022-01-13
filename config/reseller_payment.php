@@ -488,6 +488,13 @@ return [
         "ekyc_completed" => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/ekyc_completed.png',
         'none' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png'
     ],
+    'mor_status_wise_text' => [
+      'ssl' => [
+          'processing' => 'আপনার আবেদনটি সফলভাবে সম্পন্ন হয়েছে অনুমোদনের জন্য অনুগ্রহ করে ১০ কার্যদিবস অপেক্ষা করুন।',
+          'verified' => 'আপনার আবেদনটি সফলভাবে অনুমোদন হয়েছে অনুগ্রহ করে আপনার ইমেইল চেক করুন এবং প্রয়োজনীয় তথ্য দিয়ে পেমেন্ট সার্ভিস সেট-আপ করুন।',
+          'rejected' => 'আপনার আবেদনটি অনুমোদন করা সম্ভব হয়নি কারণ - Rejection Note সঠিক তথ্য দিয়ে পুনরায় আবেদন করুন।'
+      ]
+    ],
 
     "payment_gateway_status_message" => [
         "ssl" => [

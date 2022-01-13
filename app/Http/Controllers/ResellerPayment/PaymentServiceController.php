@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ResellerPayment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\PaymentGateway\PaymentGateway;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -188,14 +189,23 @@ class PaymentServiceController extends Controller
     {
         $partner = $request->partner;
 
-        $data = $paymentService->setPartner($partner)->getStatusAndBanner();
+       // $data = $paymentService->setPartner($partner)->getStatusAndBanner();
 
-        /*$data = [
+        $data = [
             'banner' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png',
             'status' => null,
             'pgw_status' => 0,
-        ];*/
+        ];
 
         return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService)
+    {
+        /*$this->validate($request, [
+            'key' => 'required|in:', implode(',', config('reseller_payment.available_payment_gateway_keys'))
+        ]);*/
+        $detail = $paymentService->setKey($request->key)->getPGWDetails();
+        return api_response($request, null, 200, ['data' => $detail]);
     }
 }
