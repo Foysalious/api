@@ -1,58 +1,59 @@
 <?php
 
-use Dotenv\Dotenv;
-use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Bootstrap\LoadConfiguration;
+namespace Tests;
 
-class TestCase extends Illuminate\Foundation\Testing\TestCase
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
+use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Str;
+use Illuminate\Contracts\Console\Kernel;
+
+/**
+ * @author Shafiqul Islam <shafiqul@sheba.xyz>
+ */
+abstract class TestCase extends BaseTestCase
 {
-    /**
-     * The base URL to use while testing the application.
-     *
-     * @var string
-     */
-    protected $baseUrl;
+    use CreatesApplication, HasFactory, RefreshDatabase;
 
-    /**
-     * Creates the application.
-     *
-     * @return Application
-     */
-    public function createApplication()
+    public function setUp(): void
     {
-        $app = require __DIR__ . '/../bootstrap/app.php';
+        parent::setup();
 
-        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        Factory::guessFactoryNamesUsing(function (string $modelName) {
+            // We can also customise where our factories live too if we want:
+            $namespace = 'Database\\Factories\\';
 
-        $this->afterApplicationCreated(function () {
-            $this->artisan('config:clear');
+            // Here we are getting the model name from the class namespace
+            $modelName = Str::afterLast($modelName, '\\');
+
+            // Finally, we'll build up the full class path where
+            // Laravel will find our model factory
+            return $namespace.$modelName.'Factory';
         });
-
-        (new Dotenv($app->environmentPath(), $app->environmentFile()))->overload();
-        (new LoadConfiguration())->bootstrap($app);
-
-        $this->baseUrl = env('APP_URL');
-
-        return $app;
     }
 
-    protected function arrayHasKeys($keys, $array)
+    /**
+     * @author Hasan Hafiz Pasha <mach.pasha@gmail.com>
+     */
+    protected function refreshTestDatabase()
     {
-        foreach ($keys as $key) {
-            $this->arrayHasKey($key)->evaluate($array);
-        }
-    }
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', 1000);
 
-    protected function tearDown()
-    {
-        parent::tearDown();
+        if (!RefreshDatabaseState::$migrated) {
+            /**
+             * NEED TO RUN ONLY ONE TIMES
+             *
+             * DB::unprepared(file_get_contents(database_path('seeds/sheba_testing.sql')));
+             */
+            $this->artisan('migrate');
+            $this->app[Kernel::class]->setArtisan(null);
 
-        $reflection_object = new ReflectionObject($this);
-        foreach ($reflection_object->getProperties() as $prop) {
-            if (!$prop->isStatic() && 0 !== strpos($prop->getDeclaringClass()->getName(), 'PHPUnit_')) {
-                $prop->setAccessible(true);
-                $prop->setValue($this, null);
-            }
+            RefreshDatabaseState::$migrated = true;
         }
+
+        $this->beginDatabaseTransaction();
     }
 }

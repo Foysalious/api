@@ -20,6 +20,9 @@ use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockAccountingEntryClient;
 use Tests\Mocks\MockExpenseClient;
 
+/**
+ * @author Khairun Nahar <khairun@sheba.xyz>
+ */
 class SmanagerTopupTest extends FeatureTestCase
 {
     /** @var $topUpVendor */
@@ -40,7 +43,7 @@ class SmanagerTopupTest extends FeatureTestCase
     /** @var $topBlocklistNumbers */
     private $topBlocklistNumbers;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

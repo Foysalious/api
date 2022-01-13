@@ -1,14 +1,19 @@
-<?php namespace Tests\Feature\sProServiceBookCategory;
+<?php
+
+namespace Tests\Feature\sProServiceBookCategory;
 
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProMasterCategoryTest extends FeatureTestCase
 {
+    protected $secondaryCategory;
     private $category;
-    private $secondaryCategory;
     private $category_location;
     private $category_location2;
     private $service;
@@ -16,9 +21,9 @@ class sProMasterCategoryTest extends FeatureTestCase
     private $thumb = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/categories_images/thumbs/1482049279_home_appliances_.png';
     private $icon = 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/categories_images/icons/1618145164_tiwnn.svg';
     private $icon_png = 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/categories_images/icons_png/1618147294_tiwnn.png';
-    private $icon_svg  = 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/marketplace/default_images/svg/default_icon.svg';
+    private $icon_svg = 'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/marketplace/default_images/svg/default_icon.svg';
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -30,37 +35,36 @@ class sProMasterCategoryTest extends FeatureTestCase
 
         $this->logIn();
 
-        $this->category = factory(Category::class)->create([
-            'name' => $this->name,
-            'bn_name' => '',
+        $this->category = Category::factory()->create([
+            'name'               => $this->name,
+            'bn_name'            => '',
             'publication_status' => 1,
-            'thumb' => $this->thumb,
-            'app_thumb' => '',
-            'icon' => $this->icon,
-            'icon_png' => $this->icon_png,
-            'icon_svg' => $this->icon_svg
+            'thumb'              => $this->thumb,
+            'app_thumb'          => '',
+            'icon'               => $this->icon,
+            'icon_png'           => $this->icon_png,
+            'icon_svg'           => $this->icon_svg,
         ]);
 
-        $this->secondaryCategory = factory(Category::class)->create([
-            'parent_id' => $this->category->id,
-            'publication_status' => 1
+        $this->secondaryCategory = Category::factory()->create([
+            'parent_id'          => $this->category->id,
+            'publication_status' => 1,
         ]);
 
-        $this->category_location = factory(CategoryLocation::class)->create([
+        $this->category_location = CategoryLocation::factory()->create([
             'category_id' => $this->category->id,
-            'location_id' => 4
+            'location_id' => 4,
         ]);
 
-        $this->category_location2 = factory(CategoryLocation::class)->create([
+        $this->category_location2 = CategoryLocation::factory()->create([
             'category_id' => $this->secondaryCategory->id,
-            'location_id' => 4
+            'location_id' => 4,
         ]);
 
-        $this->service = factory(Service::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'publication_status' => 1
+        $this->service = Service::factory()->create([
+            'category_id'        => $this->secondaryCategory->id,
+            'publication_status' => 1,
         ]);
-
     }
 
     public function testSProMasterCategoryAPIWithoutLocationParameter()
@@ -81,7 +85,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         $this->assertEquals($this->icon, $data["categories"][0]["icon"]);
         $this->assertEquals($this->icon_png, $data["categories"][0]["icon_png"]);
         $this->assertEquals($this->icon_svg, $data["categories"][0]["icon_svg"]);
-
     }
 
     public function testSProMasterCategoryAPIWithValidLatLngParameter()
@@ -102,7 +105,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         $this->assertEquals($this->icon, $data["categories"][0]["icon"]);
         $this->assertEquals($this->icon_png, $data["categories"][0]["icon_png"]);
         $this->assertEquals($this->icon_svg, $data["categories"][0]["icon_svg"]);
-
     }
 
     public function testSProMasterCategoryAPIWithValidLocationParameter()
@@ -124,7 +126,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         $this->assertEquals($this->icon, $data["categories"][0]["icon"]);
         $this->assertEquals($this->icon_png, $data["categories"][0]["icon_png"]);
         $this->assertEquals($this->icon_svg, $data["categories"][0]["icon_svg"]);
-
     }
 
     public function testSProMasterCategoryAPIWithInvalidLatAndValidLngParameter()
@@ -139,7 +140,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat must be a number.', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithValidLatAndInvalidLngParameter()
@@ -154,7 +154,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lng must be a number.', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithInvalidLatLngParameter()
@@ -169,7 +168,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat must be a number.The lng must be a number.', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithInvalidLocationParameter()
@@ -184,7 +182,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The location must be a number.', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithLatAndWithoutLngParameter()
@@ -199,7 +196,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lng field is required when lat is present.', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithoutLatAndWithLngParameter()
@@ -214,17 +210,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat field is required when lng is present.', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithLocationNotAvailableForThisCategory()
     {
         //arrange
-        $this->category -> update(["publication_status" => 1]);
+        $this->category->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
         $response = $this->get('v3/categories?location=8');
@@ -234,17 +229,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryPublishedAndServicePublished()
     {
         //arrange
-        $this->category -> update(["publication_status" => 0]);
+        $this->category->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
         $response = $this->get('v3/categories?lat=23.788994076131&lng=90.410852011945');
@@ -254,17 +248,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryUnpublishedAndServicePublished()
     {
         //arrange
-        $this->category -> update(["publication_status" => 0]);
+        $this->category->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
         $response = $this->get('v3/categories?lat=23.788994076131&lng=90.410852011945');
@@ -274,17 +267,17 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
-    public function testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryUnpublishedAndServiceUnpublished()
+    public function testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryUnpublishedAndServiceUnpublished(
+    )
     {
         //arrange
-        $this->category -> update(["publication_status" => 0]);
+        $this->category->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
         $response = $this->get('v3/categories?lat=23.788994076131&lng=90.410852011945');
@@ -294,17 +287,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithMasterCategoryUnpublishedAndSubCategoryPublishedAndServiceUnpublished()
     {
         //arrange
-        $this->category -> update(["publication_status" => 0]);
+        $this->category->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
         $response = $this->get('v3/categories?lat=23.788994076131&lng=90.410852011945');
@@ -314,17 +306,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryPublishedAndServicePublished()
     {
         //arrange
-        $this->category -> update(["publication_status" => 1]);
+        $this->category->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
 
         //act
@@ -341,17 +332,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         $this->assertEquals($this->icon, $data["categories"][0]["icon"]);
         $this->assertEquals($this->icon_png, $data["categories"][0]["icon_png"]);
         $this->assertEquals($this->icon_svg, $data["categories"][0]["icon_svg"]);
-
     }
 
     public function testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryUnpublishedAndServicePublished()
     {
         //arrange
-        $this->category -> update(["publication_status" => 1]);
+        $this->category->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
         $response = $this->get('v3/categories?lat=23.788994076131&lng=90.410852011945');
@@ -361,17 +351,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryUnpublishedAndServiceUnpublished()
     {
         //arrange
-        $this->category -> update(["publication_status" => 1]);
+        $this->category->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
         $response = $this->get('v3/categories?lat=23.788994076131&lng=90.410852011945');
@@ -381,17 +370,16 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithMasterCategoryPublishedAndSubCategoryPublishedAndServiceUnpublished()
     {
         //arrange
-        $this->category -> update(["publication_status" => 1]);
+        $this->category->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
         $response = $this->get('v3/categories?lat=23.788994076131&lng=90.410852011945');
@@ -401,7 +389,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProMasterCategoryAPIWithLatLngOfLocationNotAvailableForThisCategory()
@@ -416,7 +403,6 @@ class sProMasterCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
 }

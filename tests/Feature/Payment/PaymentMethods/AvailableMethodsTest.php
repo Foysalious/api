@@ -2,9 +2,12 @@
 
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class AvailableMethodsTest extends FeatureTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
     }

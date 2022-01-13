@@ -1,9 +1,6 @@
 <?php
 
-
 namespace Tests\Feature\sDeliveryOrderManagement;
-
-
 
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
@@ -11,6 +8,9 @@ use App\Models\PosOrderPayment;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
+ */
 class DeliveryOrderInfoAPITest extends FeatureTestCase
 {
     /** @var $posOrderCreate */
@@ -25,7 +25,7 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
     /** @var  $posOrderPayment */
     private $posOrderPayment;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
@@ -33,7 +33,7 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
             PosCustomer::class,
             PosOrder::class,
             PosOrderPayment::class,
-            PartnerDeliveryInformation::class
+            PartnerDeliveryInformation::class,
         ]);
         $this->logIn();
 
@@ -41,14 +41,14 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         $this->posOrderCreate = factory(PosOrder::class)->create();
         $this->posOrderPayment = factory(PosOrderPayment::class)->create();
         $this->partnerDeliveryinfo = factory(PartnerDeliveryInformation::class)->create([
-            'partner_id'=>$this->partner->id
+            'partner_id' => $this->partner->id,
         ]);
     }
 
     public function testPosDeliveryOrderInfo()
     {
         $response = $this->get('/v2/pos/delivery/order-information/1', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
@@ -58,20 +58,20 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
     public function test401ResponseforPosDeliveryOrderInfo()
     {
         $response = $this->get('/v2/pos/delivery/order-information/1', [
-            'Authorization' => "Bearer $this->token" . 'hrthew'
+            'Authorization' => "Bearer $this->token".'hrthew',
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(401, $data['code']);
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
     }
 
-/*    public function testPosDeliveryOrderCODAmountcalculate()
-    {
-        $response = $this->get('/v2/pos/delivery/order-information/1', [
-            'Authorization' => "Bearer $this->token"
-        ]);
+    /*    public function testPosDeliveryOrderCODAmountcalculate()
+        {
+            $response = $this->get('/v2/pos/delivery/order-information/1', [
+                'Authorization' => "Bearer $this->token"
+            ]);
 
-        $data = $response->decodeResponseJson();
-        $this->assertEquals('0', $data['order_information'][0]['cod_amount'][]);
-    }*/
+            $data = $response->decodeResponseJson();
+            $this->assertEquals('0', $data['order_information'][0]['cod_amount'][]);
+        }*/
 }

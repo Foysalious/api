@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\sProServiceBookCategory;
+<?php
+
+namespace Tests\Feature\sProServiceBookCategory;
 
 use App\Models\Location;
 use Sheba\Cache\CacheAside;
@@ -9,17 +11,18 @@ use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProServiceListTest extends FeatureTestCase
 {
-
+    protected $secondaryCategory;
+    protected $location;
     private $masterCategory;
-    private $secondaryCategory;
     private $service;
-    private $location;
 
-    public function setUp()
+    public function setUp(): void
     {
-
         parent::setUp();
 
         $cache_aside = app(CacheAside::class);
@@ -34,64 +37,61 @@ class sProServiceListTest extends FeatureTestCase
             Category::class,
             CategoryLocation::class,
             Service::class,
-            LocationService::class
+            LocationService::class,
         ]);
 
         $this->location = Location::find(4);
 
-        $this->masterCategory = factory(Category::class)->create([
+        $this->masterCategory = Category::factory()->create([
             'name' => 'Car Maintenance',
-            'slug' => 'car-maintenance'
+            'slug' => 'car-maintenance',
         ]);
 
-        $this->secondaryCategory = factory(Category::class)->create([
-            'name' => 'Car Paint',
-            'slug' => 'car-paint',
-            'parent_id' => $this->masterCategory->id,
-            'service_title' => 'Car Paint',
+        $this->secondaryCategory = Category::factory()->create([
+            'name'                 => 'Car Paint',
+            'slug'                 => 'car-paint',
+            'parent_id'            => $this->masterCategory->id,
+            'service_title'        => 'Car Paint',
             'terms_and_conditions' => '["Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eligendi non quis exercitationem culpa nesciunt nihil aut nostrum explicabo reprehenderit optio amet ab temporibus asperiores quasi cupiditate. Voluptatum ducimus voluptates voluptas?", "• The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am • Minimum 4 Hours Lead time after service booking • Emergency Support Service (BDT 500 will be added for Emergency Support)"]',
-            'max_order_amount' => 100
+            'max_order_amount'     => 100,
         ]);
 
-        $this->service = factory(Service::class)->create([
-            'name' => 'Matte Black',
-            'category_id'=> $this->secondaryCategory->id,
-            'description' => 'This is it!',
-            'faqs' => '[{"question":"How are you?","answer":"I am fine."}]',
-            'unit' => 'vehicle',
-            'bn_name' => 'কার ওয়াস',
-            'short_description' => 'Hello',
+        $this->service = Service::factory()->create([
+            'name'                 => 'Matte Black',
+            'category_id'          => $this->secondaryCategory->id,
+            'description'          => 'This is it!',
+            'faqs'                 => '[{"question":"How are you?","answer":"I am fine."}]',
+            'unit'                 => 'vehicle',
+            'bn_name'              => 'কার ওয়াস',
+            'short_description'    => 'Hello',
             'terms_and_conditions' => '["The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am"]',
-            'features' => '["WHAT TO EXPECT FROM THIS SERVICE"]'
+            'features'             => '["WHAT TO EXPECT FROM THIS SERVICE"]',
         ]);
 
-        factory(CategoryLocation::class)->create([
-            'category_id'=>$this->masterCategory->id,
-            'location_id'=>$this->location->id
+        CategoryLocation::factory()->create([
+            'category_id' => $this->masterCategory->id,
+            'location_id' => $this->location->id,
         ]);
 
-        factory(CategoryLocation::class)->create([
-            'category_id'=>$this->secondaryCategory->id,
-            'location_id'=>$this->location->id
+        CategoryLocation::factory()->create([
+            'category_id' => $this->secondaryCategory->id,
+            'location_id' => $this->location->id,
         ]);
 
         LocationService::create([
-            'location_id'=>$this->location->id,
-            'service_id'=>$this->service->id,
-            'prices'=> 100
+            'location_id' => $this->location->id,
+            'service_id'  => $this->service->id,
+            'prices'      => 100,
         ]);
-
     }
 
     public function testSProServiceListAPIWithValidLocationId()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->idsProServiceBookCategory/sProSubCategoryTest.php
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals($this->secondaryCategory->id, $data["category"]["id"]);
@@ -99,8 +99,14 @@ class sProServiceListTest extends FeatureTestCase
         $this->assertEquals("Car Paint", $data["category"]["name"]);
         $this->assertEquals(null, $data["category"]["slug"]);
         $this->assertEquals("Car Paint", $data["category"]["service_title"]);
-        $this->assertEquals('Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eligendi non quis exercitationem culpa nesciunt nihil aut nostrum explicabo reprehenderit optio amet ab temporibus asperiores quasi cupiditate. Voluptatum ducimus voluptates voluptas?', $data["category"]["terms_and_conditions"][0]);
-        $this->assertEquals('• The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am • Minimum 4 Hours Lead time after service booking • Emergency Support Service (BDT 500 will be added for Emergency Support)', $data["category"]["terms_and_conditions"][1]);
+        $this->assertEquals(
+            'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eligendi non quis exercitationem culpa nesciunt nihil aut nostrum explicabo reprehenderit optio amet ab temporibus asperiores quasi cupiditate. Voluptatum ducimus voluptates voluptas?',
+            $data["category"]["terms_and_conditions"][0]
+        );
+        $this->assertEquals(
+            '• The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am • Minimum 4 Hours Lead time after service booking • Emergency Support Service (BDT 500 will be added for Emergency Support)',
+            $data["category"]["terms_and_conditions"][1]
+        );
         $this->assertEquals(1, $data["category"]["is_auto_sp_enabled"]);
         $this->assertEquals(0, $data["category"]["is_vat_applicable"]);
         $this->assertEquals(0, $data["category"]["min_order_amount"]);
@@ -119,7 +125,10 @@ class sProServiceListTest extends FeatureTestCase
         $this->assertEquals("I am fine.", $data["category"]["services"][0]["faqs"][0]["answer"]);
         $this->assertEquals("Fixed", $data["category"]["services"][0]["variable_type"]);
         $this->assertEquals(1, $data["category"]["services"][0]["min_quantity"]);
-        $this->assertEquals('The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am', $data["category"]["services"][0]["terms_and_conditions"][0]);
+        $this->assertEquals(
+            'The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am',
+            $data["category"]["services"][0]["terms_and_conditions"][0]
+        );
         $this->assertEquals('WHAT TO EXPECT FROM THIS SERVICE', $data["category"]["services"][0]["features"][0]);
         $this->assertEquals(0, $data["category"]["services"][0]["is_inspection_service"]);
         $this->assertEquals(0, $data["category"]["services"][0]["is_add_on"]);
@@ -137,18 +146,15 @@ class sProServiceListTest extends FeatureTestCase
         $this->assertEquals(0, $data["category"]["delivery_charge"]);
         $this->assertEquals(null, $data["category"]["delivery_discount"]);
         $this->assertEquals(null, $data["category"]["disclaimer"]);
-
     }
 
     public function testSProServiceListAPIWithValidLatLng()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?lat=23.788099544655&lng=90.412001016086");
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?lat=23.788099544655&lng=90.412001016086"
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals($this->secondaryCategory->id, $data["category"]["id"]);
@@ -156,8 +162,14 @@ class sProServiceListTest extends FeatureTestCase
         $this->assertEquals("Car Paint", $data["category"]["name"]);
         $this->assertEquals(null, $data["category"]["slug"]);
         $this->assertEquals("Car Paint", $data["category"]["service_title"]);
-        $this->assertEquals('Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eligendi non quis exercitationem culpa nesciunt nihil aut nostrum explicabo reprehenderit optio amet ab temporibus asperiores quasi cupiditate. Voluptatum ducimus voluptates voluptas?', $data["category"]["terms_and_conditions"][0]);
-        $this->assertEquals('• The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am • Minimum 4 Hours Lead time after service booking • Emergency Support Service (BDT 500 will be added for Emergency Support)', $data["category"]["terms_and_conditions"][1]);
+        $this->assertEquals(
+            'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eligendi non quis exercitationem culpa nesciunt nihil aut nostrum explicabo reprehenderit optio amet ab temporibus asperiores quasi cupiditate. Voluptatum ducimus voluptates voluptas?',
+            $data["category"]["terms_and_conditions"][0]
+        );
+        $this->assertEquals(
+            '• The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am • Minimum 4 Hours Lead time after service booking • Emergency Support Service (BDT 500 will be added for Emergency Support)',
+            $data["category"]["terms_and_conditions"][1]
+        );
         $this->assertEquals(1, $data["category"]["is_auto_sp_enabled"]);
         $this->assertEquals(0, $data["category"]["is_vat_applicable"]);
         $this->assertEquals(0, $data["category"]["min_order_amount"]);
@@ -176,7 +188,10 @@ class sProServiceListTest extends FeatureTestCase
         $this->assertEquals("I am fine.", $data["category"]["services"][0]["faqs"][0]["answer"]);
         $this->assertEquals("Fixed", $data["category"]["services"][0]["variable_type"]);
         $this->assertEquals(1, $data["category"]["services"][0]["min_quantity"]);
-        $this->assertEquals('The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am', $data["category"]["services"][0]["terms_and_conditions"][0]);
+        $this->assertEquals(
+            'The price declared is an estimate and may vary depending on bus availability and the travel route plan • Overtime: After 10 hours duty BDT 1000 will be charged per hour • Booking should be placed at least 2 day before the service availing date. • Nocturnal service period is from 10.00pm to 8.00am',
+            $data["category"]["services"][0]["terms_and_conditions"][0]
+        );
         $this->assertEquals('WHAT TO EXPECT FROM THIS SERVICE', $data["category"]["services"][0]["features"][0]);
         $this->assertEquals(0, $data["category"]["services"][0]["is_inspection_service"]);
         $this->assertEquals(0, $data["category"]["services"][0]["is_add_on"]);
@@ -194,119 +209,82 @@ class sProServiceListTest extends FeatureTestCase
         $this->assertEquals(0, $data["category"]["delivery_charge"]);
         $this->assertEquals(null, $data["category"]["delivery_discount"]);
         $this->assertEquals(null, $data["category"]["disclaimer"]);
-
     }
 
     public function testSProServiceListAPIWithInvalidLocationId()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=111");
+        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services?location_id=111");
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithoutLocationId()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services");
+        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services");
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithValidLatInvalidLng()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?lat=23.788099544655&lng=dfdsfasdf");
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?lat=23.788099544655&lng=dfdsfasdf"
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lng must be a number.', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithInvalidLatValidLng()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?lat=dfdsfasdf&lng=90.410852011945");
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?lat=dfdsfasdf&lng=90.410852011945"
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat must be a number.', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithInvalidLatLng()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?lat=dfdsfasdf&lng=dfdsfasdf");
+        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services?lat=dfdsfasdf&lng=dfdsfasdf");
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat must be a number.The lng must be a number.', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithValidLatNoLng()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?lat=23.788099544655");
+        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services?lat=23.788099544655");
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithNoLatValidLng()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?lng=90.412001016086");
+        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services?lng=90.412001016086");
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithInvalidCategoryId()
     {
-        //arrange
-
-        //act
-        $response = $this->get("/v3/categories/111/services?location_id=" . $this->location->id);
+        $response = $this->get("/v3/categories/111/services?location_id=".$this->location->id);
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithoutAnyCategory()
@@ -315,13 +293,13 @@ class sProServiceListTest extends FeatureTestCase
         $this->truncateTable(Category::class);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithoutAnyService()
@@ -330,13 +308,13 @@ class sProServiceListTest extends FeatureTestCase
         $this->truncateTable(Service::class);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithoutAnyCategoryLocation()
@@ -345,13 +323,13 @@ class sProServiceListTest extends FeatureTestCase
         $this->truncateTable(CategoryLocation::class);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithoutAnyLocationService()
@@ -360,205 +338,196 @@ class sProServiceListTest extends FeatureTestCase
         $this->truncateTable(LocationService::class);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithPostMethod()
     {
-        //arrange
-
-        //act
-        $response = $this->post("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->post(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals('405 Method Not Allowed', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithPutMethod()
     {
-        //arrange
-
-        //act
-        $response = $this->put("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->put(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals('405 Method Not Allowed', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithDeleteMethod()
     {
-        //arrange
-
-        //act
-        $response = $this->delete("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->delete(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals('405 Method Not Allowed', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithSubCategoryUnpublishedAndMasterCategoryPublishedAndServicePublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 1]);
+        $this->masterCategory->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithSubCategoryUnpublishedAndMasterCategoryUnpublishedAndServiceUnpublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 0]);
+        $this->masterCategory->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithSubCategoryUnpublishedAndMasterCategoryUnpublishedAndServicePublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 0]);
+        $this->masterCategory->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithSubCategoryUnpublishedAndMasterCategoryPublishedAndServiceUnpublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 1]);
+        $this->masterCategory->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 0]);
+        $this->secondaryCategory->update(["publication_status" => 0]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServicePublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 1]);
+        $this->masterCategory->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServiceUnpublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 0]);
+        $this->masterCategory->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     //Failed
     public function testSProServiceListAPIWithSubCategoryPublishedAndMasterCategoryUnpublishedAndServicePublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 0]);
+        $this->masterCategory->update(["publication_status" => 0]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 1]);
+        $this->service->update(["publication_status" => 1]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
     public function testSProServiceListAPIWithSubCategoryPublishedAndMasterCategoryPublishedAndServiceUnpublished()
     {
         //arrange
-        $this->masterCategory -> update(["publication_status" => 1]);
+        $this->masterCategory->update(["publication_status" => 1]);
 
-        $this->secondaryCategory -> update(["publication_status" => 1]);
+        $this->secondaryCategory->update(["publication_status" => 1]);
 
-        $this->service -> update(["publication_status" => 0]);
+        $this->service->update(["publication_status" => 0]);
 
         //act
-        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
+        $response = $this->get(
+            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
+        );
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(404, $data["code"]);
         $this->assertEquals('Not found', $data["message"]);
-
     }
 
 }

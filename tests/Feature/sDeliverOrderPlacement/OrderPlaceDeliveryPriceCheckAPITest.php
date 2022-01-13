@@ -1,47 +1,54 @@
-<?php namespace Tests\Feature\sDeliverOrderPlacement;
+<?php
+
+namespace Tests\Feature\sDeliverOrderPlacement;
+
+use Tests\Feature\FeatureTestCase;
+use Throwable;
 
 /**
- * Khairun Nahar
- * 22 May,2021
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
  */
-use App\Models\PosCustomer;
-use App\Models\PosOrder;
-use Tests\Feature\FeatureTestCase;
-
 class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
-
         $this->logIn();
     }
 
-    public function testSuccessfulResponseToFetchProductPriceAccordingtoWeight()
+    /**
+     * @throws Throwable
+     */
+    public function testSuccessfulResponseToFetchProductPriceAccordingToWeight()
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'weight' => '1',
-            'cod_amount' => 200,
+            'weight'            => '1',
+            'cod_amount'        => 200,
             'delivery_district' => 'Dhaka',
-            'delivery_thana' => 'Gulshan',
-            'partner_id' => '1',
-            'pickup_thana' => 'Gulshan',
-            "pickup_district"=> 'Dhaka'
+            'delivery_thana'    => 'Gulshan',
+            'partner_id'        => '1',
+            'pickup_thana'      => 'Gulshan',
+            "pickup_district"   => 'Dhaka',
         ]);
+
         $data = $response->decodeResponseJson();
+
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
     }
 
-    public function testDataFailedToPassValidationResponseToFetchProductPriceAccordingtoWeight()
+    /**
+     * @throws Throwable
+     */
+    public function testDataFailedToPassValidationResponseToFetchProductPriceAccordingToWeight()
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'cod_amount' => 500,
+            'cod_amount'        => 500,
             'delivery_district' => 'Dhaka',
-            'delivery_thana' => 'Dhanmondi',
-            'partner_id' => '1',
-            'pickup_thana' => 'Gulshan',
-            "pickup_district"=> 'Dhaka'
+            'delivery_thana'    => 'Dhanmondi',
+            'partner_id'        => '1',
+            'pickup_thana'      => 'Gulshan',
+            "pickup_district"   => 'Dhaka',
 
         ]);
         $data = $response->decodeResponseJson();
@@ -50,82 +57,81 @@ class OrderPlaceDeliveryPriceCheckAPITest extends FeatureTestCase
         $this->assertEquals("The weight field is required.", $data['message']);
     }
 
-    public function testDatasValidationResponseToFetchProductPriceWithoutCODAmount()
+    /**
+     * @throws Throwable
+     */
+    public function testDataValidationResponseToFetchProductPriceWithoutCODAmount()
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'weight' => '1',
+            'weight'            => '1',
             'delivery_district' => 'Dhaka',
-            'delivery_thana' => 'Dhanmondi',
-            'partner_id' => '1',
-            'pickup_thana' => 'Gulshan',
-            "pickup_district"=> 'Dhaka'
+            'delivery_thana'    => 'Dhanmondi',
+            'partner_id'        => '1',
+            'pickup_thana'      => 'Gulshan',
+            "pickup_district"   => 'Dhaka',
         ]);
+
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The cod amount field is required.", $data['message']);
     }
 
-    public function testDatasValidationResponseToFetchProductPriceWithoutPartnerId()
+    /**
+     * @throws Throwable
+     */
+    public function testDataValidationResponseToFetchProductPriceWithoutPartnerId()
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'weight' => '1',
-            'cod_amount' => 500,
+            'weight'            => '1',
+            'cod_amount'        => 500,
             'delivery_district' => 'Dhaka',
-            'delivery_thana' => 'Dhanmondi',
-            'pickup_thana' => 'Gulshan',
-            "pickup_district"=> 'Dhaka'
+            'delivery_thana'    => 'Dhanmondi',
+            'pickup_thana'      => 'Gulshan',
+            "pickup_district"   => 'Dhaka',
         ]);
+
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The partner id field is required.", $data['message']);
     }
 
-    public function testDatasValidationResponseToFetchProductPriceWithoutDeliveryDistrictandThana()
+    /**
+     * @throws Throwable
+     */
+    public function testDataValidationResponseToFetchProductPriceWithoutDeliveryDistrictAndThana()
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'weight' => '1',
-            'cod_amount' => 500,
-            'partner_id' => '1',
-            'pickup_thana' => 'Gulshan',
-            "pickup_district"=> 'Dhaka'
+            'weight'          => '1',
+            'cod_amount'      => 500,
+            'partner_id'      => '1',
+            'pickup_thana'    => 'Gulshan',
+            "pickup_district" => 'Dhaka',
 
         ]);
+
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
-        $this->assertEquals("The delivery district field is required.The delivery thana field is required.", $data['message']);
+        $this->assertEquals(
+            "The delivery district field is required.The delivery thana field is required.",
+            $data['message']
+        );
     }
 
-  /*  public function testFetchProductPriceAccordingtoWeight()
+    /**
+     * @throws Throwable
+     */
+    public function testProductPriceChangeAccordingToWeight()
     {
         $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'weight' => '1',
-            'cod_amount' => 500,
+            'weight'            => '1',
+            'cod_amount'        => 500,
             'delivery_district' => 'Dhaka',
-            'delivery_thana' => 'Dhanmondi',
-            'partner_id' => '1',
-            'pickup_thana' => 'Dhaka',
-            "pickup_district"=> 'Gulshan'
-
+            'delivery_thana'    => 'Dhanmondi',
+            'partner_id'        => '1',
+            'pickup_thana'      => 'Gulshan',
+            "pickup_district"   => 'Dhaka',
         ]);
-        $data = $response->decodeResponseJson();
-        $this->assertEquals(1, $data['info']['data'][0]['id']);
-        $this->assertEquals(125, $data['info']['data'][0]['package_price']);
-        $this->assertEquals('user@paperfly.com', $data['info']['data'][0]['email']);
-        $this->assertEquals('01700112233', $data['info']['data'][0]['phone']);
 
-    }*/
-
-    public function testProductPriceChangeAccordingtoWeight()
-    {
-        $response = $this->post('/v2/pos/delivery/delivery-charge', [
-            'weight' => '1',
-            'cod_amount' => 500,
-            'delivery_district' => 'Dhaka',
-            'delivery_thana' => 'Dhanmondi',
-            'partner_id' => '1',
-            'pickup_thana' => 'Gulshan',
-            "pickup_district"=> 'Dhaka'
-        ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(55, $data['delivery_charge']);
     }

@@ -6,6 +6,9 @@ use APP\Sheba\EMI\Banks;
 use APP\Sheba\EMI\Calculator;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Zubayer alam <zubayer@sheba.xyz>
+ */
 class EMIDetailsInfoTest extends FeatureTestCase
 {
 

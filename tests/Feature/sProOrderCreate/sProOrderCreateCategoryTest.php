@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\sProOrderCreate;
+<?php
+
+namespace Tests\Feature\sProOrderCreate;
 
 use App\Models\PartnerResource;
 use Sheba\Dal\Category\Category;
@@ -9,17 +11,19 @@ use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Dolon Banik <dolon@sheba.xyz>
+ */
 class sProOrderCreateCategoryTest extends FeatureTestCase
 {
-    private $categoryPartner;
-    private $locationService;
+    protected $categoryPartner;
+    protected $locationService;
+    protected $categoryLocation;
     private $service;
     private $master_category;
-    private $categoryLocation;
 
-    public function setUp()
+    public function setUp(): void
     {
-
         parent::setUp();
 
         $this->truncateTable(Category::class);
@@ -34,44 +38,43 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         $this->logIn();
 
-        $this->master_category = factory(Category::class)->create();
+        $this->master_category = Category::factory()->create();
 
-        $this->secondaryCategory = factory(Category::class)->create([
-            'name' => 'Car Wash',
-            'bn_name' => 'গাড়ী ধোয়া',
-            'parent_id' => $this->master_category->id,
-            'publication_status' => 1
+        $this->secondaryCategory = Category::factory()->create([
+            'name'               => 'Car Wash',
+            'bn_name'            => 'গাড়ী ধোয়া',
+            'parent_id'          => $this->master_category->id,
+            'publication_status' => 1,
         ]);
 
-        $this->service = factory(Service::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'variable_type' => ServiceType::FIXED,
-            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
-            'publication_status' => 1
+        $this->service = Service::factory()->create([
+            'category_id'        => $this->secondaryCategory->id,
+            'variable_type'      => ServiceType::FIXED,
+            'variables'          => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
+            'publication_status' => 1,
         ]);
 
-        $this->partner -> update([
-            'geo_informations' => '{"lat":"23.788099544655","lng":"90.412001016086","radius":"500"}'
+        $this->partner->update([
+            'geo_informations' => '{"lat":"23.788099544655","lng":"90.412001016086","radius":"500"}',
         ]);
 
-        $this->locationService = factory(LocationService::class)->create();
+        $this->locationService = LocationService::factory()->create();
 
-        $this->categoryPartner = factory(CategoryPartner::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'partner_id' => $this->partner->id,
-            'min_order_amount' => 0.00,
-            'is_home_delivery_applied' => 1,
+        $this->categoryPartner = CategoryPartner::factory()->create([
+            'category_id'                => $this->secondaryCategory->id,
+            'partner_id'                 => $this->partner->id,
+            'min_order_amount'           => 0.00,
+            'is_home_delivery_applied'   => 1,
             'is_partner_premise_applied' => 0,
-            'uses_sheba_logistic' => 0,
-            'delivery_charge' => 0.00,
-            'preparation_time_minutes' => 0
+            'uses_sheba_logistic'        => 0,
+            'delivery_charge'            => 0.00,
+            'preparation_time_minutes'   => 0,
         ]);
 
-        $this->categoryLocation = factory(CategoryLocation::class)->create([
+        $this->categoryLocation = CategoryLocation::factory()->create([
             'category_id' => $this->secondaryCategory->id,
-            'location_id' => 4
+            'location_id' => 4,
         ]);
-
     }
 
     public function testSProCategoryAPIWithValidLatLng()
@@ -80,7 +83,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=23.788099544655&lng=90.412001016086', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -94,7 +97,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         $this->assertEquals(0, $data["categories"][0]["is_vat_applicable"]);
         $this->assertEquals(0, $data["categories"][0]["is_car_rental"]);
         $this->assertEquals(5, $data["categories"][0]["vat_percentage"]);
-
     }
 
     public function testSProCategoryAPIWithInvalidAuthToken()
@@ -104,7 +106,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=23.788099544655&lng=90.412001016086', [
-            'Authorization' => "Bearer $dummyToken"
+            'Authorization' => "Bearer $dummyToken",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -112,7 +114,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(401, $data["code"]);
         $this->assertEquals('Your session has expired. Try Login', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithoutAuthToken()
@@ -127,7 +128,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(401, $data["code"]);
         $this->assertEquals('Your session has expired. Try Login', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithoutLatLngField()
@@ -136,7 +136,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -144,7 +144,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat field is required.The lng field is required.', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithoutLngField()
@@ -153,7 +152,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=23.788099544655', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -161,7 +160,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lng field is required.', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithoutLatField()
@@ -170,7 +168,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lng=90.412001016086', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -178,7 +176,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat field is required.', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithInvalidCharacterLatField()
@@ -187,7 +184,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=abcde&lng=90.412001016086', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -195,7 +192,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat must be a number.', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithInvalidSpecialCharacterLatField()
@@ -204,7 +200,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=!@%$^%&lng=90.412001016086', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -212,7 +208,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lat must be a number.', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithInvalidCharacterLngField()
@@ -221,7 +216,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=23.788099544655&lng=abcde', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -229,7 +224,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lng must be a number.', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithInvalidSpecialCharacterLngField()
@@ -238,7 +232,7 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=23.788099544655&lng=!@%$^%&', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -246,50 +240,49 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The lng must be a number.', $data["message"]);
-
     }
 
     public function testSProCategoryAPIWithMultipleCategory()
     {
         //arrange
-        $this->secondaryCategory = factory(Category::class)->create([
-            'name' => 'Car Clean',
-            'bn_name' => 'গাড়ী পরিষ্কার',
-            'parent_id' => $this->master_category->id,
-            'publication_status' => 1
+        $this->secondaryCategory = Category::factory()->create([
+            'name'               => 'Car Clean',
+            'bn_name'            => 'গাড়ী পরিষ্কার',
+            'parent_id'          => $this->master_category->id,
+            'publication_status' => 1,
         ]);
 
-        $this->service = factory(Service::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'variable_type' => ServiceType::FIXED,
-            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
-            'publication_status' => 1
+        $this->service = Service::factory()->create([
+            'category_id'        => $this->secondaryCategory->id,
+            'variable_type'      => ServiceType::FIXED,
+            'variables'          => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
+            'publication_status' => 1,
         ]);
 
-        $this->locationService = factory(LocationService::class)->create([
+        $this->locationService = LocationService::factory()->create([
             'location_id' => 4,
-            'service_id' => $this->service->id
+            'service_id'  => $this->service->id,
         ]);
 
-        $this->categoryPartner = factory(CategoryPartner::class)->create([
-            'category_id' => $this->secondaryCategory->id,
-            'partner_id' => $this->partner->id,
-            'min_order_amount' => 0.00,
-            'is_home_delivery_applied' => 1,
+        $this->categoryPartner = CategoryPartner::factory()->create([
+            'category_id'                => $this->secondaryCategory->id,
+            'partner_id'                 => $this->partner->id,
+            'min_order_amount'           => 0.00,
+            'is_home_delivery_applied'   => 1,
             'is_partner_premise_applied' => 0,
-            'uses_sheba_logistic' => 0,
-            'delivery_charge' => 0.00,
-            'preparation_time_minutes' => 0
+            'uses_sheba_logistic'        => 0,
+            'delivery_charge'            => 0.00,
+            'preparation_time_minutes'   => 0,
         ]);
 
-        $this->categoryLocation = factory(CategoryLocation::class)->create([
+        $this->categoryLocation = CategoryLocation::factory()->create([
             'category_id' => $this->secondaryCategory->id,
-            'location_id' => 4
+            'location_id' => 4,
         ]);
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=23.788099544655&lng=90.412001016086', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -309,19 +302,18 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         $this->assertEquals(0, $data["categories"][1]["is_vat_applicable"]);
         $this->assertEquals(0, $data["categories"][1]["is_car_rental"]);
         $this->assertEquals(5, $data["categories"][1]["vat_percentage"]);
-
     }
 
     public function testSProCategoryAPIWithFivePercentVat()
     {
         //arrange
-        $this->secondaryCategory -> update([
-            'is_vat_applicable' => 5
+        $this->secondaryCategory->update([
+            'is_vat_applicable' => 5,
         ]);
 
         //act
         $response = $this->get('/v2/resources/partner/categories?lat=23.788099544655&lng=90.412001016086', [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
 
         $data = $response->decodeResponseJson();
@@ -335,7 +327,6 @@ class sProOrderCreateCategoryTest extends FeatureTestCase
         $this->assertEquals(5, $data["categories"][0]["is_vat_applicable"]);
         $this->assertEquals(0, $data["categories"][0]["is_car_rental"]);
         $this->assertEquals(5, $data["categories"][0]["vat_percentage"]);
-
     }
 
 }

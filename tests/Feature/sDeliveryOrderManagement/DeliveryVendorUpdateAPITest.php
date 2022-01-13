@@ -1,4 +1,5 @@
 <?php namespace Tests\Feature\sDeliveryOrderManagement;
+
 /**
  * Khairun
  * 26th May, 2021
@@ -12,12 +13,15 @@ use Sheba\Dal\PartnerDeliveryInformation\Model;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockDeliveryServerClient;
 
+/**
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
+ */
 class DeliveryVendorUpdateAPITest extends FeatureTestCase
 {
     /** @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed $partnerDeliveryinfo */
     private $partnerDeliveryinfo;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 

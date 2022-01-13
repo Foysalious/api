@@ -9,6 +9,9 @@ use App\Models\Profile;
 use Faker\Factory;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
+ */
 class businessCreatingTest extends FeatureTestCase
 {
     private $businessMember;

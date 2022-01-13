@@ -18,9 +18,12 @@ use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockSuccessfulResourceJobRepository;
 
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class OrderStatusChangerApiTest extends FeatureTestCase
 {
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->logIn();

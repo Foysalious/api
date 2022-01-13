@@ -19,6 +19,9 @@ use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 
+/**
+ * @author Khairun Nahar <khairun@sheba.xyz>
+ */
 class SbusinessSingleTopupTest extends FeatureTestCase
 {
     /** @var  $topUpVendor */
@@ -39,7 +42,7 @@ class SbusinessSingleTopupTest extends FeatureTestCase
     /** @var $topBlocklistNumbers */
     private $topBlocklistNumbers;
     
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->truncateTables([

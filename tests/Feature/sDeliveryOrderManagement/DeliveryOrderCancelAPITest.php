@@ -7,6 +7,9 @@ use Sheba\Dal\PartnerDeliveryInformation\Model;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockDeliveryServerClient;
 
+/**
+ * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
+ */
 class DeliveryOrderCancelAPITest extends FeatureTestCase
 {
     /** @vard $posOrderCreate */
@@ -15,7 +18,7 @@ class DeliveryOrderCancelAPITest extends FeatureTestCase
     /** @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed $partnerPosCustomer */
     private $partnerPosCustomer;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
 
