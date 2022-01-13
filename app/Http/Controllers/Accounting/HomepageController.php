@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\AccountingReport;
 use App\Sheba\AccountingEntry\Repository\HomepageRepository;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -195,17 +196,53 @@ class HomepageController extends Controller
         return api_response($request, null, 200, ['data' => $response]);
     }
 
-    private function convertStartDate($date)
+    private function convertStartDate($date = null)
     {
         return $date ?
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 0:00:00')->timestamp :
             strtotime('1 January 1971');
     }
 
-    private function convertEndDate($date)
+    private function convertEndDate($date = null)
     {
         return $date ?
             Carbon::createFromFormat('Y-m-d H:i:s', $date . ' 23:59:59')->timestamp :
             strtotime('tomorrow midnight') - 1;
+    }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function homePageStat(Request $request): JsonResponse
+    {
+        if (!$request->partner->isMigrated(Modules::EXPENSE)) {
+            return api_response($request, null, 200, ['data' => null]);
+        }
+        $dateTime = Carbon::now();
+        $today = $dateTime->format('Y-m-d');
+        $month = $dateTime->month;
+        $year = $dateTime->year;
+        $firstDayOfMonth = $year .'-'.$month.'-'.'01';
+        $lastDayOfMonth = $year .'-'.$month.'-'. $dateTime->daysInMonth;
+
+        $dailyStartDate = $this->convertStartDate($today);
+        $dailyEndDate = $this->convertEndDate($today);
+        $dailyIncome = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $dailyStartDate, $dailyEndDate);
+
+        $monthlyStartDate = $this->convertStartDate($firstDayOfMonth);
+        $monthlyEndDate = $this->convertEndDate($lastDayOfMonth);
+        $monthlyIncome = $this->homepageRepo->getIncomeExpenseBalance($request->partner->id, $monthlyStartDate, $monthlyEndDate);
+
+        $dueTrackerBalance = $this->homepageRepo->getDueCollectionBalance($request->partner->id, $this->convertStartDate(), $this->convertEndDate());
+        $data = [
+            "daily_income" => $dailyIncome['total_income_balance'],
+            "monthly_income" => $monthlyIncome['total_income_balance'],
+            "receivable" => $dueTrackerBalance['account_payable'],
+            "payable"    => $dueTrackerBalance['account_receivable'],
+            "date" => en2bnNumber($dateTime->day),
+            "month" => banglaMonth($month),
+            "api_time" => Carbon::now()->toDateTimeString()
+        ];
+        return api_response($request, $data, 200, ['data' => $data]);
     }
 }

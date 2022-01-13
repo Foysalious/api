@@ -2,9 +2,18 @@
 
 namespace Sheba\MerchantEnrollment;
 
+use App\Models\Partner;
+
 class DocumentInformation extends PartnerAllInformation
 {
     protected $first_admin_profile;
+
+    public function setPartner(Partner $partner): DocumentInformation
+    {
+        $this->partner = $partner;
+        $this->partner_basic_information = $this->partner->basicInformations;
+        return $this;
+    }
 
     private function document_get(): array
     {
