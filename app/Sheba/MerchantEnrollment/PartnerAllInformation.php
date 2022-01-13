@@ -22,6 +22,8 @@ abstract class PartnerAllInformation
 
     protected $formItems;
 
+    protected $partner_resource_profile;
+
     /**
      * @param mixed $formItems
      * @return PartnerAllInformation
@@ -39,27 +41,24 @@ abstract class PartnerAllInformation
     public function setPartner(Partner $partner): PartnerAllInformation
     {
         $this->partner = $partner;
-        $this->partner_basic_information = $this->partner->basicInformations;
-        $this->partner_bank_information  = $this->partner->bankInformations()->first();
+        if($operation_resource = $this->partner->operationResources()->first())
+            $this->partner_resource_profile = $operation_resource->profile;
+        else
+            $this->partner_resource_profile =  $this->partner->admins()->first()->profile;
         return $this;
     }
 
     protected function getFormFieldValues(): array
     {
-        $this->additional_information = (json_decode($this->partner_basic_information->additional_information));
         $values = [];
         foreach($this->formItems as $formItem) {
-            if(isset($formItem['data_source']) && $formItem['data_source'] !== 'json') {
+            if(isset($formItem['data_source'])) {
                 if(isset($formItem['data_source_type']) && $formItem['data_source_type'] === "function")
                     $values[$formItem['id']] = $this->{$formItem['data_source']} ? $this->{$formItem['data_source']}->{$formItem['data_source_id']}() : '';
                 else
                     $values[$formItem['id']] = $this->{$formItem['data_source']} ? $this->{$formItem['data_source']}->{$formItem['data_source_id']} : '';
             }
-            elseif (isset($formItem['data_source']) && $formItem['data_source'] === 'json') {
-                if(isset($this->additional_information))
-                    $values[$formItem['id']] = $this->additional_information->{$formItem['id']} ?? '';
 
-            }
         }
         return $values;
     }

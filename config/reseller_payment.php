@@ -394,7 +394,93 @@ return [
                 'data_source_id' => 'tin_certificate',
                 'upload_folder'  => 'getVatRegistrationImagesFolder'
             ],
-        ]
+        ],
+        'personal' => [
+            [
+                'label'         => 'নাম *',
+                'message'       => '',
+                'hint'          => 'Suniv Ashraf',
+                'id'            => 'user_name',
+                'error'         => "আপনার  নাম পূরণ আবশ্যক",
+                'input_type'    => 'text',
+                'data'          => '',
+                "min_length"    => "",
+                "max_length"    => "",
+                'is_editable'   => true,
+                'mandatory'     => true,
+                'data_source'   => 'partner_resource_profile',
+                'data_source_id'=> 'name'
+            ],
+            [
+                'label'         => 'ই-মেইল *',
+                'message'       => '',
+                'hint'          => 'ইমেইল এড্রেস লিখুন',
+                'id'            => 'email',
+                'error'         => "ইমেইল পূরণ আবশ্যক",
+                'input_type'    => 'text',
+                'data'          => '',
+                "min_length"    => "",
+                "max_length"    => "",
+                'is_editable'   => true,
+                'mandatory'     => true,
+                'data_source'   => 'partner_resource_profile',
+                'data_source_id'=> 'email'
+            ],
+            [
+                'label'         => 'ফোন নাম্বার *',
+                'message'       => '',
+                'hint'          => '01762180533',
+                'id'            => 'mobile',
+                'error'         => "ফোন নাম্বার পূরণ আবশ্যক",
+                'input_type'    => 'text',
+                'data'          => '',
+                "min_length"    => "",
+                "max_length"    => "",
+                'is_editable'   => true,
+                'mandatory'     => true,
+                'data_source'      => 'partner_resource_profile',
+                'data_source_id'   => 'mobile'
+            ],
+            [
+                'label'         => 'এনআইডি নং *',
+                'message'       => "",
+                'hint'          => '68464684936',
+                'id'            => 'nid_no',
+                'error'         => "এনআইডি নং পূরণ আবশ্যক",
+                'input_type'    => 'text',
+                'data'          => "",
+                "min_length"    => "",
+                "max_length"    => "",
+                'is_editable'   => false,
+                'mandatory'     => true,
+                'data_source'   => 'partner_resource_profile',
+                'data_source_id'=> 'nid_no'
+            ],
+            [
+                'label'            => 'জন্ম তারিখ *',
+                'message'          => '',
+                'hint'             => '1989-03-16',
+                'id'               => 'dob',
+                'error'            => "পজন্ম তারিখ ূরণ আবশ্যক",
+                'input_type'       => 'date_picker',
+                'data'             => "",
+                "min_length"       => "",
+                "max_length"       => "",
+                'is_editable'      => false,
+                'mandatory'        => true,
+                'data_source'      => 'partner_resource_profile',
+                'data_source_id'   => 'dob'
+            ]
+
+        ],
     ],
+    "status_wise_banner" => [
+        "ekyc_completed" => '',
+        'survey_completed' => '',
+        'mef_completed' => '',
+        'mef_pending' => '',
+        'mef_verified' => '',
+        'fresh' => ''
+    ]
 
 ];

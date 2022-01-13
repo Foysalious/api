@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ResellerPayment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
@@ -183,14 +184,18 @@ class PaymentServiceController extends Controller
         }
     }
 
-    public function bannerAndStatus(Request $request)
+    public function bannerAndStatus(Request $request, PaymentService $paymentService)
     {
-        $data = [
+        $partner = $request->partner;
+
+        $data = $paymentService->setPartner($partner)->getStatusAndBanner();
+
+        /*$data = [
             'banner' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png',
             'status' => null,
             'pgw_status' => 0,
-            'digital_sales_setup_detail_link' => ''
-        ];
+        ];*/
+
         return api_response($request, null, 200, ['data' => $data]);
     }
 }

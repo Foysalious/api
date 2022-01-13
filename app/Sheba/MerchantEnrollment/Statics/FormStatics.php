@@ -13,4 +13,10 @@ class FormStatics
     {
         return config('reseller_payment.category_form_items.documents');
     }
+
+    public static function personal()
+    {
+        return config('reseller_payment.category_form_items.personal');
+    }
+
 }
