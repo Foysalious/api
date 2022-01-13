@@ -11,6 +11,7 @@ use App\Sheba\Business\OfficeSetting\PolicyTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\ChangesLogsTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\Creator;
 use App\Sheba\Business\OfficeSettingChangesLogs\Requester;
+use App\Sheba\Business\PolicyHistory\PolicyHistory;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -762,6 +763,7 @@ class AttendanceController extends Controller
         $business = $request->business;
         $business_office_hour = $business->officeHour;
         $business_member = $request->business_member;
+
         $this->officeSettingChangesLogsRequester
             ->setBusiness($business)
             ->setPreviousOfficeStartTime($business_office_hour->start_time)
@@ -789,6 +791,10 @@ class AttendanceController extends Controller
         $this->officeSettingChangesLogsCreator->createAttendanceOfficeEndTimingLogs();
         $this->officeSettingChangesLogsCreator->createAttendanceStartGraceTimingLogs();
         $this->officeSettingChangesLogsCreator->createAttendanceEndGraceTimingLogs();
+
+        # Store Policy History
+        (new PolicyHistory())->setRequest($request)->setBusiness($business)->createPolicies();
+
         if ($office_timing) {
              $requester->setBusiness($request->business)
                             ->setIsEnable($request->is_grace_policy_enable)
@@ -840,6 +846,8 @@ class AttendanceController extends Controller
                         ->setRules($request->rules);
         if ($requester->getError()) return api_response($request, null, 400, ['message' => $requester->getError()]);
         $updater->setPolicyRuleRequester($requester)->update();
+        # Store Policy History
+        (new PolicyHistory())->setRequest($request)->setBusiness($business)->isForUnpaidLeavePolicy(1)->createPolicies();
 
         return api_response($request, null, 200);
     }
