@@ -1,5 +1,6 @@
 <?php namespace Sheba\Survey;
 
+use App\Sheba\Survey\Exception\SurveyException;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\Repositories\Interfaces\SurveyInterface;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
@@ -21,10 +22,14 @@ class ResellerPaymentSurvey implements SurveyInterface
 
     /**
      * @throws InvalidKeyException
+     * @throws SurveyException
      */
     public function storeResult($result)
     {
         $this->validateResult($result);
+        $survey = Survey::where('user_id',$this->partner->id)->where('user_type',get_class($this->partner))->first();
+        if($survey)
+            throw new SurveyException("Survey already exist for this user");
         $data = [
             'user_id' => $this->partner->id,
             'user_type' => get_class($this->partner),
