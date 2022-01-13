@@ -7,8 +7,13 @@ use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\Pos\Partner\PartnerService;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
+use App\Transformers\CustomSerializer;
+use App\Transformers\Partner\WebstoreBannerTransformer;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
+use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 
 class PartnerController extends Controller
 {
@@ -54,9 +59,12 @@ class PartnerController extends Controller
     }
     public function getWebStoreBanner($partner, Request $request)
     {
-        $partner = Partner::where('id', $partner)->first();
-        $banner = $this->posCustomerService->partnerWebstoreBanner($partner);
-        return http_response($request, $partner, 200, ['data' => [$banner]]);
+        $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner)->where('is_published',1)->get();
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Collection($partnerBanners, new WebstoreBannerTransformer());
+        $banners = $fractal->createData($resource)->toArray()['data'];
+        return http_response($request, $resource, 200, ['data' => $banners]);
 
     }
 
