@@ -468,11 +468,6 @@ class DashboardController extends Controller
 
             unset($modules[$key]['function']);
         }
-        return api_response($request, $modules, 200, ['data' => [
-            [
-                'key' => "home_settings",
-                'updated_at' => "2022-01-11 18:45:32"
-            ]
-        ]]);
+        return api_response($request, $modules, 200, ['data' => $modules]);
     }
 }
