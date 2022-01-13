@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'mor' => [
+      'api_url' => env('MOR_SERVICE_API_URL'),
+        'client_id' => env('MOR_CLIENT_ID',1234),
+        'client_secret' => env('MOR_CLIENT_SECRET','abcd')
+    ],
     "available_payment_gateway_keys" => ["ssl", "bkash"],
     'category_list' => [
         'ssl' => [

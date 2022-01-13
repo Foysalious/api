@@ -28,7 +28,7 @@ class PaymentService
         $this->getPgwStatus();
 
         return [
-            'status' => $this->status ?? null,
+            'mor_status' => $this->status ?? null,
             'pgw_status' => $this->pgwStatus ?? null,
             'banner' => $this->getBanner()
         ];
