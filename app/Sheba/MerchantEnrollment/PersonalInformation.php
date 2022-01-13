@@ -16,12 +16,14 @@ class PersonalInformation extends PartnerAllInformation
 
     public function personal_post($post_data)
     {
+        $post_data = json_decode($post_data,true);
         foreach ($this->formItems as $item) {
             if ($item['is_editable']) {
                 if (isset($post_data[$item['id']])) {
                     $key = $item['id'];
-                    if (isset($item['data_source']))
+                    if (isset($item['data_source'])){
                         $this->{$item['data_source']}->{$item['data_source_id']} = $post_data[$key];
+                    }
                 }
             }
         }
