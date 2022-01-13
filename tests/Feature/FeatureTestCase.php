@@ -34,9 +34,9 @@ use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
+use TestCase;
 use Tests\Mocks\MockInventoryServerClient;
 use Tests\Mocks\MockPosOrderServerClient;
-use Tests\TestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -138,6 +138,12 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
+        /* \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+         $this->artisan('migrate');
+         $this->beforeApplicationDestroyed(function () {
+             \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+         });*/
+
         $this->beforeApplicationDestroyed(function () {
             foreach ($this->app->make('db')->getConnections() as $connection) {
                 $connection->disconnect();
