@@ -7,6 +7,8 @@ use Sheba\ModificationFields;
 
 class InstitutionInformation extends PartnerAllInformation
 {
+    protected $json;
+
     use ModificationFields;
 
     public function institution_get(): array
