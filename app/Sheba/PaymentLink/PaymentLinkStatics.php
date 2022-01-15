@@ -66,7 +66,12 @@ class  PaymentLinkStatics
         ];
     }
 
-    public static function paidByTypes()
+    public static function paymentTermsAndConditionWebview(): string
+    {
+        return config('sheba.partners_base_url') . "/" . "payment-solution-terms-condition";
+    }
+
+    public static function paidByTypes(): array
     {
         return ['partner', 'customer'];
     }
