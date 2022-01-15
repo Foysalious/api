@@ -71,5 +71,8 @@ class PersonalInformation extends PartnerAllInformation
         return $values;
     }
 
-
+    public function isNidVerified(): bool
+    {
+        return !!($this->partner_resource_profile->nid_verified);
+    }
 }

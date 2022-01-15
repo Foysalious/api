@@ -3,7 +3,6 @@
 namespace Sheba\MerchantEnrollment\MEFFormCategory\Category;
 
 use Sheba\MerchantEnrollment\DocumentInformation;
-use Sheba\MerchantEnrollment\InstitutionInformation;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 use Sheba\MerchantEnrollment\Statics\FormStatics;
@@ -15,8 +14,8 @@ class Documents extends MEFFormCategory
     public function completion(): array
     {
         return [
-            'en' => 100,
-            'bn' => 100
+            'en' => $this->percentageCalculation(),
+            'bn' => $this->getBengaliPercentage()
         ];
     }
 
