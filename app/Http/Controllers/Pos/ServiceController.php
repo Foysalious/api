@@ -348,6 +348,8 @@ class ServiceController extends Controller
             ];
         }) : [];
         $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
+        /** USAGE LOG */
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_UPDATE)->create($request->manager_resource);
         return api_response($request, null, 200, [
             'msg' => 'Product Updated Successfully',
             'service' => $partner_pos_service_arr
@@ -366,7 +368,8 @@ class ServiceController extends Controller
             if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $this->setModifier($request->manager_resource);
             $deleter->delete($request->service);
-
+            /** USAGE LOG */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_DELETE)->create($request->manager_resource);
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

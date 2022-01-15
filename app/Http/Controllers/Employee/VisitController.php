@@ -303,7 +303,7 @@ class VisitController extends Controller
         if (!$visit) return api_response($request, null, 404);
 
         if ($request->status === Status::STARTED) {
-            $is_less_than_schedule_time = Carbon::now()->lt($visit->schedule_date);
+            $is_less_than_schedule_time = Carbon::now()->toDateString() < $visit->schedule_date->toDateString();
             if ($is_less_than_schedule_time) {
                 return api_response($request, null, 420, ['msg' => 'You can not start visit before schedule time']);
             }

@@ -173,6 +173,7 @@ class CustomerController extends Controller
         $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
         $partnerPosCustomer = PartnerPosCustomer::where('customer_id', $customer->id)->first();
         if ($partnerPosCustomer) event(new PartnerPosCustomerUpdatedEvent($partnerPosCustomer));
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::UPDATE_CUSTOMER)->create($request->manager_resource);
         return api_response($request, $customer, 200, ['customer' => $customerDetails]);
     }
 
@@ -280,6 +281,7 @@ class CustomerController extends Controller
         }
         $this->deletePosOrder($request->partner->id, $customer->id);
         $partner_pos_customer->delete();
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DELETE_CUSTOMER)->create($request->manager_resource);
         return api_response($request, true, 200);
     }
 

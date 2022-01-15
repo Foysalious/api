@@ -170,12 +170,12 @@ class ExpenseController extends Controller
         $customer_id = $request->input('customer_id');
         if ($customer_id) $input['profile_id'] = PosCustomer::find($customer_id)->profile_id;
 
-        $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($expense, new ExpenseTransformer());
-        $expense_formatted = $manager->createData($resource)->toArray()['data'];
-
-        return api_response($request, null, 200, ['expense' => $expense_formatted]);
+            $expense = $this->entryRepo->setPartner($request->partner)->updateEntry(EntryType::getRoutable(EntryType::EXPENSE), $input, $expense_id);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($expense, new ExpenseTransformer());
+            $expense_formatted = $manager->createData($resource)->toArray()['data'];
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_ENTRY_UPDATE)->create($request->manager_resource);
+            return api_response($request, null, 200, ['expense' => $expense_formatted]);
     }
 }

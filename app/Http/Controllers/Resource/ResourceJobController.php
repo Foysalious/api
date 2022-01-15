@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Job;
 use App\Models\Resource;
+use App\Sheba\Jobs\JobConcurrencyHandler;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -99,17 +100,23 @@ class ResourceJobController extends Controller
         return api_response($request, $job, 200, ['job' => $job]);
     }
 
-    public function updateStatus(Job $job, Request $request, StatusUpdater $status_updater, UserAgentInformation $user_agent_information)
+    public function updateStatus(Job $job, Request $request, StatusUpdater $status_updater, UserAgentInformation $user_agent_information, JobConcurrencyHandler $jobConcurrencyHandler)
     {
-        $this->validate($request, ['status' => 'string|in:process,served']);
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $resource = $auth_user->getResource();
-        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
-        $user_agent_information->setRequest($request);
-        $status_updater->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setStatus($request->status);
-        $response = $status_updater->update();
-        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+        try {
+            $this->validate($request, ['status' => 'string|in:process,served']);
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            $resource = $auth_user->getResource();
+            if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
+            $user_agent_information->setRequest($request);
+            $status_updater->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setStatus($request->status);
+            $response = $status_updater->update();
+            $jobConcurrencyHandler->removeJobFromRedis($job->id);
+            return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+        } catch (Exception $e){
+            $jobConcurrencyHandler->removeJobFromRedis($job->id);
+            throw $e;
+        }
     }
 
     public function rescheduleJob(Job $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
@@ -132,17 +139,23 @@ class ResourceJobController extends Controller
         }
     }
 
-    public function collectMoney(Job $job, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
+    public function collectMoney(Job $job, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information, JobConcurrencyHandler $jobConcurrencyHandler)
     {
-        $this->validate($request, ['amount' => 'required|numeric']);
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $resource = $auth_user->getResource();
-        if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
-        $user_agent_information->setRequest($request);
-        $collect_money->setResource($resource)->setPartnerOrder($job->partnerOrder)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
-        $response = $collect_money->collect();
-        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+        try {
+            $this->validate($request, ['amount' => 'required|numeric']);
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            $resource = $auth_user->getResource();
+            if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job's bill."]);
+            $user_agent_information->setRequest($request);
+            $collect_money->setResource($resource)->setPartnerOrder($job->partnerOrder)->setUserAgentInformation($user_agent_information)->setCollectionAmount($request->amount);
+            $response = $collect_money->collect();
+            $jobConcurrencyHandler->removeJobFromRedis($job->id);
+            return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
+        } catch (Exception $e) {
+            $jobConcurrencyHandler->removeJobFromRedis($job->id);
+            throw $e;
+        }
     }
 
     public function extendTime(Job $job, Request $request, ExtendTime $extend_time)
