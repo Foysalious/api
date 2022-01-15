@@ -9,6 +9,7 @@ use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethod;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethodCompletion;
 use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
+use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class SslGateway extends PaymentMethod
@@ -36,7 +37,7 @@ class SslGateway extends PaymentMethod
     {
         return [
             'required_documents' => MEFGeneralStatics::required_documents()['ssl'],
-            'terms_and_condition' => 'asd'
+            'terms_and_condition' => PaymentLinkStatics::paymentTermsAndConditionWebview()
         ];
     }
 }
