@@ -14,8 +14,8 @@ class Institution extends MEFFormCategory
     public function completion(): array
     {
         return [
-            'en' => 100,
-            'bn' => 100
+            'en' => $this->percentageCalculation(),
+            'bn' => $this->getBengaliPercentage()
         ];
     }
 

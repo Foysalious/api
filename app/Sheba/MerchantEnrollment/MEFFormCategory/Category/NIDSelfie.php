@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory\Category;
 
+use App\Sheba\MerchantEnrollment\PersonalInformation;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 
@@ -12,8 +13,8 @@ class NIDSelfie extends MEFFormCategory
     public function completion(): array
     {
         return [
-            'en' => 100,
-            'bn' => 100
+            'en' => $this->percentageCalculation(),
+            'bn' => $this->getBengaliPercentage()
         ];
     }
 
@@ -28,5 +29,12 @@ class NIDSelfie extends MEFFormCategory
 
     public function getFormFields()
     {
+    }
+
+    public function percentageCalculation(): float
+    {
+        $is_nid_verified = (new PersonalInformation())->setPartner($this->partner)->isNidVerified();
+        $this->percentage = $is_nid_verified ? 100 : 0;
+        return $this->percentage;
     }
 }
