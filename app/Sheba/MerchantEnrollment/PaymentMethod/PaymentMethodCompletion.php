@@ -64,4 +64,12 @@ class PaymentMethodCompletion
         ];
         return $this;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getOverallCompletion()
+    {
+        return $this->overall_completion;
+    }
 }
