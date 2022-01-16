@@ -189,13 +189,13 @@ class PaymentServiceController extends Controller
     {
         $partner = $request->partner;
 
-        $data = $paymentService->setPartner($partner)->getStatusAndBanner();
+        //$data = $paymentService->setPartner($partner)->getStatusAndBanner();
 
-       /* $data = [
+        $data = [
             'banner' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png',
             'status' => null,
             'pgw_status' => 0,
-        ];*/
+        ];
 
         return api_response($request, null, 200, ['data' => $data]);
     }

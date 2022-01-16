@@ -34,8 +34,8 @@ class PaymentService
 
     public function getPGWDetails()
     {
-        $this->getResellerPaymentStatus();
-        $this->getPgwStatus();
+       // $this->getResellerPaymentStatus();
+       // $this->getPgwStatus();
         return [
             'banner' =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/payment_gateway_banner/app-banner+(1)+2.png',
             'faq' => [
@@ -43,9 +43,9 @@ class PaymentService
                 'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
                 'পেমেন্ট সার্ভিস কনফিগার করুন'
             ],
-            'status' => $this->status ?? null,
-            'mor_status_wise_text' => config('reseller_payment.mor_status_wise_text')[$this->key][$this->status],
-            'pgw_status' =>  $this->pgwStatus ?? null,
+            'status' => 'ekyc_completed',//$this->status ?? null,
+            'mor_status_wise_text' => null,//config('reseller_payment.mor_status_wise_text')[$this->key][$this->status],
+            'pgw_status' =>  null,//$this->pgwStatus ?? null,
             'pgw_inactive_text' => 'নিষ্ক্রিয় থাকা অবস্থায় SSL কমার্সের গেটওয় থেকে ডিজিটাল উপায়ে টাকা গ্রহণ করা যাবে না।',
             'how_to_use_link' => ''
         ];
