@@ -2,6 +2,7 @@
 
 use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 use Sheba\Dal\Survey\Model as Survey;
+use Sheba\MerchantEnrollment\MerchantEnrollment;
 
 class PaymentService
 {
@@ -9,6 +10,7 @@ class PaymentService
     private $status;
     private $pgwStatus;
     private $key;
+    private $rejectReason;
 
     /**
      * @param mixed $partner
@@ -32,8 +34,8 @@ class PaymentService
 
     public function getPGWDetails()
     {
-       // $this->getResellerPaymentStatus();
-        //$this->getPgwStatus();
+        $this->getResellerPaymentStatus();
+        $this->getPgwStatus();
         return [
             'banner' =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/payment_gateway_banner/app-banner+(1)+2.png',
             'faq' => [
@@ -41,9 +43,9 @@ class PaymentService
                 'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
                 'পেমেন্ট সার্ভিস কনফিগার করুন'
             ],
-            'status' => 'ekyc_completed',//$this->status ?? null,
-            'mor_status_wise_text' => null,//config('reseller_payment.mor_status_wise_text')[$this->key][$this->status],
-            'pgw_status' =>  null,//$this->pgwStatus ?? null,
+            'status' => $this->status ?? null,
+            'mor_status_wise_text' => config('reseller_payment.mor_status_wise_text')[$this->key][$this->status],
+            'pgw_status' =>  $this->pgwStatus ?? null,
             'pgw_inactive_text' => 'নিষ্ক্রিয় থাকা অবস্থায় SSL কমার্সের গেটওয় থেকে ডিজিটাল উপায়ে টাকা গ্রহণ করা যাবে না।',
             'how_to_use_link' => ''
         ];
@@ -64,8 +66,13 @@ class PaymentService
 
     private function getBanner()
     {
-        if(!$this->status)
-            $this->status  = 'None';
+        if($this->pgwStatus == 0)
+            $banner = config('reseller_payment.status_wise_home_banner')['pgw_inactive'];
+        elseif ($this->status == 'verified')
+            $banner = config('reseller_payment.status_wise_home_banner')['verified'];
+       elseif($this->status == 'rejected')
+           $banner = config('reseller_payment.status_wise_home_banner')['rejected'];
+       elseif ($this->status == 'rejected')
       return  config('reseller_payment.status_wise_home_banner')[$this->status];
     }
 
@@ -85,17 +92,27 @@ class PaymentService
     {
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $morStatus = $morClient->get('applications/status?user_id='.$this->partner->id.'&user_type=partner')['status'];
-        if($morStatus)
-            return $this->status = $morStatus;
+        $morResponse = $morClient->get('client/applications/status?user_id=1'.'&user_type=partner');
+        $morStatus = $morResponse['application_status'];
+        if($morStatus){
+            $this->status = $morStatus;
+            if($morStatus == 'rejected')
+                $this->rejectReason = $morResponse['reject_reason'];
+            return true;
+        }
+
        return $this->checkMefCompletion();
 
     }
 
     private function checkMefCompletion()
     {
-        //check mef completion
-       return $this->status = 'pending';
+        /** @var MerchantEnrollment $merchantEnrollment */
+        $merchantEnrollment = app(MerchantEnrollment::class);
+        $completion = $merchantEnrollment->setPartner($this->partner)->setKey($this->key)->getCompletion()->toArray();
+        if($completion['can_apply'] == 1)
+            $this->status = 'mef_completed';
+       return true;
     }
 
     private function getSurveyStatus()
