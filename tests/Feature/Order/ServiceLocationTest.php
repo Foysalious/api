@@ -11,7 +11,9 @@ use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
 
-
+/**
+ * @author Mahanaz Tabassum <mahanaz.tabassum@sheba.xyz>
+ */
 class ServiceLocationTest extends featureTestCase
 {
     protected $location;
@@ -21,7 +23,6 @@ class ServiceLocationTest extends featureTestCase
     private $service2;
     private $location2;
 
-
     public function setUp(): void
     {
         parent::setUp();
@@ -30,53 +31,27 @@ class ServiceLocationTest extends featureTestCase
         $service_cache_request->setLocationId(4);
         $cache_aside->setCacheRequest($service_cache_request)->deleteEntity();
 
-        $this->truncateTables([
-            Category::class,
-            CategoryLocation::class,
-            Service::class,
-            LocationService::class,
+        $this->truncateTables([Category::class, CategoryLocation::class, Service::class, LocationService::class,
 
         ]);
 
         $this->location2 = Location::find(10);
         $this->location = Location::find(4);
         $this->masterCategory = Category::factory()->create();
-        $this->secondaryCategory = Category::factory()->create([
-            'parent_id' => $this->masterCategory->id,
-        ]);
-        $this->service1 = Service::factory()->create([
-            'category_id' => $this->secondaryCategory->id,
-        ]);
-        $this->service2 = Service::factory()->create([
-            'category_id' => $this->secondaryCategory->id,
-        ]);
+        $this->secondaryCategory = Category::factory()->create(['parent_id' => $this->masterCategory->id,]);
+        $this->service1 = Service::factory()->create(['category_id' => $this->secondaryCategory->id,]);
+        $this->service2 = Service::factory()->create(['category_id' => $this->secondaryCategory->id,]);
     }
 
     public function testPublishedAndTaggedCategoryServiceShowingInResponse()
     {
-        CategoryLocation::factory()->create([
-            'category_id' => $this->masterCategory->id,
-            'location_id' => $this->location->id,
-        ]);
-        CategoryLocation::factory()->create([
-            'category_id' => $this->secondaryCategory->id,
-            'location_id' => $this->location->id,
-        ]);
+        CategoryLocation::factory()->create(['category_id' => $this->masterCategory->id, 'location_id' => $this->location->id,]);
+        CategoryLocation::factory()->create(['category_id' => $this->secondaryCategory->id, 'location_id' => $this->location->id,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service1->id,
-            'prices'      => 100,
-        ]);
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service1->id, 'prices' => 100,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service2->id,
-            'prices'      => 200,
-        ]);
-        $response = $this->get(
-            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
-        );
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service2->id, 'prices' => 200,]);
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals($this->secondaryCategory->id, $data['category']['id']);
@@ -86,25 +61,13 @@ class ServiceLocationTest extends featureTestCase
 
     public function testUntaggedButPublishedServiceNotShowingInResponse()
     {
-        CategoryLocation::factory()->create([
-            'category_id' => $this->masterCategory->id,
-            'location_id' => $this->location->id,
-        ]);
-        CategoryLocation::factory()->create([
-            'category_id' => $this->secondaryCategory->id,
-            'location_id' => $this->location->id,
-        ]);
+        CategoryLocation::factory()->create(['category_id' => $this->masterCategory->id, 'location_id' => $this->location->id,]);
+        CategoryLocation::factory()->create(['category_id' => $this->secondaryCategory->id, 'location_id' => $this->location->id,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service1->id,
-            'prices'      => 100,
-        ]);
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service1->id, 'prices' => 100,]);
 
 
-        $response = $this->get(
-            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
-        );
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals($this->secondaryCategory->id, $data['category']['id']);
@@ -120,33 +83,14 @@ class ServiceLocationTest extends featureTestCase
 
     public function testTaggedButUnpublishedServiceNotShowingInResponse()
     {
-        $this->service2 = Service::factory()->create([
-            'category_id'        => $this->secondaryCategory->id,
-            'publication_status' => 0,
-        ]);
-        CategoryLocation::factory()->create([
-            'category_id' => $this->masterCategory->id,
-            'location_id' => $this->location->id,
-        ]);
-        CategoryLocation::factory()->create([
-            'category_id' => $this->secondaryCategory->id,
-            'location_id' => $this->location->id,
-        ]);
+        $this->service2 = Service::factory()->create(['category_id' => $this->secondaryCategory->id, 'publication_status' => 0,]);
+        CategoryLocation::factory()->create(['category_id' => $this->masterCategory->id, 'location_id' => $this->location->id,]);
+        CategoryLocation::factory()->create(['category_id' => $this->secondaryCategory->id, 'location_id' => $this->location->id,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service1->id,
-            'prices'      => 100,
-        ]);
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service1->id, 'prices' => 100,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service2->id,
-            'prices'      => 200,
-        ]);
-        $response = $this->get(
-            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
-        );
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service2->id, 'prices' => 200,]);
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals($this->secondaryCategory->id, $data['category']['id']);
@@ -162,29 +106,13 @@ class ServiceLocationTest extends featureTestCase
 
     public function testApiResponseGiving200ForAllRequiredPram()
     {
-        CategoryLocation::factory()->create([
-            'category_id' => $this->masterCategory->id,
-            'location_id' => $this->location->id,
-        ]);
-        CategoryLocation::factory()->create([
-            'category_id' => $this->secondaryCategory->id,
-            'location_id' => $this->location->id,
-        ]);
+        CategoryLocation::factory()->create(['category_id' => $this->masterCategory->id, 'location_id' => $this->location->id,]);
+        CategoryLocation::factory()->create(['category_id' => $this->secondaryCategory->id, 'location_id' => $this->location->id,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service1->id,
-            'prices'      => 100,
-        ]);
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service1->id, 'prices' => 100,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service2->id,
-            'prices'      => 200,
-        ]);
-        $response = $this->get(
-            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
-        );
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service2->id, 'prices' => 200,]);
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(200, $data["code"]);
@@ -192,24 +120,13 @@ class ServiceLocationTest extends featureTestCase
 
     public function testApiResponseGiving404ForUntaggedSecondaryCategory()
     {
-        CategoryLocation::factory()->create([
-            'category_id' => $this->masterCategory->id,
-            'location_id' => $this->location->id,
-        ]);
+        CategoryLocation::factory()->create(['category_id' => $this->masterCategory->id, 'location_id' => $this->location->id,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service1->id,
-            'prices'      => 100,
-        ]);
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service1->id, 'prices' => 100,]);
 
-        LocationService::create([
-            'location_id' => $this->location->id,
-            'service_id'  => $this->service2->id,
-            'prices'      => 200,
-        ]);
+        LocationService::create(['location_id' => $this->location->id, 'service_id' => $this->service2->id, 'prices' => 200,]);
 
-        $response = $this->get("/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id);
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(404, $data["code"]);
@@ -217,19 +134,11 @@ class ServiceLocationTest extends featureTestCase
 
     public function testApiResponseGiving404ForUntaggedServicesWithLocation()
     {
-        CategoryLocation::factory()->create([
-            'category_id' => $this->masterCategory->id,
-            'location_id' => $this->location->id,
-        ]);
+        CategoryLocation::factory()->create(['category_id' => $this->masterCategory->id, 'location_id' => $this->location->id,]);
 
-        CategoryLocation::factory()->create([
-            'category_id' => $this->secondaryCategory->id,
-            'location_id' => $this->location->id,
-        ]);
+        CategoryLocation::factory()->create(['category_id' => $this->secondaryCategory->id, 'location_id' => $this->location->id,]);
 
-        $response = $this->get(
-            "/v3/categories/".$this->secondaryCategory->id."/services?location_id=".$this->location->id
-        );
+        $response = $this->get("/v3/categories/" . $this->secondaryCategory->id . "/services?location_id=" . $this->location->id);
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(404, $data["code"]);
