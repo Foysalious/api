@@ -270,7 +270,7 @@ pipeline {
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh',
+                                execCommand: 'cd /var/www/api && ./bin/test_by_docker_on_parallel_mode.sh',
                                 execTimeout: 2100000,
                                 flatten: false,
                                 makeEmptyDirs: false,
@@ -313,7 +313,7 @@ pipeline {
                                     makeEmptyDirs: false,
                                     noDefaultExcludes: false,
                                     patternSeparator: '[, ]+',
-                                    remoteDirectory: '/tech_api/public',
+                                    remoteDirectory: '/tech_api/test_results/api/migrations',
                                     remoteDirectorySDF: false,
                                     removePrefix: '',
                                     sourceFiles: '**/api-test-result.xml'
@@ -321,7 +321,7 @@ pipeline {
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
-                                    execCommand: 'cd /var/www/tech_api && ./bin/test_result_send_to_slack.sh',
+                                    execCommand: 'cd /var/www/tech_api && ./bin/rename_test_result_file.sh api && ./bin/test_migration_run.sh api',
                                     execTimeout: 3600000,
                                     flatten: false,
                                     makeEmptyDirs: false,
