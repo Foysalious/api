@@ -2,17 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('LAST COMMIT DETAILS') {
-            when { branch 'development' }
-            steps {
-                script {
-                    LAST_COMMIT_USER_NAME = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
-                    LAST_COMMIT_USER_EMAIL = sh(script: 'git log -1 --pretty=%ae', returnStdout: true).trim()
-                    echo "last commit user:${LAST_COMMIT_USER_NAME}."
-                    echo "last commit user email:${LAST_COMMIT_USER_EMAIL}."
-                }
-            }
-        }
         stage('MAKE ENV FILE') {
             steps {
                 withCredentials([
