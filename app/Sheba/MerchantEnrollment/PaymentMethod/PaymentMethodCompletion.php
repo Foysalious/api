@@ -58,7 +58,10 @@ class PaymentMethodCompletion
      */
     public function setOverallCompletion($overall_completion): PaymentMethodCompletion
     {
-        $this->overall_completion = $overall_completion;
+        $this->overall_completion = [
+            "en" => $overall_completion,
+            "bn" => convertNumbersToBangla($overall_completion, false)
+        ];
         return $this;
     }
 }
