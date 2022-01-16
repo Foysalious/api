@@ -81,6 +81,9 @@ class PaymentService
        $this->getMORStatus();
        if(isset($this->status))
            return;
+       $this->checkMefCompletion();
+       if(isset($this->status))
+           return;
        $this->getSurveyStatus();
        if(isset($this->status))
            return;
@@ -98,10 +101,9 @@ class PaymentService
             $this->status = $morStatus;
             if($morStatus == 'rejected')
                 $this->rejectReason = $morResponse['reject_reason'];
-            return true;
+            return $morStatus;
         }
-
-       return $this->checkMefCompletion();
+        return null;
 
     }
 
