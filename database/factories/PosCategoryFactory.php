@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\PosCategory;
 
-class PosCategoriesFactory extends Factory
+class PosCategoryFactory extends Factory
 {
     protected $model = PosCategory::class;
 

@@ -1,5 +1,8 @@
-<?php namespace App\Models;
+<?php
 
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Sheba\Checkout\ShebaOrderInterface;
 use Sheba\Dal\ApiRequest\ApiRequest;
 use Sheba\Dal\BaseModel;
@@ -13,19 +16,21 @@ use Sheba\Voucher\Contracts\CanHaveVoucher;
 
 class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
 {
+    use HasFactory;
+    
     public static $savedEventClass = OrderSaved::class;
     public static $createdEventClass = OrderCreated::class;
     public $totalPrice;
     public $due;
     public $profit;
     protected $guarded = ['id'];
+    protected $searchable = ['delivery_name'];
     private $statuses;
     private $jobStatuses;
     private $salesChannelDepartments;
     private $salesChannelShortNames;
     /** @var CodeBuilder */
     private $codeBuilder;
-    protected $searchable = ['delivery_name'];
 
     public function __construct($attributes = [])
     {
@@ -96,6 +101,7 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
             $this->profit += $partnerOrder->profit;
         }
         $this->status = $this->getStatus();
+
         return $this;
     }
 
@@ -151,7 +157,10 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
 
     public function lastPartnerOrder()
     {
-        if ($this->isCancelled()) return $this->partnerOrders->last();
+        if ($this->isCancelled()) {
+            return $this->partnerOrders->last();
+        }
+
         return $this->partnerOrders->filter(function ($partner_order) {
             return is_null($partner_order->cancelled_at);
         })->first();
@@ -166,9 +175,11 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
     {
         $customer_addresses = $this->customer->delivery_addresses();
         $address = $customer_addresses->where('address', $this->delivery_address)->first();
-        if ($address) return $address->id;
-        return $customer_addresses->first()->id;
+        if ($address) {
+            return $address->id;
+        }
 
+        return $customer_addresses->first()->id;
     }
 
     /** @TODO Remove */
@@ -181,6 +192,7 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
         $delivery_address->mobile = $this->delivery_mobile;
         $delivery_address->address = $this->delivery_address;
         $delivery_address->geo_informations = json_encode(["lat" => $location->lat, "lng" => $location->lng]);
+
         return $delivery_address;
     }
 
@@ -194,7 +206,10 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
      */
     public function lastJob()
     {
-        if ($this->isCancelled()) return $this->jobs->last();
+        if ($this->isCancelled()) {
+            return $this->jobs->last();
+        }
+
         return $this->jobs->filter(function ($job) {
             return $job->status != $this->jobStatuses['Cancelled'];
         })->first();

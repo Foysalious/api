@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use App\Models\ScheduleSlot;
 
-class ScheduleSlotsFactory extends Factory
+class ScheduleSlotFactory extends Factory
 {
     protected $model = ScheduleSlot::class;
 

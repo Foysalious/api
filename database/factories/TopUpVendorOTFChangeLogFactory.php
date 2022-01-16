@@ -6,7 +6,7 @@ use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 
 class TopUpVendorOTFChangeLogFactory extends Factory
 {
-    protected $model = Model::class;
+    protected $model = TopUpVendorOTFChangeLog::class;
 
     public function definition(): array
     {

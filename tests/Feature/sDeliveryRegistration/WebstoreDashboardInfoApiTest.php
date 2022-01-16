@@ -4,7 +4,6 @@ namespace Tests\Feature\sDeliveryRegistration;
 
 use App\Models\PartnerPosService;
 use App\Models\PosCategory;
-use Factory\PartnerDeliveryInfoFactory;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInfo;
 use Tests\Feature\FeatureTestCase;
 
