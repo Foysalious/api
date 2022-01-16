@@ -253,6 +253,6 @@ class PartnerPosService extends BaseModel
 
     public function getInfinityStockBatchIfExists()
     {
-        return $this->batches->whereNull('stock')->first();
+        return $this->batches->where('stock',null)->first();
     }
 }
