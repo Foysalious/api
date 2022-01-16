@@ -250,34 +250,34 @@ pipeline {
 //                 sh './bin/remove_build.sh'
 //             }
 //         }
-        stage('RUN TEST RESULT') {
-            when { branch 'development' }
-            steps {
-                script {
-                    sshPublisher(publishers: [
-                        sshPublisherDesc(configName: 'testing-server',
-                            transfers: [sshTransfer(
-                                cleanRemote: false,
-                                excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/test_by_docker_on_parallel_mode.sh',
-                                execTimeout: 2100000,
-                                flatten: false,
-                                makeEmptyDirs: false,
-                                noDefaultExcludes: false,
-                                patternSeparator: '[, ]+',
-                                remoteDirectory: '',
-                                remoteDirectorySDF: false,
-                                removePrefix: '',
-                                sourceFiles: ''
-                            )],
-                            usePromotionTimestamp: false,
-                            useWorkspaceInPromotion: false,
-                            verbose: true
-                        )]
-                    )
-                }
-            }
-        }
+//         stage('RUN TEST RESULT') {
+//             when { branch 'development' }
+//             steps {
+//                 script {
+//                     sshPublisher(publishers: [
+//                         sshPublisherDesc(configName: 'testing-server',
+//                             transfers: [sshTransfer(
+//                                 cleanRemote: false,
+//                                 excludes: '',
+//                                 execCommand: 'cd /var/www/api && ./bin/test_by_docker_on_parallel_mode.sh',
+//                                 execTimeout: 2100000,
+//                                 flatten: false,
+//                                 makeEmptyDirs: false,
+//                                 noDefaultExcludes: false,
+//                                 patternSeparator: '[, ]+',
+//                                 remoteDirectory: '',
+//                                 remoteDirectorySDF: false,
+//                                 removePrefix: '',
+//                                 sourceFiles: ''
+//                             )],
+//                             usePromotionTimestamp: false,
+//                             useWorkspaceInPromotion: false,
+//                             verbose: true
+//                         )]
+//                     )
+//                 }
+//             }
+//         }
         stage('TEST RESULT TO DEPLOYMENT SERVER') {
             when { branch 'development' }
             steps {
