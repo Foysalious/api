@@ -20,6 +20,12 @@ class NIDSelfie extends MEFFormCategory
 
     public function get(): CategoryGetter
     {
+        return (new CategoryGetter());
+    }
+
+    public function getFormFieldData(): array
+    {
+        return [];
     }
 
     public function post($data)

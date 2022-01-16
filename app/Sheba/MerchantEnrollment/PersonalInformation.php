@@ -71,4 +71,11 @@ class PersonalInformation extends PartnerAllInformation
     {
         return !!($this->partner_resource_profile->nid_verified);
     }
+
+    public function getPersonalPhoto(): array
+    {
+        return [
+            "personal_photo" => $this->partner_resource_profile->pro_pic
+        ];
+    }
 }

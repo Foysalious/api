@@ -2,10 +2,12 @@
 
 namespace Sheba\MerchantEnrollment\PaymentMethod\SslGateway;
 
+use App\Sheba\MerchantEnrollment\PaymentMethod\ApplicationSubmit;
 use App\Sheba\MerchantEnrollment\PaymentMethod\Completion;
 use Sheba\MerchantEnrollment\Exceptions\InvalidListInsertionException;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
+use Sheba\MerchantEnrollment\MEFFormCategoryFactory;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethod;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethodCompletion;
 use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
@@ -44,8 +46,13 @@ class SslGateway extends PaymentMethod
         ];
     }
 
+    /**
+     * @return void
+     * @throws InvalidKeyException
+     * @throws InvalidListInsertionException
+     */
     public function apply()
     {
-        dd($this->partner);
+        (new ApplicationSubmit())->setPartner($this->partner)->setPaymentGateway($this->payment_method)->submit();
     }
 }

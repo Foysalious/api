@@ -30,15 +30,12 @@ class MerchantEnrollmentController extends Controller
             $partner = $request->partner;
             $detail = $this->merchantEnrollment->setPartner($partner)->setKey($request->key)->getCompletion()->toArray();
             return api_response($request, $detail, 200, ['data' => $detail]);
-        } catch (ResellerPaymentException $e) {
-            logError($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (\Throwable $e) {
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
     }
 
@@ -55,15 +52,12 @@ class MerchantEnrollmentController extends Controller
             $detail = $this->merchantEnrollment->setPartner($partner)->setKey($request->key)
                 ->getCategoryDetails($request->category_code);
             return api_response($request, $detail, 200, ['data' => $detail]);
-        } catch (ResellerPaymentException $e) {
-            logError($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (\Throwable $e) {
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
     }
 
@@ -78,15 +72,12 @@ class MerchantEnrollmentController extends Controller
             $this->merchantEnrollment->setPartner($request->partner)->setKey($request->key)
                 ->setPostData($request->data)->postCategoryDetails($request->category_code);
             return api_response($request, null, 200);
-        } catch (ResellerPaymentException $e) {
-            logError($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (\Throwable $e) {
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
     }
 
@@ -101,15 +92,12 @@ class MerchantEnrollmentController extends Controller
             $this->merchantEnrollment->setPartner($request->partner)->setKey($request->key)->setCategoryCode($request->category_code)
                 ->uploadDocument($request->document, $request->document_id)->postCategoryDetails($request->category_code);
             return api_response($request, null, 200);
-        } catch (ResellerPaymentException $e) {
-            logError($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (\Throwable $e) {
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
     }
 
@@ -119,15 +107,12 @@ class MerchantEnrollmentController extends Controller
             $this->validate($request, MEFGeneralStatics::payment_gateway_key_validation());
             $data = $this->merchantEnrollment->setKey($request->key)->getRequiredDocuments();
             return api_response($request, $data, 200, ['data' => $data]);
-        } catch (ResellerPaymentException $e) {
-            logError($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (\Throwable $e) {
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
     }
 
@@ -137,15 +122,12 @@ class MerchantEnrollmentController extends Controller
             $this->validate($request, MEFGeneralStatics::payment_gateway_key_validation());
             $data = $this->merchantEnrollment->setPartner($request->partner)->setKey($request->key)->apply();
             return api_response($request, $data, 200, ['data' => $data]);
-        } catch (ResellerPaymentException $e) {
-            logError($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (\Throwable $e) {
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
     }
 }
