@@ -1,6 +1,11 @@
 <?php
 
 return [
+    'mor' => [
+      'api_url' => env('MOR_SERVICE_API_URL'),
+        'client_id' => env('MOR_CLIENT_ID',1234),
+        'client_secret' => env('MOR_CLIENT_SECRET','abcd')
+    ],
     "available_payment_gateway_keys" => ["ssl", "bkash"],
     'category_list' => [
         'ssl' => [
@@ -474,13 +479,30 @@ return [
 
         ],
     ],
-    "status_wise_banner" => [
-        "ekyc_completed" => '',
-        'survey_completed' => '',
-        'mef_completed' => '',
-        'mef_pending' => '',
-        'mef_verified' => '',
-        'fresh' => ''
+    "status_wise_home_banner" => [
+        'pgw_inactive' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pgw_inactive.png',
+        'verified' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/verified.png',
+        'rejected' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/rejected.png',
+        'completed_but_did_not_apply' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pending.png',
+        'mef_completed' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/survey_completed.png',
+        'survey_completed' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/survey_completed.png',
+        "ekyc_completed" => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/ekyc_completed.png',
+        'did_not_started_journey' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png'
+    ],
+    'mor_status_wise_text' => [
+      'ssl' => [
+          'processing' => 'আপনার আবেদনটি সফলভাবে সম্পন্ন হয়েছে অনুমোদনের জন্য অনুগ্রহ করে ১০ কার্যদিবস অপেক্ষা করুন।',
+          'verified' => 'আপনার আবেদনটি সফলভাবে অনুমোদন হয়েছে অনুগ্রহ করে আপনার ইমেইল চেক করুন এবং প্রয়োজনীয় তথ্য দিয়ে পেমেন্ট সার্ভিস সেট-আপ করুন।',
+          'rejected' => 'আপনার আবেদনটি অনুমোদন করা সম্ভব হয়নি কারণ - Rejection Note সঠিক তথ্য দিয়ে পুনরায় আবেদন করুন।'
+      ]
+    ],
+
+    "payment_gateway_status_message" => [
+        "ssl" => [
+            'processing' => 'আপনার আবেদনটি সফলভাবে সম্পন্ন হয়েছে অনুমোদনের জন্য অনুগ্রহ করে ১০ কার্যদিবস অপেক্ষা করুন।',
+            'verified'  => 'আপনার আবেদনটি সফলভাবে অনুমোদন হয়েছে অনুগ্রহ করে আপনার ইমেইল চেক করুন এবং প্রয়োজনীয় তথ্য দিয়ে পেমেন্ট সার্ভিস সেট-আপ করুন।',
+            'rejected'  => 'আপনার আবেদনটি অনুমোদন করা সম্ভব হয়নি কারণ - Rejection Note সঠিক তথ্য দিয়ে পুনরায় আবেদন করুন।'
+        ]
     ]
 
 ];

@@ -13,6 +13,7 @@ class ResellerPaymentRoute
                 $api->post('payment-service-charge', 'ResellerPayment\\PaymentServiceController@storePaymentServiceCharge');
                 $api->get('/emi-info/manager', 'ResellerPayment\\PaymentServiceController@emiInformationForManager');
                 $api->get('/banner-and-status', 'ResellerPayment\\PaymentServiceController@bannerAndStatus');
+                $api->get('/pgw-details', 'ResellerPayment\\PaymentServiceController@getPaymentGatewayDetails');
             });
             $api->group(["prefix" => 'merchant-on-boarding'], function ($api) {
                 $api->get('/category-list', "ResellerPayment\\MEF\\MerchantEnrollmentController@categoryListWithCompletion");
