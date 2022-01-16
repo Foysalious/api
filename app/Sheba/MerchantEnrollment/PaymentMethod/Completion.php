@@ -14,6 +14,8 @@ class Completion
 
     private $payment_gateway;
 
+    private $overall_completion;
+
     /**
      * @param mixed $payment_gateway
      * @return Completion
@@ -61,6 +63,15 @@ class Completion
             $completion[] = $current->getCompletionDetails()->toArray();
             $iterator->next();
         }
+        $this->calculateAndSetOverallCompletion($completion);
         return $completion;
+    }
+
+    public function calculateAndSetOverallCompletion($completion)
+    {
+        $overall_completion = 0;
+        foreach ($completion as $c) {
+            $overall_completion += ($c["completion_percentage"]["en"]);
+        }
     }
 }

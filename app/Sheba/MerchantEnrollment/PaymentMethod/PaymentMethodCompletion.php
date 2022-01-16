@@ -11,6 +11,7 @@ class PaymentMethodCompletion
 
     protected $categories;
     protected $can_apply;
+    protected $overall_completion;
     protected $message = '';
 
     /**
@@ -49,5 +50,15 @@ class PaymentMethodCompletion
     public function getCanApply()
     {
         return $this->can_apply;
+    }
+
+    /**
+     * @param mixed $overall_completion
+     * @return PaymentMethodCompletion
+     */
+    public function setOverallCompletion($overall_completion): PaymentMethodCompletion
+    {
+        $this->overall_completion = $overall_completion;
+        return $this;
     }
 }

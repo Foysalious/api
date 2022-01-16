@@ -412,7 +412,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'name'
             ],
@@ -427,7 +427,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => true,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'email'
             ],
@@ -442,7 +442,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'      => 'partner_resource_profile',
                 'data_source_id'   => 'mobile'
             ],
@@ -457,7 +457,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'nid_no'
             ],
@@ -472,7 +472,7 @@ return [
                 "min_length"       => "",
                 "max_length"       => "",
                 'is_editable'      => false,
-                'mandatory'        => true,
+                'mandatory'        => false,
                 'data_source'      => 'partner_resource_profile',
                 'data_source_id'   => 'dob'
             ]
