@@ -43,4 +43,9 @@ class SslGateway extends PaymentMethod
             'terms_and_condition' => PaymentLinkStatics::paymentTermsAndConditionWebview()
         ];
     }
+
+    public function apply()
+    {
+        dd($this->partner);
+    }
 }
