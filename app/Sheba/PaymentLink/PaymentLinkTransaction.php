@@ -170,9 +170,15 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $paymentLinkTransaction = $this->amountTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->configureServiceCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
+    }
+
+    private function configureServiceCharge(): PaymentLinkTransaction
+    {
+        $this->linkCommission = (new DigitalCollectionSetting())->setPartner($this->receiver)->getServiceCharge();
+        return $this;
     }
 
     private function amountTransaction()
@@ -212,6 +218,7 @@ class PaymentLinkTransaction
     {
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
+            $this->real_amount = $this->paymentLink->getRealAmount();
         } else {
             $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
@@ -227,7 +234,8 @@ class PaymentLinkTransaction
             $this->entryAmount = $amount;
         } else {
             if ($this->paymentLink->isEmi()) {
-                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
+//                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
+                $this->entryAmount = $amount - $this->partnerProfit;
             } else {
                 $this->entryAmount = $amount - $this->getFee() - $this->partnerProfit;
             }
@@ -252,6 +260,7 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        $this->real_amount = $this->real_amount ? : 0;
         $customer = $this->paymentLink->getPayer();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);

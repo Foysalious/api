@@ -32,6 +32,7 @@ class ServiceController extends Controller
 
         $fractal = new Manager();
         if($location_service) $service_transformer->setLocationService($location_service);
+        else return api_response($request, null, 404);
         $resource = new Item($service, $service_transformer);
         $data = $fractal->createData($resource)->toArray()['data'];
 

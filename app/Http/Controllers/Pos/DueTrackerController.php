@@ -143,6 +143,7 @@ class DueTrackerController extends Controller
 
         $request->merge(['customer_id' => $customer_id]);
         $response = $dueTrackerRepository->setPartner($request->partner)->update($request->partner, $request);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_ENTRY_UPDATE)->create($request->manager_resource);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
@@ -164,6 +165,7 @@ class DueTrackerController extends Controller
             $this->setModifier($request->partner);
             $partner_pos_customer_repo->update($partner_pos_customer, $data);
         }
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::REMINDER_SET)->create($request->manager_resource);
         return api_response($request, null, 200);
     }
 
@@ -202,6 +204,7 @@ class DueTrackerController extends Controller
     public function delete(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $entry_id)
     {
         $dueTrackerRepository->setPartner($request->partner)->removeEntry($entry_id);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_ENTRY_DELETE)->create($request->manager_resource);
         return api_response($request, true, 200);
     }
 
@@ -223,6 +226,7 @@ class DueTrackerController extends Controller
                 $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
             $dueTrackerRepository->sendSMS($request);
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_SMS_SEND)->create($request->manager_resource);
             return api_response($request, true, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -234,7 +238,6 @@ class DueTrackerController extends Controller
             $message = "Insufficient Balance";
             return api_response($request, $message, 402, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e->getMessage());
             logError($e);
             return api_response($request, null, 500);
         }

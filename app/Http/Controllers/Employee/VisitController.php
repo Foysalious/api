@@ -299,7 +299,14 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        $visit = $this->visitRepository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+
         if ($request->status === Status::STARTED) {
+            $is_less_than_schedule_time = Carbon::now()->toDateString() < $visit->schedule_date->toDateString();
+            if ($is_less_than_schedule_time) {
+                return api_response($request, null, 420, ['msg' => 'You can not start visit before schedule time']);
+            }
             $current_visits = $this->visitRepository->where('visitor_id', $business_member->id)
                 ->whereIn('status', [Status::STARTED, Status::REACHED])->get()->count();
             if ($current_visits > 0) {
@@ -317,8 +324,6 @@ class VisitController extends Controller
         $member = $this->getMember($request);
         $this->setModifier($member);
 
-        $visit = $this->visitRepository->find($visit);
-        if (!$visit) return api_response($request, null, 404);
         $status_updater->setVisit($visit)->setStatus($request->status)->setLat($request->lat)->setLng($request->lng)
             ->setNote($request->note)->setDate($request->date)->update();
         return api_response($request, null, 200);

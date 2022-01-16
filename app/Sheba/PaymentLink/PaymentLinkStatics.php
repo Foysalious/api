@@ -2,6 +2,8 @@
 
 class  PaymentLinkStatics
 {
+    const SERVICE_CHARGE = 2.0;
+
     public static function faq_webview()
     {
         return config('sheba.partners_url') . "/api/payment-link-faq";
@@ -48,6 +50,16 @@ class  PaymentLinkStatics
             "transaction_message"            => self::get_transaction_message(),
             "payment_link_tax"               => self::get_payment_link_tax(),
             "payment_link_charge_percentage" => self::get_payment_link_commission()
+        ];
+    }
+
+    public static function customPaymentServiceData(): array
+    {
+        return [
+            "step"                           => self::get_step_margin(),
+            "minimum_percentage"             => self::get_minimum_percentage(),
+            "maximum_percentage"             => self::get_maximum_percentage(),
+            "terms_and_condition"            => self::faq_webview()
         ];
     }
 

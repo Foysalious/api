@@ -1,9 +1,21 @@
 <?php namespace Sheba\EMI;
 
+use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSettingModel;
 use Sheba\PaymentLink\PaymentLinkStatics;
 
 class Calculator
 {
+    protected $partner;
+
+    /**
+     * @param $partner
+     * @return $this
+     */
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
+    }
     /**
      * @param $amount
      * @return array
@@ -17,11 +29,19 @@ class Calculator
         return $emi->forgetEach('interest_value')->toArray();
     }
 
+    /**
+     * @param $amount
+     * @param $month
+     * @param $interest
+     * @param bool $format
+     * @return array
+     */
     public function calculateMonthWiseCharge($amount, $month, $interest, $format = true)
     {
         $rate                 = ($interest / 100);
         $interest_two_decimal = number_format((float)$interest, 2, '.', '');
-        $bank_trx_fee = $this->getBankTransactionFee($amount + ceil(($amount * $rate))) + $this->getTax();
+        $bank_trx_fee = isset($this->partner) ? $this->getBankTransactionFee($amount + ceil(($amount * $rate))) :
+                            $this->getBankTransactionFee($amount + ceil(($amount * $rate))) + $this->getTax();
         return $format ? [
             "number_of_months"     => $month,
             "interest"             => "$interest_two_decimal%",
@@ -41,8 +61,21 @@ class Calculator
         ];
     }
 
+    /**
+     * @param $amount
+     * @return bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
+     */
     public function getBankTransactionFee($amount)
     {
+        $digitalCollectionPartner = null;
+
+        if (isset($this->partner->id)) {
+            $digitalCollectionPartner = DigitalCollectionSettingModel::query()->where('partner_id', $this->partner->id)->first();
+        }
+        if ($digitalCollectionPartner) {
+            $charge = $digitalCollectionPartner->service_charge;
+            return ceil($amount * ($charge/ 100));
+        }
         return ceil($amount * ($this->getBankFeePercentage() / 100));
     }
 
