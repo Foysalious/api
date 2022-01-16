@@ -42,6 +42,8 @@ abstract class PaymentMethod
 
     abstract public function requiredDocuments();
 
+    abstract public function apply();
+
     public function postCategoryDetail(MEFFormCategory $category, $data)
     {
         return $category->post($data);

@@ -123,9 +123,24 @@ class MerchantEnrollment
         return $this;
     }
 
+    /**
+     * @return mixed
+     * @throws InvalidKeyException
+     */
     public function getRequiredDocuments()
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
         return $payment_method->requiredDocuments();
+    }
+
+    /**
+     * @return void
+     * @throws InvalidKeyException
+     */
+    public function apply()
+    {
+        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        $payment_method->apply();
+        dd("Apply");
     }
 }

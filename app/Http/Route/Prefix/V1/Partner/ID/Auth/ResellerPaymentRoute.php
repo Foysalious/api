@@ -21,6 +21,7 @@ class ResellerPaymentRoute
                 $api->post('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@postCategoryWiseDetails");
                 $api->post('/document-upload', "ResellerPayment\\MEF\\MerchantEnrollmentController@uploadCategoryWiseDocument");
                 $api->get('/required-document-list', "ResellerPayment\\MEF\\MerchantEnrollmentController@requiredDocuments");
+                $api->post('/apply', "ResellerPayment\\MEF\\MerchantEnrollmentController@apply");
             });
             $api->group(["prefix" => 'survey'], function ($api) {
                 $api->get('/', "Partner\\SurveyController@getQuestions");

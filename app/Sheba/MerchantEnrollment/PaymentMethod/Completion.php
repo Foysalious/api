@@ -56,6 +56,7 @@ class Completion
     public function get(): PaymentMethodCompletion
     {
         $completion = $this->completionPercentage();
+        $this->calculateAndSetOverallCompletion($completion);
         return (new PaymentMethodCompletion())->setCanApply($this->overall_completion == 100 ? 1 : 0)
             ->setOverallCompletion($this->overall_completion)->setCategories($completion)->setMessage($this->message);
     }
@@ -76,16 +77,14 @@ class Completion
             $completion[] = $current->getCompletionDetails()->toArray();
             $iterator->next();
         }
-        $this->calculateAndSetOverallCompletion($completion);
         return $completion;
     }
 
     public function calculateAndSetOverallCompletion($completion)
     {
         $overall_completion = 0;
-        foreach ($completion as $c) {
+        foreach ($completion as $c)
             $overall_completion += ($c["completion_percentage"]["en"]);
-        }
 
         $this->overall_completion = round($overall_completion / count($completion),2);
     }
