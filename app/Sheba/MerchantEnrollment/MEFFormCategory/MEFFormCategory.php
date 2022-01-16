@@ -93,6 +93,8 @@ abstract class MEFFormCategory
 
     abstract public function getFormFields();
 
+    abstract public function getFormFieldData(): array;
+
     abstract public function post($data);
 
     protected function getBengaliPercentage(): string

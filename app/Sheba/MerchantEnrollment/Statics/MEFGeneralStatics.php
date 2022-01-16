@@ -4,6 +4,8 @@ namespace Sheba\MerchantEnrollment\Statics;
 
 class MEFGeneralStatics
 {
+    const USER_TYPE_PARTNER = "Partner";
+
     public static function payment_gateway_keys()
     {
         return config('reseller_payment.available_payment_gateway_keys');

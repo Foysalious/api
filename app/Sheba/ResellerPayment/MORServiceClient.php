@@ -47,7 +47,8 @@ class MORServiceClient
     private function call($method, $uri, $data = null)
     {
         try {
-            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
+            $response = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
+            return json_decode($response->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
@@ -60,18 +61,18 @@ class MORServiceClient
         }
     }
 
-    private function makeUrl($uri)
+    private function makeUrl($uri): string
     {
         return $this->baseUrl . "/" . $uri;
     }
 
-    private function getOptions($data = null)
+    private function getOptions($data = null): array
     {
         $options['headers'] = [
-            'Content-Type' => 'application/json',
-            'Accept'       => 'application/json',
-            'client-id'       => $this->clientId,
-            'client-secret'     => $this->clientSecret
+            'Content-Type'  => 'application/json',
+            'Accept'        => 'application/json',
+            'client-id'     => $this->clientId,
+            'client-secret' => $this->clientSecret
         ];
         if ($data) {
             $options['json'] = $data;

@@ -21,9 +21,14 @@ class Personal extends MEFFormCategory
 
     public function get(): CategoryGetter
     {
+        $formData  = $this->getFormFieldData();
+        return $this->getFormData($this->getFormFields(), $formData);
+    }
+
+    public function getFormFieldData(): array
+    {
         $formItems = $this->getFormFields();
-        $formData  = (new PersonalInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
-        return $this->getFormData($formItems, $formData);
+        return (new PersonalInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
     }
 
     public function post($data)

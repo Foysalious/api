@@ -480,13 +480,14 @@ return [
         ],
     ],
     "status_wise_home_banner" => [
+        'pgw_inactive' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pgw_inactive.png',
         'verified' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/verified.png',
-        'processing' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/processing.png',
-        'pending' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pending.png',
         'rejected' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/rejected.png',
+        'completed_but_did_not_apply' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pending.png',
+        'mef_completed' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/survey_completed.png',
         'survey_completed' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/survey_completed.png',
         "ekyc_completed" => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/ekyc_completed.png',
-        'none' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png'
+        'did_not_started_journey' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png'
     ],
     'mor_status_wise_text' => [
       'ssl' => [
