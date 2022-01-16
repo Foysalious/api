@@ -44,4 +44,12 @@ class PaymentMethodStatics
         if (isset($categoryList[$paymentGatewayKey])) return $categoryList[$paymentGatewayKey];
         throw new InvalidKeyException();
     }
+
+    public static function completionPageMessage(): array
+    {
+        return [
+            "incomplete_message" => "SSL পেমেন্ট সার্ভিস সচল করতে প্রয়োজনীয় তথ্য প্রদান করুন।",
+            "completed_message"  => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, SSL পেমেন্ট সার্ভিস সচল করতে আবেদন করুন।"
+        ];
+    }
 }
