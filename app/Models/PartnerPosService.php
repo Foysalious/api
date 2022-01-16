@@ -249,4 +249,9 @@ class PartnerPosService extends BaseModel
         if(!$partner->isMigrated(Modules::EXPENSE)) return $this->cost;
         return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
     }
+
+    public function getInfinityStockBatchIfExists()
+    {
+        return $this->batches->whereNull('stock')->first();
+    }
 }

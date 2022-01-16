@@ -12,7 +12,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\PartnerRepository;
 use App\Repositories\ProfileRepository;
-use Sheba\AccountingEntry\Repository\UserMigrationRepository;
+use App\Sheba\UserMigration\UserMigrationService;
 use Sheba\Gender\Gender;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
@@ -272,9 +272,9 @@ class PartnerRegistrationController extends Controller
             $this->walletSetting($partner, $by);
         });
         $partner = Partner::find($partner->id);
-        /** @var UserMigrationRepository $umRepo */
-        $umRepo = app(UserMigrationRepository::class);
-        $umRepo->autoMigrate($partner);
+        /** @var UserMigrationService $umService */
+        $umService = app(UserMigrationService::class);
+        $umService->autoMigrate($partner);
         if (isset($data['billing_type']) && isset($data['package_id']))
             $partner->subscribe($data['package_id'], $data['billing_type']);
         return $partner;
