@@ -11,6 +11,7 @@ use Sheba\MerchantEnrollment\MerchantEnrollment;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkStatus;
+use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class PaymentService
 {
@@ -155,7 +156,7 @@ class PaymentService
      * @param $header_message
      * @param $partnerId
      * @return array
-     * @throws \Sheba\ResellerPayment\Exceptions\InvalidKeyException
+     * @throws InvalidKeyException
      */
     public function getPaymentGateways($completion, $header_message, $partnerId): array
     {
@@ -168,7 +169,7 @@ class PaymentService
         $pgwStores = $pgwStores->select('id', 'name', 'key', 'name_bn', 'icon')->get();
         foreach ($pgwStores as $pgwStore) {
             $completionData = (new MerchantEnrollment())->setPartner($partner)->setKey($pgwStore->key)->getCompletion();
-            if ($partner_account->status == 1) {
+            if (isset($partner_account) && $partner_account->status == 1) {
                 $pgwData[] = [
                     'id' => $pgwStore->id,
                     'name' => $pgwStore->name,
@@ -179,7 +180,7 @@ class PaymentService
                     'icon' => $pgwStore->icon,
                     'status' => PaymentLinkStatus::ACTIVE
                 ];
-            } else if ($partner_account->status == 0) {
+            } else if (isset($partner_account) && $partner_account->status == 0) {
                 $pgwData[] = [
                     'id' => $pgwStore->id,
                     'name' => $pgwStore->name,

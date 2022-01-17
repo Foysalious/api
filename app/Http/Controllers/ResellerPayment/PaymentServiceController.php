@@ -4,8 +4,8 @@ namespace App\Http\Controllers\ResellerPayment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
-use App\Sheba\ResellerPayment\PaymentGateway\PaymentGateway;
 use App\Sheba\ResellerPayment\PaymentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -19,42 +19,31 @@ class PaymentServiceController extends Controller
         $this->paymentService = $paymentService;
     }
 
-    public function getPaymentGateway(Request $request)
+    public function getPaymentGateway(Request $request): JsonResponse
     {
-        try {
-            $completion = $request->query('completion');
-            $header_message = 'সর্বাধিক ব্যবহৃত';
-            $partnerId = $request->partner->id;
+        $completion = $request->query('completion');
+        $header_message = 'সর্বাধিক ব্যবহৃত';
+        $partnerId = $request->partner->id;
 
-            $pgwData = $this->paymentService->getPaymentGateways($completion, $header_message, $partnerId);
-            return api_response($request, null, 200, ['data' => $pgwData]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $pgwData = $this->paymentService->getPaymentGateways($completion, $header_message, $partnerId);
+        return api_response($request, null, 200, ['data' => $pgwData]);
     }
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function getPaymentServiceCharge(Request $request)
+    public function getPaymentServiceCharge(Request $request): JsonResponse
     {
-        try {
-            $partnerId = $request->partner->id;
-
-            $data = $this->paymentService->getServiceCharge($partnerId);
-            return api_response($request, null, 200, ['data' => $data]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $partnerId = $request->partner->id;
+        $data = $this->paymentService->getServiceCharge($partnerId);
+        return api_response($request, null, 200, ['data' => $data]);
     }
 
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function storePaymentServiceCharge(Request $request)
     {
@@ -80,7 +69,7 @@ class PaymentServiceController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function emiInformationForManager(Request $request)
     {
