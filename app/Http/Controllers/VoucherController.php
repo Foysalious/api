@@ -7,8 +7,11 @@ use App\Models\PosOrderDiscount;
 use App\Models\Tag;
 use App\Models\Taggable;
 use App\Models\Voucher;
+use App\Sheba\PosCustomerService\PosCustomerService;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Repositories\VoucherRepository;
+use App\Sheba\UserMigration\Modules;
+use App\Sheba\Voucher\PosCustomer as VoucherPosCustomer;
 use App\Sheba\Voucher\VoucherService;
 use App\Transformers\CustomSerializer;
 use App\Transformers\VoucherDetailTransformer;
@@ -37,11 +40,16 @@ class VoucherController extends Controller
      * @var VoucherService
      */
     private $voucherService;
+    /**
+     * @var VoucherPosCustomer
+     */
+    private $voucherPosCustomer;
 
-    public function __construct(OrderService $orderService, VoucherService $voucherService)
+    public function __construct(OrderService $orderService, VoucherService $voucherService, VoucherPosCustomer $voucherPosCustomer)
     {
         $this->orderService = $orderService;
         $this->voucherService = $voucherService;
+        $this->voucherPosCustomer = $voucherPosCustomer;
     }
 
     /**
@@ -87,41 +95,7 @@ class VoucherController extends Controller
     public function index(Request $request)
     {
         try {
-            if ($request->has('amount') || $request->has('pos_services') || $request->has('pos_customer'))
-                $this->validate($request, ['amount' => 'required']);
-
-            $partner = $request->partner;
-            list($offset, $limit) = calculatePagination($request);
-            $partner_voucher_query = Voucher::byPartner($partner);
-
-            $all_voucher_id = $partner_voucher_query->pluck('id')->toArray();
-            $used_voucher_id = PosOrder::byVoucher($all_voucher_id)->pluck('voucher_id')->toArray();
-
-            if ($request->has('filter_type')) {
-                if ($request->filter_type == "used") $partner_voucher_query->whereIn('id', $used_voucher_id);
-                if ($request->filter_type == "valid") $partner_voucher_query->valid();
-                if ($request->filter_type == "invalid") $partner_voucher_query->dateExpire();
-            }
-            if ($request->has('q') && !empty($request->q))
-                $partner_voucher_query = $partner_voucher_query->search($request->q);
-
-            $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit);
-
-            $vouchers = [];
-
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager, $request) {
-                list($is_check_for_promotion, $pos_order_params) = $this->checkForPromotion($request);
-                if ($is_check_for_promotion) {
-                    $result = voucher($voucher->code)->checkForPosOrder($pos_order_params)->reveal();
-                    if (!$result['is_valid']) return;
-                }
-
-                $resource = new Item($voucher, new VoucherTransformer());
-                $voucher = $manager->createData($resource)->toArray();
-                array_push($vouchers, $voucher['data']);
-            });
+            $vouchers = $this->getVouchers($request);
             return api_response($request, null, 200, ['vouchers' => $vouchers]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -130,6 +104,60 @@ class VoucherController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function indexV2(Request $request)
+    {
+        try {
+            $vouchers = $this->getVouchers($request);
+            return http_response($request, null, 200, ['vouchers' => $vouchers]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return http_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return http_response($request, null, 500);
+        }
+    }
+
+    private function getVouchers($request)
+    {
+        if ($request->has('amount') || $request->has('pos_services') || $request->has('pos_customer'))
+            $this->validate($request, ['amount' => 'required']);
+
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        list($offset, $limit) = calculatePagination($request);
+        $partner_voucher_query = Voucher::byPartner($partner);
+
+        $all_voucher_id = $partner_voucher_query->pluck('id')->toArray();
+        $used_voucher_id = PosOrder::byVoucher($all_voucher_id)->pluck('voucher_id')->toArray();
+
+        if ($request->has('filter_type')) {
+            if ($request->filter_type == "used") $partner_voucher_query->whereIn('id', $used_voucher_id);
+            if ($request->filter_type == "valid") $partner_voucher_query->valid();
+            if ($request->filter_type == "invalid") $partner_voucher_query->dateExpire();
+        }
+        if ($request->has('q') && !empty($request->q))
+            $partner_voucher_query = $partner_voucher_query->search($request->q);
+
+        $partner_voucher_query = $partner_voucher_query->skip($offset)->take($limit);
+
+        $vouchers = [];
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $partner_voucher_query->orderBy('id', 'desc')->get()->each(function ($voucher) use (&$vouchers, $manager, $request) {
+            list($is_check_for_promotion, $pos_order_params) = $this->checkForPromotion($request);
+            if ($is_check_for_promotion) {
+                $result = voucher($voucher->code)->checkForPosOrder($pos_order_params)->reveal();
+                if (!$result['is_valid']) return;
+            }
+
+            $resource = new Item($voucher, new VoucherTransformer());
+            $voucher = $manager->createData($resource)->toArray();
+            array_push($vouchers, $voucher['data']);
+        });
+        return $vouchers;
     }
 
     /**
@@ -149,8 +177,8 @@ class VoucherController extends Controller
             $is_check_for_promotion = true;
             $pos_order_params->setPartnerPosService($request->pos_services);
         }
-
-        $pos_customer = $request->has('pos_customer') && !empty($request->pos_customer) ? PosCustomer::find($request->pos_customer) : new PosCustomer();
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $pos_customer = $this->resolvePosCustomer($partner, $request->pos_customer);
         $pos_order_params->setApplicant($pos_customer);
 
         return [$is_check_for_promotion, $pos_order_params];
@@ -411,5 +439,33 @@ class VoucherController extends Controller
 
         $voucher = $voucher_generator->setChannel($request->channel)->setData($request)->setRepository($voucherRepository)->generate();
         return api_response($request, null, 200, ['code' => $voucher->code]);
+    }
+
+    private function resolvePosCustomer($partner, $customerId)
+    {
+        if (!$partner->isMigrated(Modules::POS)) {
+            if (!$customerId) $customer = (new PosCustomer());
+            else $customer = PosCustomer::find($customerId);
+            $this->voucherPosCustomer
+                ->setMobile(($profile = $customer->profile) ? $profile->mobile : null)
+                ->setId($customer->id)
+                ->setMovieTicketOrders($customer->movieTicketOrders)
+                ->setProfile($customer->profile);
+        } else {
+            $customer = !$customerId ? (new PosCustomer()) : $this->getPosCustomerFromSmanagerUser($partner, $customerId);
+            $this->voucherPosCustomer
+                ->setMobile($customer['mobile'])
+                ->setId()
+                ->setMovieTicketOrders(collect())
+                ->setProfile();
+        }
+        return $this->voucherPosCustomer;
+    }
+
+    private function getPosCustomerFromSmanagerUser($partner, $customerId)
+    {
+        /** @var PosCustomerService $posCustomerService */
+        $posCustomerService = app(PosCustomerService::class);
+        return $posCustomerService->setPartner($partner)->setCustomerId($customerId)->getCustomerInfoFromSmanagerUserService();
     }
 }
