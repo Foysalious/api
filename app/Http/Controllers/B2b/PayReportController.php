@@ -11,7 +11,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
-use Illuminate\Support\Facades\Cache;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\FileManagers\CdnFileManager;
@@ -50,9 +49,7 @@ class PayReportController extends Controller
         if (!$business_member) return api_response($request, null, 401);
         $payroll_setting = $business->payrollSetting;
         list($offset, $limit) = calculatePagination($request);
-        $cache_key = 'pay_report_business_'.$business->id.'year_month_'.$request->month_year;
-        $payslip = Cache::remember($cache_key, (60*60*24) , function () use ($business, $request, $pay_report_list) {
-            $payslip['data'] =  $pay_report_list->setBusiness($business)
+        $payslip = $pay_report_list->setBusiness($business)
             ->setSearch($request->search)
             ->setSortKey($request->sort)
             ->setSortColumn($request->sort_column)
@@ -60,22 +57,16 @@ class PayReportController extends Controller
             ->setDepartmentID($request->department_id)
             ->setGrossSalaryProrated($request->gross_salary_prorated)
             ->get();
-            $payslip['total'] = $pay_report_list->getTotal();
-            $payslip['is_prorated_filter_applicable'] = $pay_report_list->getIsProratedFilterApplicable();
-            return $payslip;
-        });
-        $total_calculation = $payslip['total'];
-        $is_prorated_filter_applicable = $payslip['is_prorated_filter_applicable'];
-        $count = count($payslip['data']);
-        if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip['data']->toArray())->setPayslipName('Pay_report')->get();
+        $count = count($payslip);
+        if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_report')->get();
         if ($request->limit == 'all') $limit = $count;
-        $payslip = collect($payslip['data'])->splice($offset, $limit);
+        $payslip = collect($payslip)->splice($offset, $limit);
 
         return api_response($request, null, 200, [
             'payslip' => $payslip,
-            'total_calculation' => $total_calculation,
+            'total_calculation' => $pay_report_list->getTotal(),
             'total' => $count,
-            'is_prorated_filter_applicable' => $is_prorated_filter_applicable,
+            'is_prorated_filter_applicable' => $pay_report_list->getIsProratedFilterApplicable(),
             'is_enable' => $payroll_setting->is_enable
         ]);
     }

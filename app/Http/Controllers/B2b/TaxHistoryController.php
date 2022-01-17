@@ -51,14 +51,19 @@ class TaxHistoryController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
-        $cache_key = 'tax_history_business_'.$business->id.'_month_'.$request->month.'_year_'.$request->year;
+        $cache_key = 'tax_history_business_'.$business->id.'_month_'.$request->month.'_year_'.$request->year.'department_'.$request->department_id;
         $time_period = $this->timeFrame->forAMonth($request->month, $request->year);
         $tax_report = Cache::remember($cache_key, 60 , function () use ($business, $request, $tax_history_list, $time_period) {
-            return $tax_history_list->setBusiness($business)->setTimePeriod($time_period)
-                ->setDepartmentID($request->department_id)->setSearch($request->search)
-                ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+            return $tax_history_list->setBusiness($business)
+                ->setTimePeriod($time_period)
+                ->setDepartmentID($request->department_id)
+                ->setSearch($request->search)
+                ->setSortKey($request->sort)
+                ->setSortColumn($request->sort_column)
                 ->get();
         });
+        if ($request->has('search')) $tax_report = $this->searchEmployee($tax_report, $request->search);
+        if ($request->has('sort')) $tax_report = $this->sortByColumn($tax_report, $request->sort_column, $request->sort)->values();
         $total_report_count = $tax_report->count();
         $total_tax_amount = $tax_report->sum('total_tax_amount_monthly');
         if ($request->file == 'excel') {
@@ -189,6 +194,31 @@ class TaxHistoryController extends Controller
             }
         }
         return ($salary_breakdown['gross_salary_breakdown']['gross_salary'] + $net_payable);
+    }
+
+    private function sortByColumn($data, $column, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($data)->$sort_by(function ($item) use ($column) {
+            return strtoupper($item[$column]);
+        });
+    }
+
+    private function searchEmployee($data, $search_value)
+    {
+        $data = $data->toArray();
+        $employee_ids = array_filter($data, function ($value) use ($search_value){
+            return str_contains($value['employee_id'], $search_value);
+        });
+        $employee_names = array_filter($data, function ($value) use ($search_value){
+            return str_contains(strtoupper($value['employee_name']), strtoupper($search_value));
+        });
+
+        $searched_employees = collect(array_merge($employee_ids, $employee_names));
+        $searched_employees = $searched_employees->unique(function ($employee) {
+            return $employee['id'];
+        });
+        return $searched_employees->values();
     }
 
 }
