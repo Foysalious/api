@@ -43,4 +43,6 @@ RUN usermod -u 1000 www-data
 
 WORKDIR /var/www
 
+RUN echo 'alias t="bin/test.sh"' >> ~/.bashrc
+
 EXPOSE 80 443
