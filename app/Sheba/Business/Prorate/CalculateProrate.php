@@ -69,9 +69,9 @@ class CalculateProrate
     {
         $joining_date = Carbon::parse($this->businessMember->join_date);
         if ($joining_date->format('Y-m') <= $this->fiscalYear->start->format('Y-m')) return false;
-        $remaining_month = Carbon::now()->diffInMonths($this->fiscalYear->end);
+        $remaining_month = (Carbon::now()->diffInMonths($this->fiscalYear->end)) + 1;
         $total_leave_days = $this->leaveType->total_days;
-        $prorated_days = intval(($remaining_month / 12) * $total_leave_days);
+        $prorated_days = ceil(($remaining_month / 12) * $total_leave_days);
         if ($prorated_days > 0) $this->createBusinessMemberLeaveProrate($prorated_days);
     }
 

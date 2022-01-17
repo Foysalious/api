@@ -1,10 +1,12 @@
 <?php namespace App\Models;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Transport\TransportTicketOrder;
+use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\UserMigration\UserMigrationService;
 use App\Sheba\UserMigration\AccountingUserMigration;
 use App\Sheba\UserMigration\UserMigrationRepository;
-use App\Sheba\UserMigration\UserMigrationService;
 use Carbon\Carbon;
 use DB;
 use Exception;
@@ -16,6 +18,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
+use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -137,6 +140,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         'updated_at'
     ];
     private $resourceTypes;
+
+    public static $updatedEventClass = Updated::class;
 
     public function __construct($attributes = [])
     {
@@ -751,9 +756,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return new \Sheba\TopUp\Commission\Partner();
     }
 
+    /**
+     * @return mixed
+     * @throws HyperLocationNotFoundException
+     */
     public function getHyperLocation()
     {
         $geo = json_decode($this->geo_informations);
+        if (empty($geo)){
+            throw  new HyperLocationNotFoundException();
+        }
         return HyperLocal::insidePolygon($geo->lat, $geo->lng)->first();
     }
 
@@ -1046,6 +1058,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
+    public function dataMigration()
+    {
+        return $this->hasOne(PartnerDataMigration::class);
+    }
+
     public function topupChangeLogs()
     {
         return $this->hasMany(CanTopUpUpdateLog::class);
@@ -1103,5 +1120,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function pgwStoreAccounts()
     {
         return $this->morphMany(PgwStoreAccount::class, 'user');
+    }
+
+    public function lastUpdatedPGWStore()
+    {
+        return $this->pgwStoreAccounts->max('updated_at') ?? null;
     }
 }

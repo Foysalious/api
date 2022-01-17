@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 use App\Models\PosCategory;
+use App\Sheba\UserMigration\Modules;
 use App\Transformers\PosServiceTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -127,6 +128,8 @@ class ServiceController extends Controller
      */
     public function store(Request $request, ProductCreator $creator)
     {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $sub_categories = PosCategory::child()->pluck('id')->toArray();
         $master_categories = PosCategory::parents()->pluck('id')->toArray();
         $this->validate($request, [
@@ -269,6 +272,8 @@ class ServiceController extends Controller
      */
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $rules = [
             'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
             'image_gallery' => 'sometimes|required',
@@ -343,6 +348,8 @@ class ServiceController extends Controller
             ];
         }) : [];
         $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
+        /** USAGE LOG */
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_UPDATE)->create($request->manager_resource);
         return api_response($request, null, 200, [
             'msg' => 'Product Updated Successfully',
             'service' => $partner_pos_service_arr
@@ -357,9 +364,12 @@ class ServiceController extends Controller
     public function destroy(Request $request, Deleter $deleter)
     {
         try {
+            $partner = $request->partner;
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $this->setModifier($request->manager_resource);
             $deleter->delete($request->service);
-
+            /** USAGE LOG */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_DELETE)->create($request->manager_resource);
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

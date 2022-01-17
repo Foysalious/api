@@ -9,4 +9,5 @@ class Methods
     const OWN_DELIVERY = 'own_delivery';
     const PAPERFLY = 'paperfly';
     const SDELIVERY = 'sdelivery';
+
 }

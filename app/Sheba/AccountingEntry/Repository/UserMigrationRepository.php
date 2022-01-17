@@ -2,6 +2,7 @@
 
 namespace Sheba\AccountingEntry\Repository;
 
+use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\BaseRepository;
 use App\Sheba\UserMigration\AccountingUserMigration;
@@ -18,6 +19,7 @@ class UserMigrationRepository extends BaseRepository
     {
         parent::__construct($client);
     }
+
     /**
      * @param $userId
      * @param $status

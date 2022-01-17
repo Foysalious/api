@@ -8,8 +8,10 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
+use App\Sheba\Pos\Order\PosOrderObject;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -168,9 +170,15 @@ class PaymentLinkTransaction
     public function create()
     {
         $this->walletTransactionHandler->setModel($this->receiver);
-        $paymentLinkTransaction = $this->amountTransaction()->configurePaymentLinkCharge()->feeTransaction()->setEntryAmount();
+        $paymentLinkTransaction = $this->amountTransaction()->configureServiceCharge()->feeTransaction()->setEntryAmount();
         $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
         return $paymentLinkTransaction;
+    }
+
+    private function configureServiceCharge(): PaymentLinkTransaction
+    {
+        $this->linkCommission = (new DigitalCollectionSetting())->setPartner($this->receiver)->getServiceCharge();
+        return $this;
     }
 
     private function amountTransaction()
@@ -210,6 +218,7 @@ class PaymentLinkTransaction
     {
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
+            $this->real_amount = $this->paymentLink->getRealAmount();
         } else {
             $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
@@ -225,7 +234,8 @@ class PaymentLinkTransaction
             $this->entryAmount = $amount;
         } else {
             if ($this->paymentLink->isEmi()) {
-                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
+//                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
+                $this->entryAmount = $amount - $this->partnerProfit;
             } else {
                 $this->entryAmount = $amount - $this->getFee() - $this->partnerProfit;
             }
@@ -250,10 +260,8 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
-        $customer = null;
-        if (isset($this->customer)) {
-            $customer = PosCustomer::where('profile_id', $this->customer->profile->id)->first();
-        }
+        $this->real_amount = $this->real_amount ? : 0;
+        $customer = $this->paymentLink->getPayer();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
         $paymentLinkRepo =  app(PaymentLinkAccountingRepository::class);
         $transaction = $paymentLinkRepo->setAmount($amount)
@@ -265,11 +273,12 @@ class PaymentLinkTransaction
             ->setRealAmount($this->real_amount);
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
-                    ->setCustomerName(isset($this->customer) ? $this->customer->profile->name: null)
-                    ->setCustomerMobile(isset($this->customer) ? $this->customer->profile->mobile: null)
-                    ->setCustomerProPic(isset($this->customer) ? $this->customer->profile->pro_pic: null);
+                    ->setCustomerName($customer->name)
+                    ->setCustomerMobile($customer->mobile)
+                    ->setCustomerProPic($customer->pro_pic)
+                    ->setCustomerIsSupplier($customer->is_supplier);
         }
-        if ($this->target instanceof PosOrder) {
+        if ($this->target instanceof PosOrderObject) {
             $transaction = $transaction->setSourceId($this->target->id)->setSourceType(EntryTypes::POS);
         }
         $transaction->store($this->receiver->id);

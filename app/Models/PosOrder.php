@@ -5,7 +5,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\POSOrder\Events\PosOrderSaved as PosOrderSavedEvent;
 use Sheba\Dal\POSOrder\OrderStatuses as POSOrderStatuses;
-use Sheba\Dal\POSOrder\SalesChannels as POSOrderSalesChannel;
 use Sheba\EMI\Calculations;
 use Sheba\Helpers\TimeFrame;
 use Sheba\PaymentLink\Target;
@@ -120,6 +119,11 @@ class PosOrder extends BaseModel
     public function discounts()
     {
         return $this->hasMany(PosOrderDiscount::class);
+    }
+
+    public function log()
+    {
+        return $this->has(PosOrderDiscount::class);
     }
 
     private function _calculatePaidAmount()

@@ -36,7 +36,7 @@ class PartnerStatusAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        if (!isset($request->partner) && $request->partner instanceof Partner) {
+        if (!isset($request->partner) || !$request->partner instanceof Partner) {
             throw new DoNotReportException("Not a Partner");
         }
 

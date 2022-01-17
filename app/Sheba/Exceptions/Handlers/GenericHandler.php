@@ -7,7 +7,7 @@ trait GenericHandler
      */
     protected function getCode()
     {
-        return $this->exception->getCode() ? $this->exception->getCode() : 500;
+        return $this->exception->getCode() ?: 500;
     }
 
     /**

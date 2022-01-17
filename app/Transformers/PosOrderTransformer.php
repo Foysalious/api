@@ -21,7 +21,7 @@ class PosOrderTransformer extends TransformerAbstract
         $refundable = $order->isRefundable();
         $refund_status = $order->getRefundStatus();
         $delivery_by_third_party = 0;
-        if ($order->delivery_vendor_name && $order->delivery_vendor_name = Methods::SDELIVERY) {
+        if ($order->delivery_vendor_name && $order->delivery_vendor_name == Methods::SDELIVERY) {
             $delivery_by_third_party = 1;
         } elseif ($order->delivery_thana && $order->delivery_district) {
             $delivery_by_third_party = 1;

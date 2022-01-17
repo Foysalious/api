@@ -28,7 +28,9 @@ class Handler extends ExceptionHandler
         InitiateFailedException::class,
         AccessRestrictedExceptionForPackage::class,
         PinMismatchException::class,
-        InsufficientBalanceException::class
+        InsufficientBalanceException::class,
+        NotFoundAndDoNotReportException::class,
+        AllarKosomWillNotReportException::class
     ];
 
     /**

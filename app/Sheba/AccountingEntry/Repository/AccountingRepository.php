@@ -26,17 +26,9 @@ class AccountingRepository extends BaseRepository
             return true;
         }
         $this->setModifier($partner);
-        $data = $this->createEntryData($request, $type, $request->source_id);
+        $payload = $this->createEntryData($request, $type, $request->source_id);
         $url = "api/entries/";
-        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
-        foreach ($data as $datum) {
-            //pos order reconcile while storing entry
-            if ($datum['source_type'] == 'pos' && $datum['amount_cleared'] > 0) {
-                $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'advance_balance');
-            }
-        }
-
-        return $data;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $payload);
     }
 
     /**

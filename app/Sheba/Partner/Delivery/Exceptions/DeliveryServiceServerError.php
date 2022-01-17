@@ -2,7 +2,6 @@
 
 
 use App\Exceptions\DoNotReportException;
-use App\Exceptions\HttpException;
 use Throwable;
 
 class DeliveryServiceServerError extends DoNotReportException

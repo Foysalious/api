@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use App\Sheba\UserMigration\Modules;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
@@ -8,7 +9,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceUpdated;
-use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\Elasticsearch\ElasticsearchTrait;
 
@@ -232,7 +232,8 @@ class PartnerPosService extends BaseModel
         /** @var Partner $partner */
         $partner = $this->partner;
         if(!$partner->isMigrated(Modules::EXPENSE)) return $this->stock;
-        return $this->batches()->latest()->first()->stock ? $this->batches()->latest()->first()->stock : null;
+        $last_batch = $this->batches()->latest()->first();
+        return !is_null($last_batch) ? $last_batch->stock : null;
     }
 
     public function getStock()
@@ -248,6 +249,12 @@ class PartnerPosService extends BaseModel
         /** @var Partner $partner */
         $partner = $this->partner;
         if(!$partner->isMigrated(Modules::EXPENSE)) return $this->cost;
-        return $this->batches()->latest()->first()->cost ? $this->batches()->latest()->first()->cost : 0.0;
+        $last_batch = $this->batches()->latest()->first();
+        return !is_null($last_batch) ? $last_batch->cost : 0.0;
+    }
+
+    public function getInfinityStockBatchIfExists()
+    {
+        return $this->batches->where('stock',null)->first();
     }
 }

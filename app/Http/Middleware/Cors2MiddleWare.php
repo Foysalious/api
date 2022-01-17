@@ -109,6 +109,7 @@ class Cors2MiddleWare
             "http://payment-link-web.sheba.test:3031",
             "https://v3.sheba.xyz",
             "https://www.smanager.xyz",
+            "https://smanager.xyz",
             "https://retailers.dev-sheba.xyz",
             "https://bkash-client.dev-sheba.xyz",
             "https://v2.sheba.xyz",
@@ -121,6 +122,7 @@ class Cors2MiddleWare
             "https://payment.smanager.xyz",
             "https://testsecureacceptance.cybersource.com",
             "https://secureacceptance.cybersource.com",
+            "https://new-smanager-webstore.dev-sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
