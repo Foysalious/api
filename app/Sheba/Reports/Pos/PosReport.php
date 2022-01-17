@@ -3,10 +3,13 @@
 use App\Models\Partner;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Sheba\FileManagers\CdnFileManager;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
@@ -21,6 +24,7 @@ abstract class PosReport
      * @var $partner Partner
      *
      */
+    use CdnFileManager;
     protected $request, $orderBy, $range, $to, $from, $query, $order, $page, $limit, $data;
     /** @var Partner */
     protected $partner;
@@ -32,6 +36,8 @@ abstract class PosReport
 
     /** @var $client PosOrderServerClient */
     private $client;
+    protected $folder_excel = 'reports/pos/excel';
+    protected $folder_pdf = 'reports/pos/pdf';
 
     public function __construct()
     {
@@ -140,9 +146,8 @@ abstract class PosReport
 
     /**
      * @param string $name
-     * @return void
      * @throws NotAssociativeArray
-     * @throws \Exception
+     * @throws Exception
      */
     public function downloadExcel($name = 'Sales Report')
     {
@@ -179,5 +184,46 @@ abstract class PosReport
             $report = $this->client->get($uri);
             return $report['data'];
         }
+    }
+
+    /**
+     * @param string $name
+     * @param string $template
+     * @return
+     * @throws NotAssociativeArray
+     */
+    public function savePdf($name = 'Sales Report', $template = 'generic_template')
+    {
+        if(!is_array($this->data)){
+            $data = $this->data->toArray();
+        } else {
+            $data = $this->data;
+        }
+        $file_name = request()->partner->id . '_sales_report_' . time();
+        $cdn = $this->pdfHandler->setName($file_name)
+            ->setViewFile($template)
+            ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
+            ->setFolder($this->folder_pdf)
+            ->save();
+        return $cdn;
+    }
+
+    /**
+     * @param string $name
+     * @return string
+     * @throws NotAssociativeArray
+     */
+    public function saveExcel($name = 'Sales Report')
+    {
+        if(!is_array($this->data)){
+            $data = $this->data->toArray();
+        } else {
+            $data = $this->data;
+        }
+        $file_name = request()->partner->id . '_sales_report_' . time();
+        $path = $this->excelHandler->setName($file_name)->createReport($data)->save();
+        $cdn = $this->saveFileToCDN($path, $this->folder_excel, $file_name .'.csv');
+        File::delete($path);
+        return $cdn;
     }
 }

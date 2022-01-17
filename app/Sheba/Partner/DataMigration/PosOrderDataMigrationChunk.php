@@ -1,10 +1,8 @@
 <?php namespace Sheba\Partner\DataMigration;
 
 
-use App\Models\PosOrder;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderChunkJob;
-use Sheba\Partner\DataMigration\Jobs\PartnerMigrationCompleteJob;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
 class PosOrderDataMigrationChunk

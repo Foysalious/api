@@ -277,8 +277,11 @@ class OrderController extends Controller
     {
         try {
             $partner = $request->partner;
+            $modifier = $request->manager_resource;
             if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $deleter->setPartner($request->partner)->setOrder($order)->delete();
+            /** USAGE LOG */
+            (new Usage())->setUser($partner)->setType(Usage::Partner()::POS_ORDER_DELETE)->create($modifier);
             return api_response($request, true, 200);
         } catch (PosExpenseCanNotBeDeleted $e) {
             app('sentry')->captureException($e);
@@ -329,20 +332,23 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater, InvoiceService $invoiceService)
     {
         $partner = $request->partner;
+        $modifier = $request->manager_resource;
         if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $this->setModifier($request->manager_resource);
-            /** @var PosOrder $order */
-            $new           = 1;
-            $order         = PosOrder::with('items')->find($request->order);
-            $is_returned   = ($this->isReturned($order, $request, $new));
-            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-            /** @var RefundNature $refund */
-            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-            $request->merge(['refund_nature' => $refund_nature]);
-            $refund->setNew($new)->update();
+        /** @var PosOrder $order */
+        $new           = 1;
+        $order         = PosOrder::with('items')->find($request->order);
+        $is_returned   = ($this->isReturned($order, $request, $new));
+        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+        /** @var RefundNature $refund */
+        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+        $request->merge(['refund_nature' => $refund_nature]);
+        $refund->setNew($new)->update();
         $invoiceService->setPosOrder($order)->generateInvoice()->saveInvoiceLink();
             $order->payment_status = $order->calculate()->getPaymentStatus();
+        /** USAGE LOG */
+        (new Usage())->setUser($partner)->setType(Usage::Partner()::POS_ORDER_UPDATE)->create($modifier);
             return api_response($request, null, 200, [
                 'msg'   => 'Order Updated Successfully',
                 'order' => $order
@@ -627,8 +633,8 @@ class OrderController extends Controller
             'payment_method' => 'sometimes|string|in:' . implode(',', config('pos.payment_method')),
             'api_key' => 'required',
         ]);
-        if($request->api_key != config('expense_tracker.api_key'))
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+//        if($request->api_key != 'sheba_xyz_acc_key')
+//            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         //from expense server payment details always advance cash
         $method_details = ['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png'];
         $posOrderPaymentRepository->setMethodDetails($method_details)->createPosOrderPayment($request->amount, $request->pos_order_id,$request->payment_method);
@@ -643,8 +649,8 @@ class OrderController extends Controller
         $this->validate($request, [
             'api_key' => 'required',
         ]);
-        if($request->api_key != config('expense_tracker.api_key'))
-            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
+//        if($request->api_key != 'sheba_xyz_acc_key')
+//            throw new UnauthorizedRequestFromExpenseTrackerException("Unauthorized Request");
         $result = $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $request->amount);
         $message = null;
         if($result) $message = 'Pos Order Payment remove successfully';
