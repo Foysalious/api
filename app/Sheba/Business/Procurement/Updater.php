@@ -281,7 +281,6 @@ class Updater
                 'link' => $link
             ]);
         }
-
-        $this->billEmail->setProcurement($this->procurement)->send();
+        #$this->billEmail->setProcurement($this->procurement)->send();
     }
 }

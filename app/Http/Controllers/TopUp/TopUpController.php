@@ -23,6 +23,7 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\Exception\InvalidTopUpTokenException;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\OTF\OtfAmount;
 use Sheba\TopUp\TopUpAgent;
@@ -32,6 +33,7 @@ use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
 use Sheba\OAuth2\VerifyPin;
+use Sheba\TopUp\TopUpTokenManager;
 use Sheba\UserAgentInformation;
 use DB;
 use Excel;
@@ -45,16 +47,19 @@ use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
-use Throwable;
 use Validator;
-use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
-use Sheba\ShebaAccountKit\ShebaAccountKit;
-use Firebase\JWT\ExpiredException;
-use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
     use ModificationFields;
+
+    /** @var TopUpTokenManager */
+    private $tokenManager;
+
+    public function __construct(TopUpTokenManager $token_manager)
+    {
+        $this->tokenManager = $token_manager;
+    }
 
     /**
      * @param Request $request
@@ -122,21 +127,11 @@ class TopUpController extends Controller
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
-            $token = $request->topup_token;
-            if ($token) {
-                try {
-                    $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-                } catch (ExpiredException $e) {
-                    return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch (Exception $e) {
-                    return api_response($request, null, 409, ['message' => 'Invalid topup token']);
-                }
-
-                if ($credentials->sub != $agent->id) {
-                    return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
-                }
+            try {
+                $this->tokenManager->setPartner($agent)->validate($request->topup_token);
+            } catch (InvalidTopUpTokenException $e) {
+                // logError($e);
             }
-
         } else return api_response($request, null, 400);
 
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
@@ -147,8 +142,8 @@ class TopUpController extends Controller
             ->setType($request->connection_type)
             ->setAgent($agent)
             ->setVendorId($request->vendor_id)
-            ->setLat($request->lat ? $request->lat : null)
-            ->setLong($request->long ? $request->long : null)
+            ->setLat($request->lat ?: null)
+            ->setLong($request->long ?: null)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
@@ -158,18 +153,16 @@ class TopUpController extends Controller
         if ($top_up_request->hasError()) {
             return api_response($request, null, $top_up_request->getErrorCode(), ['message' => $top_up_request->getErrorMessage()]);
         }
-        
+
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
         $agent_blocker->setAgent($agent)->checkAndBlock();
 
-        if ($topup_order) {
-            dispatch((new TopUpJob($topup_order)));
+        if (!$topup_order) return api_response($request, null, 500);
 
-            return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-        } else {
-            return api_response($request, null, 500);
-        }
+        dispatch((new TopUpJob($topup_order)));
+
+        return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
     }
 
     public function isBusiness($agent)
@@ -440,35 +433,37 @@ class TopUpController extends Controller
         return api_response($request, null, 200, ['otf_lists' => $special_amount]);
     }
 
-    public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
+    /**
+     * @throws \Sheba\TopUp\Exception\UnauthorizedTokenCreationException
+     */
+    public function generateJwt(Request $request)
     {
-        $authorizationCode = $request->authorization_code;
-        if (!$authorizationCode) {
-            return api_response($request, null, 400, [
-                'message' => 'Authorization code not provided'
-            ]);
-        }
-        $access_token_request->setAuthorizationCode($authorizationCode);
-        $otpNumber = $sheba_accountKit->getMobile($access_token_request);
+        $this->validate($request, [
+            'authorization_code' => 'required|string'
+        ]);
 
         /** @var AuthUser $user */
         $user = $request->auth_user;
-        $resourceNumber = $user->getPartner()->getContactNumber();
-        if ($otpNumber != $resourceNumber) return api_response($request, null, 403, ['message' => 'Invalid Request']);
-
-        $timeSinceMidnight = time() - strtotime("midnight");
-        $remainingTime = (24 * 3600) - $timeSinceMidnight;
-
-        $payload = [
-            'iss' => "topup-jwt",
-            'sub' => $user->getPartner()->id,
-            'iat' => time(),
-            'exp' => time() + $remainingTime
-        ];
+        $token = $this->tokenManager->setPartner($user->getPartner())->generate($request->authorization_code);
 
         return api_response($request, null, 200, [
-            'topup_token' => JWT::encode($payload, config('jwt.secret'))
+            'topup_token' => $token
         ]);
+    }
+
+    /**
+     * @throws InvalidTopUpTokenException
+     */
+    public function checkJwt(Request $request)
+    {
+        $this->validate($request, [
+            'topup_token' => 'required|string'
+        ]);
+
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $this->tokenManager->setPartner($auth_user->getPartner())->validate($request->topup_token);
+        return api_response($request, null, 200, ['message' => 'Token is valid']);
     }
 
     /**

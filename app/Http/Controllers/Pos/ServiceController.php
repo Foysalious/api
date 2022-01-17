@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PartnerPosService;
 use App\Models\PartnerPosServiceDiscount;
 use App\Models\PosCategory;
+use App\Sheba\UserMigration\Modules;
 use App\Transformers\PosServiceTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,7 @@ use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Dal\PartnerPosServiceBatch\Model as PartnerPosServiceBatch;
 use Sheba\ModificationFields;
+use Sheba\Pos\Category\Constants\CategoryConstants;
 use Sheba\Pos\Product\Creator;
 use Sheba\Pos\Product\Creator as ProductCreator;
 use Sheba\Pos\Product\Deleter;
@@ -126,6 +128,8 @@ class ServiceController extends Controller
      */
     public function store(Request $request, ProductCreator $creator)
     {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $sub_categories = PosCategory::child()->pluck('id')->toArray();
         $master_categories = PosCategory::parents()->pluck('id')->toArray();
         $this->validate($request, [
@@ -222,7 +226,7 @@ class ServiceController extends Controller
      */
     private function resolveSubcategory($master_category)
     {
-        $default_subcategory = PosCategory::where('name', 'Sub None Category')->where('parent_id', $master_category)->first();
+        $default_subcategory = PosCategory::where('name', CategoryConstants::DEFAULT_SUB_CATEGORY_NAME)->where('parent_id', $master_category)->first();
         if ($default_subcategory)
             return ['category_id' => $default_subcategory->id];
         $sub_category = $this->createSubcategory($master_category);
@@ -237,8 +241,9 @@ class ServiceController extends Controller
     {
         $master_category = PosCategory::where('id', $master_category)->first();
         $master_category->parent_id = $master_category->id;
-        $master_category->name = 'Sub None Category';
-        $master_category->slug = 'sub-none-category';
+        $master_category->name = CategoryConstants::DEFAULT_SUB_CATEGORY_NAME;
+        $master_category->slug = CategoryConstants::DEFAULT_SUB_CATEGORY_SLUG;
+
         $sub_category = collect($master_category)->all();
         return PosCategory::create($this->withCreateModificationField(array_except($sub_category, ['id', 'created_at', 'created_by', 'created_by_name', 'updated_at', 'updated_by', 'updated_by_name'])));
 
@@ -267,6 +272,8 @@ class ServiceController extends Controller
      */
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
+        $partner = $request->partner;
+        if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
         $rules = [
             'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
             'image_gallery' => 'sometimes|required',
@@ -341,6 +348,8 @@ class ServiceController extends Controller
             ];
         }) : [];
         $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
+        /** USAGE LOG */
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_UPDATE)->create($request->manager_resource);
         return api_response($request, null, 200, [
             'msg' => 'Product Updated Successfully',
             'service' => $partner_pos_service_arr
@@ -355,9 +364,12 @@ class ServiceController extends Controller
     public function destroy(Request $request, Deleter $deleter)
     {
         try {
+            $partner = $request->partner;
+            if($partner->isMigrated(Modules::POS))  return api_response($request, null, 403,["message" =>'অনুগ্রহ করে অ্যাপটি প্লে-স্টোর থেকে আপডেট করুন']);
             $this->setModifier($request->manager_resource);
             $deleter->delete($request->service);
-
+            /** USAGE LOG */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_DELETE)->create($request->manager_resource);
             return api_response($request, null, 200, ['msg' => 'Product Updated Successfully']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

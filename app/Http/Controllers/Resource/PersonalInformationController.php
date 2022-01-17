@@ -6,6 +6,7 @@ use App\Models\PartnerResource;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Repositories\FileRepository;
+use Sheba\Gender\Gender;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -136,7 +137,7 @@ class PersonalInformationController extends Controller
             $rules = [
                 'nid_no' => 'string|unique:resources,nid_no,' . $resource->id,
                 'name' => 'string',
-                'gender' => 'string|in:Male,Female,Other',
+                'gender' => 'string|in:' . Gender::implodeEnglish(),
                 'birthday' => 'date_format:Y-m-d|before:' . date('Y-m-d'),
                 'address' => 'string',
                 'mobile' => 'string|mobile:bd',

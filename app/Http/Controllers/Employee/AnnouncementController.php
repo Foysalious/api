@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\BusinessMember;
+use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\Business\AnnouncementTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\Request;
@@ -14,10 +16,12 @@ use Sheba\Dal\Announcement\AnnouncementTypes;
 
 class AnnouncementController extends Controller
 {
+    use BusinessBasicInformation;
+
     public function show($announcement, Request $request, AnnouncementRepositoryInterface $announcement_repository)
     {
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
         $announcement = $announcement_repository->find($announcement);
         if (!$announcement || $announcement->business_id != $business_member['business_id']) return api_response($request, null, 403);
         $fractal = new Manager();
@@ -29,8 +33,8 @@ class AnnouncementController extends Controller
     public function index(Request $request, AnnouncementList $announcement_list)
     {
         $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric', 'type' => 'string|in:' . implode(',', AnnouncementTypes::get())]);
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 403);
         list($offset, $limit) = calculatePagination($request);
         $announcement_list->setBusinessId($business_member['business_id'])->setOffset($offset)->setLimit($limit);
@@ -40,7 +44,14 @@ class AnnouncementController extends Controller
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $announcements = new Collection($announcements, new AnnouncementTransformer());
-        $announcements = $manager->createData($announcements)->toArray()['data'];
-        return api_response($request, $announcements, 200, ['announcements' => $announcements]);
+        $announcements = collect($manager->createData($announcements)->toArray()['data']);
+
+        if ($request->has('status')) {
+            $announcements = $announcements->filter(function ($announcement) use ($request) {
+                return $announcement['status'] == $request->status;
+            });
+        }
+
+        return api_response($request, $announcements, 200, ['announcements' => $announcements->values()]);
     }
 }

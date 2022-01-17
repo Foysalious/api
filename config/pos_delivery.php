@@ -6,6 +6,10 @@ return [
     'vendor_list' => [
         'own_delivery' => ['bn' => 'নিজস্ব ডেলিভারি ', 'en' => 'Own Delivery'], 'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly']
     ],
+    'vendor_list_v2' => [
+        'paperfly' => ['bn' => 'পেপারফ্লাই', 'en' => 'Paperfly' , 'icon' => env('S3_URL').'pos/paperfly.png'],
+        'redex' => ['bn' => 'রেডেক্স', 'en' => 'Redex' , 'icon' => env('S3_URL').'pos/paperfly.png']
+    ],
     'api_url' => env('S_DELIVERY_API_URL'),
     'server_ip' => env('S_DELIVERY_SERVER_IP'),
 
@@ -20,7 +24,8 @@ return [
             'minimum' => 110,
             'kg_wise' => 30
         ],
-        'note' => 'ক্যাশ অন ডেলিভারির ক্ষেত্রে বিলের উপর ১%  চার্জ প্রযোজ্য।সিটির মধ্যে পরের দিন ডেলিভারি ও সপ্তাহে ৫ দিন মার্চেন্ট পেমেন্ট।'
+        'note' => 'ক্যাশ অন ডেলিভারির ক্ষেত্রে বিলের উপর ১%  চার্জ প্রযোজ্য।সিটির মধ্যে পরের দিন ডেলিভারি ও সপ্তাহে ৫ দিন মার্চেন্ট পেমেন্ট।',
+        'terms_and_condition_link' => 'https://www.paperfly.com.bd/faq.php'
     ],
     'cash_on_delivery_charge_percentage' => 1,
     'terms_and_condition_link' => 'https://www.paperfly.com.bd/faq.php'

@@ -2,6 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\PosOrder;
+use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Payment\Adapters\Payable\PayableAdapter;
@@ -50,18 +51,21 @@ class PaymentLinkOrderAdapter implements PayableAdapter
     public function getPayable(): Payable
     {
         $this->resolveDescription();
-        $payable = new Payable();
-        $payable->type = 'payment_link';
-        $payable->type_id = $this->paymentLink->getLinkID();
-        $payable->user_id = $this->payableUser->id;
-        $payable->user_type = "App\\Models\\" . class_basename($this->payableUser);
-        $payable->amount = $this->getAmount();
-        $payable->description = $this->description;
+        $receiver                 = $this->paymentLink->getPaymentReceiver();
+        $payable                  = new Payable();
+        $payable->type            = 'payment_link';
+        $payable->type_id         = $this->paymentLink->getLinkID();
+        $payable->user_id         = $this->payableUser->id;
+        $payable->user_type       = "App\\Models\\" . class_basename($this->payableUser);
+        $payable->amount          = $this->getAmount();
+        $payable->description     = $this->description;
         $payable->completion_type = "payment_link";
-        $payable->success_url = $this->resolveSuccessUrl();
-        $payable->fail_url = $this->resolveFailUrl();
-        $payable->created_at = Carbon::now();
-        $payable->emi_month = $this->paymentLink->getEmiMonth();
+        $payable->success_url     = $this->resolveSuccessOrFailUrl();
+        $payable->fail_url        = $this->resolveSuccessOrFailUrl();
+        $payable->created_at      = Carbon::now();
+        $payable->emi_month       = $this->paymentLink->getEmiMonth();
+        $payable->created_by      = $receiver ? $receiver->id : 0;
+        $payable->created_by_name = $receiver ? class_basename($receiver) : "";
         $payable->save();
         return $payable;
     }
@@ -74,7 +78,7 @@ class PaymentLinkOrderAdapter implements PayableAdapter
 
     private function resolveDescription()
     {
-        $reason = $this->paymentLink->getReason();
+        $reason            = $this->paymentLink->getReason();
         $this->description = $reason ? $reason : $this->description;
     }
 
@@ -93,21 +97,15 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         return true;
     }
 
-    private function resolveSuccessUrl()
+    private function resolveSuccessOrFailUrl(): string
     {
         $target = $this->paymentLink->getTarget();
-        if ($target && $target instanceof PosOrder && $target->sales_channel == SalesChannels::WEBSTORE) {
-            return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
-        } else {
-            return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
-        }
-    }
-
-    private function resolveFailUrl()
-    {
-        $target = $this->paymentLink->getTarget();
-        if ($target && $target instanceof PosOrder && $target->sales_channel == SalesChannels::WEBSTORE) {
-            return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
+        if ($target && $target instanceof PosOrderObject && $target->sales_channel == SalesChannels::WEBSTORE) {
+            if ($target->is_migrated) {
+                return config('sheba.new_webstore_url') . '/' . $target->partner->sub_domain . '/orders/' . $target->id . '/success';
+            } else {
+                return config('sheba.webstore_url') . '/' . $target->partner->sub_domain . '/redirect-after-payment/' . $target->id;
+            }
         } else {
             return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
         }

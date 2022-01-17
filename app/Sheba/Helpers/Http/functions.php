@@ -6,6 +6,7 @@ use App\Models\Location;
 use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Helpers\Http\ShebaHttpResponse;
 use Sheba\Helpers\Http\ShebaRequestHeader;
 use Sheba\Helpers\Http\ShebaResponse;
 use Sheba\Portals\Portals;
@@ -185,5 +186,27 @@ if (!function_exists('getLocationFromRequest')) {
         }
 
         return null;
+    }
+}
+
+if (!function_exists('http_response')) {
+    /**
+     * @param            $request
+     * @param            $internal_response
+     * @param            $response_code
+     * @param array|null $external_response
+     * @return JsonResponse
+     */
+    function http_response($request, $internal_response, $response_code, array $external_response = null)
+    {
+        $public_response = (new ShebaHttpResponse())->$response_code;
+        if ($external_response != null) {
+            $public_response = array_merge($public_response, $external_response);
+        }
+        if (class_basename($request) == 'Request' || $request instanceof ApiRequest) {
+            return response()->json($public_response, $response_code);
+        } else {
+            return $internal_response;
+        }
     }
 }

@@ -1,11 +1,9 @@
 <?php namespace Sheba\Business\ApprovalRequest;
 
 use App\Jobs\Business\SendLeavePushNotificationToEmployee;
-use App\Jobs\Business\SendNotificationToWebPortal;
+use App\Jobs\Business\SendNotificationToApprover;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
-use App\Models\BusinessMember;
 use App\Models\Profile;
-use App\Models\Member;
 use Exception;
 
 class Notification
@@ -27,6 +25,6 @@ class Notification
      */
     public function sendShebaNotificationToApprover(ApprovalRequest $approval_request, Profile $profile)
     {
-        dispatch(new SendNotificationToWebPortal($approval_request, $profile));
+        dispatch(new SendNotificationToApprover($approval_request, $profile));
     }
 }
