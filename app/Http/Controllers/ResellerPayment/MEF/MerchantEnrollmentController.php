@@ -101,6 +101,10 @@ class MerchantEnrollmentController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function requiredDocuments(Request $request): JsonResponse
     {
         try {
@@ -116,6 +120,10 @@ class MerchantEnrollmentController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function apply(Request $request): JsonResponse
     {
         try {

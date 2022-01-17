@@ -6,7 +6,10 @@ use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class PaymentMethodStatics
 {
-    const APPLY_SUCCESS_MESSAGE = "আবেদন যাচাই করতে ১০ কার্যদিবস সময় লাগতে পারে অনুগ্রহ করে অপেক্ষা করুন।";
+    const APPLY_SUCCESS_MESSAGE = [
+        "body" => "আবেদন যাচাই করতে ১০ কার্যদিবস সময় লাগতে পারে অনুগ্রহ করে অপেক্ষা করুন।",
+        "title" => "আবেদন সফল হয়েছে!"
+    ];
 
     public static function classMap(): array
     {
