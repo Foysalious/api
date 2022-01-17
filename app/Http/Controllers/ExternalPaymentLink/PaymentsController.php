@@ -83,17 +83,16 @@ class PaymentsController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param $partner_id
      * @param ExternalPayments $payments
      * @return JsonResponse
      */
-    public function checkGatewayStatus(Request $request, $partner_id, ExternalPayments $payments): JsonResponse
+    public function checkGatewayStatus($partner_id, ExternalPayments $payments): JsonResponse
     {
         try {
             $partner = Partner::find($partner_id);
-            $status = $payments->getGatewayStatus($partner);
-            return response()->json(['data' => $status, "message" => "Successful", "code" => 200]);
+            $data = $payments->getPaymentGatewayStatus($partner);
+            return response()->json($data);
         }  catch (\Throwable $e) {
             logError($e);
             return response()->json(["message" => "Something went wrong", "code" => 500], 500);

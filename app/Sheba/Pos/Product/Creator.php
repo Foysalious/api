@@ -187,6 +187,7 @@ class Creator
     public function savePartnerPosServiceBatch($service, $stock = null, $cost = null)
     {
         /** @var Partner $partner */
+        /** @var PartnerPosService $service */
         $partner = $service->partner;
         if(!$partner->isMigrated(Modules::EXPENSE)) return true;
         $batchData = [];
@@ -201,7 +202,12 @@ class Creator
         }
         /** @var PartnerPosServiceBatchRepositoryInterface $partnerPosServiceBatchRepository */
         $partnerPosServiceBatchRepository = app(PartnerPosServiceBatchRepositoryInterface::class);
-        $partner_pos_service_batch = $partnerPosServiceBatchRepository->create($batchData);
+        $infinity_batch = $service->getInfinityStockBatchIfExists();
+        if ($infinity_batch) {
+            $partner_pos_service_batch = $infinity_batch->update($batchData);
+        } else {
+            $partner_pos_service_batch = $partnerPosServiceBatchRepository->create($batchData);
+        }
         $batchData = $this->makeReturnDataForBatch($partner_pos_service_batch);
         $this->data['stock'] = $batchData['stock'];
         $this->data['cost'] = $batchData['cost'];

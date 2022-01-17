@@ -9,6 +9,7 @@ use App\Sheba\AccountingEntry\Repository\EntriesRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Usage\Usage;
 
 class EntriesController extends Controller
 {
@@ -40,6 +41,7 @@ class EntriesController extends Controller
     {
 
         $this->entriesRepo->setPartner($request->partner)->setEntryId($entry_id)->deleteEntry();
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::ENTRY_DELETE)->create($request->auth_user);
         return api_response($request, null, 200, ['data' => "Entry delete successful"]);
     }
 }
