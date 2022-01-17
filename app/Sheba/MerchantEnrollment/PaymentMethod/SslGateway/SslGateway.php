@@ -56,7 +56,7 @@ class SslGateway extends PaymentMethod
      * @throws MORServiceServerError
      * @throws NotFoundAndDoNotReportException
      */
-    public function apply(): string
+    public function applicationApply(): string
     {
         (new ApplicationSubmit())->setPartner($this->partner)->setPaymentGateway($this->payment_method)->submit();
         return PaymentMethodStatics::APPLY_SUCCESS_MESSAGE;

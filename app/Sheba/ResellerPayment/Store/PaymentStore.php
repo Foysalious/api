@@ -61,4 +61,6 @@ abstract class PaymentStore
 
     public abstract function test();
 
+    public abstract function account_status_update($status);
+
 }
