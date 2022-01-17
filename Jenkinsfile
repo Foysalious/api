@@ -259,7 +259,7 @@ pipeline {
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/test_by_docker_on_parallel_mode.sh',
+                                execCommand: 'cd /var/www/api && ./bin/generate_author_for_test.sh && ./bin/test_by_docker_on_parallel_mode.sh',
                                 execTimeout: 2100000,
                                 flatten: false,
                                 makeEmptyDirs: false,
@@ -283,6 +283,7 @@ pipeline {
             steps {
                 sshagent(['testing-server-ssh']) {
                     sh "scp -P 2222 testing@103.197.207.58:/var/www/api/results/phpunit/api-test-result.xml ."
+                    sh "scp -P 2222 testing@103.197.207.58:/var/www/api/results/test_case_author.json ."
                 }
             }
         }
@@ -293,6 +294,20 @@ pipeline {
                     sshPublisher(publishers: [
                         sshPublisherDesc(configName: 'production-server-on-premises',
                             transfers: [
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: '',
+                                    execTimeout: 120000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '/tech_api/public/test_results/api',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: '**/test_case_author.json'
+                                ),
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
