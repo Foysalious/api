@@ -53,6 +53,7 @@ class VisitController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', '<>', $business_member->id)->orderBy('id', 'DESC');
         $visits = $visits->whereIn('visitor_id', $this->getBusinessMemberIds($business, $business_member));
+        $show_empty_page = $visits->count() > 0 ? 0 : 1;
 
         /** Department Filter */
         if ($request->has('department_id')) {
@@ -83,15 +84,16 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
 
-        $total_visits = count($visits);
+        $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') return $employee_visit_excel->setEmployeeVisitData($visits->toArray())->get();
 
         return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_visits' => $total_visits
+            'total_visits' => $total_visits,
+            'show_empty_page' => $show_empty_page
         ]);
     }
 
@@ -110,6 +112,7 @@ class VisitController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
         $visits = $this->visitRepository->getAllVisitsWithRelations()->where('visitor_id', $business_member->id)->orderBy('id', 'DESC');
+        $show_empty_page = $visits->count() > 0 ? 0 : 1;
 
         /** Status Filter */
         if ($request->has('status')) {
@@ -129,15 +132,16 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->searchWithVisitTitle($visits, $request);
 
-        $total_visits = count($visits);
+        $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
-        if ($request->has('limit') && !$request->has('file')) $visits = collect($visits)->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
 
         if ($request->has('file') && $request->file == 'excel') return $my_visit_excel->setMyVisitData($visits->toArray())->get();
 
         return api_response($request, $visits, 200, [
             'employees' => $visits,
-            'total_visits' => $total_visits
+            'total_visits' => $total_visits,
+            'show_empty_page' => $show_empty_page
         ]);
     }
 

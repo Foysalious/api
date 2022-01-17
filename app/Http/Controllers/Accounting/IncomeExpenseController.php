@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Statics\IncomeExpenseStatics;
 use Sheba\ModificationFields;
+use Sheba\Usage\Usage;
 
 class IncomeExpenseController extends Controller
 {
@@ -35,6 +36,7 @@ class IncomeExpenseController extends Controller
             $this->validate($request, ['customer_id' => 'required']);
         }
         $response = $this->accountingRepo->storeEntry($request, EntryTypes::INCOME);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_TRACKER_TRANSACTION)->create($request->auth_user);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
@@ -51,6 +53,7 @@ class IncomeExpenseController extends Controller
             $this->validate($request, ['customer_id' => 'required']);
         }
         $response = $this->accountingRepo->updateEntry($request, EntryTypes::INCOME, $income_id);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_ENTRY_UPDATE)->create($request->auth_user);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
@@ -72,6 +75,7 @@ class IncomeExpenseController extends Controller
             $type = EntryTypes::INVENTORY;
         }
         $response = $this->accountingRepo->storeEntry($request, $type);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_TRACKER_TRANSACTION)->create($request->auth_user);
         return api_response($request, $response, 200, ['data' => $response]);
 
     }
@@ -88,9 +92,12 @@ class IncomeExpenseController extends Controller
         if ($request->has("amount_cleared") && $request->amount > $request->amount_cleared) {
             $this->validate($request, ['customer_id' => 'required']);
         }
-//            $product = (json_decode($request->inventory_products, true));
-        $type = count(json_decode($request->inventory_products, true)) ? EntryTypes::INVENTORY : EntryTypes::EXPENSE;
+        $type = EntryTypes::EXPENSE;
+        if ($request->has('inventory_products') && count(json_decode($request->inventory_products, true))) {
+            $type = EntryTypes::INVENTORY;
+        }
         $response = $this->accountingRepo->updateEntry($request, $type, $expense_id);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_ENTRY_UPDATE)->create($request->auth_user);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
