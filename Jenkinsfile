@@ -259,7 +259,7 @@ pipeline {
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/generate_author_for_test.sh && ./bin/test_by_docker_on_parallel_mode.sh',
+                                execCommand: 'cd /var/www/api && ./bin/deploy.sh development && ./bin/generate_author_for_test.sh && ./bin/test_by_docker_on_parallel_mode.sh',
                                 execTimeout: 2100000,
                                 flatten: false,
                                 makeEmptyDirs: false,
