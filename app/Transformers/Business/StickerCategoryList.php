@@ -7,11 +7,11 @@ class StickerCategoryList extends TransformerAbstract
 {
     public function transform(StickerCategory $sticker_category)
     {
-        return[
+        return [
             'category_id' => $sticker_category->id,
             'category_name' => $sticker_category->name,
             'category_title' => $sticker_category->title,
-            'stickers'=> $this->getStickers($sticker_category)
+            'stickers' => $this->getStickers($sticker_category)
         ];
     }
 
@@ -19,12 +19,12 @@ class StickerCategoryList extends TransformerAbstract
     {
         $all_sticker = [];
         $stickers = $sticker_category->stickers;
-        foreach ($stickers as $sticker){
-            array_push($all_sticker,[
-                'id'=>$sticker->id,
-                'image'=>$sticker->image,
+        foreach ($stickers as $sticker) {
+            array_push($all_sticker, [
+                'id' => $sticker->id,
+                'image' => $sticker->image,
             ]);
         }
-       return $all_sticker;
+        return $all_sticker;
     }
 }
