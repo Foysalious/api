@@ -42,9 +42,10 @@ class NidFaceVerification
             $count = $resourceRepo->checkDuplicateNIDInResource($data['nid_no']);
             if($count > 0) throw new EKycException("NID already exist in another resource");
             $resourceRepo->update($this->withUpdateModificationField([
-                'father_name' => $data['father_name'] ? $data['father_name'] : 'N/A',
+                'name_bn' => $data['name_bn'] ?? 'N/A',
+                'father_name' => $data['father_name'] ?? 'N/A',
                 'mother_name' => $data['mother_name'],
-                'spouse_name' => $data['spouse_name'] ? $data['spouse_name'] : 'N/A',
+                'spouse_name' => $data['spouse_name'] ?? 'N/A',
                 'nid_no' => $data['nid_no'],
                 "status" => 'verified',
                 "is_verified" => 1,
