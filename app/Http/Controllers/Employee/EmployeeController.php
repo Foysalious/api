@@ -176,6 +176,8 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $department = $business_member->department();
+        $profile = $business_member->profile();
+        $designation = $business_member->role()->first();
 
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
@@ -249,7 +251,12 @@ class EmployeeController extends Controller
             ] : null,
             'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,
-            'is_manager' => $is_manager
+            'is_manager' => $is_manager,
+            'user_profile' => [
+                'name' => $profile->name ?: null,
+                'pro_pic' => $profile->pro_pic ?: null,
+                'designation' => $designation ? ucwords($designation->name) : null
+            ]
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);

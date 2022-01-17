@@ -7,6 +7,7 @@ use App\Sheba\EmployeeTracking\Requester;
 use App\Sheba\EmployeeTracking\Updater;
 use App\Transformers\Business\AppVisitDetailsTransformer;
 use App\Transformers\Business\LeaveApprovalRequestListTransformer;
+use App\Transformers\Business\TeamVisitsTransformer;
 use App\Transformers\Business\VisitHistoryTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -205,6 +206,44 @@ class VisitController extends Controller
 
     /**
      * @param Request $request
+     * @param VisitList $visit_list
+     * @param TimeFrame $time_frame
+     * @return JsonResponse
+     */
+    public function teamVisitsListV2(Request $request, VisitList $visit_list, TimeFrame $time_frame)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        list($offset, $limit) = calculatePagination($request);
+
+        $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member);
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+            $team_visits = $team_visits->whereBetween('schedule_date', [$time_frame->start, $time_frame->end]);
+        }
+
+        if ($request->has('employees')) {
+            $team_visits = $team_visits->whereIn('visitor_id', json_decode($request->employees, 1));
+        }
+
+        if ($request->has('status')) {
+            $team_visits = $team_visits->where('status', $request->status);
+        }
+
+        $team_visits = $team_visits->get();
+        if (count($team_visits) == 0) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($team_visits, new TeamVisitsTransformer());
+        $team_visits = $manager->createData($resource)->toArray()['data'];
+        $total_visit = count($team_visits);
+        $team_visits = collect($team_visits)->splice($offset, $limit);
+        return api_response($request, $team_visits, 200, ['total_visit' => $total_visit, 'team_visit_list' => $team_visits]);
+    }
+
+    /**
+     * @param Request $request
      * @param $visit
      * @return JsonResponse
      */
@@ -299,7 +338,14 @@ class VisitController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        $visit = $this->visitRepository->find($visit);
+        if (!$visit) return api_response($request, null, 404);
+
         if ($request->status === Status::STARTED) {
+            $is_less_than_schedule_time = Carbon::now()->toDateString() < $visit->schedule_date->toDateString();
+            if ($is_less_than_schedule_time) {
+                return api_response($request, null, 420, ['msg' => 'You can not start visit before schedule time']);
+            }
             $current_visits = $this->visitRepository->where('visitor_id', $business_member->id)
                 ->whereIn('status', [Status::STARTED, Status::REACHED])->get()->count();
             if ($current_visits > 0) {
@@ -317,8 +363,6 @@ class VisitController extends Controller
         $member = $this->getMember($request);
         $this->setModifier($member);
 
-        $visit = $this->visitRepository->find($visit);
-        if (!$visit) return api_response($request, null, 404);
         $status_updater->setVisit($visit)->setStatus($request->status)->setLat($request->lat)->setLng($request->lng)
             ->setNote($request->note)->setDate($request->date)->update();
         return api_response($request, null, 200);

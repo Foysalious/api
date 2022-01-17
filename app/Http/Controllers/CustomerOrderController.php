@@ -78,6 +78,7 @@ class CustomerOrderController extends Controller
                 $all_jobs->map(function ($job) {
                     $order_job = Job::find($job['job_id']);
                     $job['can_pay'] = $this->canPay($order_job);
+                    $job['payment_status'] = $this->getPaymentStatus($order_job);
                     $job['can_take_review'] = $this->canTakeReview($order_job);
                     return $job;
                 });
@@ -133,6 +134,16 @@ class CustomerOrderController extends Controller
         else {
             return $due > 0;
         }
+    }
+
+    private function getPaymentStatus($job)
+    {
+        $due = $job->partnerOrder->calculate(true)->due;
+        $status = $job->status;
+
+        if ($status === 'Cancelled') return null;
+        elseif ($due > 0) return 'Due';
+        else return 'Paid';
     }
 
     private function getInformation($orders)

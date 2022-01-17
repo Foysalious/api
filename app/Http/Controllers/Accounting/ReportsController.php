@@ -10,6 +10,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Reports\Accounting\AccountingReportRepository;
 use Sheba\Reports\Pos\PosReportRepository;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class ReportsController extends Controller
@@ -29,6 +30,7 @@ class ReportsController extends Controller
     public function getCustomerWiseReport(Request $request)
     {
         try {
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::REPORT_DOWNLOAD)->create($request->auth_user);
             if ($request->has('download_excel')) {
                 $name = 'Customer Wise Sales Report';
                 return $this->posReportRepository->getCustomerWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadExcel($name);
@@ -63,6 +65,7 @@ class ReportsController extends Controller
     public function getProductWiseReport(Request $request)
     {
         try {
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::REPORT_DOWNLOAD)->create($request->auth_user);
             if ($request->has('download_excel')) {
                 $name = 'Product Wise Sales Report';
                 return $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadExcel($name);
@@ -115,6 +118,7 @@ class ReportsController extends Controller
 
         if (in_array($reportType, $report_types)) {
             $response = $this->accountingReportRepository->getAccountingReport($reportType, $request->partner->id, $startDate, $endDate, $acc_id, $request->account_type);
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::REPORT_DOWNLOAD)->create($request->auth_user);
             return api_response($request, $response, 200, ['data' => $response]);
         }
         return api_response($request, null, 402, ['message' => 'Please apply with correct report type.']);
