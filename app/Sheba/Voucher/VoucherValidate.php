@@ -116,7 +116,7 @@ class VoucherValidate
                 ->setMovieTicketOrders($customer->movieTicketOrders)
                 ->setProfile($customer->profile);
         } else {
-            $customer = $this->getPosCustomer();
+            $customer = !$this->posCustomerId ? (new PosCustomerModel()) : $this->getPosCustomer();
             $this->posCustomer
                 ->setMobile($customer['mobile'])
                 ->setId()
