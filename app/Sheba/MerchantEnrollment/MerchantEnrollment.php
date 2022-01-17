@@ -134,13 +134,12 @@ class MerchantEnrollment
     }
 
     /**
-     * @return void
+     * @return mixed
      * @throws InvalidKeyException
      */
     public function apply()
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
-        $payment_method->apply();
-        dd("Apply");
+        return $payment_method->apply();
     }
 }
