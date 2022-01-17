@@ -46,6 +46,7 @@ class FaceVerificationController extends Controller
     {
         try {
             $this->validate($request, Statics::faceVerificationValidate());
+            $this->nidFaceVerification->updateLivelinessCount($request, $profileNIDSubmissionRepo);
             $userAgentInformation->setRequest($request);
             $profile = $request->auth_user->getProfile();
             $userAgent = $userAgentInformation->getUserAgent();

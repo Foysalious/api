@@ -9,8 +9,6 @@ class Creator
 {
     use ModificationFields;
 
-    const WHICH_PERSON_GET_NOTIFICATION_IN_THE_ORDER = 1;
-
     private $approvalRequestRepo;
     private $approverId;
     private $requestableType;
@@ -68,6 +66,7 @@ class Creator
 
     public function create()
     {
+        $first_approver_key = key($this->approverId); // When Department Head not found order doesn't start from 1, so is notified becomes 0, to fix that issue this implementation
         foreach ($this->approverId as $order => $approver_id) {
             $data = $this->withCreateModificationField([
                 'requestable_type' => $this->requestableType,
@@ -75,12 +74,12 @@ class Creator
                 'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
                 'approver_id' => $approver_id,
                 'order' => $order,
-                'is_notified' => $order == self::WHICH_PERSON_GET_NOTIFICATION_IN_THE_ORDER ? 1 : 0
+                'is_notified' => $first_approver_key == $order ? 1 : 0
             ]);
 
             $approval_request = $this->approvalRequestRepo->create($data);
             # First approver will get notification this the order
-            if (!$this->isLeaveAdjustment && $order == self::WHICH_PERSON_GET_NOTIFICATION_IN_THE_ORDER) {
+            if (!$this->isLeaveAdjustment && $first_approver_key == $order) {
                 try {
                     $this->notification->sendPushToApprover($approval_request, $this->profile);
                     $this->notification->sendShebaNotificationToApprover($approval_request, $this->profile);

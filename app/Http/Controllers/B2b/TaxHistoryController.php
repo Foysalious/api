@@ -143,7 +143,11 @@ class TaxHistoryController extends Controller
                 $data[$x]['amount'] = $component_value;
             }
             else {
-                $custom_component = $this->payrollComponentRepo->where('name', $component_name)->where('payroll_setting_id', $payroll_setting->id)->first();
+                $custom_component = $this->payrollComponentRepo
+                    ->where('name', $component_name)
+                    ->where('payroll_setting_id', $payroll_setting->id)
+                    ->withTrashed()
+                    ->first();
                 $name = $custom_component->value;
                 $data[$x]['value'] = $name;
                 $data[$x]['display_index'] = 9;
