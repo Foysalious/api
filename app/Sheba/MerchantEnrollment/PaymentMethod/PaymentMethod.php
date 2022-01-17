@@ -42,7 +42,7 @@ abstract class PaymentMethod
 
     abstract public function requiredDocuments();
 
-    abstract public function apply();
+    abstract public function applicationApply();
 
     public function postCategoryDetail(MEFFormCategory $category, $data)
     {

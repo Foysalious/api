@@ -140,6 +140,6 @@ class MerchantEnrollment
     public function apply()
     {
         $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
-        return $payment_method->apply();
+        return $payment_method->applicationApply();
     }
 }

@@ -36,7 +36,7 @@ class BkashGateway extends PaymentMethod
         // TODO: Implement requiredDocuments() method.
     }
 
-    public function apply(): string
+    public function applicationApply(): string
     {
         // TODO: Implement apply() method.
     }
