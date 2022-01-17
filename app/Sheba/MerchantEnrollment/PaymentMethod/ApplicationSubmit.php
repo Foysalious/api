@@ -25,6 +25,7 @@ class ApplicationSubmit
 
     private $partner_data;
     private $data;
+    private $partner_survey_data;
 
     /**
      * @param mixed $partner
@@ -70,7 +71,7 @@ class ApplicationSubmit
     {
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $response = $morClient->post("api/v1/applications/store", $this->data);
+        $morClient->post("api/v1/clients/applications/store", $this->data);
     }
 
     /**
@@ -83,6 +84,20 @@ class ApplicationSubmit
     {
         $this->validateNID();
         $this->validateData();
+        $this->validateSurvey();
+    }
+
+    /**
+     * @return void
+     * @throws IncompleteSubmitData
+     */
+    private function validateSurvey()
+    {
+        if($this->partner->survey->first()) {
+            $this->partner_survey_data = $this->partner->survey->first()->result;
+            return;
+        }
+        throw new IncompleteSubmitData("Survey data not found");
     }
 
     /**
@@ -119,6 +134,9 @@ class ApplicationSubmit
             }
     }
 
+    /**
+     * @return void
+     */
     private function makeData()
     {
         $other_data = (new PersonalInformation())->setPartner($this->partner)->getPersonalPhoto();
@@ -128,7 +146,8 @@ class ApplicationSubmit
             "application_data" => json_encode($this->partner_data),
             "user_type"        => MEFGeneralStatics::USER_TYPE_PARTNER,
             "user_id"          => $this->partner->id,
-            "pgw_store_key"    => $this->payment_gateway->key
+            "pgw_store_key"    => $this->payment_gateway->key,
+            "survey_data"      => $this->partner_survey_data
         ];
     }
 }

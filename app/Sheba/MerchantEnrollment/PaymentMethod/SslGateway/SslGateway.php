@@ -2,12 +2,14 @@
 
 namespace Sheba\MerchantEnrollment\PaymentMethod\SslGateway;
 
+use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Sheba\MerchantEnrollment\PaymentMethod\ApplicationSubmit;
 use App\Sheba\MerchantEnrollment\PaymentMethod\Completion;
+use App\Sheba\ResellerPayment\Exceptions\MORServiceServerError;
+use Sheba\MerchantEnrollment\Exceptions\IncompleteSubmitData;
 use Sheba\MerchantEnrollment\Exceptions\InvalidListInsertionException;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
-use Sheba\MerchantEnrollment\MEFFormCategoryFactory;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethod;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethodCompletion;
 use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
@@ -47,12 +49,16 @@ class SslGateway extends PaymentMethod
     }
 
     /**
-     * @return void
+     * @return string
+     * @throws IncompleteSubmitData
      * @throws InvalidKeyException
      * @throws InvalidListInsertionException
+     * @throws MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
      */
-    public function apply()
+    public function apply(): string
     {
         (new ApplicationSubmit())->setPartner($this->partner)->setPaymentGateway($this->payment_method)->submit();
+        return PaymentMethodStatics::APPLY_SUCCESS_MESSAGE;
     }
 }
