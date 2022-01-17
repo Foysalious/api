@@ -161,6 +161,7 @@ class PaymentService
     public function getPaymentGateways($completion, $header_message, $partnerId): array
     {
         $pgwData = [];
+        $status = '';
         $partner = Partner::where('id', $partnerId)->first();
         $partner_account = $partner->pgwStoreAccounts()->select('status')->first();
         $pgwStores = new PgwStore();
@@ -169,73 +170,30 @@ class PaymentService
         $pgwStores = $pgwStores->select('id', 'name', 'key', 'name_bn', 'icon')->get();
         foreach ($pgwStores as $pgwStore) {
             $completionData = (new MerchantEnrollment())->setPartner($partner)->setKey($pgwStore->key)->getCompletion();
-            if (isset($partner_account) && $partner_account->status == 1) {
-                $pgwData[] = [
-                    'id' => $pgwStore->id,
-                    'name' => $pgwStore->name,
-                    'key' => $pgwStore->key,
-                    'name_bn' => $pgwStore->name_bn,
-                    'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                    'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                    'icon' => $pgwStore->icon,
-                    'status' => PaymentLinkStatus::ACTIVE
-                ];
-            } else if (isset($partner_account) && $partner_account->status == 0) {
-                $pgwData[] = [
-                    'id' => $pgwStore->id,
-                    'name' => $pgwStore->name,
-                    'key' => $pgwStore->key,
-                    'name_bn' => $pgwStore->name_bn,
-                    'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                    'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                    'icon' => $pgwStore->icon,
-                    'status' => PaymentLinkStatus::INACTIVE
-                ];
-            } else if ( !$mor_status && !$partner_account) {
-                $pgwData[] = [
-                    'id' => $pgwStore->id,
-                    'name' => $pgwStore->name,
-                    'key' => $pgwStore->key,
-                    'name_bn' => $pgwStore->name_bn,
-                    'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                    'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                    'icon' => $pgwStore->icon,
-                    'status' => PaymentLinkStatus::UNREGISTERED
-                ];
-            } else if ($mor_status['application_status'] == "processing" && !$partner_account) {
-                $pgwData[] = [
-                    'id' => $pgwStore->id,
-                    'name' => $pgwStore->name,
-                    'key' => $pgwStore->key,
-                    'name_bn' => $pgwStore->name_bn,
-                    'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                    'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                    'icon' => $pgwStore->icon,
-                    'status' => PaymentLinkStatus::PROCESSING
-                ];
+
+            if ( !$mor_status && !$partner_account) {
+                $status = PaymentLinkStatus::UNREGISTERED;
+            } else if ($mor_status['application_status'] == "pending" && !$partner_account) {
+                $status = PaymentLinkStatus::PROCESSING;
             } else if ($mor_status['application_status'] == "verified" && !$partner_account) {
-                $pgwData[] = [
-                    'id' => $pgwStore->id,
-                    'name' => $pgwStore->name,
-                    'key' => $pgwStore->key,
-                    'name_bn' => $pgwStore->name_bn,
-                    'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                    'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                    'icon' => $pgwStore->icon,
-                    'status' => PaymentLinkStatus::SUCCESSFUL
-                ];
+                $status = PaymentLinkStatus::SUCCESSFUL;
             } else if ($mor_status['application_status'] == "rejected" && !$partner_account) {
-                $pgwData[] = [
-                    'id' => $pgwStore->id,
-                    'name' => $pgwStore->name,
-                    'key' => $pgwStore->key,
-                    'name_bn' => $pgwStore->name_bn,
-                    'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                    'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                    'icon' => $pgwStore->icon,
-                    'status' => PaymentLinkStatus::REJECTED
-                ];
+                $status = PaymentLinkStatus::REJECTED;
+            } else if ($partner_account->status == 1) {
+                $status = PaymentLinkStatus::ACTIVE;
+            } else if ($partner_account->status == 0) {
+                $status = PaymentLinkStatus::INACTIVE;
             }
+            $pgwData[] = [
+                'id' => $pgwStore->id,
+                'name' => $pgwStore->name,
+                'key' => $pgwStore->key,
+                'name_bn' => $pgwStore->name_bn,
+                'header' => $pgwStore->key === 'ssl' ? $header_message : null,
+                'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
+                'icon' => $pgwStore->icon,
+                'status' => $status
+            ];
         }
         return $pgwData;
     }
