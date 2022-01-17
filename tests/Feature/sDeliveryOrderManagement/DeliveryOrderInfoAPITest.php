@@ -7,6 +7,7 @@ use App\Models\PosOrder;
 use App\Models\PosOrderPayment;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Tests\Feature\FeatureTestCase;
+use Throwable;
 
 /**
  * @author Md Taufiqur Rahman Miraz <taufiqur.rahman@sheba.xyz>
@@ -15,14 +16,11 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
 {
     /** @var $posOrderCreate */
     private $posOrderCreate;
-
     /** @var $partnerPosCustomer */
     private $partnerPosCustomer;
-
     /** @var $partnerDeliveryinfo */
     private $partnerDeliveryinfo;
-
-    /** @var  $posOrderPayment */
+    /** @var $posOrderPayment */
     private $posOrderPayment;
 
     public function setUp(): void
@@ -37,14 +35,17 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         ]);
         $this->logIn();
 
-        $this->partnerPosCustomer = factory(PosCustomer::class)->create();
-        $this->posOrderCreate = factory(PosOrder::class)->create();
-        $this->posOrderPayment = factory(PosOrderPayment::class)->create();
-        $this->partnerDeliveryinfo = factory(PartnerDeliveryInformation::class)->create([
+        $this->partnerPosCustomer = PosCustomer::factory()->create();
+        $this->posOrderCreate = PosOrder::factory()->create();
+        $this->posOrderPayment = PosOrderPayment::factory()->create();
+        $this->partnerDeliveryinfo = PartnerDeliveryInformation::factory()->create([
             'partner_id' => $this->partner->id,
         ]);
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testPosDeliveryOrderInfo()
     {
         $response = $this->get('/v2/pos/delivery/order-information/1', [
@@ -55,7 +56,10 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         $this->assertEquals("Successful", $data['message']);
     }
 
-    public function test401ResponseforPosDeliveryOrderInfo()
+    /**
+     * @throws Throwable
+     */
+    public function test401ResponseForPosDeliveryOrderInfo()
     {
         $response = $this->get('/v2/pos/delivery/order-information/1', [
             'Authorization' => "Bearer $this->token".'hrthew',
@@ -64,14 +68,4 @@ class DeliveryOrderInfoAPITest extends FeatureTestCase
         $this->assertEquals(401, $data['code']);
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
     }
-
-    /*    public function testPosDeliveryOrderCODAmountcalculate()
-        {
-            $response = $this->get('/v2/pos/delivery/order-information/1', [
-                'Authorization' => "Bearer $this->token"
-            ]);
-
-            $data = $response->decodeResponseJson();
-            $this->assertEquals('0', $data['order_information'][0]['cod_amount'][]);
-        }*/
 }
