@@ -2,18 +2,20 @@
 
 return [
     '01799444000'           => [
-        'app_key'    => env('BKASH_APP_KEY_017'),
-        'app_secret' => env('BKASH_APP_SECRET_017'),
-        'username'   => env('BKASH_USERNAME_017'),
-        'password'   => env('BKASH_PASSWORD_017'),
-        'url'        => env('BKASH_URL_017')
+        'app_key'         => env('BKASH_APP_KEY_017'),
+        'app_secret'      => env('BKASH_APP_SECRET_017'),
+        'username'        => env('BKASH_USERNAME_017'),
+        'password'        => env('BKASH_PASSWORD_017'),
+        'url'             => env('BKASH_URL_017'),
+        'merchant_number' => '01799444000'
     ],
     '01833922030'           => [
-        'app_key'    => env('BKASH_APP_KEY_018'),
-        'app_secret' => env('BKASH_APP_SECRET_018'),
-        'username'   => env('BKASH_USERNAME_018'),
-        'password'   => env('BKASH_PASSWORD_018'),
-        'url'        => env('BKASH_URL_018')
+        'app_key'         => env('BKASH_APP_KEY_018'),
+        'app_secret'      => env('BKASH_APP_SECRET_018'),
+        'username'        => env('BKASH_USERNAME_018'),
+        'password'        => env('BKASH_PASSWORD_018'),
+        'url'             => env('BKASH_URL_018'),
+        'merchant_number' => '01833922030'
     ],
     'old_username'          => env('BKASH_VERIFICATION_USERNAME'),
     'old_password'          => env('BKASH_VERIFICATION_PASSWORD'),
@@ -34,19 +36,21 @@ return [
         'url'        => env('BKASH_PAYOUT_URL')
     ],
     'client_url' => env('BKASH_CLIENT_URL', "https://bkash-client.dev-sheba.xyz"),
-    'sManager'=>[
-        'app_key' => env('BKASH_APP_KEY_SMANAGER'),
-        'app_secret' => env('BKASH_APP_SECRET_SMANAGER'),
-        'username'   => env('BKASH_USERNAME_SMANAGER'),
-        'password'   => env('BKASH_PASSWORD_SMANAGER'),
-        'url'        => env('BKASH_URL_SMANAGER')
+    'sManager'              => [
+        'app_key'         => env('BKASH_APP_KEY_017'),
+        'app_secret'      => env('BKASH_APP_SECRET_017'),
+        'username'        => env('BKASH_USERNAME_017'),
+        'password'        => env('BKASH_PASSWORD_017'),
+        'url'             => env('BKASH_URL_017'),
+        'merchant_number' => '01799444000'
     ],
     'marketplace'           => [
-        'app_key'    => env('BKASH_APP_KEY_MARKETPLACE'),
-        'app_secret' => env('BKASH_APP_SECRET_MARKETPLACE'),
-        'username'   => env('BKASH_USERNAME_MARKETPLACE'),
-        'password'   => env('BKASH_PASSWORD_MARKETPLACE'),
-        'url'        => env('BKASH_URL_MARKETPLACE')
+        'app_key'         => env('BKASH_APP_KEY_018'),
+        'app_secret'      => env('BKASH_APP_SECRET_018'),
+        'username'        => env('BKASH_USERNAME_018'),
+        'password'        => env('BKASH_PASSWORD_018'),
+        'url'             => env('BKASH_URL_018'),
+        'merchant_number' => '01833922030'
     ],
-    'default_url'           => env("BKASH_DEFAULT_URL","https://checkout.sandbox.bka.sh/v1.2.0-beta")
+    'default_url'           => env("BKASH_DEFAULT_URL", "https://checkout.sandbox.bka.sh/v1.2.0-beta")
 ];
