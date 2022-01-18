@@ -297,7 +297,7 @@ class InventoryDataMigration
                 SUBTIME(profiles.updated_at,"6:00:0") as updated_at'))
             ->get();
         if(!is_array($suppliers)) {
-            $suppliers = $suppliers->toArray();
+            $suppliers = $suppliers->values()->toArray();
         }
         return $suppliers;
     }
