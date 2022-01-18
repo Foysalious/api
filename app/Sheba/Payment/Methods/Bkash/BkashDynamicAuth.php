@@ -6,15 +6,20 @@ use Illuminate\Contracts\Support\Arrayable;
 use ReflectionClass;
 use ReflectionException;
 use Sheba\Bkash\Modules\BkashAuth;
-use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
 use Sheba\Payment\Exceptions\StoreNotFoundException;
+use Sheba\ResellerPayment\EncryptionAndDecryption;
 
 class BkashDynamicAuth extends BkashAuth implements Arrayable
 {
 
 
-    public    $configuration;
-    protected $url = "https://checkout.sandbox.bka.sh/v1.2.0-beta";
+    public $configuration;
+
+    public function __construct()
+    {
+        $this->url = config('bkash.default_url');
+    }
+
     /**
      * @param mixed $store
      * @return BkashDynamicAuth
@@ -24,7 +29,8 @@ class BkashDynamicAuth extends BkashAuth implements Arrayable
     {
 
         if (empty($store)) throw new StoreNotFoundException();
-        $this->configuration = json_decode($store->configuration, true);
+        $configuration = !empty($store->configuration) ? (new EncryptionAndDecryption())->setData($store->configuration)->getDecryptedData() : "[]";
+        $this->configuration = json_decode($configuration, true);
         return $this;
     }
 
@@ -58,7 +64,7 @@ class BkashDynamicAuth extends BkashAuth implements Arrayable
         $reflection_class = new ReflectionClass($this);
         $data             = [];
         foreach ($reflection_class->getProperties() as $item) {
-            if (!$item->isPrivate())
+            if (!$item->isProtected())
                 continue;
             $data[$item->name] = $this->{$item->name};
         }
