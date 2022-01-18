@@ -175,6 +175,7 @@ class JobController extends Controller
         $job_collection->put('is_same_service', 0);
         $job_collection->put('is_closed', $job->partnerOrder->closed_at != null ? 1 : 0);
         $job_collection->put('is_inspection_service', $job->jobServices[0] ? $job->jobServices[0]->service->is_inspection_service :  0);
+        $job_collection->put('readable_status', constants('JOB_STATUSES_SHOW')[$job->status]['customer']);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         if (count($job->jobServices) == 0) {

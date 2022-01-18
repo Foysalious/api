@@ -54,6 +54,11 @@ class PartnerService
         return $this->client->get($this->uri);
     }
 
+    public function storeOrGet($data)
+    {
+        return $this->client->post('api/v1/partners/store-or-get', $data, false);
+    }
+
     private function makeUri()
     {
         $this->uri = 'api/v1/partners/' . $this->partner->id;

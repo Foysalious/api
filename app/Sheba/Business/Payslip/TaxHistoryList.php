@@ -4,6 +4,7 @@
 use App\Models\Business;
 use App\Transformers\Business\PayRunListTransformer;
 use App\Transformers\Business\TaxHistoryListTransformer;
+use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
@@ -107,9 +108,10 @@ class TaxHistoryList
 
     private function getData()
     {
+        $profiles = $this->getBusinessMembersProfileName();
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $tax_history_list = new Collection($this->taxHistoryList, new TaxHistoryListTransformer());
+        $tax_history_list = new Collection($this->taxHistoryList, new TaxHistoryListTransformer($profiles));
         $tax_history_list = collect($manager->createData($tax_history_list)->toArray()['data']);
 
         if ($this->search) $tax_history_list = $this->searchEmployee($tax_history_list);
@@ -165,6 +167,14 @@ class TaxHistoryList
             return $employee['id'];
         });
         return $searched_employees->values();
+    }
+
+    private function getBusinessMembersProfileName()
+    {
+        return DB::table('business_member')
+            ->join('members', 'members.id', '=', 'business_member.member_id')
+            ->join('profiles', 'profiles.id', '=', 'members.profile_id')
+            ->whereIn('business_member.id', $this->businessMemberIds)->pluck('name', 'business_member.id');
     }
 
 }

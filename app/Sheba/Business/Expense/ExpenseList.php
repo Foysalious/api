@@ -4,7 +4,7 @@ use Illuminate\Support\Collection;
 
 class ExpenseList
 {
-    private $expenseData;
+    private $rawExpenseData;
 
     /**
      * @param Collection $expenses
@@ -12,7 +12,7 @@ class ExpenseList
      */
     public function setData(Collection $expenses)
     {
-        $this->expenseData = $expenses;
+        $this->rawExpenseData = $expenses;
         return $this;
     }
 
@@ -22,62 +22,48 @@ class ExpenseList
     public function get()
     {
         $expense_data = [];
-        foreach ($this->expenseData as $expense) {
-            $total_amount = 0;
-            $expense_summary = [
-                'employee_id' => null,
-                'member_id' => null,
-                'business_member_id' => null,
-                'transport' => 0,
-                'food' => 0,
-                'other' => 0,
-                'amount' => 0,
-                'created_at' => null,
-                'year' => null,
-                'month' => null,
-                'employee_name' => null,
-                'employee_department' => null
-            ];
-            foreach ($expense as $expense_breakdown) {
-                $expense_breakdown->amount = floatval($expense_breakdown->amount);
-                if (!$expense_summary['member_id']) {
-                    $expense_summary['member_id'] = $expense_breakdown->member_id;
-                }
-                if (!$expense_summary['business_member_id']) {
-                    $expense_summary['business_member_id'] = $expense_breakdown->business_member_id;
-                }
-                if ($expense_breakdown->type === 'transport') {
-                    $expense_summary['transport'] = $expense_breakdown->amount;
-                }
-                if ($expense_breakdown->type === 'food') {
-                    $expense_summary['food'] = $expense_breakdown->amount;
-                }
-                if ($expense_breakdown->type === 'other') {
-                    $expense_summary['other'] = $expense_breakdown->amount;
-                }
-                if (!$expense_summary['created_at']) {
-                    $expense_summary['created_at'] = $expense_breakdown->created_at->format('F');;
-                }
-                if (!$expense_summary['year']) {
-                    $expense_summary['year'] = $expense_breakdown->year;
-                }
-                if (!$expense_summary['month']) {
-                    $expense_summary['month'] = $expense_breakdown->month;
-                }
-                if (!$expense_summary['employee_name']) {
-                    $member = $expense_breakdown->member;
-                    $business_member = $member->businessMember;
-                    $department = $business_member->department();
-                    $expense_summary['employee_id'] = $business_member->employee_id;
-                    $expense_summary['employee_name'] = $member->profile->name;
-                    $expense_summary['employee_department'] = $department ? $department->name : null;
-                }
-                $total_amount = $total_amount + $expense_breakdown->amount;
-            }
-            $expense_summary['amount'] = $total_amount;
-            array_push($expense_data, $expense_summary);
+        $amount = [];
+        $total_food = $total_transport = $total_other = 0;
+        $all_department = [];
+        $all_employee = [];
+        $final_data = [];
+        foreach ($this->rawExpenseData as $expense) {
+            $business_member = $expense->businessMember;
+            $department = $business_member->role ? $business_member->role->businessDepartment->name : null;
+            $business_member_id = $expense->business_member_id;
+            $expense_amount = floatValFormat($expense->amount);
+            if ($department && !in_array($department, $all_department)) $all_department[] = $department;
+            if (!in_array($business_member_id, $all_employee)) $all_employee[] = $business_member_id;
+            $amount[$business_member_id] = array_key_exists($business_member_id, $amount) ? $amount[$business_member_id] :  0;
+            $expense_data[$business_member_id]['member_id'] = $expense->member_id;
+            $expense_data[$business_member_id]['business_member_id'] =$business_member_id;
+            $expense_data[$business_member_id]['employee_id'] = $business_member->employee_id;
+            $expense_data[$business_member_id]['employee_department'] = $department;
+            $expense_data[$business_member_id]['created_at'] = $expense->created_at->format('F');
+            $expense_data[$business_member_id]['year'] = $expense->year;
+            $expense_data[$business_member_id]['month'] = $expense->month;
+            $expense_data[$business_member_id]['employee_name'] = $business_member->member->profile->name;
+            $expense_data[$business_member_id][$expense->type] = $expense_amount;
+            $expense_data[$business_member_id]['amount'] = $amount[$business_member_id] + $expense_amount;
+            $amount[$business_member_id] = $expense_data[$business_member_id]['amount'];
+            if ($expense->type == 'food') $total_food = $total_food + $expense_amount;
+            if ($expense->type == 'transport') $total_transport = $total_transport + $expense_amount;
+            if ($expense->type == 'other') $total_other = $total_other + $expense_amount;
         }
-
-        return $expense_data;
+        foreach ($expense_data as $data){
+            if (!array_key_exists('food', $data)) $expense_data[$data['business_member_id']]['food'] = 0;
+            if (!array_key_exists('transport', $data)) $expense_data[$data['business_member_id']]['transport'] = 0;
+            if (!array_key_exists('other', $data)) $expense_data[$data['business_member_id']]['other'] = 0;
+        }
+        $final_data['expense_breakdown'] = $expense_data;
+        $final_data['expense_summary'] = [
+            "employee" => count($all_employee),
+            "department" => count($all_department),
+            "transport" => $total_transport,
+            "food" => $total_food,
+            "other" => $total_other,
+            "amount" => $total_transport + $total_food + $total_other
+        ];
+        return $final_data;
     }
 }

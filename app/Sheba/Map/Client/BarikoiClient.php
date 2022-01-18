@@ -1,5 +1,6 @@
 <?php namespace Sheba\Map\Client;
 
+use App\Sheba\Map\BarikoiAddress;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Map\Distance;
@@ -25,13 +26,15 @@ class BarikoiClient implements Client
                 'query' => [
                     'latitude' => $geo->getLat(),
                     'longitude' => $geo->getLng(),
+                    'address' => 'true',
+                    'area' => 'true'
                 ]
             ]);
             $response = json_decode($response->getBody());
-            $address = new Address();
+            $address = new BarikoiAddress();
             if (!isset($response->place)) return $address->setAddress(null);
             $place = $response->place;
-            return $address->setAddress($place->address . ', ' . $place->area . ', ' . $place->city);
+            return $address->handleFullAddress($place);
         } catch (RequestException $e) {
             throw $e;
         }
