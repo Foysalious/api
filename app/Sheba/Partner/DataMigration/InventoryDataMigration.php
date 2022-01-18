@@ -285,7 +285,7 @@ class InventoryDataMigration
     public function generatePosServiceSuppliersData()
     {
         $name = DB::raw("(CASE WHEN partner_pos_customers.nick_name IS NOT NULL  THEN partner_pos_customers.nick_name  ELSE profiles.name END) as name");
-        return DB::table('partner_pos_customers')
+        $suppliers = DB::table('partner_pos_customers')
             ->where('partner_id', $this->partner->id)
             ->whereIn('pos_customers.id', $this->partnerPosServiceSupplierIds)
             ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
@@ -295,7 +295,11 @@ class InventoryDataMigration
                 'profiles.mobile', 'profiles.email', 'profiles.pro_pic',
                 DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
                 SUBTIME(profiles.updated_at,"6:00:0") as updated_at'))
-            ->get()->toArray();
+            ->get();
+        if(!is_array($suppliers)) {
+            $suppliers = $suppliers->toArray();
+        }
+        return $suppliers;
     }
 
     private function migrateSuppliers($data)
