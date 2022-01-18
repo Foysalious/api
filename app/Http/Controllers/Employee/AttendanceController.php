@@ -76,7 +76,7 @@ class AttendanceController extends Controller
         $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $weekend_settings, $business_member_leave));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $business_member_joining_date->format('Y-m-d')]);
+        return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $business_member_joining_date ? $business_member_joining_date->format('Y-m-d') : null]);
     }
 
     private function checkJoiningDate($business_member_joining_date, $month, $year)
