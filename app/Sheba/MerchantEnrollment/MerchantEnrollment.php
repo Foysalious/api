@@ -6,6 +6,7 @@ use Sheba\Dal\PgwStore\Contract as PgwStoreRepository;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\MerchantEnrollment\Exceptions\InvalidMEFFormCategoryCodeException;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethodFactory;
+use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class MerchantEnrollment
@@ -160,5 +161,10 @@ class MerchantEnrollment
     {
         $payment_method = $this->getPaymentMethod();
         return $payment_method->documentServices($this->key);
+    }
+
+    public function dropDownList($type_id): array
+    {
+        return MEFGeneralStatics::types($type_id);
     }
 }
