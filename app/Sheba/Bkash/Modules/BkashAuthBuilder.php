@@ -87,7 +87,7 @@ class BkashAuthBuilder
     }
 
     public static function sManagerStore(){
-        return self::generateBkashAuth('smanager');
+        return self::generateBkashAuth('sManager');
     }
     public static function marketplaceStore(){
         return self::generateBkashAuth('marketplace');
