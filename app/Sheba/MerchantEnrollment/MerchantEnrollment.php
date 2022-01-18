@@ -63,6 +63,15 @@ class MerchantEnrollment
     }
 
     /**
+     * @return PaymentMethod\PaymentMethod
+     * @throws InvalidKeyException
+     */
+    private function getPaymentMethod(): PaymentMethod\PaymentMethod
+    {
+        return (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+    }
+
+    /**
      * @param mixed $category_code
      * @return MerchantEnrollment
      */
@@ -80,7 +89,7 @@ class MerchantEnrollment
      */
     public function getCategoryDetails($category_code): array
     {
-        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        $payment_method = $this->getPaymentMethod();
         $category = (new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code);
         return $payment_method->categoryDetails($category)->toArray();
     }
@@ -94,7 +103,7 @@ class MerchantEnrollment
      */
     public function postCategoryDetails($category_code)
     {
-        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        $payment_method = $this->getPaymentMethod();
         $category = (new MEFFormCategoryFactory())->setPaymentGateway($this->payment_gateway)->setPartner($this->partner)->getCategoryByCode($category_code);
         $payment_method->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
     }
@@ -105,7 +114,7 @@ class MerchantEnrollment
      */
     public function getCompletion(): PaymentMethod\PaymentMethodCompletion
     {
-        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        $payment_method = $this->getPaymentMethod();
         return $payment_method->completion();
     }
 
@@ -129,7 +138,7 @@ class MerchantEnrollment
      */
     public function getRequiredDocuments()
     {
-        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        $payment_method = $this->getPaymentMethod();
         return $payment_method->requiredDocuments();
     }
 
@@ -139,7 +148,17 @@ class MerchantEnrollment
      */
     public function apply()
     {
-        $payment_method = (new PaymentMethodFactory())->setPartner($this->partner)->setPaymentGateway($this->payment_gateway)->get();
+        $payment_method = $this->getPaymentMethod();
         return $payment_method->applicationApply();
+    }
+
+    /**
+     * @return mixed
+     * @throws InvalidKeyException
+     */
+    public function getDocumentService()
+    {
+        $payment_method = $this->getPaymentMethod();
+        return $payment_method->documentServices($this->key);
     }
 }
