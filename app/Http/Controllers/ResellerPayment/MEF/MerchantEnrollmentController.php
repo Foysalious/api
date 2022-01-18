@@ -143,6 +143,25 @@ class MerchantEnrollmentController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+    public function documentServices(Request $request): JsonResponse
+    {
+        try {
+            $this->validate($request, MEFGeneralStatics::payment_gateway_key_validation());
+            $data = $this->merchantEnrollment->setPartner($request->partner)->setKey($request->key)->getDocumentService();
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (ResellerPaymentException $e) {
+            logError($e);
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function selectTypes(Request $request): JsonResponse
     {
         $this->validate($request, ["type_id" => "required"]);

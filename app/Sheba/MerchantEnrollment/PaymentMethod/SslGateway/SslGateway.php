@@ -60,4 +60,14 @@ class SslGateway extends PaymentMethod
         (new ApplicationSubmit())->setPartner($this->partner)->setPaymentGateway($this->payment_method)->submit();
         return PaymentMethodStatics::APPLY_SUCCESS_MESSAGE;
     }
+
+    /**
+     * @param $paymentGatewayKey
+     * @return mixed
+     * @throws InvalidKeyException
+     */
+    public function documentServices($paymentGatewayKey)
+    {
+        return $this->documentServiceList($paymentGatewayKey);
+    }
 }
