@@ -41,7 +41,7 @@ class BkashAuthBuilder
                    ->setUsername(config("bkash.$bkash_number.username"))
                    ->setPassword(config("bkash.$bkash_number.password"))
                    ->setUrl(config("bkash.$bkash_number.url"))
-                   ->setMerchantNumber($bkash_number);
+                   ->setMerchantNumber(config("bkash.$bkash_number.merchant_number"));
 
         return $bkash_auth;
     }
