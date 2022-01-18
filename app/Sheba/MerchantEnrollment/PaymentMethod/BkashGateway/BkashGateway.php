@@ -40,4 +40,9 @@ class BkashGateway extends PaymentMethod
     {
         // TODO: Implement apply() method.
     }
+
+    public function documentServices($paymentGatewayKey)
+    {
+        // TODO: Implement apply() method.
+    }
 }
