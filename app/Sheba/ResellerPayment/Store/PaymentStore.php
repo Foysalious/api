@@ -2,13 +2,18 @@
 
 namespace Sheba\ResellerPayment\Store;
 
+use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
+use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
+use Sheba\ResellerPayment\EncryptionAndDecryption;
+use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
+
 abstract class PaymentStore
 {
     protected $key;
     protected $partner;
     protected $data;
     protected $gateway_id;
-
+    protected $conn_data;
     /**
      * @param mixed $key
      * @return PaymentStore
@@ -47,16 +52,54 @@ abstract class PaymentStore
         $this->gateway_id = $gateway_id;
         return $this;
     }
+    public function getConfiguration()
+    {
+        $data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
+        $storeAccount = $this->getStoreAccount();
+        $storedConfiguration = $storeAccount ? $storeAccount->configuration : "";
+        $dynamicSslConfiguration = (new DynamicSslStoreConfiguration($storedConfiguration))->getConfiguration();
+        return self::buildData($data, $dynamicSslConfiguration);
+    }
 
+    public static function buildData($static_data, $dynamic_configuration)
+    {
+        foreach ($static_data as &$data) {
+            $field_name = $data["id"];
+            if($field_name === "password") continue;
+            $data["data"] = $dynamic_configuration ? $dynamic_configuration->$field_name : "";
+        }
+
+        return $static_data;
+    }
+
+    public function saveStore($data){
+        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
+        if(isset($storeAccount)) {
+            $storeAccount->configuration = $data["configuration"];
+            $storeAccount->save();
+        } else {
+            $pgw_store_repo = app()->make(PgwStoreAccountRepo::class);
+            $pgw_store_repo->create($data);
+        }
+    }
     protected function getStoreAccount()
     {
         if(isset($this->partner))
             return $this->partner->pgwStoreAccounts()->join('pgw_stores', 'pgw_store_id', '=', 'pgw_stores.id')
                 ->where('pgw_stores.key', $this->key)->first();
+        return null;
     }
 
-    public abstract function getConfiguration();
-
+    public function getAndSetConfiguration($configuration){
+        $this->conn_data = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
+        return [
+            "pgw_store_id"  => (int)$this->gateway_id,
+            "user_id"       => $this->partner->id,
+            "user_type"     => get_class($this->partner),
+            "name"          => "dynamic_ssl",
+            "configuration" => $this->conn_data
+        ];
+    }
     public abstract function postConfiguration();
 
     public abstract function test();

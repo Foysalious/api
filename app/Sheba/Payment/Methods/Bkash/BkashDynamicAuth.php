@@ -7,6 +7,7 @@ use ReflectionClass;
 use ReflectionException;
 use Sheba\Bkash\Modules\BkashAuth;
 use Sheba\Payment\Exceptions\StoreNotFoundException;
+use Sheba\ResellerPayment\EncryptionAndDecryption;
 
 class BkashDynamicAuth extends BkashAuth implements Arrayable
 {
@@ -28,7 +29,8 @@ class BkashDynamicAuth extends BkashAuth implements Arrayable
     {
 
         if (empty($store)) throw new StoreNotFoundException();
-        $this->configuration = json_decode($store->configuration, true);
+        $configuration = !empty($store->configuration) ? (new EncryptionAndDecryption())->setData($store->configuration)->getDecryptedData() : "[]";
+        $this->configuration = json_decode($configuration, true);
         return $this;
     }
 
