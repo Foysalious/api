@@ -138,4 +138,15 @@ class MerchantEnrollmentController extends Controller
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         }
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function selectTypes(Request $request): JsonResponse
+    {
+        $this->validate($request, ["type_id" => "required"]);
+        $data = $this->merchantEnrollment->dropDownList($request->type_id);
+        return api_response($request, $data, 200, ['data' => $data]);
+    }
 }
