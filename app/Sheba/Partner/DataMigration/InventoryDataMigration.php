@@ -295,7 +295,7 @@ class InventoryDataMigration
                 'profiles.mobile', 'profiles.email', 'profiles.pro_pic',
                 DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
                 SUBTIME(profiles.updated_at,"6:00:0") as updated_at'))
-            ->get();
+            ->get()->toArray();
     }
 
     private function migrateSuppliers($data)
