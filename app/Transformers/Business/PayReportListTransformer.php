@@ -1,8 +1,6 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\BusinessMember;
 use Carbon\Carbon;
-use DateTimeZone;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
@@ -14,6 +12,12 @@ class PayReportListTransformer extends TransformerAbstract
     const GROSS_SALARY = 'gross_salary';
     private $grossSalary;
     private $isProratedFilterApplicable = 0;
+    private $profiles;
+
+    public function __construct($profiles)
+    {
+        $this->profiles = $profiles;
+    }
 
     /**
      * @param Payslip $payslip
@@ -22,7 +26,8 @@ class PayReportListTransformer extends TransformerAbstract
     public function transform(Payslip $payslip)
     {
         $business_member = $payslip->businessMember;
-        $department = $business_member->department();
+        $business_member_role = $payslip->businessMember->role;
+        $business_member_department = $business_member_role ? $business_member_role->businessDepartment->name : 'N/A';
         $salary_breakdown = $payslip->salaryBreakdown();
         $gross_salary_breakdown = $this->getGrossBreakdown($salary_breakdown);
         if ($this->isProratedFilterApplicable === 0 && $payslip->joining_log) $this->isProratedFilterApplicable = 1;
@@ -30,9 +35,10 @@ class PayReportListTransformer extends TransformerAbstract
             'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,
             'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
-            'employee_name' => $business_member->profile()->name,
-            'department' => $department ? $department->name : 'N/A',
+            'employee_name' => $this->profiles[$business_member->id],
+            'department' => $business_member_department,
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
+            'schedule_type' => $payslip->generation_type,
             'gross_salary' => $this->grossSalary,
             'addition' => $this->getTotal($salary_breakdown, Type::ADDITION),
             'deduction' => $this->getTotal($salary_breakdown, Type::DEDUCTION),
