@@ -8,6 +8,7 @@ use Sheba\Dal\Survey\Model as Survey;
 use Sheba\EMI\Banks;
 use Sheba\EMI\CalculatorForManager;
 use Sheba\MerchantEnrollment\MerchantEnrollment;
+use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkStatus;
@@ -104,7 +105,7 @@ class PaymentService
 
     private function getResellerPaymentStatus()
     {
-       // $this->getMORStatus();
+        $this->getMORStatus();
         if(isset($this->status))
             return;
         $this->getSurveyStatus();
@@ -116,10 +117,9 @@ class PaymentService
 
     private function getMORStatus()
     {
-
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $morResponse = $morClient->get('api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type=partner');
+        $morResponse = $morClient->get('api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type='.MEFGeneralStatics::USER_TYPE_PARTNER);
         if(isset($morResponse['data'])){
             $this->status = $morStatus = $morResponse['data']['application_status'];
             if($morStatus == 'rejected')
