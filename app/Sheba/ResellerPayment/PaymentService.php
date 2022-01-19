@@ -105,14 +105,13 @@ class PaymentService
 
     private function getMORStatus()
     {
-        return null;
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
         $morResponse = $morClient->get('api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type=partner');
-        if($morResponse){
-            $this->status = $morStatus = $morResponse['application_status'];
+        if(isset($morResponse['data'])){
+            $this->status = $morStatus = $morResponse['data']['application_status'];
             if($morStatus == 'rejected')
-                $this->rejectReason = $morResponse['reject_reason'];
+                $this->rejectReason = $morResponse['data']['reject_reason'];
             return $morStatus;
         }
         return null;
