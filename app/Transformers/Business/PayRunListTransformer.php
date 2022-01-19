@@ -12,6 +12,14 @@ class PayRunListTransformer extends TransformerAbstract
     const GROSS_SALARY = 'gross_salary';
     private $grossSalary;
     private $isProratedFilterApplicable = 0;
+    private $payrollComponent;
+    private $profiles;
+
+    public function __construct($payroll_component, $profiles)
+    {
+        $this->payrollComponent = $payroll_component;
+        $this->profiles = $profiles;
+    }
 
     /**
      * @param Payslip $payslip
@@ -20,26 +28,27 @@ class PayRunListTransformer extends TransformerAbstract
     public function transform(Payslip $payslip)
     {
         $business_member = $payslip->businessMember;
-        $department = $business_member->department();
+        $business_member_role = $payslip->businessMember->role;
+        $business_member_department = $business_member_role ? $business_member_role->businessDepartment->name : 'N/A';
         $salary_breakdown = $payslip->salaryBreakdown();
-        $payroll_components = $business_member->business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('name');
         if ($this->isProratedFilterApplicable === 0 && $payslip->joining_log) $this->isProratedFilterApplicable = 1;
         $gross_salary_breakdown = $this->getGrossBreakdown($salary_breakdown);
         return [
             'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,
             'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
-            'employee_name' => $business_member->profile()->name,
-            'department' => $department ? $department->name : 'N/A',
+            'employee_name' => $this->profiles[$business_member->id],
+            'department' => $business_member_department,
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
+            'schedule_type' => $payslip->generation_type,
             'gross_salary' => $this->grossSalary,
             'addition' => $this->getTotal($salary_breakdown, Type::ADDITION),
             'deduction' => $this->getTotal($salary_breakdown, Type::DEDUCTION),
             'net_payable' => $this->getTotal($salary_breakdown, self::NET_PAYABLE),
             'is_prorated' => $payslip->joining_log ? 1 : 0,
             'gross_salary_breakdown' => $gross_salary_breakdown,
-            'addition_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown['payroll_component']['addition'], $payroll_components, Type::ADDITION),
-            'deduction_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown['payroll_component']['deduction'], $payroll_components, Type::DEDUCTION),
+            'addition_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown['payroll_component']['addition'], $this->payrollComponent, Type::ADDITION),
+            'deduction_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown['payroll_component']['deduction'], $this->payrollComponent, Type::DEDUCTION),
         ];
     }
     public function getIsProratedFilterApplicable()
