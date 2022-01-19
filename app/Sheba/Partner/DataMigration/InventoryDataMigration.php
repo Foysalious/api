@@ -290,7 +290,6 @@ class InventoryDataMigration
             ->whereIn('pos_customers.id', $this->partnerPosServiceSupplierIds)
             ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
             ->leftJoin('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
-            ->where('is_supplier','<>', 1)
             ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', $name,
                 'profiles.mobile', 'profiles.email', 'profiles.pro_pic',
                 DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
