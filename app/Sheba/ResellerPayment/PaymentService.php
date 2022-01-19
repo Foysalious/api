@@ -73,13 +73,13 @@ class PaymentService
     public function getStatusAndBanner()
     {
         $this->getResellerPaymentStatus();
-        $this->getPgwStatus();
+        $this->getPgwStatusForHomePage();
 
         return [
             'status' => $this->status ?? null,
             'pgw_status' => $this->pgwStatus ?? null,
             'banner' => $this->getBanner(),
-            'webview_link' => 'https://partners.dev-sheba.xyz/api/payment-link-faq'
+            'info_link' => 'https://partners.dev-sheba.xyz/api/payment-link-faq'
         ];
     }
 
@@ -94,7 +94,7 @@ class PaymentService
            $banner = config('reseller_payment.status_wise_home_banner')['rejected'];
        elseif ($this->status == 'ekyc_completed')
            $banner = config('reseller_payment.status_wise_home_banner')['ekyc_completed'];
-       elseif ($this->status == 'mef_completed' || $this->status == 'survey_completed')
+       elseif ($this->status == 'survey_completed')
            $banner = config('reseller_payment.status_wise_home_banner')['completed_but_did_not_apply'];
       elseif(is_null($this->status))
           $banner = config('reseller_payment.status_wise_home_banner')['did_not_started_journey'];
@@ -108,9 +108,6 @@ class PaymentService
         $this->getMORStatus();
         if(isset($this->status))
             return;
-        $this->checkMefCompletion();
-        if(isset($this->status))
-            return;
         $this->getSurveyStatus();
         if(isset($this->status))
             return;
@@ -122,7 +119,7 @@ class PaymentService
     {
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $morResponse = $morClient->get('api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type=partner');
+        $morResponse = $morClient->get('api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type='.MEFGeneralStatics::USER_TYPE_PARTNER);
         if(isset($morResponse['data'])){
             $this->status = $morStatus = $morResponse['data']['application_status'];
             if($morStatus == 'rejected')
@@ -133,19 +130,19 @@ class PaymentService
 
     }
 
-    private function checkMefCompletion()
+   /* private function checkMefCompletion()
     {
-        /** @var MerchantEnrollment $merchantEnrollment */
+
         $merchantEnrollment = app(MerchantEnrollment::class);
         $completion = $merchantEnrollment->setPartner($this->partner)->setKey($this->key)->getCompletion()->toArray();
         if($completion['can_apply'] == 1)
             $this->status = 'mef_completed';
        return true;
-    }
+    }*/
 
     private function getSurveyStatus()
     {
-        $survey =  Survey::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->first();
+        $survey =  Survey::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->where('key','reseller_payment')->first();
         if($survey)
             $this->status = 'survey_completed';
     }
@@ -156,9 +153,28 @@ class PaymentService
             $this->status = 'ekyc_completed';
     }
 
+    private function getPgwStatusForHomePage()
+    {
+        $pgw_store_accounts = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->get();
+        if($pgw_store_accounts){
+            foreach ($pgw_store_accounts as $pgw_store_account) {
+                if ($pgw_store_account->status == 1) {
+                    $this->pgwStatus = $pgw_store_account->status;
+                    $this->pgwMerchantId = (new DynamicSslStoreConfiguration($pgw_store_account->configuration))->getStoreId();
+                    return true;
+                }
+            }
+            $this->pgwStatus = $pgw_store_accounts->first()->status;
+            $this->pgwMerchantId = (new DynamicSslStoreConfiguration($pgw_store_accounts->first()->configuration))->getStoreId();
+
+        }
+
+    }
+
     private function getPgwStatus()
     {
-        $pgw_store_account = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->first();
+        $pgw_store_account = $this->partner->pgwStoreAccounts()->join('pgw_stores', 'pgw_store_id', '=', 'pgw_stores.id')
+            ->where('pgw_stores.key', $this->key)->first();
         if($pgw_store_account)
         {
             $this->pgwStatus = $pgw_store_account->status;
