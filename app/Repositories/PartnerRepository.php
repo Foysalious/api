@@ -281,8 +281,8 @@ class PartnerRepository
      */
     public function saveLogo($request)
     {
-        list($logo, $logo_filename) = $this->makeThumb($request->file('logo'), $this->partner->name);
-        return $this->saveImageToCDN($logo, getPartnerLogoFolder(), $logo_filename);
+        $logo_filename = $this->uniqueFileName($request->file('logo'), $this->partner->name);
+        return $this->saveFileToCDN($request->file('logo'), getPartnerLogoFolder(), $logo_filename);
     }
 
     public function validatePartner($remember_token)
