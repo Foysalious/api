@@ -81,10 +81,12 @@ class AttendanceReconciliationController extends Controller
         $halt_execution = false;
         $attendance_reconciliation_excel_error->setBusiness($business)->setFile($file_path);
 
-        $data->each(function ($value, $key) use ($business, $file_path, $total, $employee_email, $reconciliation_date, $employee_id, $excel_error, &$halt_execution, $reconciliation_checkin_time, $reconciliation_checkout_time, $attendance_reconciliation_excel_error, $last_payroll_generated) {
+        $data->each(function ($value, $key) use ($request, $business, $file_path, $total, $employee_email, $reconciliation_date, $employee_id, $excel_error, &$halt_execution, $reconciliation_checkin_time, $reconciliation_checkout_time, $attendance_reconciliation_excel_error, $last_payroll_generated) {
             if (!$value->$employee_id && !$value->$employee_email && !$value->$reconciliation_date && !$value->$reconciliation_checkin_time && !$value->$reconciliation_checkout_time) return;
             $profile = $this->profileRepo->checkExistingEmail($value->$employee_email);
             $date = $value->$reconciliation_date;
+            $checkin = $value->$reconciliation_checkin_time;
+            $checkout = $value->$reconciliation_checkout_time;
             if (!$value->$employee_email) {
                 $halt_execution = true;
                 $excel_error = 'Email cannot be empty';
@@ -100,10 +102,16 @@ class AttendanceReconciliationController extends Controller
             } elseif (!$profile->member->activeBusinessMember->first()) {
                 $halt_execution = true;
                 $excel_error = 'Business Member not found';
-            } /*elseif ($this->isCorrectDateFormat($date)){
+            } elseif ($this->isInCorrectFormat($date)){
                 $halt_execution = true;
-                $excel_error = 'Date Format should be in Y-m-d';
-            }*/ elseif ($last_payroll_generated && $last_payroll_generated < $date){
+                $excel_error = 'Date Format should be in yyyy-mm-dd or dd/mm/yyyy';
+            } elseif ($this->isInCorrectFormat($checkin)){
+                $halt_execution = true;
+                $excel_error = 'Checkin Time format should be hh:mm';
+            } elseif ($this->isInCorrectFormat($checkout)){
+                $halt_execution = true;
+                $excel_error = 'Checkout Time format should be hh:mm';
+            } elseif ($last_payroll_generated && $last_payroll_generated > $date->toDateString()){
                 $halt_execution = true;
                 $excel_error = 'Payroll is already generated cannot reconcile';
             } elseif (Carbon::now()->format('Y-m-d') < $date){
@@ -114,7 +122,6 @@ class AttendanceReconciliationController extends Controller
             }
             $attendance_reconciliation_excel_error->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
         });
-
         if ($halt_execution) {
             $excel_data_format_errors = $attendance_reconciliation_excel_error->takeCompletedAction();
             return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
@@ -137,12 +144,9 @@ class AttendanceReconciliationController extends Controller
         return api_response($request, null, 200);
     }
 
-    private function isCorrectDateFormat($date)
+    private function isInCorrectFormat($date_time)
     {
-        return preg_match("/^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[1-2][0-9]|3[0-1])$/",$date);
-        /*if (strval($date)[4] !== '-' || strval($date)[7] !== '-') return false;
-        $date_array = explode('_', $date);
-        return (strlen($date_array[0]) == 4 && $date_array[1] <= 12 && $date_array[2] <= 31);*/
+        return $date_time->year < 2000;
     }
 
 }
