@@ -120,7 +120,7 @@ class PaymentService
 
     private function getResellerPaymentStatus()
     {
-        $this->getMORStatus();
+        //$this->getMORStatus();
         if(isset($this->status))
             return;
         $this->getSurveyStatus();
@@ -171,7 +171,8 @@ class PaymentService
     private function getPgwStatusForHomePage()
     {
         $pgw_store_accounts = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->get();
-        if($pgw_store_accounts){
+
+        if(!$pgw_store_accounts->isEmpty()){
             foreach ($pgw_store_accounts as $pgw_store_account) {
                 if ($pgw_store_account->status == 1) {
                     $this->pgwStatus = $pgw_store_account->status;
