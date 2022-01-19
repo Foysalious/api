@@ -9,6 +9,7 @@ use App\Models\PosOrder;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\PaymentLinkAccountingRepository;
 use App\Sheba\Pos\Order\PosOrderObject;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Pos\Customer\PosCustomerResolver;
@@ -55,6 +56,7 @@ class PaymentLinkTransaction
     private $paymentLinkCharge;
     private $is_due_tracker_payment_link;
     private $real_amount;
+    private $method_class;
 
     /**
      * @param Payment                $payment
@@ -169,9 +171,10 @@ class PaymentLinkTransaction
 
     public function create()
     {
+        $payment_method_fee = $this->method_class->getCalculatedChargedAmount($this->payment->getTransactionDetails());
         $this->walletTransactionHandler->setModel($this->receiver);
         $paymentLinkTransaction = $this->amountTransaction()->configureServiceCharge()->feeTransaction()->setEntryAmount();
-        $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
+        $this->storePaymentLinkEntry($this->amount, $payment_method_fee, $this->interest);
         return $paymentLinkTransaction;
     }
 
@@ -185,6 +188,16 @@ class PaymentLinkTransaction
     {
         $this->amount                  = $this->payment->payable->amount;
         $this->formattedRechargeAmount = number_format($this->amount, 2);
+        return $this;
+    }
+
+    /**
+     * @param mixed $method_class
+     * @return PaymentLinkTransaction
+     */
+    public function setMethodClass($method_class): PaymentLinkTransaction
+    {
+        $this->method_class = $method_class;
         return $this;
     }
 
@@ -260,6 +273,8 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
+        Log::debug(["Amount" => $amount, "fee_transaction" => $feeTransaction, "interest" => $interest,
+            "real_amount" => $this->real_amount, "fee" => $this->fee]);
         $this->real_amount = $this->real_amount ? : 0;
         $customer = $this->paymentLink->getPayer();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */

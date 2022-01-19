@@ -200,6 +200,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             ->setTarget($this->target)
             ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink())
             ->setPaidBy($this->paymentLink->getPaidBy())
+            ->setMethodClass($this->method)
             ->create();
     }
 

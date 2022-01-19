@@ -14,6 +14,8 @@ abstract class PaymentComplete
     /** @var PaymentStatusChangeLogRepository */
     protected $paymentRepository;
 
+    protected $method;
+
     public function __construct()
     {
         $this->paymentRepository = app(PaymentStatusChangeLogRepository::class);
@@ -23,6 +25,16 @@ abstract class PaymentComplete
     {
         $this->payment = $payment;
         $this->paymentRepository->setPayment($payment);
+    }
+
+    /**
+     * @param mixed $method
+     * @return PaymentComplete
+     */
+    public function setMethod($method): PaymentComplete
+    {
+        $this->method = $method;
+        return $this;
     }
 
     protected function failPayment()
