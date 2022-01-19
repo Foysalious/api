@@ -9,17 +9,16 @@ use App\Sheba\Business\AttendanceReconciliation\BulkReconciliation\AttendanceRec
 use App\Sheba\Business\AttendanceReconciliation\Creator;
 use App\Sheba\Business\AttendanceReconciliation\Requester;
 use Carbon\Carbon;
-use DateTime;
+use Excel;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
-use Excel;
 
 class AttendanceReconciliationController extends Controller
 {
     use ModificationFields;
 
-    /*** @var ProfileRepositoryInterface $profileRepo*/
+    /*** @var ProfileRepositoryInterface $profileRepo */
     private $profileRepo;
 
     public function __construct()
@@ -42,10 +41,10 @@ class AttendanceReconciliationController extends Controller
         if (!$business_member) return api_response($request, null, 401);
         $this->setModifier($business_member->member);
         $requester->setBusiness($business)
-                    ->setBusinessMember($request->business_member_id)
-                    ->setCheckinTime($request->checkin)
-                    ->setCheckoutTime($request->checkout)
-                    ->setDate($request->date);
+            ->setBusinessMember($request->business_member_id)
+            ->setCheckinTime($request->checkin)
+            ->setCheckoutTime($request->checkout)
+            ->setDate($request->date);
         if ($requester->getError()) return api_response($request, null, 404);
         $creator->setRequester($requester)->create();
         return api_response($request, null, 200);
@@ -102,22 +101,22 @@ class AttendanceReconciliationController extends Controller
             } elseif (!$profile->member->activeBusinessMember->first()) {
                 $halt_execution = true;
                 $excel_error = 'Business Member not found';
-            } elseif ($this->isInCorrectFormat($date)){
+            } elseif ($this->isInCorrectFormat($date)) {
                 $halt_execution = true;
                 $excel_error = 'Date Format should be in yyyy-mm-dd or dd/mm/yyyy';
-            } elseif ($this->isInCorrectFormat($checkin)){
+            } elseif ($this->isInCorrectFormat($checkin)) {
                 $halt_execution = true;
                 $excel_error = 'Checkin Time format should be hh:mm';
-            } elseif ($this->isInCorrectFormat($checkout)){
+            } elseif ($this->isInCorrectFormat($checkout)) {
                 $halt_execution = true;
                 $excel_error = 'Checkout Time format should be hh:mm';
-            } elseif ($last_payroll_generated && $last_payroll_generated > $date->toDateString()){
+            } elseif ($last_payroll_generated && $last_payroll_generated > $date->toDateString()) {
                 $halt_execution = true;
                 $excel_error = 'Payroll is already generated cannot reconcile';
-            } elseif (Carbon::now()->format('Y-m-d') < $date){
+            } elseif (Carbon::now()->format('Y-m-d') < $date) {
                 $halt_execution = true;
                 $excel_error = 'Cannot reconcile a future date';
-            }else {
+            } else {
                 $excel_error = null;
             }
             $attendance_reconciliation_excel_error->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
@@ -136,8 +135,8 @@ class AttendanceReconciliationController extends Controller
             $business_member = $member->activeBusinessMember->first();
             $requester->setBusiness($business)
                 ->setBusinessMember($business_member->id)
-                ->setCheckinTime($value->$reconciliation_checkin_time->format('H:i').':00')
-                ->setCheckoutTime($value->$reconciliation_checkout_time->format('H:i').':59')
+                ->setCheckinTime($value->$reconciliation_checkin_time->format('H:i') . ':00')
+                ->setCheckoutTime($value->$reconciliation_checkout_time->format('H:i') . ':59')
                 ->setDate($value->$reconciliation_date->format('Y-m-d'));
             $creator->setRequester($requester)->create();
         });
