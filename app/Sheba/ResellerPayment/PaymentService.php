@@ -68,6 +68,7 @@ class PaymentService
     {
         $this->getResellerPaymentStatus();
         $this->getPgwStatus();
+        $pgw_store = PgwStore::where('key',$this->key)->first();
         return [
             'banner' =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/payment_gateway_banner/app-banner+(1)+2.png',
             'faq' => [
@@ -80,7 +81,12 @@ class PaymentService
             'pgw_status' =>  $this->pgwStatus ?? null,
             'pgw_merchant_id' => $this->pgwMerchantId,
             'how_to_use_link' => 'https://partners.dev-sheba.xyz/api/how-to-use',
-            'payment_service_info_link' => 'https://partners.dev-sheba.xyz/api/payment-setup-faq'
+            'payment_service_info_link' => 'https://partners.dev-sheba.xyz/api/payment-setup-faq',
+            'details' => [
+                'id' => $pgw_store->id,
+                'key' => $pgw_store->key,
+                'name_bn' =>$pgw_store->name_bn
+            ]
         ];
 
     }
