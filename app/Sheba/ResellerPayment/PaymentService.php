@@ -12,8 +12,12 @@ use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkStatus;
+use Sheba\PushNotificationHandler;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
+use Sheba\Sms\BusinessType;
+use Sheba\Sms\FeatureType;
+use Sheba\Sms\Sms;
 
 class PaymentService
 {
@@ -25,7 +29,7 @@ class PaymentService
     private $key;
     private $rejectReason;
     private $pgwMerchantId;
-    private $toStatus;
+    private $newStatus;
 
     /**
      * @param mixed $partner
@@ -41,9 +45,9 @@ class PaymentService
      * @param mixed $status
      * @return PaymentService
      */
-    public function setToStatus($status)
+    public function setNewStatus($status)
     {
-        $this->toStatus = $status;
+        $this->newStatus = $status;
         return $this;
     }
 
@@ -116,7 +120,7 @@ class PaymentService
 
     private function getResellerPaymentStatus()
     {
-        $this->getMORStatus();
+        //$this->getMORStatus();
         if(isset($this->status))
             return;
         $this->getSurveyStatus();
@@ -167,7 +171,8 @@ class PaymentService
     private function getPgwStatusForHomePage()
     {
         $pgw_store_accounts = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->get();
-        if($pgw_store_accounts){
+
+        if(!$pgw_store_accounts->isEmpty()){
             foreach ($pgw_store_accounts as $pgw_store_account) {
                 if ($pgw_store_account->status == 1) {
                     $this->pgwStatus = $pgw_store_account->status;
@@ -319,10 +324,37 @@ class PaymentService
 
     public function sendNotificationOnStatusChange()
     {
-        if(!$this->status == 'processing')
+        if(!$this->newStatus == 'processing')
             $this->sendSMS();
-        $this->sendNotification();
+        $this->sendPushNotification();
 
+    }
+
+    private function sendSMS()
+    {
+        $mobile = $this->partner->getContactNumber();
+        (new Sms())
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->shoot($mobile, config('reseller_payment.mor_status_change_message')[$this->key][$this->newStatus]);
+    }
+
+    private function sendPushNotification()
+    {
+        $topic = config('sheba.push_notification_topic_name.manager') . $this->partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+
+        $notification_data = [
+            "title" => 'Reseller Payment Status Change',
+            "message" => config('reseller_payment.mor_status_change_message')[$this->key][$this->newStatus],
+            "sound" => "notification_sound",
+            "channel_id" => $channel,
+            "event_type" => 'reseller_payment_status_change',
+            "event_id" => $this->partner->id
+        ];
+
+        (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
     }
 
 
