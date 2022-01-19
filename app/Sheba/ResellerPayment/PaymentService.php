@@ -8,6 +8,7 @@ use Sheba\Dal\Survey\Model as Survey;
 use Sheba\EMI\Banks;
 use Sheba\EMI\CalculatorForManager;
 use Sheba\MerchantEnrollment\MerchantEnrollment;
+use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkStatus;
@@ -170,10 +171,11 @@ class PaymentService
      * @param $completion
      * @param $header_message
      * @param $partnerId
+     * @param $banner
      * @return array
      * @throws InvalidKeyException
      */
-    public function getPaymentGateways($completion, $header_message, $partnerId): array
+    public function getPaymentGateways($completion, $header_message, $partnerId, $banner): array
     {
         $pgwData = [];
         $status = '';
@@ -210,7 +212,8 @@ class PaymentService
                 'status' => $status
             ];
         }
-        return $pgwData;
+        return $banner ?
+            array_merge(["payment_gateway_list" => $pgwData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $pgwData;
     }
 
     /**

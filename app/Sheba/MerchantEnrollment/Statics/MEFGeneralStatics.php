@@ -6,6 +6,8 @@ class MEFGeneralStatics
 {
     const USER_TYPE_PARTNER = "Partner";
 
+    const LIST_PAGE_BANNER = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/list_banner.jpg";
+
     public static function payment_gateway_keys()
     {
         return config('reseller_payment.available_payment_gateway_keys');

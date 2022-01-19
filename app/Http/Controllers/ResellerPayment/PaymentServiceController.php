@@ -22,10 +22,11 @@ class PaymentServiceController extends Controller
     public function getPaymentGateway(Request $request): JsonResponse
     {
         $completion = $request->query('completion');
+        $banner     = $request->query('banner');
         $header_message = 'সর্বাধিক ব্যবহৃত';
         $partnerId = $request->partner->id;
 
-        $pgwData = $this->paymentService->setPartner($request->partner)->getPaymentGateways($completion, $header_message, $partnerId);
+        $pgwData = $this->paymentService->setPartner($request->partner)->getPaymentGateways($completion, $header_message, $partnerId, $banner);
         return api_response($request, null, 200, ['data' => $pgwData]);
     }
 
