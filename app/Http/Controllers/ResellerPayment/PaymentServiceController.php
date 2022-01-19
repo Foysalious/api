@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\ResellerPayment;
 
+use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
@@ -112,18 +113,24 @@ class PaymentServiceController extends Controller
 
     /**
      * @throws UnauthorizedRequestFromMORException
+     * @throws NotFoundException
      */
     public function sendNotificationOnStatusChange(Request $request, PaymentService $paymentService)
     {
         $this->validate($request, [
             'key' => 'required|in:'. implode(',', config('reseller_payment.available_payment_gateway_keys')),
-            'new_status' => 'required|in:processing,verified,rejected'
+            'new_status' => 'required|in:processing,verified,rejected',
+            'partner_id' => 'required'
         ]);
         if (($request->header('access-key')) !== config('reseller_payment.mor_access_token'))
             throw new UnauthorizedRequestFromMORException();
 
+        $partner = Partner::find($request->partner_id);
+        if(!$partner)
+            throw new NotFoundException("Invalid Partner Id");
 
-        //$paymentService->setKey($request->key)->setStatus($request->status)->sendNotificationOnStatusChange();
+
+        $paymentService->setKey($request->key)->setPartner($partner)->setNewStatus($request->new_status)->sendNotificationOnStatusChange();
         return api_response($request, null, 200, ["message" => 'Notification sent successfully']);
 
     }
