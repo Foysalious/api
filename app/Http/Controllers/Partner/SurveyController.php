@@ -31,6 +31,9 @@ class SurveyController extends Controller
         /** @var SurveyInterface $surveyClass */
         $surveyClass = $surveyService->setKey($request->key)->get();
         $surveyClass->setUser($partner)->storeResult($request->result);
-        return api_response($request, null, 200);
+        return api_response($request, null, 200 ,["message" => [
+            "body" => 'আবেদন যাচাই করতে ১০ কার্যদিবস সময় লাগতে পারে অনুগ্রহ করে অপেক্ষা করুন।',
+            "title" => 'আবেদন সফল হয়েছে!'
+        ]]);
     }
 }
