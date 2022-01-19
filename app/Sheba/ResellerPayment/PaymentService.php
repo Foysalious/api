@@ -3,6 +3,7 @@
 use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\MerchantEnrollment\MerchantEnrollment;
+use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 
 class PaymentService
 {
@@ -11,6 +12,7 @@ class PaymentService
     private $pgwStatus;
     private $key;
     private $rejectReason;
+    private $pgwMerchantId;
 
     /**
      * @param mixed $partner
@@ -46,7 +48,9 @@ class PaymentService
             'status' => $this->status ?? null,
             'mor_status_wise_disclaimer' => in_array($this->status,['pending','processing','verified','rejected']) ? config('reseller_payment.mor_status_wise_text')[$this->key][$this->status] : null,
             'pgw_status' =>  $this->pgwStatus ?? null,
-            'how_to_use_link' => ''
+            'pgw_merchant_id' => $this->pgwMerchantId,
+            'how_to_use_link' => 'https://partners.dev-sheba.xyz/api/how-to-use',
+            'payment_service_info_link' => 'https://partners.dev-sheba.xyz/api/payment-setup-faq'
         ];
 
     }
@@ -86,24 +90,25 @@ class PaymentService
 
     private function getResellerPaymentStatus()
     {
-       $this->getMORStatus();
-       if(isset($this->status))
-           return;
-       $this->checkMefCompletion();
-       if(isset($this->status))
-           return;
-       $this->getSurveyStatus();
-       if(isset($this->status))
-           return;
-       $this->getEkycStatus();
+        $this->getMORStatus();
+        if(isset($this->status))
+            return;
+        $this->checkMefCompletion();
+        if(isset($this->status))
+            return;
+        $this->getSurveyStatus();
+        if(isset($this->status))
+            return;
+        $this->getEkycStatus();
 
     }
 
     private function getMORStatus()
     {
+        return null;
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $morResponse = $morClient->get('api/v1/client/applications/status?user_id=1'.'&user_type=partner');
+        $morResponse = $morClient->get('api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type=partner');
         if($morResponse){
             $this->status = $morStatus = $morResponse['application_status'];
             if($morStatus == 'rejected')
@@ -139,9 +144,18 @@ class PaymentService
 
     private function getPgwStatus()
     {
-        $pgw_store_accounts = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->first();
-        if($pgw_store_accounts)
-            $this->pgwStatus = $pgw_store_accounts->staus;
+        $pgw_store_account = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->first();
+        if($pgw_store_account)
+        {
+            $this->pgwStatus = $pgw_store_account->status;
+            $this->pgwMerchantId = (new DynamicSslStoreConfiguration($pgw_store_account->configuration))->getStoreId();
+        }
+
+
+
+
+
+
     }
 
 }
