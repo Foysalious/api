@@ -120,7 +120,7 @@ class PaymentService
 
     private function getResellerPaymentStatus()
     {
-        //$this->getMORStatus();
+        $this->getMORStatus();
         if(isset($this->status))
             return;
         $this->getSurveyStatus();
