@@ -2,6 +2,8 @@
 
 use App\Jobs\Business\SendEmailForPublishTenderToBusiness;
 use App\Models\Business;
+use App\Sheba\Business\PayrollComponent\Components\GrossComponents\GrossBreakdownHistory\IndividualHistoryCreator as GrossSalaryBreakdownHistoryCreator;
+use App\Sheba\Business\Salary\History\Creator as GrossSalaryHistoryCreator;
 use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerReportDetailsTransformer;
 use Carbon\Carbon;
@@ -423,7 +425,7 @@ class CoWorkerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function salaryInfoEdit($business, $business_member_id, Request $request)
+    public function salaryInfoEdit($business, $business_member_id, Request $request, GrossSalaryHistoryCreator $gross_salary_history_creator, GrossSalaryBreakdownHistoryCreator $gross_salary_breakdown_history_creator)
     {
         $business_member = $this->businessMemberRepository->find($business_member_id);
         $manager_member = $request->manager_member;
@@ -431,8 +433,16 @@ class CoWorkerController extends Controller
         $this->coWorkerSalaryRequester->setBusinessMember($business_member)
             ->setGrossSalary($request->gross_salary)
             ->setBreakdownPercentage($request->breakdown_percentage)
-            ->setManagerMember($manager_member)
             ->createOrUpdate();
+        $gross_salary_history_creator
+            ->setBusinessMember($business_member)
+            ->setManagerMember($manager_member)
+            ->setGrossSalary($request->gross_salary)
+            ->update();
+        $gross_salary_breakdown_history_creator
+            ->setBusinessMember($business_member)
+            ->setGrossSalaryBreakdown($request->breakdown_percentage)
+            ->update();
         return api_response($request, null, 200);
     }
 
