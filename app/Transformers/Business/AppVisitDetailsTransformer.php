@@ -80,14 +80,14 @@ class AppVisitDetailsTransformer extends TransformerAbstract
     private function getNotes(Visit $visit)
     {
         $notes = [];
-        $visit_notes = $visit->visitNotes()->whereNotIn('status', [Status::CANCELLED, Status::RESCHEDULED])->select('id', 'visit_id', 'note', 'date')->orderBy('id', 'DESC')->get();
+        $visit_notes = $visit->visitNotes()->whereNotIn('status', [Status::CANCELLED, Status::RESCHEDULED])->select('id', 'visit_id', 'note', 'date', 'status')->orderBy('id', 'DESC')->get();
 
         foreach ($visit_notes as $visit_note) {
-            array_push($notes, [
+            $notes[] = [
                 'date' => Carbon::parse($visit_note->date)->format('F d, Y'),
                 'note' => $visit_note->note,
                 'status' => $visit_note->status
-            ]);
+            ];
         }
 
         return $notes ?: null;
