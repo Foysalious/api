@@ -24,6 +24,7 @@ use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
+use Sheba\Dal\Survey\Model as Survey;
 use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
@@ -1143,5 +1144,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function lastUpdatedPGWStore()
     {
         return $this->pgwStoreAccounts->max('updated_at') ?? null;
+    }
+
+    public function survey()
+    {
+        return $this->morphMany(Survey::class, 'user');
     }
 }

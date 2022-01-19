@@ -8,6 +8,7 @@ class ResellerPaymentRoute
             $api->group(['prefix' => 'reseller-payment'], function ($api) {
                 $api->get('/store-configuration', 'ResellerPayment\\StoreConfigurationController@get');
                 $api->post('/store-configuration', 'ResellerPayment\\StoreConfigurationController@store');
+                $api->post('/update-status', 'ResellerPayment\\StoreConfigurationController@statusUpdate');
                 $api->get('/payment-gateways', 'ResellerPayment\\PaymentServiceController@getPaymentGateway');
                 $api->get('/payment-service-charge', 'ResellerPayment\\PaymentServiceController@getPaymentServiceCharge');
                 $api->post('payment-service-charge', 'ResellerPayment\\PaymentServiceController@storePaymentServiceCharge');
@@ -21,6 +22,9 @@ class ResellerPaymentRoute
                 $api->post('/category', "ResellerPayment\\MEF\\MerchantEnrollmentController@postCategoryWiseDetails");
                 $api->post('/document-upload', "ResellerPayment\\MEF\\MerchantEnrollmentController@uploadCategoryWiseDocument");
                 $api->get('/required-document-list', "ResellerPayment\\MEF\\MerchantEnrollmentController@requiredDocuments");
+                $api->post('/apply', "ResellerPayment\\MEF\\MerchantEnrollmentController@apply");
+                $api->get('/document-service-list', "ResellerPayment\\MEF\\MerchantEnrollmentController@documentServices");
+                $api->get('/select-types', "ResellerPayment\\MEF\\MerchantEnrollmentController@selectTypes");
             });
             $api->group(["prefix" => 'survey'], function ($api) {
                 $api->get('/', "Partner\\SurveyController@getQuestions");

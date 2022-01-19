@@ -42,6 +42,8 @@ class GeneratePayslip extends Command
             ->setPayrollSetting($payroll_setting)
             ->setGeneratePeriod($period)
             ->setGeneratedBusinessMemberIds($generated_business_member)
+            ->setClass(get_class())
+            ->setGeneratedFor($period)
             ->calculate();
     }
 

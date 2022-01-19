@@ -17,4 +17,13 @@ class StoreConfigurationStatic
             "gateway_id"         => "required"
         ];
     }
+
+    public static function statusUpdateValidation(): array
+    {
+        return [
+            "key" => "required",
+            "gateway_id" => "required|numeric",
+            "status" => "required|boolean"
+        ];
+    }
 }

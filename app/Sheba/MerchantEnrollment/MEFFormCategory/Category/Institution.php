@@ -2,6 +2,7 @@
 
 namespace Sheba\MerchantEnrollment\MEFFormCategory\Category;
 
+use App\Sheba\MerchantEnrollment\PersonalInformation;
 use Sheba\MerchantEnrollment\InstitutionInformation;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
@@ -14,16 +15,15 @@ class Institution extends MEFFormCategory
     public function completion(): array
     {
         return [
-            'en' => 100,
-            'bn' => 100
+            'en' => $this->percentageCalculation(),
+            'bn' => $this->getBengaliPercentage()
         ];
     }
 
     public function get(): CategoryGetter
     {
-        $formItems = $this->getFormFields();
-        $formData  = (new InstitutionInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
-        return $this->getFormData($formItems, $formData);
+        $formData  = $this->getFormFieldData();
+        return $this->getFormData($this->getFormFields(), $formData);
     }
 
     public function post($data)
@@ -43,5 +43,11 @@ class Institution extends MEFFormCategory
             }
         }
         return $form_fields;
+    }
+
+    public function getFormFieldData(): array
+    {
+        $formItems = $this->getFormFields();
+        return (new InstitutionInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
     }
 }

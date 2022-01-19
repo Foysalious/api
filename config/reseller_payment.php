@@ -57,6 +57,43 @@ return [
 
         ]
     ],
+    'document_service_list' => [
+        'ssl' => [
+            'message' => 'ডকুমেন্ট সার্ভিস গ্রহণ করতে নিচের নাম্বারে যোগাযোগ করুন :',
+            'service_contact_list' => [
+                [
+                    'name' => 'F M Associates',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+                ],
+                [
+                    'name' => 'Woliur Business',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+
+                ],
+                [
+                    'name' => 'Firoze Associates',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+
+                ],
+                [
+                    'name' => 'F M Associates',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+
+                ]
+            ]
+        ],
+        'bkash' => [
+
+        ]
+    ],
     'category_titles' => [
         'nid_selfie'  => [
             'en' => 'NID and Selfie',
@@ -412,7 +449,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'name'
             ],
@@ -427,7 +464,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => true,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'email'
             ],
@@ -442,7 +479,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'      => 'partner_resource_profile',
                 'data_source_id'   => 'mobile'
             ],
@@ -457,7 +494,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'nid_no'
             ],
@@ -472,7 +509,7 @@ return [
                 "min_length"       => "",
                 "max_length"       => "",
                 'is_editable'      => false,
-                'mandatory'        => true,
+                'mandatory'        => false,
                 'data_source'      => 'partner_resource_profile',
                 'data_source_id'   => 'dob'
             ]

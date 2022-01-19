@@ -30,4 +30,19 @@ class BkashGateway extends PaymentMethod
     {
         return (new Completion())->setPartner($this->partner)->setPaymentGateway($this->payment_method)->get();
     }
+
+    public function requiredDocuments()
+    {
+        // TODO: Implement requiredDocuments() method.
+    }
+
+    public function applicationApply(): string
+    {
+        // TODO: Implement apply() method.
+    }
+
+    public function documentServices($paymentGatewayKey)
+    {
+        // TODO: Implement apply() method.
+    }
 }

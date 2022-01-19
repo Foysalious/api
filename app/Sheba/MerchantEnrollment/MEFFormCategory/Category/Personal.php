@@ -3,7 +3,6 @@
 namespace Sheba\MerchantEnrollment\MEFFormCategory\Category;
 
 use App\Sheba\MerchantEnrollment\PersonalInformation;
-use Sheba\MerchantEnrollment\InstitutionInformation;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 use Sheba\MerchantEnrollment\Statics\FormStatics;
@@ -15,16 +14,21 @@ class Personal extends MEFFormCategory
     public function completion(): array
     {
         return [
-            'en' => 100,
-            'bn' => 100
+            'en' => $this->percentageCalculation(),
+            'bn' => $this->getBengaliPercentage()
         ];
     }
 
     public function get(): CategoryGetter
     {
+        $formData  = $this->getFormFieldData();
+        return $this->getFormData($this->getFormFields(), $formData);
+    }
+
+    public function getFormFieldData(): array
+    {
         $formItems = $this->getFormFields();
-        $formData  = (new PersonalInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
-        return $this->getFormData($formItems, $formData);
+        return (new PersonalInformation())->setPartner($this->partner)->setFormItems($formItems)->getByCode($this->category_code);
     }
 
     public function post($data)
