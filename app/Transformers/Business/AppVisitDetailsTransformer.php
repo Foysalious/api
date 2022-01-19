@@ -85,7 +85,8 @@ class AppVisitDetailsTransformer extends TransformerAbstract
         foreach ($visit_notes as $visit_note) {
             array_push($notes, [
                 'date' => Carbon::parse($visit_note->date)->format('F d, Y'),
-                'note' => $visit_note->note
+                'note' => $visit_note->note,
+                'status' => $visit_note->status
             ]);
         }
 
