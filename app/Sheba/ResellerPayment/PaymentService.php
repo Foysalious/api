@@ -180,14 +180,13 @@ class PaymentService
         $pgwData = [];
         $status = '';
         $partner = Partner::where('id', $partnerId)->first();
-        $partner_account = $partner->pgwStoreAccounts()->select('status')->first();
         $pgwStores = new PgwStore();
         $mor_status = $this->getMORStatus();
 
         $pgwStores = $pgwStores->select('id', 'name', 'key', 'name_bn', 'icon')->get();
         foreach ($pgwStores as $pgwStore) {
             $completionData = (new MerchantEnrollment())->setPartner($partner)->setKey($pgwStore->key)->getCompletion();
-
+            $partner_account = $partner->pgwStoreAccounts()->where('pgw_store_id', $pgwStore->id)->select('status')->first();
             if ( !$mor_status && !$partner_account) {
                 $status = PaymentLinkStatus::UNREGISTERED;
             } else if ($mor_status['application_status'] == "pending" && !$partner_account) {
