@@ -25,7 +25,7 @@ class PaymentServiceController extends Controller
         $header_message = 'সর্বাধিক ব্যবহৃত';
         $partnerId = $request->partner->id;
 
-        $pgwData = $this->paymentService->getPaymentGateways($completion, $header_message, $partnerId);
+        $pgwData = $this->paymentService->setPartner($request->partner)->getPaymentGateways($completion, $header_message, $partnerId);
         return api_response($request, null, 200, ['data' => $pgwData]);
     }
 
