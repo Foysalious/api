@@ -25,6 +25,7 @@ class PaymentService
     private $key;
     private $rejectReason;
     private $pgwMerchantId;
+    private $toStatus;
 
     /**
      * @param mixed $partner
@@ -33,6 +34,16 @@ class PaymentService
     public function setPartner($partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param mixed $status
+     * @return PaymentService
+     */
+    public function setToStatus($status)
+    {
+        $this->toStatus = $status;
         return $this;
     }
 
@@ -304,4 +315,14 @@ class PaymentService
             ]
         ];
     }
+
+    public function sendNotificationOnStatusChange()
+    {
+        if(!$this->status == 'processing')
+            $this->sendSMS();
+        $this->sendNotification();
+
+    }
+
+
 }

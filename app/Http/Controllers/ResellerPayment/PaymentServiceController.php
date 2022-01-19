@@ -4,6 +4,7 @@ namespace App\Http\Controllers\ResellerPayment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -106,5 +107,23 @@ class PaymentServiceController extends Controller
         $partner = $request->partner;
         $detail = $paymentService->setPartner($partner)->setKey($request->key)->getPGWDetails();
         return api_response($request, null, 200, ['data' => $detail]);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromMORException
+     */
+    public function sendNotificationOnStatusChange(Request $request, PaymentService $paymentService)
+    {
+        $this->validate($request, [
+            'key' => 'required|in:'. implode(',', config('reseller_payment.available_payment_gateway_keys')),
+            'new_status' => 'required|in:processing,verified,rejected'
+        ]);
+        if (($request->header('access-key')) !== config('reseller_payment.mor_access_token'))
+            throw new UnauthorizedRequestFromMORException();
+
+
+        //$paymentService->setKey($request->key)->setStatus($request->status)->sendNotificationOnStatusChange();
+        return api_response($request, null, 200, ["message" => 'Notification sent successfully']);
+
     }
 }
