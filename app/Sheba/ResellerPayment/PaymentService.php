@@ -347,12 +347,12 @@ class PaymentService
             "title" => 'Reseller Payment Status Change',
             "message" => config('reseller_payment.mor_status_change_message')[$this->key][$this->newStatus],
             "sound" => "notification_sound",
+            "channel_id" => $channel,
             "event_type" => 'reseller_payment_status_change',
             "event_id" => $this->partner->id
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
-
     }
 
 
