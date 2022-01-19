@@ -101,7 +101,7 @@ class PaymentService
     private function getBanner()
     {
         $banner = null;
-        if($this->pgwStatus == 0)
+        if($this->pgwStatus === 0)
             $banner = config('reseller_payment.status_wise_home_banner')['pgw_inactive'];
         elseif ($this->status == 'verified')
             $banner = config('reseller_payment.status_wise_home_banner')['verified'];
