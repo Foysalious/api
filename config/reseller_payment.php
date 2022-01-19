@@ -1,6 +1,8 @@
 <?php
 
 return [
+
+    'mor_access_token' => env('MOR_ACCESS_TOKEN'),
     'mor' => [
       'api_url' => env('MOR_SERVICE_API_URL'),
         'client_id' => env('MOR_CLIENT_ID',1234),
