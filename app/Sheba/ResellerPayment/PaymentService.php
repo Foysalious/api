@@ -85,7 +85,8 @@ class PaymentService
             'details' => [
                 'id' => $pgw_store->id,
                 'key' => $pgw_store->key,
-                'name_bn' =>$pgw_store->name_bn
+                'name_bn' => $pgw_store->name_bn,
+                'icon' => $pgw_store->icon
             ]
         ];
 
@@ -100,7 +101,7 @@ class PaymentService
             'status' => $this->status ?? null,
             'pgw_status' => $this->pgwStatus ?? null,
             'banner' => $this->getBanner(),
-            'info_link' => 'https://partners.dev-sheba.xyz/api/payment-link-faq'
+            'info_link' => config('reseller_payment.digital_sales_setup_info_link')
         ];
     }
 
