@@ -28,5 +28,9 @@ return [
     [
         'key' => 'pgw_store_configuration',
         'function' => 'lastUpdatedPGWStore'
+    ],
+    [
+        'key' => 'profile_updated',
+        'function' => 'lastUpdatedProfile'
     ]
 ];
