@@ -518,6 +518,7 @@ return [
 
         ],
     ],
+    "digital_sales_setup_info_link" => 'https://partners.dev-sheba.xyz/api/payment-link-faq',
     "status_wise_home_banner" => [
         'pgw_inactive' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pgw_inactive.png',
         'verified' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/verified.png',
