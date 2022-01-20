@@ -231,8 +231,7 @@ class PaymentLinkTransaction
     {
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
-            Log::debug(["fee" => $this->fee, "real_amount" => $this->real_amount]);
-            $this->real_amount = ($this->isPaidByCustomer()) ? $this->paymentLink->getAmount() - $this->interest - $this->fee : $this->paymentLink->getRealAmount();
+            $this->real_amount = ($this->isPaidByCustomer()) ? $this->paymentLink->getAmount() - $this->interest - $this->fee : $this->paymentLink->getAmount();
         } else {
             $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
