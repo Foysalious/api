@@ -47,7 +47,9 @@ class ProfileUpdateRepository
         $resource = $request->manager_resource;
         $profile = $resource->profile;
         $status = $resource->status;
-
+        if ($profile->nid_verification_request_count >= 3) {
+            $status = Statuses::PENDING;
+        }
         if ($status == Statuses::VERIFIED) {
 
              return $data = [
