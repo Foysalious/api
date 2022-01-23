@@ -101,7 +101,7 @@ class PaymentService
             'status' => $this->status ?? null,
             'pgw_status' => $this->pgwStatus ?? null,
             'banner' => $this->getBanner(),
-            'info_link' => config('reseller_payment.digital_sales_setup_info_link')
+            'info_link' => PaymentLinkStatics::payment_setup_faq_webview()
         ];
     }
 
