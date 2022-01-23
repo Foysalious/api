@@ -1,6 +1,13 @@
 <?php
 
 return [
+
+    'mor_access_token' => env('MOR_ACCESS_TOKEN'),
+    'mor' => [
+      'api_url' => env('MOR_SERVICE_API_URL'),
+        'client_id' => env('MOR_CLIENT_ID',1234),
+        'client_secret' => env('MOR_CLIENT_SECRET','abcd')
+    ],
     "available_payment_gateway_keys" => ["ssl", "bkash"],
     'category_list' => [
         'ssl' => [
@@ -46,6 +53,43 @@ return [
                 'name' => 'vat_certificate',
                 'name_bn' => 'ভ্যাট সার্টিফিকেট',
                 'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+            ]
+        ],
+        'bkash' => [
+
+        ]
+    ],
+    'document_service_list' => [
+        'ssl' => [
+            'message' => 'ডকুমেন্ট সার্ভিস গ্রহণ করতে নিচের নাম্বারে যোগাযোগ করুন :',
+            'service_contact_list' => [
+                [
+                    'name' => 'F M Associates',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+                ],
+                [
+                    'name' => 'Woliur Business',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+
+                ],
+                [
+                    'name' => 'Firoze Associates',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+
+                ],
+                [
+                    'name' => 'F M Associates',
+                    'mobile' => '+880179614836499',
+                    'address' => '51, Green Corner',
+                    'photo' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+
+                ]
             ]
         ],
         'bkash' => [
@@ -407,7 +451,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'name'
             ],
@@ -422,7 +466,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => true,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'email'
             ],
@@ -437,7 +481,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'      => 'partner_resource_profile',
                 'data_source_id'   => 'mobile'
             ],
@@ -452,7 +496,7 @@ return [
                 "min_length"    => "",
                 "max_length"    => "",
                 'is_editable'   => false,
-                'mandatory'     => true,
+                'mandatory'     => false,
                 'data_source'   => 'partner_resource_profile',
                 'data_source_id'=> 'nid_no'
             ],
@@ -467,20 +511,44 @@ return [
                 "min_length"       => "",
                 "max_length"       => "",
                 'is_editable'      => false,
-                'mandatory'        => true,
+                'mandatory'        => false,
                 'data_source'      => 'partner_resource_profile',
                 'data_source_id'   => 'dob'
             ]
 
         ],
     ],
-    "status_wise_banner" => [
-        "ekyc_completed" => '',
-        'survey_completed' => '',
-        'mef_completed' => '',
-        'mef_pending' => '',
-        'mef_verified' => '',
-        'fresh' => ''
+
+    "status_wise_home_banner" => [
+        'pgw_inactive' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/pgw_inactive.png',
+        'verified' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/verified.png',
+        'rejected' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/rejected.png',
+        'completed_but_did_not_apply' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/pending.png',
+        "ekyc_completed" => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/ekyc_completed.png',
+        'did_not_started_journey' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/not_started_journey.png'
+    ],
+    'mor_status_wise_text' => [
+      'ssl' => [
+          'pending' => 'আপনার আবেদনটি সফলভাবে সম্পন্ন হয়েছে অনুমোদনের জন্য অনুগ্রহ করে ১০ কার্যদিবস অপেক্ষা করুন।',
+          'processing' => 'আপনার আবেদনটি সফলভাবে সম্পন্ন হয়েছে অনুমোদনের জন্য অনুগ্রহ করে ১০ কার্যদিবস অপেক্ষা করুন।',
+          'verified' => 'আপনার আবেদনটি সফলভাবে অনুমোদন হয়েছে অনুগ্রহ করে আপনার ইমেইল চেক করুন এবং প্রয়োজনীয় তথ্য দিয়ে পেমেন্ট সার্ভিস সেট-আপ করুন।',
+          'rejected' => 'আপনার আবেদনটি অনুমোদন করা সম্ভব হয়নি কারণ - Rejection Note সঠিক তথ্য দিয়ে পুনরায় আবেদন করুন।'
+      ]
+    ],
+
+    "payment_gateway_status_message" => [
+        "ssl" => [
+            'processing' => 'আপনার আবেদনটি সফলভাবে সম্পন্ন হয়েছে অনুমোদনের জন্য অনুগ্রহ করে ১০ কার্যদিবস অপেক্ষা করুন।',
+            'verified'  => 'আপনার আবেদনটি সফলভাবে অনুমোদন হয়েছে অনুগ্রহ করে আপনার ইমেইল চেক করুন এবং প্রয়োজনীয় তথ্য দিয়ে পেমেন্ট সার্ভিস সেট-আপ করুন।',
+            'rejected'  => 'আপনার আবেদনটি অনুমোদন করা সম্ভব হয়নি কারণ - Rejection Note সঠিক তথ্য দিয়ে পুনরায় আবেদন করুন।'
+        ]
+    ],
+    'mor_status_change_message' => [
+        "ssl" => [
+            "processing" => 'SSL এ আপনার মার্চেন্ট অনবোর্ড রেকুয়েস্ট নিয়ে কাজ শুরু হয়েছে, আগামী ১০ কার্যদিবস এর মধ্যে ফলাফল জানানো হবে।',
+            "verified" => 'SSL এ আপনার মার্চেন্ট অনবোর্ড রেকুয়েস্ট সফলভাবে সম্পন্ন হয়েছে, বিস্তারিত জানতে মেইল চেক করুন।',
+            "rejected" => 'SSL এ আপনার মার্চেন্ট অনবোর্ড রেকুয়েস্টটি সফল হয়নি, পুনরায় চেষ্টা করুন।'
+        ]
     ]
 
 ];

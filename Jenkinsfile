@@ -2,17 +2,6 @@ pipeline {
     agent any
 
     stages {
-        stage('LAST COMMIT DETAILS') {
-            when { branch 'development' }
-            steps {
-                script {
-                    LAST_COMMIT_USER_NAME = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
-                    LAST_COMMIT_USER_EMAIL = sh(script: 'git log -1 --pretty=%ae', returnStdout: true).trim()
-                    echo "last commit user:${LAST_COMMIT_USER_NAME}."
-                    echo "last commit user email:${LAST_COMMIT_USER_EMAIL}."
-                }
-            }
-        }
         stage('MAKE ENV FILE') {
             steps {
                 withCredentials([
@@ -270,8 +259,8 @@ pipeline {
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh',
-                                execTimeout: 2100000,
+                                execCommand: 'cd /var/www/api && ./bin/deploy.sh development && ./bin/generate_author_for_test.sh && ./bin/test_by_docker_on_parallel_mode.sh',
+                                execTimeout: 21000000,
                                 flatten: false,
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
@@ -294,6 +283,7 @@ pipeline {
             steps {
                 sshagent(['testing-server-ssh']) {
                     sh "scp -P 2222 testing@103.197.207.58:/var/www/api/results/phpunit/api-test-result.xml ."
+                    sh "scp -P 2222 testing@103.197.207.58:/var/www/api/results/test_case_author.json ."
                 }
             }
         }
@@ -313,7 +303,21 @@ pipeline {
                                     makeEmptyDirs: false,
                                     noDefaultExcludes: false,
                                     patternSeparator: '[, ]+',
-                                    remoteDirectory: '/tech_api/public',
+                                    remoteDirectory: '/tech_api/public/test_results/api',
+                                    remoteDirectorySDF: false,
+                                    removePrefix: '',
+                                    sourceFiles: '**/test_case_author.json'
+                                ),
+                                sshTransfer(
+                                    cleanRemote: false,
+                                    excludes: '',
+                                    execCommand: '',
+                                    execTimeout: 120000,
+                                    flatten: false,
+                                    makeEmptyDirs: false,
+                                    noDefaultExcludes: false,
+                                    patternSeparator: '[, ]+',
+                                    remoteDirectory: '/tech_api/public/test_results/api/migrations',
                                     remoteDirectorySDF: false,
                                     removePrefix: '',
                                     sourceFiles: '**/api-test-result.xml'
@@ -321,7 +325,7 @@ pipeline {
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
-                                    execCommand: 'cd /var/www/tech_api && ./bin/test_result_send_to_slack.sh',
+                                    execCommand: 'cd /var/www/tech_api && ./bin/rename_test_result_file.sh api && ./bin/test_migration_run.sh api',
                                     execTimeout: 3600000,
                                     flatten: false,
                                     makeEmptyDirs: false,

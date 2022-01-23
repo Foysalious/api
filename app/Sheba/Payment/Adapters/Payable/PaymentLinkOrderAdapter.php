@@ -51,18 +51,21 @@ class PaymentLinkOrderAdapter implements PayableAdapter
     public function getPayable(): Payable
     {
         $this->resolveDescription();
-        $payable = new Payable();
-        $payable->type = 'payment_link';
-        $payable->type_id = $this->paymentLink->getLinkIdentifier();
-        $payable->user_id = $this->payableUser->id;
-        $payable->user_type = "App\\Models\\" . class_basename($this->payableUser);
-        $payable->amount = $this->getAmount();
-        $payable->description = $this->description;
+        $receiver                 = $this->paymentLink->getPaymentReceiver();
+        $payable                  = new Payable();
+        $payable->type            = 'payment_link';
+        $payable->type_id         = $this->paymentLink->getLinkIdentifier();
+        $payable->user_id         = $this->payableUser->id;
+        $payable->user_type       = "App\\Models\\" . class_basename($this->payableUser);
+        $payable->amount          = $this->getAmount();
+        $payable->description     = $this->description;
         $payable->completion_type = "payment_link";
-        $payable->success_url = $this->resolveSuccessOrFailUrl();
-        $payable->fail_url = $this->resolveSuccessOrFailUrl();
-        $payable->created_at = Carbon::now();
-        $payable->emi_month = $this->paymentLink->getEmiMonth();
+        $payable->success_url     = $this->resolveSuccessOrFailUrl();
+        $payable->fail_url        = $this->resolveSuccessOrFailUrl();
+        $payable->created_at      = Carbon::now();
+        $payable->emi_month       = $this->paymentLink->getEmiMonth();
+        $payable->created_by      = $receiver ? $receiver->id : 0;
+        $payable->created_by_name = $receiver ? class_basename($receiver) : "";
         $payable->save();
         return $payable;
     }
@@ -75,7 +78,7 @@ class PaymentLinkOrderAdapter implements PayableAdapter
 
     private function resolveDescription()
     {
-        $reason = $this->paymentLink->getReason();
+        $reason            = $this->paymentLink->getReason();
         $this->description = $reason ? $reason : $this->description;
     }
 
@@ -99,9 +102,9 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         $target = $this->paymentLink->getTarget();
         if ($target && $target instanceof PosOrderObject && $target->sales_channel == SalesChannels::WEBSTORE) {
             if ($target->is_migrated) {
-                return config('sheba.new_webstore_url') . '/' . $target->partner->sub_domain .'/orders/' . $target->id . '/success';
+                return config('sheba.new_webstore_url') . '/' . $target->partner->sub_domain . '/orders/' . $target->id . '/success';
             } else {
-                return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
+                return config('sheba.webstore_url') . '/' . $target->partner->sub_domain . '/redirect-after-payment/' . $target->id;
             }
         } else {
             return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';

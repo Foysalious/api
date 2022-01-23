@@ -11,6 +11,7 @@ use App\Sheba\Pos\Order\PosOrderObject;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -55,6 +56,8 @@ class PaymentLinkTransaction
     private $paymentLinkCharge;
     private $is_due_tracker_payment_link;
     private $real_amount;
+    /** @var PaymentMethod */
+    private $method_class;
 
     /**
      * @param Payment                $payment
@@ -169,9 +172,10 @@ class PaymentLinkTransaction
 
     public function create()
     {
+        $payment_method_fee = $this->method_class->getCalculatedChargedAmount($this->payment->getTransactionDetails());
         $this->walletTransactionHandler->setModel($this->receiver);
         $paymentLinkTransaction = $this->amountTransaction()->configureServiceCharge()->feeTransaction()->setEntryAmount();
-        $this->storePaymentLinkEntry($this->amount, $this->fee, $this->interest);
+        $this->storePaymentLinkEntry($this->amount, $payment_method_fee, $this->interest);
         return $paymentLinkTransaction;
     }
 
@@ -185,6 +189,16 @@ class PaymentLinkTransaction
     {
         $this->amount                  = $this->payment->payable->amount;
         $this->formattedRechargeAmount = number_format($this->amount, 2);
+        return $this;
+    }
+
+    /**
+     * @param mixed $method_class
+     * @return PaymentLinkTransaction
+     */
+    public function setMethodClass($method_class): PaymentLinkTransaction
+    {
+        $this->method_class = $method_class;
         return $this;
     }
 
@@ -218,7 +232,7 @@ class PaymentLinkTransaction
     {
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
-            $this->real_amount = $this->paymentLink->getRealAmount();
+            $this->real_amount = ($this->isPaidByCustomer()) ? $this->paymentLink->getAmount() - $this->interest - $this->fee : $this->paymentLink->getAmount();
         } else {
             $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);

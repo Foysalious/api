@@ -105,7 +105,7 @@ class SslBuilder
 
         if ($payment_link->isForMissionSaveBangladesh()) return new Donation();
 
-        if ($receiver instanceof Partner) return (new DynamicSslStore($receiver))->set();
+        if ($receiver instanceof Partner) return (new DynamicSslStore($receiver))->setStoreAccount();
 
         return new DefaultStore();
 

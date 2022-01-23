@@ -2,105 +2,51 @@
 
 namespace App\Http\Controllers\ResellerPayment;
 
+use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use App\Sheba\ResellerPayment\PaymentService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
-use Sheba\Dal\PgwStore\Model as PgwStore;
-use Sheba\EMI\Banks;
-use Sheba\EMI\CalculatorForManager;
-use Sheba\ModificationFields;
-use Sheba\PaymentLink\PaymentLinkStatics;
-use Sheba\PaymentLink\PaymentLinkStatus;
 use Throwable;
 
 class PaymentServiceController extends Controller
 {
-    use ModificationFields;
+    protected $paymentService;
 
-    public function getPaymentGateway(Request $request, PgwStore $pgwStore)
+    public function __construct(PaymentService $paymentService)
     {
-        try {
-            $completion = $request->query('completion');
-            $header_message = 'সর্বাধিক ব্যবহৃত';
-            $pgwData = [];
-            $partner = Partner::where('id', $request->partner->id)->first();
-            $partner_account = $partner->pgwStoreAccounts()->select('status')->first();
+        $this->paymentService = $paymentService;
+    }
 
-            $pgwStores = $pgwStore->select('id', 'name', 'key', 'name_bn', 'icon')->get();
-            foreach ($pgwStores as $pgwStore) {
-                if (!$partner_account) {
-                    $pgwData[] = [
-                        'id' => $pgwStore->id,
-                        'name' => $pgwStore->name,
-                        'key' => $pgwStore->key,
-                        'name_bn' => $pgwStore->name_bn,
-                        'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                        'completion' => $completion == 1 ? '' : null,
-                        'icon' => $pgwStore->icon,
-                        'status' => PaymentLinkStatus::UNREGISTERED
-                    ];
-                } else if ($partner_account->status == 1) {
-                    $pgwData[] = [
-                        'id' => $pgwStore->id,
-                        'name' => $pgwStore->name,
-                        'key' => $pgwStore->key,
-                        'name_bn' => $pgwStore->name_bn,
-                        'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                        'completion' => $completion == 1 ? '' : null,
-                        'icon' => $pgwStore->icon,
-                        'status' => PaymentLinkStatus::ACTIVE
-                    ];
-                } else {
-                    $pgwData[] = [
-                        'id' => $pgwStore->id,
-                        'name' => $pgwStore->name,
-                        'key' => $pgwStore->key,
-                        'name_bn' => $pgwStore->name_bn,
-                        'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                        'completion' => $completion == 1 ? '' : null,
-                        'icon' => $pgwStore->icon,
-                        'status' => PaymentLinkStatus::INACTIVE
-                    ];
-                }
-            }
-            return api_response($request, null, 200, ['data' => $pgwData]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+    public function getPaymentGateway(Request $request): JsonResponse
+    {
+        $completion = $request->query('completion');
+        $banner     = $request->query('banner');
+        $header_message = 'সর্বাধিক ব্যবহৃত';
+        $partnerId = $request->partner->id;
+
+        $pgwData = $this->paymentService->setPartner($request->partner)->getPaymentGateways($completion, $header_message, $partnerId, $banner);
+        return api_response($request, null, 200, ['data' => $pgwData]);
     }
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function getPaymentServiceCharge(Request $request)
+    public function getPaymentServiceCharge(Request $request): JsonResponse
     {
-        try {
-            $partnerId = $request->partner->id;
-            $digitalCollection = DigitalCollectionSetting::where('partner_id', $partnerId)->select('service_charge')->first();
-
-            $data = PaymentLinkStatics::customPaymentServiceData();
-            if ($digitalCollection) {
-                $data['current_percentage'] = $digitalCollection->service_charge;
-            } else {
-                $data['current_percentage'] = PaymentLinkStatics::SERVICE_CHARGE;
-            }
-
-            return api_response($request, null, 200, ['data' => $data]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $partnerId = $request->partner->id;
+        $data = $this->paymentService->getServiceCharge($partnerId);
+        return api_response($request, null, 200, ['data' => $data]);
     }
 
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function storePaymentServiceCharge(Request $request)
     {
@@ -109,20 +55,10 @@ class PaymentServiceController extends Controller
                 "current_percentage" => "required | numeric"
             ]);
 
-            $digitalCollectionSetting = new DigitalCollectionSetting();
             $partnerId = $request->partner->id;
-            $partner = $digitalCollectionSetting->where('partner_id', $partnerId)->first();
+            $currentPercentage = $request->current_percentage;
 
-            if (!$partner) {
-                $digitalCollectionSetting->partner_id = $request->partner->id;
-                $digitalCollectionSetting->service_charge = $request->current_percentage;
-                $this->withCreateModificationField($digitalCollectionSetting);
-                $digitalCollectionSetting->save();
-            } else {
-                $data = ['service_charge' => $request->current_percentage];
-                $digitalCollectionSetting->query()->where('partner_id', $partnerId)
-                    ->update($this->withUpdateModificationField($data));
-            }
+            $this->paymentService->storeServiceCharge($partnerId, $currentPercentage);
 
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
@@ -136,43 +72,17 @@ class PaymentServiceController extends Controller
 
     /**
      * @param Request $request
-     * @param CalculatorForManager $emi_calculator
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function emiInformationForManager(Request $request, CalculatorForManager $emi_calculator)
+    public function emiInformationForManager(Request $request)
     {
         try {
             $partner = $request->partner;
 
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
             $amount       = $request->amount;
-            $icons_folder = getEmiBankIconsFolder(true);
-            $emi_data     = [
-                "emi"   => $emi_calculator->setPartner($partner)->getCharges($amount),
-                "banks" => (new Banks())->setAmount($amount)->get(),
-                "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
-                "static_info"    => [
-                    "how_emi_works"        => [
-                        "EMI (Equated Monthly Installment) is one of the payment methods of online purchasing, only for the customers using any of the accepted Credit Cards on Sheba.xyz.* It allows customers to pay for their ordered services  in easy equal monthly installments.*",
-                        "Sheba.xyz has introduced a convenient option of choosing up to 12 months EMI facility for customers who use Credit Cards for buying services worth BDT 5,000 or more. The duration and extent of the EMI options available will be visible on the payment page after order placement. EMI plans are also viewable on the checkout page in the EMI Banner below the bill section.",
-                        "Customers wanting to avail EMI facility must have a Credit Card from any one of the banks in the list shown in the payment page.",
-                        "EMI facilities available for all services worth BDT 5,000 or more.",
-                        "EMI charges may vary on promotional offers.",
-                        "Sheba.xyz  may charge additional convenience fee if the customer extends the period of EMI offered."
-                    ],
-                    "terms_and_conditions" => [
-                        "As soon as you complete your purchase order on Sheba.xyz, you will see the full amount charged on your credit card.",
-                        "You must Sign and Complete the EMI form and submit it at Sheba.xyz within 3 working days.",
-                        "Once Sheba.xyz receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
-                        "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI.",
-                        "From your next billing cycle, you will be charged the EMI amount and your credit limit will be reduced by the outstanding amount.",
-                        "If you do not receive an updated monthly bank statement reflecting your EMI transactions for the following month, feel free to contact us at 16516  for further assistance.",
-                        "For example, if you have made a 3-month EMI purchase of BDT 30,000 and your credit limit is BDT 1, 00,000 then your bank will block your credit limit by BDT 30,000 and thus your available credit limit after the purchase will only be BDT 70,000. As and when you pay your EMI every month, your credit limit will be released accordingly.",
-                        "EMI facilities with the aforesaid Banks are regulated as per their terms and conditions and these terms may vary from one bank to another.",
-                        "For any query or concern please contact your issuing bank, if your purchase has not been converted to EMI by 7 working days of your transaction date."
-                    ]
-                ]
-            ];
+
+            $emi_data = $this->paymentService->getEmiInfoForManager($partner, $amount);
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
         } catch (ValidationException $e) {
@@ -187,15 +97,41 @@ class PaymentServiceController extends Controller
     public function bannerAndStatus(Request $request, PaymentService $paymentService)
     {
         $partner = $request->partner;
-
         $data = $paymentService->setPartner($partner)->getStatusAndBanner();
-
-        /*$data = [
-            'banner' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png',
-            'status' => null,
-            'pgw_status' => 0,
-        ];*/
-
         return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService)
+    {
+        $this->validate($request, [
+            'key' => 'required|in:'.implode(',', config('reseller_payment.available_payment_gateway_keys'))
+        ]);
+        $partner = $request->partner;
+        $detail = $paymentService->setPartner($partner)->setKey($request->key)->getPGWDetails();
+        return api_response($request, null, 200, ['data' => $detail]);
+    }
+
+    /**
+     * @throws UnauthorizedRequestFromMORException
+     * @throws NotFoundException
+     */
+    public function sendNotificationOnStatusChange(Request $request, PaymentService $paymentService)
+    {
+        $this->validate($request, [
+            'key' => 'required|in:'. implode(',', config('reseller_payment.available_payment_gateway_keys')),
+            'new_status' => 'required|in:processing,verified,rejected',
+            'partner_id' => 'required'
+        ]);
+        if (($request->header('access-key')) !== config('reseller_payment.mor_access_token'))
+            throw new UnauthorizedRequestFromMORException();
+
+        $partner = Partner::find($request->partner_id);
+        if(!$partner)
+            throw new NotFoundException("Invalid Partner Id");
+
+
+        $paymentService->setKey($request->key)->setPartner($partner)->setNewStatus($request->new_status)->sendNotificationOnStatusChange();
+        return api_response($request, null, 200, ["message" => 'Notification sent successfully']);
+
     }
 }

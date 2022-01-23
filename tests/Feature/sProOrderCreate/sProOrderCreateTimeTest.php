@@ -10,13 +10,13 @@ use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 /**
  * @author Dolon Banik <dolon@sheba.xyz>
  */
 class sProOrderCreateTimeTest extends FeatureTestCase
 {
-
     private $scheduleSlot1;
     private $today;
 
@@ -58,28 +58,26 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
             if ($x > 7 && $x < 22) {
                 for ($z = 0; $z < 7; $z++) {
-                    DB::insert(
-                        'insert into category_schedule_slot(category_id,schedule_slot_id,day) values (?, ?, ?)',
-                        [$this->secondaryCategory->id, $this->scheduleSlot1->id, $z]
-                    );
+                    DB::insert('insert into category_schedule_slot(category_id,schedule_slot_id,day) values (?, ?, ?)',
+                        [$this->secondaryCategory->id, $this->scheduleSlot1->id, $z]);
                 }
             }
         }
     }
 
+    /**
+     * @throws Throwable
+     */
     public function testSProTimeAPIWithValidCategoryIdPartnerIdLimit()
     {
-        //arrange
         $this->today = Carbon::now()->toDateString();
 
-        //act
         $response = $this->get(
             '/v2/times?category='.$this->secondaryCategory->id.'&partner='.$this->partner->id.'&limit=1'
         );
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertEquals($this->today, $data["dates"][0]["value"]);
@@ -88,42 +86,32 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
     public function testSProTimeAPIWithValidCategoryIdPartnerIdAndInvalidAlphabeticCharacterLimit()
     {
-        //arrange
-
-        //act
         $response = $this->get(
             '/v2/times?category='.$this->secondaryCategory->id.'&partner='.$this->partner->id.'&limit=abcde'
         );
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The limit must be a number.', $data["message"]);
     }
 
     public function testSProTimeAPIWithValidCategoryIdPartnerIdAndInvalidSpecialCharacterLimit()
     {
-        //arrange
-
-        //act
         $response = $this->get(
             '/v2/times?category='.$this->secondaryCategory->id.'&partner='.$this->partner->id.'&limit=!@#$%^'
         );
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The limit must be a number.', $data["message"]);
     }
 
     public function testSProTimeAPIWithValidCategoryIdPartnerIdAndNoLimit()
     {
-        //arrange
         $this->today = Carbon::now()->toDateString();
 
-        //act
         $response = $this->get('/v2/times?category='.$this->secondaryCategory->id.'&partner='.$this->partner->id);
 
         $data = $response->decodeResponseJson();
@@ -137,42 +125,30 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
     public function testSProTimeAPIWithValidCategoryIdLimitAndInvalidAlphabeticCharacterPartnerId()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?category='.$this->secondaryCategory->id.'&partner=abcde&limit=1');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The partner must be a number.', $data["message"]);
     }
 
     public function testSProTimeAPIWithValidCategoryIdLimitAndInvalidSpecialCharacterPartnerId()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?category='.$this->secondaryCategory->id.'&partner=!@#$%^&limit=1');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The partner must be a number.', $data["message"]);
     }
 
     public function testSProTimeAPIWithValidCategoryIdLimitAndNoPartnerId()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?category='.$this->secondaryCategory->id.'&limit=1');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertNotEmpty($data["times"]);
@@ -181,42 +157,30 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
     public function testSProTimeAPIWithValidPartnerIdLimitAndInvalidAlphabeticCharacterCategoryId()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?category=abcde&partner='.$this->partner->id.'&limit=1');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The category must be a number.', $data["message"]);
     }
 
     public function testSProTimeAPIWithValidPartnerIdLimitAndInvalidSpecialCharacterCategoryId()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?category=!@#$%^&partner='.$this->partner->id.'&limit=1');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(400, $data["code"]);
         $this->assertEquals('The category must be a number.', $data["message"]);
     }
 
     public function testSProTimeAPIWithValidPartnerIdLimitAndNoCategoryId()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?partner='.$this->partner->id.'&limit=1');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertNotEmpty($data["times"]);
@@ -225,14 +189,10 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
     public function testSProTimeAPIWithNoPartnerIdLimitCategoryId()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertNotEmpty($data["times"]);
@@ -241,14 +201,10 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
     public function testSProTimeAPIWithOnlyValidCategoryIdParameter()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?category='.$this->secondaryCategory->id);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertNotEmpty($data["times"]);
@@ -257,14 +213,10 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
     public function testSProTimeAPIWithOnlyValidPartnerIdParameter()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?partner='.$this->partner->id);
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertNotEmpty($data["times"]);
@@ -273,14 +225,10 @@ class sProOrderCreateTimeTest extends FeatureTestCase
 
     public function testSProTimeAPIWithOnlyValidLimitParameter()
     {
-        //arrange
-
-        //act
         $response = $this->get('/v2/times?limit=1');
 
         $data = $response->decodeResponseJson();
 
-        //assert
         $this->assertEquals(200, $data["code"]);
         $this->assertEquals('Successful', $data["message"]);
         $this->assertNotEmpty($data["times"]);

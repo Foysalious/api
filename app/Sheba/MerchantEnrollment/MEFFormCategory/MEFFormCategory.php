@@ -3,6 +3,7 @@
 namespace Sheba\MerchantEnrollment\MEFFormCategory;
 
 use App\Sheba\MerchantEnrollment\PaymentMethod\CompletionDetail;
+use Sheba\MerchantEnrollment\CompletionCalculation;
 use Sheba\MerchantEnrollment\MEFForm\FormItemBuilder;
 use Sheba\MerchantEnrollment\PartnerAllInformation;
 use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
@@ -92,6 +93,8 @@ abstract class MEFFormCategory
 
     abstract public function getFormFields();
 
+    abstract public function getFormFieldData(): array;
+
     abstract public function post($data);
 
     protected function getBengaliPercentage(): string
@@ -113,6 +116,14 @@ abstract class MEFFormCategory
     public function getCompletionDetails(): CompletionDetail
     {
         return (new CompletionDetail())->setTitle($this->getTitle())->setCategoryCode($this->category_code)->setCompletionPercentage($this->completion());
+    }
+
+    public function percentageCalculation(): float
+    {
+        if (!isset($this->data)) $this->get();
+        $this->percentage = (new CompletionCalculation())->setFormFields($this->data)->get();
+        $this->percentage = round($this->percentage);
+        return $this->percentage;
     }
 
 }

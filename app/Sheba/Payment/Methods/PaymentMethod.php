@@ -64,7 +64,7 @@ abstract class PaymentMethod
      * @return mixed
      */
     abstract public function getMethodName();
-
+    abstract public function getCalculatedChargedAmount($transaction_details);
     /**
      * @param Payable $payable
      * @param string  $gateway_account_name

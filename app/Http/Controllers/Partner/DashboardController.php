@@ -182,9 +182,10 @@ class DashboardController extends Controller
             $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
         return api_response($request, $dashboard, 200, ['data' => $dashboard]);
     }
+
     private function hasQrCode(OrderService $orderService, Partner $partner)
     {
-        if(!$partner->isMigrated(Modules::POS))
+        if (!$partner->isMigrated(Modules::POS))
             return ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0;
         $partnerInfo = $orderService->setPartnerId($partner->id)->getPartnerDetails();
         return $partnerInfo['partner']['qr_code_account_type'] && $partnerInfo['partner']['qr_code_image'] ? 1 : 0;
@@ -221,23 +222,31 @@ class DashboardController extends Controller
 
     public function getNewHomePage(Request $request)
     {
-        /** @var Partner $partner */
-        $partner = $request->partner;
-        /** @var Resource $resource */
-        $resource = $request->manager_resource;
-        $resource_status = $resource->status;
-        $data = [
-            'name' => $partner->name,
-            'logo' => $partner->logo,
-            'resource_kyc_status' => $resource_status,
-            'is_nid_verified' => (bool)((int)$request->manager_resource->profile->nid_verified),
-            'is_webstore_published' => $partner->is_webstore_published,
-            'new_notification_count' => $partner->notifications()->where('is_seen', '0')->count()
-        ];
-        if ($resource_status === Statuses::VERIFIED) {
-            $data['message_seen'] = (bool)((int)$resource->verification_message_seen);
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            /** @var Resource $resource */
+            $resource = $request->manager_resource;
+            $resource_status = $resource->status;
+            if($resource_status == Statuses::UNVERIFIED && $resource->profile->nid_verification_request_count >= 3) {
+                $resource_status = Statuses::PENDING;
+            }
+            $data = [
+                'name' => $partner->name,
+                'logo' => $partner->logo,
+                'resource_kyc_status' => $resource_status,
+                'is_nid_verified' => (bool)((int)$request->manager_resource->profile->nid_verified),
+                'is_webstore_published' => $partner->is_webstore_published,
+                'new_notification_count' => $partner->notifications()->where('is_seen', '0')->count()
+            ];
+            if ($resource_status === Statuses::VERIFIED) {
+                $data['message_seen'] = (bool)((int)$resource->verification_message_seen);
+            }
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        return api_response($request, $data, 200, ['data' => $data]);
     }
 
     private function newOrdersCount($partner, $request)
@@ -280,12 +289,12 @@ class DashboardController extends Controller
 
     public function getV3(Request $request, OrderService $orderService)
     {
-            /** @var Partner $partner */
-            $partner = $request->partner;
-            /** @var Resource $resource */
-            $resource = $request->manager_resource;
-            $data = (new PartnerRepository($partner))->getDashboard($resource,$orderService);
-            return api_response($request, $data, 200, ['data' => $data]);
+        /** @var Partner $partner */
+        $partner = $request->partner;
+        /** @var Resource $resource */
+        $resource = $request->manager_resource;
+        $data = (new PartnerRepository($partner))->getDashboard($resource, $orderService);
+        return api_response($request, $data, 200, ['data' => $data]);
     }
 
     public function getFeatureVideos(Request $request)

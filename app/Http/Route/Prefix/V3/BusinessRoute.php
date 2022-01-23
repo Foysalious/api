@@ -45,6 +45,14 @@ class BusinessRoute
                         });
                     });
                 });
+                $api->group(['prefix' => 'announcements'], function ($api) {
+                    $api->get('/', 'B2b\AnnouncementV2Controller@index');
+                    $api->post('/', 'B2b\AnnouncementV2Controller@store');
+                    $api->group(['prefix' => '{announcement}'], function ($api) {
+                        $api->put('/', 'B2b\AnnouncementV2Controller@update');
+                        $api->get('/', 'B2b\AnnouncementV2Controller@show');
+                    });
+                });
             });
         });
     }

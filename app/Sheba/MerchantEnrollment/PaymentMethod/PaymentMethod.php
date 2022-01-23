@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Sheba\MerchantEnrollment\Exceptions\InvalidCategoryPostDataException;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
+use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 abstract class PaymentMethod
 {
@@ -42,6 +43,10 @@ abstract class PaymentMethod
 
     abstract public function requiredDocuments();
 
+    abstract public function applicationApply();
+
+    abstract public function documentServices($paymentGatewayKey);
+
     public function postCategoryDetail(MEFFormCategory $category, $data)
     {
         return $category->post($data);
@@ -71,5 +76,17 @@ abstract class PaymentMethod
         }
 
         return $this;
+    }
+
+    /**
+     * @param $paymentGatewayKey
+     * @return mixed
+     * @throws InvalidKeyException
+     */
+    public function documentServiceList($paymentGatewayKey)
+    {
+        $categoryList = config('reseller_payment.document_service_list');
+        if (isset($categoryList[$paymentGatewayKey])) return $categoryList[$paymentGatewayKey];
+        throw new InvalidKeyException();
     }
 }

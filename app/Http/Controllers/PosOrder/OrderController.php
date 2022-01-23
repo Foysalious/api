@@ -9,6 +9,8 @@ use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
+use App\Sheba\Voucher\VoucherService;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -131,14 +133,22 @@ class OrderController extends Controller
         return http_response($request, null, 200, $response);
     }
 
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function validatePromo(Request $request)
     {
-        $this->validate($request, [
-            'code' => 'required|string',
-        ]);
-        /** @var VoucherController $promoValidator */
-        $promoValidator = app(VoucherController::class);
-        return $promoValidator->validateVoucher($request);
+        $this->validate($request, ['code' => 'required|string']);
+        $partner = $request->auth_user->getPartner();
+        /** @var VoucherService $voucherService */
+        $voucherService = app(VoucherService::class);
+        $response = $voucherService->validateVoucher($partner->id, $request);
+        if (empty($response))
+            return http_response($request, null, 403, ['message' => 'Invalid Promo']);
+        return http_response($request, null, 200, ['voucher' => $response]);
     }
 
     public function logs(Request $request, $order_id)

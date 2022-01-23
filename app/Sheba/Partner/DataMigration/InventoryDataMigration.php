@@ -35,6 +35,8 @@ class InventoryDataMigration
     private $partnerPosServices;
     private $posCategories;
     private $partnerPosServiceBatches;
+    private $partnerPosServiceSupplierIds;
+    private $partnerPosSerivceSuppliers;
     /**
      * @var PartnerPosServiceBatchRepositoryInterface
      */
@@ -99,6 +101,7 @@ class InventoryDataMigration
     public function migrate()
     {
         $this->generateMigrationData();
+        $this->migrateSuppliers($this->partnerPosSerivceSuppliers);
         $this->migrateCategories($this->posCategories);
         $this->migrateCategoryPartner($this->partnerPosCategories);
         $this->migrateProducts($this->partnerPosServices);
@@ -110,6 +113,7 @@ class InventoryDataMigration
         $this->partnerPosCategories = $this->generatePartnerPosCategoriesMigrationData();
         $this->partnerPosServices = $this->generatePartnerPosServicesMigrationData();
         $this->partnerPosServiceBatches = collect($this->generatePartnerPosServiceBatchesData());
+        $this->partnerPosSerivceSuppliers = $this->generatePosServiceSuppliersData();
         $this->partnerPosServiceImages = collect($this->generatePartnerPosServiceImageGalleryData());
         $this->partnerPosServiceLogs = collect($this->generatePartnerPosServiceLogsMigrationData());
         $this->partnerPosServiceDiscounts = collect($this->generatePartnerPosServiceDiscountsMigrationData());
@@ -202,12 +206,14 @@ class InventoryDataMigration
 
     private function generatePartnerPosServiceBatchesData()
     {
-        return $this->partnerPosServiceBatchRepository->builder()
+        $batches = $this->partnerPosServiceBatchRepository->builder()
             ->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
             ->withTrashed()->select('partner_pos_service_id AS product_id', 'supplier_id', 'from_account', 'cost', 'stock', 'created_by_name','updated_by_name',
                 DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at, 
                 SUBTIME(deleted_at,"6:00:00") as deleted_at'))
             ->get();
+        $this->partnerPosServiceSupplierIds = $batches->pluck('supplier_id')->unique()->toArray();
+        return $batches;
     }
 
     private function generatePartnerPosServiceImageGalleryData()
@@ -274,5 +280,35 @@ class InventoryDataMigration
                         END) AS is_default'), 'created_by_name', 'updated_by_name',
             DB::raw('SUBTIME(created_at,"6:00:00") as created_at, SUBTIME(updated_at,"6:00:00") as updated_at')
         )->with('parent')->get();
+    }
+
+    public function generatePosServiceSuppliersData()
+    {
+        $name = DB::raw("(CASE WHEN partner_pos_customers.nick_name IS NOT NULL  THEN partner_pos_customers.nick_name  ELSE profiles.name END) as name");
+        $suppliers = DB::table('partner_pos_customers')
+            ->where('partner_id', $this->partner->id)
+            ->whereIn('pos_customers.id', $this->partnerPosServiceSupplierIds)
+            ->leftJoin('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
+            ->leftJoin('profiles', 'pos_customers.profile_id', '=', 'profiles.id')
+            ->select('partner_pos_customers.customer_id as id', 'partner_pos_customers.partner_id', $name,
+                'profiles.mobile', 'profiles.email', 'profiles.pro_pic',
+                DB::raw('SUBTIME(profiles.created_at,"6:00:0") as created_at, 
+                SUBTIME(profiles.updated_at,"6:00:0") as updated_at'))
+            ->get();
+        if(!is_array($suppliers)) {
+            $suppliers = $suppliers->values()->toArray();
+        }
+        return $suppliers;
+    }
+
+    private function migrateSuppliers($data)
+    {
+        $chunks = array_chunk($data, self::CHUNK_SIZE);
+        foreach ($chunks as $chunk) {
+            $this->setRedisKey();
+            $this->shouldQueue ? dispatch(new PartnerDataMigrationToInventoryJob($this->partner, ['suppliers' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue)) :
+                dispatchJobNow(new PartnerDataMigrationToInventoryJob($this->partner, ['suppliers' => $chunk], $this->currentQueue, $this->queue_and_connection_name, $this->shouldQueue));
+            $this->increaseCurrentQueueValue();
+        }
     }
 }

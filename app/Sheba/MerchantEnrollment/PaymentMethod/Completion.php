@@ -14,6 +14,10 @@ class Completion
 
     private $payment_gateway;
 
+    private $overall_completion;
+
+    private $message;
+
     /**
      * @param mixed $payment_gateway
      * @return Completion
@@ -35,6 +39,16 @@ class Completion
     }
 
     /**
+     * @param mixed $message
+     * @return Completion
+     */
+    public function setMessage($message): Completion
+    {
+        $this->message = $message;
+        return $this;
+    }
+
+    /**
      * @return PaymentMethodCompletion
      * @throws InvalidKeyException
      * @throws InvalidListInsertionException
@@ -42,7 +56,9 @@ class Completion
     public function get(): PaymentMethodCompletion
     {
         $completion = $this->completionPercentage();
-        return (new PaymentMethodCompletion())->setCanApply(1)->setCategories($completion)->setMessage('');
+        $this->calculateAndSetOverallCompletion($completion);
+        return (new PaymentMethodCompletion())->setCanApply($this->overall_completion == 100 ? 1 : 0)
+            ->setOverallCompletion($this->overall_completion)->setCategories($completion)->setMessage($this->message);
     }
 
     /**
@@ -62,5 +78,14 @@ class Completion
             $iterator->next();
         }
         return $completion;
+    }
+
+    public function calculateAndSetOverallCompletion($completion)
+    {
+        $overall_completion = 0;
+        foreach ($completion as $c)
+            $overall_completion += ($c["completion_percentage"]["en"]);
+
+        $this->overall_completion = round($overall_completion / count($completion),2);
     }
 }

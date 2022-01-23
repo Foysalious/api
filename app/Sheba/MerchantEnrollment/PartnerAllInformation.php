@@ -39,16 +39,11 @@ abstract class PartnerAllInformation
         $this->additional_information = (json_decode($this->partner_basic_information->additional_information));
         $values = [];
         foreach($this->formItems as $formItem) {
-            if(isset($formItem['data_source']) && $formItem['data_source'] !== 'json') {
-                if(isset($formItem['data_source_type']) && $formItem['data_source_type'] === "function")
-                    $values[$formItem['id']] = $this->{$formItem['data_source']} ? $this->{$formItem['data_source']}->{$formItem['data_source_id']}() : '';
+            if(isset($formItem['data_source'])) {
+                if($formItem['data_source'] !== 'json')
+                    $this->mapNonJsonFormField($formItem, $values);
                 else
-                    $values[$formItem['id']] = $this->{$formItem['data_source']} ? $this->{$formItem['data_source']}->{$formItem['data_source_id']} : '';
-            }
-            elseif (isset($formItem['data_source']) && $formItem['data_source'] === 'json') {
-                if(isset($this->additional_information))
-                    $values[$formItem['id']] = $this->additional_information->{$formItem['id']} ?? '';
-
+                    $this->mapJsonFormField($formItem,$values);
             }
         }
         return $values;
@@ -57,4 +52,18 @@ abstract class PartnerAllInformation
     public abstract function getByCode($category_code): array;
 
     public abstract function postByCode($category_code, $post_data);
+
+    protected function mapNonJsonFormField($formItem, &$values)
+    {
+        if(isset($formItem['data_source_type']) && $formItem['data_source_type'] === "function")
+            $values[$formItem['id']] = $this->{$formItem['data_source']} ? $this->{$formItem['data_source']}->{$formItem['data_source_id']}() : '';
+        else
+            $values[$formItem['id']] = $this->{$formItem['data_source']} ? $this->{$formItem['data_source']}->{$formItem['data_source_id']} : '';
+
+    }
+
+    protected function mapJsonFormField($formItem, &$values) {
+        if(isset($this->additional_information))
+            $values[$formItem['id']] = $this->additional_information->{$formItem['id']} ?? '';
+    }
 }

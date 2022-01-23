@@ -138,6 +138,9 @@ class Route
                     });
                 });
                 $api->post('migrate', 'Partner\DataMigrationController@migrate');
+                $api->group(['prefix' => 'vouchers'], function ($api) {
+                    $api->post('validity-check', 'PosOrder\OrderController@validatePromo');
+                });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'PosOrder\OrderController@index');
                     $api->post('/', 'PosOrder\OrderController@store');
@@ -145,7 +148,6 @@ class Route
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'PosOrder\OrderController@show');
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
-                        $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                         $api->get('/logs', 'PosOrder\OrderController@logs');
                         $api->get('/logs/{log}/invoice', 'PosOrder\OrderController@generateLogInvoice');
                         $api->post('payment/create', "PosOrder\OrderController@createPayment");
@@ -180,6 +182,7 @@ class Route
                 $api->post('orders/{order}/send-email', 'Pos\OrderController@sendEmailV2');
                 $api->get('filters', 'PosOrder\OrderController@getFilteringOptions' );
                 $api->post('address', 'PartnerController@updateAddressV2');
+                $api->get('vouchers', 'VoucherController@indexV2');
 
                 /**
                  * End Old APIs with jwtAccessToken Middleware

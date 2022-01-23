@@ -14,6 +14,7 @@ use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
+use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\Bkash\Stores\BkashStore;
 use Sheba\Payment\Methods\PaymentMethod;
@@ -137,8 +138,13 @@ class Bkash extends PaymentMethod
             'intent'                => $intent,
             'merchantInvoiceNumber' => $payment->gateway_transaction_id
         ));
-        $url             = curl_init($this->url . '/checkout/payment/create');
-        $header          = array(
+        return $this->initPayment($token, $create_pay_body);
+    }
+
+    private function initPayment($token, $create_pay_body)
+    {
+        $url    = curl_init($this->url . '/checkout/payment/create');
+        $header = array(
             'Content-Type:application/json',
             'authorization:' . $token,
             'x-app-key:' . $this->appKey
@@ -187,7 +193,6 @@ class Bkash extends PaymentMethod
     /**
      * @param Payment $payment
      * @return Payment|mixed
-     * @throws GuzzleException
      * @throws Exception
      */
     public function validate(Payment $payment): Payment
@@ -207,11 +212,6 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
-                $this->registrar->setAmount($payment->payable->amount)
-                    ->setDetails(json_encode($success->details))
-                    ->setTime(Carbon::now()->format('Y-m-d H:i:s'))
-                    ->setIsValidated(1)
-                    ->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
                 $status              = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {
@@ -261,5 +261,39 @@ class Bkash extends PaymentMethod
     public function getMethodName()
     {
         return self::NAME;
+    }
+
+    /**
+     * @param BkashStore $store
+     * @return bool
+     * @throws InvalidConfigurationException
+     */
+    public function testInit(BkashStore $store)
+    {
+        $this->setCredFromAuth($store->getAuth());
+        $token           = $this->grantToken();
+        $intent          = 'sale';
+        $create_pay_body = json_encode(array(
+            'amount'                => 10,
+            'currency'              => 'BDT',
+            'intent'                => $intent,
+            'merchantInvoiceNumber' => 'SHEBA_BKASH_TEST_INIT_' . randomString(5)
+        ));
+        $data            = $this->initPayment($token, $create_pay_body);
+        if ($data->paymentID) {
+            return true;
+        }
+        throw new InvalidConfigurationException("Invalid credentials! Please try again.");
+
+    }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        if ($transaction_details->transactionStatus === "Completed") {
+            $amount = (float)$transaction_details->amount;
+            $charge = (float)config('bkash.transaction_charge');
+            return round($amount * $charge / 100, 2);
+        }
+        return 0;
     }
 }
