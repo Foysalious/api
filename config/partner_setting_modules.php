@@ -30,7 +30,7 @@ return [
         'function' => 'lastUpdatedPGWStore'
     ],
     [
-        'key' => 'profile_updated',
-        'function' => 'lastUpdatedProfile'
+        'key' => 'resource_updated',
+        'function' => 'lastResourceUpdated'
     ]
 ];
