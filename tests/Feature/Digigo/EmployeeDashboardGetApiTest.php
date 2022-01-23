@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\DigigoDashboard;
+namespace Tests\Feature\Digigo;
 
 /**
  * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
@@ -19,7 +19,7 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-
+        dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }
