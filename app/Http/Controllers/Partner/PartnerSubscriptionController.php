@@ -67,16 +67,11 @@ class PartnerSubscriptionController extends Controller
      */
     public function currentPackage($partner, Request $request)
     {
-        try {
-            /** @var Partner $partner */
-            $partner = $request->partner;
-            $partner_subscription_package = $this->generateSubscriptionData(null, $partner->subscription->id);
-            $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
-            return api_response($request, null, 200, ["data" => $data]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        /** @var Partner $partner */
+        $partner = $request->partner;
+        $partner_subscription_package = $this->generateSubscriptionData(null, $partner->subscription->id);
+        $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
+        return api_response($request, null, 200, ["data" => $data]);
     }
 
     /**
