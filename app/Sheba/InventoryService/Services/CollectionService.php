@@ -147,7 +147,7 @@ class CollectionService
 
     public function getAllCollection()
     {
-        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections?'. 'offset='. $this->offset . '&limit='. $this->limit  );
+        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collections');
     }
 
     public function store()
@@ -169,20 +169,22 @@ class CollectionService
 
     private function makeData()
     {
-        return [
+        $data = [
             ['name' => 'name', 'contents' => $this->name],
             ['name' => 'description', 'contents' => $this->description],
             ['name' => 'partner_id', 'contents' => $this->partner_id],
             ['name' => 'is_published', 'contents' => $this->is_published],
-            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''],
-            ['name' => 'banner', 'contents' => $this->banner ? File::get($this->banner->getRealPath()) : null, 'filename' => $this->banner ? $this->banner->getClientOriginalName() : ''],
-            ['name' => 'app_thumb', 'contents' => $this->app_thumb ? File::get($this->app_thumb->getRealPath()) : null, 'filename' => $this->app_thumb ? $this->app_thumb->getClientOriginalName() : ''],
-            ['name' => 'app_banner', 'contents' => $this->app_banner ? File::get($this->app_banner->getRealPath()) : null, 'filename' => $this->app_banner ? $this->app_banner->getClientOriginalName() : ''],
+
             [
                 'name' => 'products',
                 'contents' => $this->products
             ]
         ];
+        if ($this->thumb) {
+            $data [] = ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''];
+        }
+        return $data;
+
     }
 
     public function delete()
