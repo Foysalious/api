@@ -35,15 +35,13 @@ class BkashController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400);
+            logError($e);
+            return api_response($request, $message, 400,['message'=>$message]);
         } catch (InvalidTransaction $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -53,10 +51,10 @@ class BkashController extends Controller
         $payment = Payment::where('gateway_transaction_id', $paymentID)->valid()->first();
         if (!$payment) return api_response($request, null, 404, ['message' => 'Payment not found.']);
         $data = array_merge(collect(json_decode($payment->transaction_details))->toArray(), [
-            'order_id' => $payment->payable->type_id,
-            'order_type' => $payment->payable->type,
-            'token' => $payment->payable->user->remember_token,
-            'id' => $payment->payable->user->id,
+            'order_id'     => $payment->payable->type_id,
+            'order_type'   => $payment->payable->type,
+            'token'        => $payment->payable->user->remember_token,
+            'id'           => $payment->payable->user->id,
             'redirect_url' => $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id
         ]);
         return $payment ? api_response($request, $payment, 200, ['data' => $data]) : api_response($request, null, 404);
