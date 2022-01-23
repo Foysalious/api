@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\TrainingVideoController;
 use Sheba\Dal\TrainingVideo\Contract as TrainingVideoRepository;
+use Sheba\ExternalPaymentLink\ExternalPayments;
 
 class PaymentLink
 {
@@ -42,7 +43,12 @@ class PaymentLink
         return (new TrainingVideoController())->formatResponse($data);
     }
 
-    public function dashboard()
+    public function dashboard($partner): array
+    {
+        return array_merge($this->dashboardData(), $this->getInactiveGatewayMessage($partner));
+    }
+
+    private function dashboardData(): array
     {
         return [
             "default_payment_link"           => $this->defaultPaymentLink,
@@ -76,5 +82,13 @@ class PaymentLink
         }
 
         return $result;
+    }
+
+    private function getInactiveGatewayMessage($partner): array
+    {
+        return [
+            "inactive_digital_collection" => (new ExternalPayments())->getPaymentLinkStatus($partner) ? null : PaymentLinkStatics::INACTIVE_DIGITAL_COLLECTION,
+            "inactive_emi_gateway"        => (new ExternalPayments())->getPaymentLinkStatus($partner, 1) ? null : PaymentLinkStatics::INACTIVE_EMI_PAYMENT
+        ];
     }
 }

@@ -7,6 +7,10 @@ class  PaymentLinkStatics
     const PAYMENT_LINK_TYPE_EMI = "emi";
     const PAYMENT_LINK_TYPE_DIGITAL_COLLECTION = "digital_collection";
 
+    const INACTIVE_DIGITAL_COLLECTION = "আপনার পেমেন্ট সার্ভিসটি নিষ্ক্রিয় রয়েছে, ডিজিটাল উপায়ে পেমেন্ট গ্রহন করতে সার্ভিসটি সক্রিয় করুন।";
+
+    const INACTIVE_EMI_PAYMENT = "আপনার পেমেন্ট সার্ভিসটি নিষ্ক্রিয় রয়েছে, EMI (কিস্তি) উপায়ে পেমেন্ট গ্রহন করতে সার্ভিসটি সক্রিয় করুন";
+
     public static function faq_webview(): string
     {
         return config('sheba.partners_url') . "/api/payment-link-faq";
