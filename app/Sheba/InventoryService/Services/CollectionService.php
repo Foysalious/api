@@ -170,18 +170,20 @@ class CollectionService
     {
         $data = [
             ['name' => 'name', 'contents' => $this->name],
-            ['name' => 'description', 'contents' => $this->description],
             ['name' => 'partner_id', 'contents' => $this->partner_id],
             ['name' => 'is_published', 'contents' => $this->is_published],
-
             [
                 'name' => 'products',
                 'contents' => $this->products
             ]
         ];
+        if ($this->description) {
+            $data [] = ['name' => 'description', 'contents' => $this->description];
+        }
         if ($this->thumb) {
             $data [] = ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''];
         }
+
         return $data;
 
     }
