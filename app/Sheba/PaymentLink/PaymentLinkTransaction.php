@@ -273,8 +273,6 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
-        Log::debug(["Amount" => $amount, "fee_transaction" => $feeTransaction, "interest" => $interest,
-            "real_amount" => $this->real_amount, "fee" => $this->fee]);
         $this->real_amount = $this->real_amount ? : 0;
         $customer = $this->paymentLink->getPayer();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */
