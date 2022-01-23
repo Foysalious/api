@@ -406,7 +406,7 @@ class PartnerSubscriptionController extends Controller
             $partner_subscription_packages = $partner_subscription_packages->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
             $partner_subscription_package = json_decode($partner_subscription_packages->features, 1);
             foreach($partner_subscription_package as $feature) {
-                if ($feature['is_showed']) {
+                if (isset($feature['is_showed']) && $feature['is_showed']) {
                     $features[] = $feature;
                 }
             }
