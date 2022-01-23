@@ -5,18 +5,32 @@ use App\Sheba\Business\AnnouncementV2\Creator;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use App\Transformers\Business\AnnouncementListTransformer;
+use App\Transformers\Business\AnnouncementShowTransformer;
 use App\Transformers\Business\AnnouncementTransformer;
+use App\Transformers\Business\ApprovalSettingDetailsTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Models\Member;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
 use Sheba\ModificationFields;
 
 class AnnouncementV2Controller extends Controller
 {
     use ModificationFields;
+
+    /** @var AnnouncementRepositoryInterface $announcementRepo */
+    private $announcementRepo;
+
+    public function __construct(AnnouncementRepositoryInterface $announcement_repository)
+    {
+        $this->announcementRepo = $announcement_repository;
+    }
+
 
     public function store($business, Request $request, CreatorRequester $creator_requester, Creator $creator)
     {
@@ -78,6 +92,20 @@ class AnnouncementV2Controller extends Controller
             'announcements' => $announcements,
             'total_announcements' => $total_announcements
         ]);
+    }
+
+    public function show($business, $announcement, Request $request)
+    {
+        $announcement = $this->announcementRepo->find($announcement);
+        if (!$announcement || $announcement->business_id != $business)
+            return api_response($request, null, 403);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($announcement, new AnnouncementShowTransformer());
+        $announcement = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, $announcement, 200, ['announcement' => $announcement]);
     }
 
     private function getLimit(Request $request, $limit, $total_announcements)
