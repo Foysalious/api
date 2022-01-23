@@ -27,7 +27,7 @@ class  PaymentLinkStatics
         return config('payment_link.payment_link_commission');
     }
 
-    public static function get_transaction_message()
+    public static function get_transaction_message(): string
     {
         $tax        = en2bnNumber(self::get_payment_link_tax());
         $commission = en2bnNumber(self::get_payment_link_commission());
