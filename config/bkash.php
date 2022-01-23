@@ -52,5 +52,6 @@ return [
         'url'             => env('BKASH_URL_018'),
         'merchant_number' => '01833922030'
     ],
-    'default_url'           => env("BKASH_DEFAULT_URL", "https://checkout.sandbox.bka.sh/v1.2.0-beta")
+    'default_url'           => env("BKASH_DEFAULT_URL", "https://checkout.sandbox.bka.sh/v1.2.0-beta"),
+    'transaction_charge'=>env('BKASH_TRANSACTION_CHARGE',1.5)
 ];

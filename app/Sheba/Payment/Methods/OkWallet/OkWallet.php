@@ -94,4 +94,9 @@ class OkWallet extends PaymentMethod
     {
         return self::NAME;
     }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        return 0;
+    }
 }

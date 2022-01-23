@@ -11,6 +11,7 @@ use App\Sheba\Pos\Order\PosOrderObject;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -55,6 +56,7 @@ class PaymentLinkTransaction
     private $paymentLinkCharge;
     private $is_due_tracker_payment_link;
     private $real_amount;
+    /** @var PaymentMethod */
     private $method_class;
 
     /**
