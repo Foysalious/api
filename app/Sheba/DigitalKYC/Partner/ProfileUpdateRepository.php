@@ -46,7 +46,7 @@ class ProfileUpdateRepository
         $resource = $request->manager_resource;
         $profile = $resource->profile;
         $status = $resource->status;
-        if ($profile->nid_verification_request_count >= 3 && $status == Statuses::UNVERIFIED) {
+        if ($profile->nid_verification_request_count >= 3 && in_array($status, [Statuses::UNVERIFIED, Statuses::REJECTED])) {
             $status = Statuses::PENDING;
         }
         if ($status == Statuses::VERIFIED) {
