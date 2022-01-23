@@ -1,5 +1,7 @@
 <?php
 
+use Sheba\Payment\Factory\PaymentStrategy;
+
 return [
 
     'mor_access_token' => env('MOR_ACCESS_TOKEN'),
@@ -8,7 +10,8 @@ return [
         'client_id' => env('MOR_CLIENT_ID',1234),
         'client_secret' => env('MOR_CLIENT_SECRET','abcd')
     ],
-    "available_payment_gateway_keys" => ["ssl", "bkash"],
+    "available_payment_gateway_keys" => [PaymentStrategy::SSL, PaymentStrategy::BKASH],
+
     'category_list' => [
         'ssl' => [
             'nid_selfie'  => 'NIDSelfie',
