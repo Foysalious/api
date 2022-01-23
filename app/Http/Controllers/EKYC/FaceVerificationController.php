@@ -54,6 +54,7 @@ class FaceVerificationController extends Controller
             $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
             $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
             $faceVerificationData = $this->client->post($this->api, $requestedData);
             $status = ($faceVerificationData['data']['status']);
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
@@ -133,6 +134,17 @@ class FaceVerificationController extends Controller
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @throws EKycException
+     */
+    private function stopIfNotEligibleForPorichoyVerificationFurther($profile)
+    {
+        $verification_req_count = $profile->nid_verification_request_count;
+        if($verification_req_count > Statics::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
+            throw new EKycException('Not Allowed to submit request further', 400);
         }
     }
 }
