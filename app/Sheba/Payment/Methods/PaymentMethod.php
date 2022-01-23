@@ -58,7 +58,7 @@ abstract class PaymentMethod
     }
 
     abstract public function getMethodName();
-
+    abstract public function getCalculatedChargedAmount($transaction_details);
     /**
      * @param Payable $payable
      * @param string  $gateway_account_name
