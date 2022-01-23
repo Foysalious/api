@@ -242,7 +242,7 @@ return [
                 'data'             => "MSME",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => true,
+                'is_editable'      => false,
                 'mandatory'        => false,
                 'data_source'      => 'json'
             ],
