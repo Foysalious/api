@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Digigo;
+namespace Tests\Feature\Digigo\Announcement;
 
 use Sheba\Dal\Announcement\Announcement;
 use Tests\Feature\FeatureTestCase;
@@ -8,7 +8,6 @@ use Tests\Feature\FeatureTestCase;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class AnnouncementDetailsGetApiTest extends FeatureTestCase
 {
     public function setUp(): void
@@ -27,5 +26,4 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
-
 }
