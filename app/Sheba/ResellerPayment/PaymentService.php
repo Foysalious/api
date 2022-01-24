@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\ResellerPayment;
 
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
@@ -334,16 +335,16 @@ class PaymentService
         if(!$this->newStatus == 'processing')
             $this->sendSMS();
         $this->sendPushNotification();
-
     }
 
-    private function sendSMS()
+    public function sendSMS($message_body = null)
     {
+        $body = $message_body ? : config('reseller_payment.mor_status_change_message')[$this->key][$this->newStatus];
         $mobile = $this->partner->getContactNumber();
         (new Sms())
             ->setFeatureType(FeatureType::PAYMENT_LINK)
             ->setBusinessType(BusinessType::SMANAGER)
-            ->shoot($mobile, config('reseller_payment.mor_status_change_message')[$this->key][$this->newStatus]);
+            ->shoot($mobile, $body);
     }
 
     private function sendPushNotification()
@@ -362,6 +363,17 @@ class PaymentService
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
+
+    /**
+     * @param $secret
+     * @return void
+     * @throws UnauthorizedRequestFromMORException
+     */
+    public function authenticateMorRequest($secret)
+    {
+        if ($secret !== config('reseller_payment.mor_access_token'))
+            throw new UnauthorizedRequestFromMORException();
     }
 
 

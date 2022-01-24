@@ -10,6 +10,7 @@ use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\ResellerPayment\Statics\ResellerPaymentGeneralStatic;
 use Throwable;
 
 class PaymentServiceController extends Controller
@@ -115,15 +116,10 @@ class PaymentServiceController extends Controller
      * @throws UnauthorizedRequestFromMORException
      * @throws NotFoundException
      */
-    public function sendNotificationOnStatusChange(Request $request, PaymentService $paymentService)
+    public function sendNotificationOnStatusChange(Request $request, PaymentService $paymentService): JsonResponse
     {
-        $this->validate($request, [
-            'key' => 'required|in:'. implode(',', config('reseller_payment.available_payment_gateway_keys')),
-            'new_status' => 'required|in:processing,verified,rejected',
-            'partner_id' => 'required'
-        ]);
-        if (($request->header('access-key')) !== config('reseller_payment.mor_access_token'))
-            throw new UnauthorizedRequestFromMORException();
+        $this->validate($request, ResellerPaymentGeneralStatic::notificationSubmitValidation());
+        $paymentService->authenticateMorRequest($request->header('access-key'));
 
         $partner = Partner::find($request->partner_id);
         if(!$partner)
@@ -132,6 +128,25 @@ class PaymentServiceController extends Controller
 
         $paymentService->setKey($request->key)->setPartner($partner)->setNewStatus($request->new_status)->sendNotificationOnStatusChange();
         return api_response($request, null, 200, ["message" => 'Notification sent successfully']);
+    }
+
+    /**
+     * @param Request $request
+     * @param PaymentService $paymentService
+     * @return JsonResponse
+     * @throws NotFoundException
+     * @throws UnauthorizedRequestFromMORException
+     */
+    public function sendCustomSMS(Request $request, PaymentService $paymentService): JsonResponse
+    {
+        $this->validate($request, ResellerPaymentGeneralStatic::smsSendValidation());
+        $paymentService->authenticateMorRequest($request->header('access-key'));
+        $partner = Partner::find($request->partner_id);
+        if(!$partner)
+            throw new NotFoundException("Invalid Partner Id");
+
+        $paymentService->setKey($request->key)->setPartner($partner)->setNewStatus($request->new_status)->sendSMS($request->sms_body);
+        return api_response($request, null, 200, ["message" => 'SMS sent successfully']);
 
     }
 }
