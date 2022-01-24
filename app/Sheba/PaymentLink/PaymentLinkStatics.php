@@ -4,6 +4,9 @@ class  PaymentLinkStatics
 {
     const SERVICE_CHARGE = 2.0;
 
+    const PAYMENT_LINK_TYPE_EMI = "emi";
+    const PAYMENT_LINK_TYPE_DIGITAL_COLLECTION = "digital_collection";
+
     const INACTIVE_DIGITAL_COLLECTION = "আপনার পেমেন্ট সার্ভিসটি নিষ্ক্রিয় রয়েছে, ডিজিটাল উপায়ে পেমেন্ট গ্রহন করতে সার্ভিসটি সক্রিয় করুন।";
 
     const INACTIVE_EMI_PAYMENT = "আপনার পেমেন্ট সার্ভিসটি নিষ্ক্রিয় রয়েছে, EMI (কিস্তি) উপায়ে পেমেন্ট গ্রহন করতে সার্ভিসটি সক্রিয় করুন";
@@ -18,6 +21,10 @@ class  PaymentLinkStatics
         return config('sheba.partners_url') . "/api/payment-setup-faq";
     }
 
+    public static function how_to_use_webview(): string
+    {
+        return config('sheba.partners_url') . "/api/how-to-use";
+    }
 
     public static function get_payment_link_tax()
     {
@@ -51,7 +58,7 @@ class  PaymentLinkStatics
         return config('payment_link.maximum_percentage');
     }
 
-    public static function customPaymentLinkData()
+    public static function customPaymentLinkData(): array
     {
         return [
             "step"                           => self::get_step_margin(),
