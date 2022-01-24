@@ -245,8 +245,10 @@ class PaymentService
             if ( !$mor_status && !$partner_account) {
                 $status = PaymentLinkStatus::UNREGISTERED;
             } else if ($mor_status == "pending" && !$partner_account) {
+                $status = PaymentLinkStatus::PENDING;
+            } else if ($mor_status == "processing" && !$partner_account) {
                 $status = PaymentLinkStatus::PROCESSING;
-            } else if ($mor_status == "verified" && !$partner_account) {
+            }else if ($mor_status == "verified" && !$partner_account) {
                 $status = PaymentLinkStatus::SUCCESSFUL;
             } else if ($mor_status == "rejected" && !$partner_account) {
                 $status = PaymentLinkStatus::REJECTED;
