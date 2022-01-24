@@ -11,6 +11,7 @@ use App\Sheba\Pos\Order\PosOrderObject;
 use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -55,6 +56,7 @@ class PaymentLinkTransaction
     private $paymentLinkCharge;
     private $is_due_tracker_payment_link;
     private $real_amount;
+    /** @var PaymentMethod */
     private $method_class;
 
     /**
@@ -230,7 +232,7 @@ class PaymentLinkTransaction
     {
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge() - $this->paymentLink->getPartnerProfit();
-            $this->real_amount = $this->paymentLink->getRealAmount();
+            $this->real_amount = ($this->isPaidByCustomer()) ? $this->paymentLink->getAmount() - $this->interest - $this->fee : $this->paymentLink->getAmount();
         } else {
             $this->real_amount = $realAmount = $this->paymentLink->getRealAmount() !== null ? $this->paymentLink->getRealAmount() : $this->calculateRealAmount();
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
@@ -274,8 +276,6 @@ class PaymentLinkTransaction
      * @throws AccountingEntryServerError
      */
     private function storePaymentLinkEntry($amount, $feeTransaction, $interest) {
-        Log::debug(["Amount" => $amount, "fee_transaction" => $feeTransaction, "interest" => $interest,
-            "real_amount" => $this->real_amount, "fee" => $this->fee]);
         $this->real_amount = $this->real_amount ? : 0;
         $customer = $this->paymentLink->getPayer();
         /** @var PaymentLinkAccountingRepository $paymentLinkRepo */

@@ -1144,4 +1144,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->morphMany(Survey::class, 'user');
     }
+
+    public function lastResourceUpdated()
+    {
+        return $this->getFirstAdminResource()->updated_at;
+    }
 }

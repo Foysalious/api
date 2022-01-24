@@ -13,6 +13,7 @@ use Sheba\MerchantEnrollment\Exceptions\InvalidListInsertionException;
 use Sheba\MerchantEnrollment\MEFFormCategory\MEFFormCategory;
 use Sheba\MerchantEnrollment\MEFFormCategoryFactory;
 use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class ApplicationSubmit
@@ -147,7 +148,9 @@ class ApplicationSubmit
             "user_type"        => MEFGeneralStatics::USER_TYPE_PARTNER,
             "user_id"          => $this->partner->id,
             "pgw_store_key"    => $this->payment_gateway->key,
-            "survey_data"      => $this->partner_survey_data
+            "survey_data"      => $this->partner_survey_data,
+            "key"              => PaymentStrategy::SSL,
+            "request_type"     => $this->partner_data["monthly_transaction_amount"] < 100000 ? "PRA" : "Regular"
         ];
     }
 }

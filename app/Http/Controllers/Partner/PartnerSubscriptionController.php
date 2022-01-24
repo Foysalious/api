@@ -67,16 +67,11 @@ class PartnerSubscriptionController extends Controller
      */
     public function currentPackage($partner, Request $request)
     {
-        try {
-            /** @var Partner $partner */
-            $partner = $request->partner;
-            $partner_subscription_package = $this->generateSubscriptionData(null, $partner->subscription->id);
-            $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
-            return api_response($request, null, 200, ["data" => $data]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        /** @var Partner $partner */
+        $partner = $request->partner;
+        $partner_subscription_package = $this->generateSubscriptionData(null, $partner->subscription->id);
+        $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
+        return api_response($request, null, 200, ["data" => $data]);
     }
 
     /**
@@ -406,7 +401,7 @@ class PartnerSubscriptionController extends Controller
             $partner_subscription_packages = $partner_subscription_packages->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
             $partner_subscription_package = json_decode($partner_subscription_packages->features, 1);
             foreach($partner_subscription_package as $feature) {
-                if ($feature['is_showed']) {
+                if (isset($feature['is_showed']) && $feature['is_showed']) {
                     $features[] = $feature;
                 }
             }

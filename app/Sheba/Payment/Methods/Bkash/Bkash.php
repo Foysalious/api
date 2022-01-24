@@ -140,9 +140,11 @@ class Bkash extends PaymentMethod
         ));
         return $this->initPayment($token, $create_pay_body);
     }
-    private function initPayment($token,$create_pay_body){
-        $url             = curl_init($this->url . '/checkout/payment/create');
-        $header          = array(
+
+    private function initPayment($token, $create_pay_body)
+    {
+        $url    = curl_init($this->url . '/checkout/payment/create');
+        $header = array(
             'Content-Type:application/json',
             'authorization:' . $token,
             'x-app-key:' . $this->appKey
@@ -158,6 +160,7 @@ class Bkash extends PaymentMethod
         curl_close($url);
         return json_decode($result_data);
     }
+
     private function grantToken()
     {
         $post_token = array(
@@ -259,26 +262,38 @@ class Bkash extends PaymentMethod
     {
         return self::NAME;
     }
+
     /**
      * @param BkashStore $store
      * @return bool
      * @throws InvalidConfigurationException
      */
-    public function testInit(BkashStore $store){
+    public function testInit(BkashStore $store)
+    {
         $this->setCredFromAuth($store->getAuth());
-        $token=$this->grantToken();
+        $token           = $this->grantToken();
         $intent          = 'sale';
         $create_pay_body = json_encode(array(
-            'amount'                =>10,
+            'amount'                => 10,
             'currency'              => 'BDT',
             'intent'                => $intent,
-            'merchantInvoiceNumber' => 'SHEBA_BKASH_TEST_INIT_'.randomString(5)
+            'merchantInvoiceNumber' => 'SHEBA_BKASH_TEST_INIT_' . randomString(5)
         ));
-        $data=$this->initPayment($token, $create_pay_body);
-        if ($data->paymentID){
+        $data            = $this->initPayment($token, $create_pay_body);
+        if ($data->paymentID) {
             return true;
         }
         throw new InvalidConfigurationException("Invalid credentials! Please try again.");
 
+    }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        if ($transaction_details->transactionStatus === "Completed") {
+            $amount = (float)$transaction_details->amount;
+            $charge = (float)config('bkash.transaction_charge');
+            return round($amount * $charge / 100, 2);
+        }
+        return 0;
     }
 }

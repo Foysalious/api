@@ -3,6 +3,7 @@
 namespace App\Sheba\MerchantEnrollment;
 
 use App\Models\Partner;
+use App\Models\Profile;
 use Sheba\MerchantEnrollment\PartnerAllInformation;
 use Sheba\ModificationFields;
 
@@ -77,5 +78,11 @@ class PersonalInformation extends PartnerAllInformation
         return [
             "personal_photo" => $this->partner_resource_profile->pro_pic
         ];
+    }
+
+    public function checkIfUniqueEmail($email): bool
+    {
+        $count = Profile::query()->where('id', '!=', $this->partner_resource_profile->id)->where('email', $email)->count();
+        return !($count > 0);
     }
 }

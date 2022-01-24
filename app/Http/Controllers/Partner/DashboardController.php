@@ -222,23 +222,31 @@ class DashboardController extends Controller
 
     public function getNewHomePage(Request $request)
     {
-        /** @var Partner $partner */
-        $partner = $request->partner;
-        /** @var Resource $resource */
-        $resource = $request->manager_resource;
-        $resource_status = $resource->status;
-        $data = [
-            'name' => $partner->name,
-            'logo' => $partner->logo,
-            'resource_kyc_status' => $resource_status,
-            'is_nid_verified' => (bool)((int)$request->manager_resource->profile->nid_verified),
-            'is_webstore_published' => $partner->is_webstore_published,
-            'new_notification_count' => $partner->notifications()->where('is_seen', '0')->count()
-        ];
-        if ($resource_status === Statuses::VERIFIED) {
-            $data['message_seen'] = (bool)((int)$resource->verification_message_seen);
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            /** @var Resource $resource */
+            $resource = $request->manager_resource;
+            $resource_status = $resource->status;
+            if ($resource->profile->nid_verification_request_count >= 3 && in_array($resource_status, [Statuses::UNVERIFIED, Statuses::REJECTED])) {
+                $resource_status = Statuses::PENDING;
+            }
+            $data = [
+                'name' => $partner->name,
+                'logo' => $partner->logo,
+                'resource_kyc_status' => $resource_status,
+                'is_nid_verified' => (bool)((int)$request->manager_resource->profile->nid_verified),
+                'is_webstore_published' => $partner->is_webstore_published,
+                'new_notification_count' => $partner->notifications()->where('is_seen', '0')->count()
+            ];
+            if ($resource_status === Statuses::VERIFIED) {
+                $data['message_seen'] = (bool)((int)$resource->verification_message_seen);
+            }
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        return api_response($request, $data, 200, ['data' => $data]);
     }
 
     private function newOrdersCount($partner, $request)

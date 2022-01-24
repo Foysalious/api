@@ -267,7 +267,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['source_type'] = $this->source_type;
         $data['to_account_key'] = $this->debit_account_key;
         $data['from_account_key'] = $this->credit_account_key;
-        $data['reference'] = 'Entry using Payment Link';
+        $data['reference'] = null;
         $data['note'] = $this->note;
         $data['details'] = $this->details;
         $data['partner'] = $userId;

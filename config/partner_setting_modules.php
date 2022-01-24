@@ -28,5 +28,9 @@ return [
     [
         'key' => 'pgw_store_configuration',
         'function' => 'lastUpdatedPGWStore'
+    ],
+    [
+        'key' => 'resource_updated',
+        'function' => 'lastResourceUpdated'
     ]
 ];

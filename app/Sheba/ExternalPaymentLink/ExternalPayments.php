@@ -278,8 +278,7 @@ class ExternalPayments
     {
         $regular_payment_link = $this->getPaymentLinkStatus($partner);
         $emi_payment_link = $this->getPaymentLinkStatus($partner, 1);
-        $status = $this->getGatewayStatus($partner);
-        return ['data' => $status, "regular_payment_link" => $regular_payment_link,
+        return ["regular_payment_link" => $regular_payment_link,
             "emi_payment_link" => $emi_payment_link, "message" => "Successful", "code" => 200];
     }
 }

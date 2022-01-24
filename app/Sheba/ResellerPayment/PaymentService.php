@@ -85,7 +85,8 @@ class PaymentService
             'details' => [
                 'id' => $pgw_store->id,
                 'key' => $pgw_store->key,
-                'name_bn' =>$pgw_store->name_bn
+                'name_bn' => $pgw_store->name_bn,
+                'icon' => $pgw_store->icon
             ]
         ];
 
@@ -100,7 +101,7 @@ class PaymentService
             'status' => $this->status ?? null,
             'pgw_status' => $this->pgwStatus ?? null,
             'banner' => $this->getBanner(),
-            'info_link' => 'https://partners.dev-sheba.xyz/api/payment-link-faq'
+            'info_link' => PaymentLinkStatics::payment_setup_faq_webview()
         ];
     }
 
@@ -227,11 +228,11 @@ class PaymentService
             $partner_account = $partner->pgwStoreAccounts()->where('pgw_store_id', $pgwStore->id)->select('status')->first();
             if ( !$mor_status && !$partner_account) {
                 $status = PaymentLinkStatus::UNREGISTERED;
-            } else if ($mor_status['application_status'] == "pending" && !$partner_account) {
+            } else if ($mor_status == "pending" && !$partner_account) {
                 $status = PaymentLinkStatus::PROCESSING;
-            } else if ($mor_status['application_status'] == "verified" && !$partner_account) {
+            } else if ($mor_status == "verified" && !$partner_account) {
                 $status = PaymentLinkStatus::SUCCESSFUL;
-            } else if ($mor_status['application_status'] == "rejected" && !$partner_account) {
+            } else if ($mor_status == "rejected" && !$partner_account) {
                 $status = PaymentLinkStatus::REJECTED;
             } else if ($partner_account->status == 1) {
                 $status = PaymentLinkStatus::ACTIVE;

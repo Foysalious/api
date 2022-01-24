@@ -3,6 +3,7 @@
 namespace Sheba\MerchantEnrollment\PaymentMethod;
 
 use App\Models\Partner;
+use App\Sheba\MerchantEnrollment\PersonalInformation;
 use Carbon\Carbon;
 use Sheba\MerchantEnrollment\Exceptions\InvalidCategoryPostDataException;
 use Sheba\MerchantEnrollment\MEFFormCategory\CategoryGetter;
@@ -72,6 +73,9 @@ abstract class PaymentMethod
                 } catch (\Throwable $e) {
                     throw new InvalidCategoryPostDataException($form['id']." date is Invalid");
                 }
+            } elseif ($form['id'] === 'email') {
+                $email = $data[$form['id']];
+                $this->validateEmail($email);
             }
         }
 
@@ -88,5 +92,16 @@ abstract class PaymentMethod
         $categoryList = config('reseller_payment.document_service_list');
         if (isset($categoryList[$paymentGatewayKey])) return $categoryList[$paymentGatewayKey];
         throw new InvalidKeyException();
+    }
+
+    /**
+     * @param $email
+     * @return void
+     * @throws InvalidCategoryPostDataException
+     */
+    private function validateEmail($email)
+    {
+        if(!(new PersonalInformation())->setPartner($this->partner)->checkIfUniqueEmail($email))
+            throw new InvalidCategoryPostDataException("Invalid email address. Email not unique");
     }
 }
