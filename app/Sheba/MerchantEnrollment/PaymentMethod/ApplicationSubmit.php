@@ -149,7 +149,6 @@ class ApplicationSubmit
             "user_id"          => $this->partner->id,
             "pgw_store_key"    => $this->payment_gateway->key,
             "survey_data"      => $this->partner_survey_data,
-            "key"              => PaymentStrategy::SSL,
             "request_type"     => $this->partner_data["monthly_transaction_amount"] < 100000 ? "PRA" : "Regular"
         ];
     }
