@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Complain;
 use App\Models\Customer;
 use App\Models\CustomerFavorite;
 use App\Models\Job;
@@ -125,6 +126,8 @@ class JobController extends Controller
             break;
         }
 
+        $job_complains = Complain::where('job_id', $job->id)->whereIn('accessor_id',[1,2])->get();
+
         $job_collection = collect();
         $job_collection->put('id', $job->id);
         $job_collection->put('resource_name', $job->resource ? $job->resource->profile->name : null);
@@ -137,7 +140,7 @@ class JobController extends Controller
         $job_collection->put('additional_information', $job->job_additional_info);
         $job_collection->put('schedule_date', $job->schedule_date);
         $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
-        $job_collection->put('complains', $this->formatComplains($job->complains));
+        $job_collection->put('complains', $this->formatComplains($job_complains));
         $job_collection->put('preferred_time', $job->readable_preferred_time);
         $job_collection->put('category_id', $job->category ? $job->category->id : null);
         $job_collection->put('category_name', $job->category ? $job->category->name : null);
