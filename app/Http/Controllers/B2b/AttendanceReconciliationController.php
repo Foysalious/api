@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Business\SendBulkAttendanceReconciliationErrorEmail;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
@@ -123,6 +124,7 @@ class AttendanceReconciliationController extends Controller
         });
         if ($halt_execution) {
             $excel_data_format_errors = $attendance_reconciliation_excel_error->takeCompletedAction();
+            dispatch(new SendBulkAttendanceReconciliationErrorEmail($business_member, $excel_data_format_errors));
             return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
         }
         $this->setModifier($business_member->member);
