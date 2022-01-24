@@ -102,6 +102,9 @@ class AttendanceReconciliationController extends Controller
             } elseif (!$profile->member->activeBusinessMember->first()) {
                 $halt_execution = true;
                 $excel_error = 'Business Member not found';
+            } elseif ($profile->member->activeBusinessMember->first()->business_id != $business->id) {
+                $halt_execution = true;
+                $excel_error = 'Business Member not found';
             } elseif ($this->isInCorrectFormat($date)) {
                 $halt_execution = true;
                 $excel_error = 'Date Format should be in yyyy-mm-dd or dd/mm/yyyy';
