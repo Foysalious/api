@@ -14,8 +14,8 @@ class AnnouncementListTransformer extends TransformerAbstract
             'type' => $announcement->type,
             'target_type' => $announcement->target_type,
             'status' => $this->getStatus($announcement->end_date),
-            'end_date' => $announcement->end_date->toDateTimeString(),
-            'created_at' => $announcement->created_at->toDateTimeString()
+            'end_date' => $announcement->end_date->format('M d,Y'),
+            'created_at' => $announcement->created_at->format('M d,Y')
         ];
     }
 

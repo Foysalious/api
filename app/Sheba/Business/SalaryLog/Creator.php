@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\Business\SalaryLog;
+<?php namespace Sheba\Business\SalaryLog;
 
 use Sheba\Business\SalaryLog\Requester;
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
