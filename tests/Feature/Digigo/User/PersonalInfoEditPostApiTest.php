@@ -8,7 +8,7 @@ use Tests\Feature\FeatureTestCase;
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
 
-class PersonalnfoEditPostApiTest extends FeatureTestCase
+class PersonalInfoEditPostApiTest extends FeatureTestCase
 {
 
 }
