@@ -5,7 +5,8 @@ namespace Tests\Feature\Digigo;
 /**
  * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
  */
-class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
+
+class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
 {
     public function setUp(): void
     {

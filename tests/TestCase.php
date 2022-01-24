@@ -7,9 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @author Shafiqul Islam <shafiqul@sheba.xyz>
@@ -48,8 +48,8 @@ abstract class TestCase extends BaseTestCase
              * NEED TO RUN ONLY ONE TIMES
              *
              * DB::unprepared(file_get_contents(database_path('seeds/sheba_testing.sql')));
-             * $this->artisan('migrate');
              */
+           // $this->artisan('migrate');
             $this->app[Kernel::class]->setArtisan(null);
 
             RefreshDatabaseState::$migrated = true;
