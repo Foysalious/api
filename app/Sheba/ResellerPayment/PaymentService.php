@@ -36,7 +36,7 @@ class PaymentService
      * @param mixed $partner
      * @return PaymentService
      */
-    public function setPartner($partner)
+    public function setPartner($partner): PaymentService
     {
         $this->partner = $partner;
         return $this;
@@ -46,7 +46,7 @@ class PaymentService
      * @param mixed $status
      * @return PaymentService
      */
-    public function setNewStatus($status)
+    public function setNewStatus($status): PaymentService
     {
         $this->newStatus = $status;
         return $this;
@@ -59,19 +59,22 @@ class PaymentService
     /**
      * @param mixed $key
      */
-    public function setKey($key)
+    public function setKey($key): PaymentService
     {
         $this->key = $key;
         return $this;
     }
 
-    public function getPGWDetails()
+    /**
+     * @return array
+     */
+    public function getPGWDetails(): array
     {
         $this->getResellerPaymentStatus();
         $this->getPgwStatus();
         $pgw_store = PgwStore::where('key',$this->key)->first();
         return [
-            'banner' =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/payment_gateway_banner/app-banner+(1)+2.png',
+            'banner' =>'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/ssl_banner.png',
             'faq' => [
                 'আপনার ব্যবসার প্রোফাইল সম্পন্ন করুন',
                 'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
@@ -81,8 +84,8 @@ class PaymentService
             'mor_status_wise_disclaimer' => in_array($this->status,['pending','processing','verified','rejected']) ? config('reseller_payment.mor_status_wise_text')[$this->key][$this->status] : null,
             'pgw_status' =>  $this->pgwStatus ?? null,
             'pgw_merchant_id' => $this->pgwMerchantId,
-            'how_to_use_link' => 'https://partners.dev-sheba.xyz/api/how-to-use',
-            'payment_service_info_link' => 'https://partners.dev-sheba.xyz/api/payment-setup-faq',
+            'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
+            'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
             'details' => [
                 'id' => $pgw_store->id,
                 'key' => $pgw_store->key,
@@ -93,7 +96,10 @@ class PaymentService
 
     }
 
-    public function getStatusAndBanner()
+    /**
+     * @return array
+     */
+    public function getStatusAndBanner(): array
     {
         $this->getResellerPaymentStatus();
         $this->getPgwStatusForHomePage();
@@ -118,7 +124,9 @@ class PaymentService
        elseif ($this->status == 'ekyc_completed')
            $banner = config('reseller_payment.status_wise_home_banner')['ekyc_completed'];
        elseif ($this->status == 'survey_completed')
-           $banner = config('reseller_payment.status_wise_home_banner')['completed_but_did_not_apply'];
+           $banner = config('reseller_payment.status_wise_home_banner')['ekyc_completed'];
+        elseif ($this->status == 'mef_completed')
+            $banner = config('reseller_payment.status_wise_home_banner')['completed_but_did_not_apply'];
       elseif(is_null($this->status))
           $banner = config('reseller_payment.status_wise_home_banner')['did_not_started_journey'];
 
@@ -129,6 +137,9 @@ class PaymentService
     private function getResellerPaymentStatus()
     {
         $this->getMORStatus();
+        if(isset($this->status))
+            return;
+        $this->checkMefCompletion();
         if(isset($this->status))
             return;
         $this->getSurveyStatus();
@@ -153,15 +164,19 @@ class PaymentService
 
     }
 
-   /* private function checkMefCompletion()
+    private function checkMefCompletion(): bool
     {
-
-        $merchantEnrollment = app(MerchantEnrollment::class);
-        $completion = $merchantEnrollment->setPartner($this->partner)->setKey($this->key)->getCompletion()->toArray();
-        if($completion['can_apply'] == 1)
-            $this->status = 'mef_completed';
-       return true;
-    }*/
+        $this->key = MEFGeneralStatics::payment_gateway_keys();
+        foreach ($this->key as $key) {
+            $merchantEnrollment = app(MerchantEnrollment::class);
+            $completion = $merchantEnrollment->setPartner($this->partner)->setKey($key)->getCompletion()->toArray();
+            if ($completion['can_apply'] == 1) {
+                $this->status = 'mef_completed';
+                return true;
+            }
+        }
+        return true;
+    }
 
     private function getSurveyStatus()
     {

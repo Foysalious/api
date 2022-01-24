@@ -21,6 +21,11 @@ class  PaymentLinkStatics
         return config('sheba.partners_url') . "/api/payment-setup-faq";
     }
 
+    public static function how_to_use_webview(): string
+    {
+        return config('sheba.partners_url') . "/api/how-to-use";
+    }
+
     public static function get_payment_link_tax()
     {
         return config('payment_link.payment_link_tax');
@@ -53,7 +58,7 @@ class  PaymentLinkStatics
         return config('payment_link.maximum_percentage');
     }
 
-    public static function customPaymentLinkData()
+    public static function customPaymentLinkData(): array
     {
         return [
             "step"                           => self::get_step_margin(),
