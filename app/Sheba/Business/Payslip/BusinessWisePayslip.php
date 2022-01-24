@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\BusinessWorkingDayHistory\BusinessWorkingDayHistoryRepository;
 use Sheba\Dal\PayrollComponentPackage\PayrollComponentPackageRepository;
+use Sheba\Dal\PayrollPayDayHistory\PayrollPayDayHistoryRepository;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\TaxHistory\TaxHistoryRepository;
 use Sheba\Helpers\TimeFrame;
@@ -46,6 +47,8 @@ class BusinessWisePayslip
     private $businessWorkingDayRepository;
     private $business;
     private $payrollSetting;
+    /*** @var PayrollPayDayHistoryRepository $payrollPayDayHistoryRepository*/
+    private $payrollPayDayHistoryRepository;
 
     public function __construct()
     {
@@ -57,6 +60,7 @@ class BusinessWisePayslip
         $this->timeFrame = app(TimeFrame::class);
         $this->taxHistoryRepository = app(TaxHistoryRepository::class);
         $this->businessWorkingDayRepository = app(BusinessWorkingDayHistoryRepository::class);
+        $this->payrollPayDayHistoryRepository = app(PayrollPayDayHistoryRepository::class);
     }
 
     public function setBusiness($business)
@@ -108,25 +112,27 @@ class BusinessWisePayslip
         $start_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $end_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $business_office = $this->business->officeHour;
-        $business_working_day_data = [];
-        $total_policy_working_days = null;
+        $start_date = $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d'));
+        $end_date = $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d');
+        $total_policy_working_days = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($start_date, $end_date), $business_office);
+        $business_working_day_data = [
+            'business_id' => $this->business->id,
+            'total_working_days' => $total_policy_working_days,
+            'start_date' => $start_date,
+            'end_date' => $end_date
+        ];
+        $business_pay_day_data = [
+            'business_id' => $this->business->id,
+            'pay_day' => Carbon::now()->day,
+            'start_date' => $start_date,
+            'end_date' => $end_date
+        ];
         foreach ($this->businessMembers as $business_member) {
             try {
                 if ($this->generatedBusinessMemberIds && in_array($business_member->id, $this->generatedBusinessMemberIds)) continue;
                 $joining_date = $business_member->join_date;
                 if ($last_pay_day && $joining_date <= Carbon::parse($last_pay_day) || !$last_pay_day && $joining_date <= Carbon::now()->subMonth()) $joining_date = null;
                 $prorated_time_frame = null;
-                $start_date = $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d'));
-                $end_date = $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d');
-                if (empty($business_working_day_data)) {
-                    $total_policy_working_days = $this->getTotalBusinessWorkingDays($this->createPeriodByTime($start_date, $end_date), $business_office);
-                    $business_working_day_data = [
-                        'business_id' => $this->business->id,
-                        'total_working_days' => $total_policy_working_days,
-                        'start_date' => $start_date,
-                        'end_date' => $end_date
-                    ];
-                }
                 $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
                 if ($joining_date) {
                     $prorated_time_frame = app(TimeFrame::class);
@@ -189,6 +195,7 @@ class BusinessWisePayslip
         if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
         $this->updatePayDay();
         $this->updateBusinessWorkingDaysHistory($business_working_day_data);
+        $this->payrollPayDayHistoryUpdate($business_pay_day_data);
     }
 
     private function updatePackageGenerateDate($package_generate_information)
@@ -212,5 +219,10 @@ class BusinessWisePayslip
     private function updateBusinessWorkingDaysHistory($business_working_day_data)
     {
         $this->businessWorkingDayRepository->create($business_working_day_data);
+    }
+
+    private function payrollPayDayHistoryUpdate($business_pay_day_data)
+    {
+        $this->payrollPayDayHistoryRepository->create($business_pay_day_data);
     }
 }
