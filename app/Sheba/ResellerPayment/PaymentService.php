@@ -244,11 +244,13 @@ class PaymentService
             $partner_account = $partner->pgwStoreAccounts()->where('pgw_store_id', $pgwStore->id)->select('status')->first();
             if ( !$mor_status && !$partner_account) {
                 $status = PaymentLinkStatus::UNREGISTERED;
-            } else if ($mor_status['application_status'] == "pending" && !$partner_account) {
+            } else if ($mor_status == "pending" && !$partner_account) {
+                $status = PaymentLinkStatus::PENDING;
+            } else if ($mor_status == "processing" && !$partner_account) {
                 $status = PaymentLinkStatus::PROCESSING;
-            } else if ($mor_status['application_status'] == "verified" && !$partner_account) {
+            }else if ($mor_status == "verified" && !$partner_account) {
                 $status = PaymentLinkStatus::SUCCESSFUL;
-            } else if ($mor_status['application_status'] == "rejected" && !$partner_account) {
+            } else if ($mor_status == "rejected" && !$partner_account) {
                 $status = PaymentLinkStatus::REJECTED;
             } else if ($partner_account->status == 1) {
                 $status = PaymentLinkStatus::ACTIVE;
