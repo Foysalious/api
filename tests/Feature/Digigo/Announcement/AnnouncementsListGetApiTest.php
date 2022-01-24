@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Digigo;
+namespace Tests\Feature\Digigo\Announcement;
 
 use Tests\Feature\FeatureTestCase;
 

@@ -1,4 +1,6 @@
-<?php namespace Tests\Feature\TopUp;
+<?php
+
+namespace Tests\Feature\TopUp;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
@@ -13,6 +15,7 @@ use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
+use Throwable;
 
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
@@ -21,19 +24,14 @@ class SingleTopUpTest extends FeatureTestCase
 {
     /** @var $topUpVendor */
     private $topUpVendor;
-
     /** @var $topUpVendorCommission */
     private $topUpVendorCommission;
-
     /** @var $topUpOtfSettings */
     private $topUpOtfSettings;
-
     /** @var $topUpVendorOtf */
     private $topUpVendorOtf;
-
     /** @var $topUpStatusChangeLog */
     private $topUpStatusChangeLog;
-
     /** @var $topBlocklistNumbers */
     private $topBlocklistNumbers;
 
@@ -41,34 +39,42 @@ class SingleTopUpTest extends FeatureTestCase
     {
         parent::setUp();
         $this->truncateTables([
-            TopUpVendor::class, TopUpVendorCommission::class, TopUpOTFSettings::class, TopUpOrder::class, TopUpBlacklistNumber::class, AffiliateTransaction::class, Profile::class, Affiliate::class
+            TopUpVendor::class,
+            TopUpVendorCommission::class,
+            TopUpOTFSettings::class,
+            TopUpOrder::class,
+            TopUpBlacklistNumber::class,
+            AffiliateTransaction::class,
+            Profile::class,
+            Affiliate::class,
         ]);
         $this->logIn();
 
-        $this->topUpVendor = factory(TopUpVendor::class)->create();
-        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
+        $this->topUpVendor = TopUpVendor::factory()->create();
+        $this->topUpVendorCommission = TopUpVendorCommission::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id,
         ]);
 
-        $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id
+        $this->topUpOtfSettings = TopUpOTFSettings::factory()->create([
+            'topup_vendor_id' => $this->topUpVendor->id,
         ]);
 
-        $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id
+        $this->topUpVendorOtf = TopUpVendorOTF::factory()->create([
+            'topup_vendor_id' => $this->topUpVendor->id,
         ]);
 
-        $this->topUpStatusChangeLog = factory(TopUpVendorOTFChangeLog::class)->create([
-            'otf_id' => $this->topUpVendorOtf->id
+        $this->topUpStatusChangeLog = TopUpVendorOTFChangeLog::factory()->create([
+            'otf_id' => $this->topUpVendorOtf->id,
         ]);
 
         /*
          * create topup topBlocklistNumbers table
          */
 
-        $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
+        $this->topBlocklistNumbers = TopUpBlacklistNumber::factory()->create();
 
-        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
+        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs(
+            [$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
         $verify_pin_mock->method('setAgent')->will($this->returnSelf());
         $verify_pin_mock->method('setProfile')->will($this->returnSelf());
         $verify_pin_mock->method('setRequest')->will($this->returnSelf());
@@ -79,9 +85,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testInvalidMobileNumberIsRejected()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '016782429559', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'mobile'          => '016782429559',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -92,61 +102,97 @@ class SingleTopUpTest extends FeatureTestCase
     {
         TopUpVendor::find(1)->update(["waiting_time" => 3]);
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'mobile'          => '+8801620011019',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'mobile'          => '+8801620011019',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
-        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 3 মিনিট অপেক্ষা করুন ।", $data['message']);
+        $this->assertEquals(
+            "এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 3 মিনিট অপেক্ষা করুন ।",
+            $data['message']
+        );
 
         sleep(60);
         TopUpVendor::find(1);
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => 12345,
+            'mobile'          => '+8801620011019',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 10,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'mobile'          => '+8801620011019',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
-        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 2 মিনিট অপেক্ষা করুন ।", $data['message']);
+        $this->assertEquals(
+            "এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 2 মিনিট অপেক্ষা করুন ।",
+            $data['message']
+        );
 
         sleep(60);
         TopUpVendor::find(1);
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'mobile'          => '+8801620011019',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801620011019', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'mobile'          => '+8801620011019',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
-        $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 1 মিনিট অপেক্ষা করুন ।", $data['message']);
+        $this->assertEquals(
+            "এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 1 মিনিট অপেক্ষা করুন ।",
+            $data['message']
+        );
     }
 
     public function testMobileNumberValidationResponseCode()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -156,9 +202,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testVendorIdValidationResponseCode()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'connection_type' => 'prepaid', 'amount' => 112, 'password' => 12345,
+            'mobile'          => '01678242955',
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -168,9 +217,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testConnectionTypeValidationResponseCode()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'amount' => 112, 'password' => 12345,
+            'mobile'    => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'amount'    => 112,
+            'password'  => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -180,9 +232,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testAmountValidationResponseCode()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'password' => 12345,
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'password'        => 12345,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -192,9 +247,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testPasswordValidationResponseCode()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112,
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -203,21 +261,28 @@ class SingleTopUpTest extends FeatureTestCase
 
     public function testOneTopUpRequestCreateOneTopUpOrder()
     {
-
         $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
-        $this->assertEquals(1, TopUpOrder::count());;
+        $this->assertEquals(1, TopUpOrder::count());
     }
 
     public function testTopUpOrderDataMatchesTopUpRequestData()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12345'
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12345',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
@@ -235,9 +300,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopUpOrderSuccessfulResponseCodeAndMessage()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
@@ -247,9 +316,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testMaximumAmountValueBlocksTopup()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 1112, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 1112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals("The amount may not be greater than 1000.", $data['message']);
@@ -258,9 +331,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testMinimumAmountValueBlocksTopup()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 9, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 9,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals("The amount must be at least 10.", $data['message']);
@@ -269,9 +346,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupInvalidVendorId()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => 10, 'connection_type' => 'prepaid', 'amount' => 19, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => 10,
+            'connection_type' => 'prepaid',
+            'amount'          => 19,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals("The selected vendor id is invalid.", $data['message']);
@@ -280,9 +361,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupNullVendorId()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => '', 'connection_type' => 'prepaid', 'amount' => 19, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => '',
+            'connection_type' => 'prepaid',
+            'amount'          => 19,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -292,9 +377,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTestWithoutVendorId()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'connection_type' => 'prepaid', 'amount' => 19, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'connection_type' => 'prepaid',
+            'amount'          => 19,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -304,9 +392,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupInternationalNumberInput()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+16469804741', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 19, 'password' => '12349'
+            'mobile'          => '+16469804741',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 19,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
@@ -316,9 +408,13 @@ class SingleTopUpTest extends FeatureTestCase
     {
         Affiliate::find(1)->update(["wallet" => 100]);
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 1000, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 1000,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
@@ -328,10 +424,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupInputWithoutAmountValue()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid',
-            'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -341,9 +439,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupInputNullAmountValue()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => ' ', 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => ' ',
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -353,9 +455,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupInputNullConnectionType()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => ' ', 'amount' => 10, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => ' ',
+            'amount'          => 10,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -365,10 +471,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupInputWithoutConnectionType()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id,
-            'amount' => 10, 'password' => '12349'
+            'mobile'    => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'amount'    => 10,
+            'password'  => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -378,9 +486,12 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupWithoutPin()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 10,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -390,9 +501,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupWithoutNullPin()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => ' '
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 10,
+            'password'        => ' ',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -403,9 +518,13 @@ class SingleTopUpTest extends FeatureTestCase
     {
         Affiliate::find(1)->update(["verification_status" => 'pending']);
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 10,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
@@ -416,9 +535,13 @@ class SingleTopUpTest extends FeatureTestCase
     {
         Affiliate::find(1)->update(["verification_status" => 'rejected']);
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 10,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
@@ -428,9 +551,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupNullNumber()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 19, 'password' => '12349'
+            'mobile'          => '',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 19,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -440,9 +567,11 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTestWithoutNumberNpin()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 19
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 19,
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -452,9 +581,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupNullPinAndNumber()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'Mobile' => ' ', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 19, 'password' => ' '
+            'Mobile'          => ' ',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 19,
+            'password'        => ' ',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
@@ -464,9 +597,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTestBlockNumber()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801678987656', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 10, 'password' => '12349'
+            'mobile'          => '+8801678987656',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 10,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
@@ -476,9 +613,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testSuccessfulTopupDeductAmountFromAgentWallet()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 800, 'password' => '12349'
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 800,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $this->affiliate->reload();
@@ -493,9 +634,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupOtfShebaOtfCommissionCheck()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349'
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 104,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
@@ -506,9 +651,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupOtfOtfAgentCommissionCheck()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349'
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 104,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
@@ -516,34 +665,44 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals(.6, $top_up_order->otf_agent_commission);
     }
 
-    public function testTopupOtfOtfvendorIDnCheck()
+    /**
+     * @throws Throwable
+     */
+    public function testTopupOtfVendorIDnCheck()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01678242955', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 104, 'password' => '12349'
+            'mobile'          => '01678242955',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 104,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(1, $top_up_order->vendor_id);
-
     }
 
     public function testSuccessfulTopupAgentGenerateTransaction()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $affiliate_transactions = AffiliateTransaction::first();
-      /**
-      * Initial wallet balance = 10000 -> AffiliateFactory
-      * Vendor Commission = 1% -> TopupVendorCommissionFactory
-      * Topup Amount should be = 100 - (100 % 1) = 99
-      **/
+        /**
+         * Initial wallet balance = 10000 -> AffiliateFactory
+         * Vendor Commission = 1% -> TopupVendorCommissionFactory
+         * Topup Amount should be = 100 - (100 % 1) = 99
+         **/
         $this->assertEquals($this->affiliate->id, $affiliate_transactions->affiliate_id);
         $this->assertEquals(99, $affiliate_transactions->amount);
     }
@@ -551,9 +710,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupGeneralUserAgentCommission()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
@@ -564,12 +727,15 @@ class SingleTopUpTest extends FeatureTestCase
     /**
      * set specific commission against this affiliate
      */
-
     public function testTopupSpecificUserAgentCommission()
     {
         $this->logInWithMobileNEmail("+880162001019");
-        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id, 'agent_commission' => '0', 'ambassador_commission' => '0', 'type' => 'App\Models\Affiliate', 'type_id' => 2
+        $this->topUpVendorCommission = TopUpVendorCommission::factory()->create([
+            'topup_vendor_id'       => $this->topUpVendor->id,
+            'agent_commission'      => '0',
+            'ambassador_commission' => '0',
+            'type'                  => 'App\Models\Affiliate',
+            'type_id'               => 2,
         ]);
 
         // set fixed commission for regular user (all ready set)
@@ -580,11 +746,14 @@ class SingleTopUpTest extends FeatureTestCase
         // calculate affiliate commission
 
         // top up function call for specific user
-
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
@@ -595,9 +764,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTransactionStoreAgentLatLng()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $Top_up_orders = TopUpOrder::first();
@@ -609,9 +782,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTransactionStoreAgentIP()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $Top_up_orders = TopUpOrder::first();
@@ -622,9 +799,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTransactionStoreUserAgentType()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $Top_up_orders = TopUpOrder::first();
@@ -635,9 +816,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testAffiliateSuccessfulTopupTransactionStoreAmbassadorCommission()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $Top_up_orders = TopUpOrder::first();
@@ -648,9 +833,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTransactionStoreUserAgentInformation()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $Top_up_orders = TopUpOrder::first();
@@ -661,9 +850,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupTransactionStoreTransactionID()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $Top_up_orders = TopUpOrder::first();
@@ -674,9 +867,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testResponseCodeWhenAuthorizationTokenChanges()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '01956154440', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 100, 'password' => '12349'
+            'mobile'          => '01956154440',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 100,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token" . "jgfjh"
+            'Authorization' => "Bearer $this->token"."jgfjh",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(401, $data['code']);
@@ -685,9 +882,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopUpOrderGatewayTimeoutResponseCodeAndMessage()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700999999',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
@@ -699,9 +900,13 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopUpOrderGatewayErrorResponseCodeAndMessage()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700888888', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700888888',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_order = TopUpOrder::first();
@@ -713,41 +918,65 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopUpOrderGatewayTimeoutThreeTimes()
     {
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700999999',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700999999',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700999999',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700999999',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700999999',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $response->decodeResponseJson();
         $top_up_vendor = TopUpVendor::first();
         $this->assertEquals(0, $top_up_vendor->is_published);
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '+8801700999999', 'vendor_id' => $this->topUpVendor->id, 'connection_type' => 'prepaid', 'amount' => 112, 'password' => '12349'
+            'mobile'          => '+8801700999999',
+            'vendor_id'       => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount'          => 112,
+            'password'        => '12349',
         ], [
-            'Authorization' => "Bearer $this->token"
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
