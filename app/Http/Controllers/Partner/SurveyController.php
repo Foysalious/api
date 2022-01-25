@@ -52,7 +52,7 @@ class SurveyController extends Controller
                 "title" => "তথ্য প্রদান সফল হয়েছে!"
             ]]);
         } catch (SurveyException $e) {
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
 }
