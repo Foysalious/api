@@ -147,11 +147,9 @@ class WebstoreSettingsController extends Controller
             $webstoreBannerSettings = app(WebstoreBannerSettings::class);
             $webstoreBannerSettings->setData($data)->store();
             return http_response($request, null, 200, ['message' => 'Successful']);
-        } catch (ValidationException $e) {
+        } catch (\Exception $e) {
             return http_response($request, null, 400, ['message' => 'Please Provide the required fields']);
         }
-
-
     }
 
     public function createWebstoreBanner($file, $filename)
