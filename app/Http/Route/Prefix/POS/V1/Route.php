@@ -75,8 +75,9 @@ class Route
                     $api->get('/', 'Inventory\CollectionController@index');
                     $api->post('/', 'Inventory\CollectionController@store');
                     $api->get('/{collection}', 'Inventory\CollectionController@show');
-                    $api->put('/{collection}', 'Inventory\CollectionController@update');
+                    $api->put('/{collection}', 'Inventory\CollectionController@update')->where('collection', '[0-9]+');
                     $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+                    $api->put('/change-status', 'Inventory\CollectionController@changeStatus');
                 });
                 $api->group(['prefix' => 'customers'], function ($api) {
                     $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@show');
