@@ -73,6 +73,11 @@ class PaymentService
         $this->getResellerPaymentStatus();
         $this->getPgwStatus();
         $pgw_store = PgwStore::where('key',$this->key)->first();
+        $status_wise_message = in_array($this->status,['pending','processing','verified']) ? config('reseller_payment.mor_status_wise_text')[$this->key][$this->status] : null;
+        if($this->status === "rejected") {
+            $status_wise_message = config('reseller_payment.mor_status_wise_text')[$this->key]["rejected_start"] .
+                $this->rejectReason . config('reseller_payment.mor_status_wise_text')[$this->key]["rejected_end"];
+        }
         return [
             'banner' =>'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/ssl_banner.png',
             'faq' => [
@@ -81,7 +86,7 @@ class PaymentService
                 'পেমেন্ট সার্ভিস কনফিগার করুন'
             ],
             'status' => $this->status ?? null,
-            'mor_status_wise_disclaimer' => in_array($this->status,['pending','processing','verified','rejected']) ? config('reseller_payment.mor_status_wise_text')[$this->key][$this->status] : null,
+            'mor_status_wise_disclaimer' => $status_wise_message,
             'pgw_status' =>  $this->pgwStatus ?? null,
             'pgw_merchant_id' => $this->pgwMerchantId,
             'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
