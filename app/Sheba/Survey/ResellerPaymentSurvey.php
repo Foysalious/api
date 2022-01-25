@@ -30,7 +30,7 @@ class ResellerPaymentSurvey implements SurveyInterface
         $survey = Survey::where('user_id',$this->partner->id)
             ->where('key', SurveyKeys::RESELLER_PAYMENT)->where('user_type',get_class($this->partner))->first();
         if($survey)
-            throw new SurveyException("Reseller payment survey already exist for this user");
+            throw new SurveyException("Reseller payment survey already exist for this user", 409);
         $data = [
             'user_id' => $this->partner->id,
             'user_type' => get_class($this->partner),
