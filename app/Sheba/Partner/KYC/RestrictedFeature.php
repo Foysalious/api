@@ -18,7 +18,7 @@ class RestrictedFeature
             'CurrentPackageActivity',
             'DueCreateLinkActivity',
             'DCShareOptionsActivity',
-            'CreateCustomLinkActivity'
+            'PaymentInvoiceActivity'
         ];
     }
 
