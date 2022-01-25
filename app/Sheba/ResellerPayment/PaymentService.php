@@ -254,7 +254,7 @@ class PaymentService
             } else if ($mor_status == "processing" && !$partner_account) {
                 $status = PaymentLinkStatus::PROCESSING;
             }else if ($mor_status == "verified" && !$partner_account) {
-                $status = PaymentLinkStatus::SUCCESSFUL;
+                $status = PaymentLinkStatus::VERIFIED;
             } else if ($mor_status == "rejected" && !$partner_account) {
                 $status = PaymentLinkStatus::REJECTED;
             } else if ($partner_account->status == 1) {
