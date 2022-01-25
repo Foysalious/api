@@ -50,7 +50,12 @@ class Payslip extends Command
             if ($this->isPayDay($payroll_setting)) {
                 $active_business_members = $business->getActiveBusinessMember()->get();
                 $business_wise_payslips = new BusinessWisePayslip();
-                $business_wise_payslips->setBusiness($business)->setPayrollSetting($payroll_setting)->setBusinessMember($active_business_members)->calculate();
+                $business_wise_payslips
+                    ->setBusiness($business)
+                    ->setPayrollSetting($payroll_setting)
+                    ->setBusinessMember($active_business_members)
+                    ->setClass(get_class())
+                    ->calculate();
             }
         }
     }

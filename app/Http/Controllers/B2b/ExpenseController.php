@@ -47,7 +47,6 @@ class ExpenseController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-
         /** @var Business $business */
         $business = $request->business;
         $business_members = $business->getAccessibleBusinessMember();
@@ -59,11 +58,8 @@ class ExpenseController extends Controller
                 });
             });
         }
-
-        $members_ids = $business_members->pluck('member_id')->toArray();
-
-        $expenses = $this->expense_repo->getExpenseByMember($members_ids);
-
+        $business_members_ids = $business_members->pluck('id')->toArray();
+        $expenses = $this->expense_repo->getExpenseByBusinessMember($business_members_ids);
         $start_date = date('Y-m-01');
         $end_date = date('Y-m-t');
 
@@ -72,7 +68,6 @@ class ExpenseController extends Controller
             $start_date = $dates['start_date'];
             $end_date = $dates['end_date'];
         }
-
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         $expenses = $expenses->get()->groupBy('member_id');
         $expenses = $expenseList->setData($expenses)->get();
@@ -108,35 +103,6 @@ class ExpenseController extends Controller
         return [
             'start_date' => Carbon::createFromDate($splitDate[0], $splitDate[1])->startOfMonth()->format('Y-m-d'),
             'end_date' => Carbon::createFromDate($splitDate[0], $splitDate[1])->endOfMonth()->format('Y-m-d')
-        ];
-    }
-
-    /**
-     * @param $expenses
-     * @return array
-     */
-    private function getTotalCalculation($expenses)
-    {
-        $total_employee = sizeof(array_unique(array_map(function ($expense) {
-            return $expense['member_id'];
-        }, $expenses)));
-
-        $total_department = sizeof(array_unique(array_map(function ($expense) {
-            return $expense['employee_department'];
-        }, $expenses)));
-
-        $total_amount = array_sum(array_column($expenses,'amount'));
-        $total_transport = array_sum(array_column($expenses,'transport'));
-        $total_food = array_sum(array_column($expenses,'food'));
-        $total_other = array_sum(array_column($expenses,'other'));
-
-        return [
-            'employee' => $total_employee,
-            'department' => $total_department,
-            'transport' => $total_transport,
-            'food' => $total_food,
-            'other' => $total_other,
-            'amount' => $total_amount
         ];
     }
 

@@ -7,6 +7,7 @@ class EmployeeRoute
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
             $api->group(['prefix' => 'employee-visit'], function ($api) {
                 $api->get('own-visit-history', 'Employee\VisitController@ownVisitHistoryV2');
+                $api->get('team-visits', 'Employee\VisitController@teamVisitsListV2');
             });
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->get('financial', 'Employee\ProfileController@getFinancialInfo');
