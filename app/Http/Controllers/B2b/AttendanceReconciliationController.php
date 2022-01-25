@@ -107,7 +107,7 @@ class AttendanceReconciliationController extends Controller
                 $excel_error = 'Business Member not found';
             } elseif ($this->isInCorrectFormat($date)) {
                 $halt_execution = true;
-                $excel_error = 'Date Format should be in yyyy-mm-dd or dd/mm/yyyy';
+                $excel_error = 'Date Format should be in yyyy-mm-dd';
             } elseif ($this->isInCorrectFormat($checkin)) {
                 $halt_execution = true;
                 $excel_error = 'Checkin Time format should be hh:mm';
