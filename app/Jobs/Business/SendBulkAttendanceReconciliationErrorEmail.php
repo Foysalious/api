@@ -28,7 +28,7 @@ class SendBulkAttendanceReconciliationErrorEmail extends BusinessEmailQueue
                 'title' => $subject,
                 'name' => $profile->name
             ], function ($m) use ($subject, $profile) {
-                $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
+                $m->from('noreply@sheba-business.com', 'Sheba Platform Limited');
                 $m->to($profile->email)->subject($subject);
                 $m->attach($this->excelErrorFile);
             });
