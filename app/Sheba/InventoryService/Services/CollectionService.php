@@ -188,7 +188,7 @@ class CollectionService
     public function changeStatus()
     {
         $data = [
-            'ids' => $this->collection_ids,
+            'collection_ids' => $this->collection_ids,
             'is_published' => $this->is_published
         ];
         return $this->client->put('api/v1/partners/' . $this->partner_id .'/collections/change-status', $data, false );
