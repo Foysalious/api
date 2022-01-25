@@ -14,6 +14,7 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
@@ -131,25 +132,28 @@ class WebstoreSettingsController extends Controller
 
     public function store(Request $request)
     {
-        $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image', 'is_published' => 'required']);
-        $partner = resolvePartnerFromAuthMiddleware($request);
-        $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
-        $this->setModifier($manager_resource);
-        $banner_id = $request->banner_id;
-        if ($request->file('image')) $banner_id = $this->createWebstoreBanner($request->file('image'), $request->title);
-        $data = [
-            'partner_id' => $partner->id,
-            'title' => $request->title,
-            'description' => $request->description,
-            'is_published' => $request->is_published,
-            'banner_id' => $banner_id
-        ];
+        try {
+            $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image', 'is_published' => 'required']);
+            $partner = resolvePartnerFromAuthMiddleware($request);
+            $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
+            $this->setModifier($manager_resource);
+            $banner_id = $request->banner_id;
+            if ($request->file('image')) $banner_id = $this->createWebstoreBanner($request->file('image'), $request->title);
+            $data = [
+                'partner_id' => $partner->id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'is_published' => $request->is_published,
+                'banner_id' => $banner_id
+            ];
 
-        /** @var WebstoreBannerSettings $webstoreBannerSettings */
-        $webstoreBannerSettings = app(WebstoreBannerSettings::class);
-        $webstoreBannerSettings->setData($data)->store();
-        return http_response($request, null, 200, ['message' => 'Successful']);
-
+            /** @var WebstoreBannerSettings $webstoreBannerSettings */
+            $webstoreBannerSettings = app(WebstoreBannerSettings::class);
+            $webstoreBannerSettings->setData($data)->store();
+            return http_response($request, null, 200, ['message' => 'Successful']);
+        } catch (\Exception $e) {
+            return http_response($request, null, 400, ['message' => 'Please Provide the required fields']);
+        }
     }
 
     public function createWebstoreBanner($file, $filename)
