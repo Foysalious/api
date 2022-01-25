@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\ResellerPayment;
 
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
@@ -35,7 +36,7 @@ class PaymentService
      * @param mixed $partner
      * @return PaymentService
      */
-    public function setPartner($partner)
+    public function setPartner($partner): PaymentService
     {
         $this->partner = $partner;
         return $this;
@@ -45,7 +46,7 @@ class PaymentService
      * @param mixed $status
      * @return PaymentService
      */
-    public function setNewStatus($status)
+    public function setNewStatus($status): PaymentService
     {
         $this->newStatus = $status;
         return $this;
@@ -58,19 +59,22 @@ class PaymentService
     /**
      * @param mixed $key
      */
-    public function setKey($key)
+    public function setKey($key): PaymentService
     {
         $this->key = $key;
         return $this;
     }
 
-    public function getPGWDetails()
+    /**
+     * @return array
+     */
+    public function getPGWDetails(): array
     {
         $this->getResellerPaymentStatus();
         $this->getPgwStatus();
         $pgw_store = PgwStore::where('key',$this->key)->first();
         return [
-            'banner' =>'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/payment_gateway_banner/app-banner+(1)+2.png',
+            'banner' =>'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/ssl_banner.png',
             'faq' => [
                 'আপনার ব্যবসার প্রোফাইল সম্পন্ন করুন',
                 'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
@@ -80,18 +84,22 @@ class PaymentService
             'mor_status_wise_disclaimer' => in_array($this->status,['pending','processing','verified','rejected']) ? config('reseller_payment.mor_status_wise_text')[$this->key][$this->status] : null,
             'pgw_status' =>  $this->pgwStatus ?? null,
             'pgw_merchant_id' => $this->pgwMerchantId,
-            'how_to_use_link' => 'https://partners.dev-sheba.xyz/api/how-to-use',
-            'payment_service_info_link' => 'https://partners.dev-sheba.xyz/api/payment-setup-faq',
+            'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
+            'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
             'details' => [
                 'id' => $pgw_store->id,
                 'key' => $pgw_store->key,
-                'name_bn' =>$pgw_store->name_bn
+                'name_bn' => $pgw_store->name_bn,
+                'icon' => $pgw_store->icon
             ]
         ];
 
     }
 
-    public function getStatusAndBanner()
+    /**
+     * @return array
+     */
+    public function getStatusAndBanner(): array
     {
         $this->getResellerPaymentStatus();
         $this->getPgwStatusForHomePage();
@@ -100,7 +108,7 @@ class PaymentService
             'status' => $this->status ?? null,
             'pgw_status' => $this->pgwStatus ?? null,
             'banner' => $this->getBanner(),
-            'info_link' => 'https://partners.dev-sheba.xyz/api/payment-link-faq'
+            'info_link' => PaymentLinkStatics::payment_setup_faq_webview()
         ];
     }
 
@@ -116,7 +124,9 @@ class PaymentService
        elseif ($this->status == 'ekyc_completed')
            $banner = config('reseller_payment.status_wise_home_banner')['ekyc_completed'];
        elseif ($this->status == 'survey_completed')
-           $banner = config('reseller_payment.status_wise_home_banner')['completed_but_did_not_apply'];
+           $banner = config('reseller_payment.status_wise_home_banner')['ekyc_completed'];
+        elseif ($this->status == 'mef_completed')
+            $banner = config('reseller_payment.status_wise_home_banner')['completed_but_did_not_apply'];
       elseif(is_null($this->status))
           $banner = config('reseller_payment.status_wise_home_banner')['did_not_started_journey'];
 
@@ -127,6 +137,9 @@ class PaymentService
     private function getResellerPaymentStatus()
     {
         $this->getMORStatus();
+        if(isset($this->status))
+            return;
+        $this->checkMefCompletion();
         if(isset($this->status))
             return;
         $this->getSurveyStatus();
@@ -151,15 +164,19 @@ class PaymentService
 
     }
 
-   /* private function checkMefCompletion()
+    private function checkMefCompletion(): bool
     {
-
-        $merchantEnrollment = app(MerchantEnrollment::class);
-        $completion = $merchantEnrollment->setPartner($this->partner)->setKey($this->key)->getCompletion()->toArray();
-        if($completion['can_apply'] == 1)
-            $this->status = 'mef_completed';
-       return true;
-    }*/
+        $this->key = MEFGeneralStatics::payment_gateway_keys();
+        foreach ($this->key as $key) {
+            $merchantEnrollment = app(MerchantEnrollment::class);
+            $completion = $merchantEnrollment->setPartner($this->partner)->setKey($key)->getCompletion()->toArray();
+            if ($completion['can_apply'] == 1) {
+                $this->status = 'mef_completed';
+                return true;
+            }
+        }
+        return true;
+    }
 
     private function getSurveyStatus()
     {
@@ -228,8 +245,10 @@ class PaymentService
             if ( !$mor_status && !$partner_account) {
                 $status = PaymentLinkStatus::UNREGISTERED;
             } else if ($mor_status == "pending" && !$partner_account) {
+                $status = PaymentLinkStatus::PENDING;
+            } else if ($mor_status == "processing" && !$partner_account) {
                 $status = PaymentLinkStatus::PROCESSING;
-            } else if ($mor_status == "verified" && !$partner_account) {
+            }else if ($mor_status == "verified" && !$partner_account) {
                 $status = PaymentLinkStatus::SUCCESSFUL;
             } else if ($mor_status == "rejected" && !$partner_account) {
                 $status = PaymentLinkStatus::REJECTED;
@@ -333,16 +352,16 @@ class PaymentService
         if(!$this->newStatus == 'processing')
             $this->sendSMS();
         $this->sendPushNotification();
-
     }
 
-    private function sendSMS()
+    public function sendSMS($message_body = null)
     {
+        $body = $message_body ? : config('reseller_payment.mor_status_change_message')[$this->key][$this->newStatus];
         $mobile = $this->partner->getContactNumber();
         (new Sms())
             ->setFeatureType(FeatureType::PAYMENT_LINK)
             ->setBusinessType(BusinessType::SMANAGER)
-            ->shoot($mobile, config('reseller_payment.mor_status_change_message')[$this->key][$this->newStatus]);
+            ->shoot($mobile, $body);
     }
 
     private function sendPushNotification()
@@ -361,6 +380,17 @@ class PaymentService
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
+
+    /**
+     * @param $secret
+     * @return void
+     * @throws UnauthorizedRequestFromMORException
+     */
+    public function authenticateMorRequest($secret)
+    {
+        if ($secret !== config('reseller_payment.mor_access_token'))
+            throw new UnauthorizedRequestFromMORException();
     }
 
 

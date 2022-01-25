@@ -1,5 +1,7 @@
 <?php
 
+use Sheba\Payment\Factory\PaymentStrategy;
+
 return [
 
     'mor_access_token' => env('MOR_ACCESS_TOKEN'),
@@ -8,7 +10,8 @@ return [
         'client_id' => env('MOR_CLIENT_ID',1234),
         'client_secret' => env('MOR_CLIENT_SECRET','abcd')
     ],
-    "available_payment_gateway_keys" => ["ssl", "bkash"],
+    "available_payment_gateway_keys" => [PaymentStrategy::SSL, PaymentStrategy::BKASH],
+
     'category_list' => [
         'ssl' => [
             'nid_selfie'  => 'NIDSelfie',
@@ -239,7 +242,7 @@ return [
                 'data'             => "MSME",
                 "min_length"       => "",
                 "max_length"       => "",
-                'is_editable'      => true,
+                'is_editable'      => false,
                 'mandatory'        => false,
                 'data_source'      => 'json'
             ],
@@ -518,13 +521,14 @@ return [
 
         ],
     ],
+
     "status_wise_home_banner" => [
-        'pgw_inactive' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pgw_inactive.png',
-        'verified' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/verified.png',
-        'rejected' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/rejected.png',
-        'completed_but_did_not_apply' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/pending.png',
-        "ekyc_completed" => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/ekyc_completed.png',
-        'did_not_started_journey' => 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/reseller_payment/not_started_journey.png'
+        'pgw_inactive' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/pgw_inactive.png',
+        'verified' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/verified.png',
+        'rejected' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/rejected.png',
+        'completed_but_did_not_apply' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/pending.png',
+        "ekyc_completed" => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/ekyc_completed.png',
+        'did_not_started_journey' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/homepage_banner/not_started_journey.png'
     ],
     'mor_status_wise_text' => [
       'ssl' => [

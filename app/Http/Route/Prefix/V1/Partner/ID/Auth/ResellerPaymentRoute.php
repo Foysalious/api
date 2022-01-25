@@ -15,7 +15,6 @@ class ResellerPaymentRoute
                 $api->get('/emi-info/manager', 'ResellerPayment\\PaymentServiceController@emiInformationForManager');
                 $api->get('/banner-and-status', 'ResellerPayment\\PaymentServiceController@bannerAndStatus');
                 $api->get('/pgw-details', 'ResellerPayment\\PaymentServiceController@getPaymentGatewayDetails');
-                $api->post('/send-notification', 'ResellerPayment\\PaymentServiceController@sendNotificationOnStatusChange');
             });
             $api->group(["prefix" => 'merchant-on-boarding'], function ($api) {
                 $api->get('/category-list', "ResellerPayment\\MEF\\MerchantEnrollmentController@categoryListWithCompletion");
@@ -35,6 +34,7 @@ class ResellerPaymentRoute
 
         $api->group(['prefix' => 'partners/reseller-payment'], function ($api) {
             $api->post('/send-notification', 'ResellerPayment\\PaymentServiceController@sendNotificationOnStatusChange');
+            $api->post('/send-custom-sms', 'ResellerPayment\\PaymentServiceController@sendCustomSMS');
         });
     }
 }
