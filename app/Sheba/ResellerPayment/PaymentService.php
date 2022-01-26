@@ -213,7 +213,7 @@ class PaymentService
             $this->status = 'ekyc_completed';
     }
 
-    private function getPgwStatusForHomePage()
+    public function getPgwStatusForHomePage()
     {
         $pgw_store_accounts = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->get();
 
@@ -222,14 +222,14 @@ class PaymentService
                 if ($pgw_store_account->status == 1) {
                     $this->pgwStatus = $pgw_store_account->status;
                     $this->pgwMerchantId = (new DynamicSslStoreConfiguration($pgw_store_account->configuration))->getStoreId();
-                    return true;
+                    return $this;
                 }
             }
             $this->pgwStatus = $pgw_store_accounts->first()->status;
             $this->pgwMerchantId = (new DynamicSslStoreConfiguration($pgw_store_accounts->first()->configuration))->getStoreId();
-
         }
 
+        return $this;
     }
 
     private function getPgwStatus()
@@ -415,6 +415,14 @@ class PaymentService
     {
         if ($secret !== config('reseller_payment.mor_access_token'))
             throw new UnauthorizedRequestFromMORException();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPgwStatusForStatusCheck()
+    {
+        return $this->pgwStatus;
     }
 
 
