@@ -61,13 +61,20 @@ class PartnerController extends Controller
 
     public function getWebStoreBanner($partner, Request $request)
     {
+        $status = false;
         $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner)->where('is_published', 1)->get();
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Collection($partnerBanners, new WebstoreBannerTransformer());
         $banners = $fractal->createData($resource)->toArray()['data'];
         if (empty($banners)) return http_response($request, null, 404);
-        return http_response($request, $resource, 200, ['data' => $banners]);
+        for ($i = 0; $i < count($banners); $i++) {
+            if ($banners[$i]['is_published'] == 1) {
+                $status = true;
+                break;
+            }
+        }
+        return http_response($request, $resource, 200, ['status' => $status, 'data' => $banners]);
     }
 
     public function getBanner(Request $request)
