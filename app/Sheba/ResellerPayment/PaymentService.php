@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\ResellerPayment;
 
+use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Models\Partner;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
@@ -103,6 +104,8 @@ class PaymentService
 
     /**
      * @return array
+     * @throws Exceptions\MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
      */
     public function getStatusAndBanner(): array
     {
@@ -139,6 +142,11 @@ class PaymentService
 
     }
 
+    /**
+     * @return void
+     * @throws Exceptions\MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     */
     private function getResellerPaymentStatus()
     {
         $this->getMORStatus();
@@ -154,11 +162,20 @@ class PaymentService
 
     }
 
-    private function getMORStatus()
+    /**
+     * @param $key
+     * @return mixed|null
+     * @throws Exceptions\MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     */
+    private function getMORStatus($key=null)
     {
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $morResponse = $morClient->get('api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type='.MEFGeneralStatics::USER_TYPE_PARTNER);
+        $url = $key ? 'api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type='.MEFGeneralStatics::USER_TYPE_PARTNER.'&key='.$key :
+            'api/v1/client/applications/status?user_id='.$this->partner->id.'&user_type='.MEFGeneralStatics::USER_TYPE_PARTNER;
+
+        $morResponse = $morClient->get($url);
         if(isset($morResponse['data'])){
             $this->status = $morStatus = $morResponse['data']['application_status'];
             if($morStatus == 'rejected')
@@ -233,7 +250,9 @@ class PaymentService
      * @param $partnerId
      * @param $banner
      * @return array
+     * @throws Exceptions\MORServiceServerError
      * @throws InvalidKeyException
+     * @throws NotFoundAndDoNotReportException
      */
     public function getPaymentGateways($completion, $header_message, $partnerId, $banner): array
     {
@@ -241,11 +260,11 @@ class PaymentService
         $status = '';
         $partner = Partner::where('id', $partnerId)->first();
         $pgwStores = new PgwStore();
-        $mor_status = $this->getMORStatus();
 
         $pgwStores = $pgwStores->select('id', 'name', 'key', 'name_bn', 'icon')->get();
         foreach ($pgwStores as $pgwStore) {
             $completionData = (new MerchantEnrollment())->setPartner($partner)->setKey($pgwStore->key)->getCompletion();
+            $mor_status = $this->getMORStatus($pgwStore->key);
             $partner_account = $partner->pgwStoreAccounts()->where('pgw_store_id', $pgwStore->id)->select('status')->first();
             if ( !$mor_status && !$partner_account) {
                 $status = PaymentLinkStatus::UNREGISTERED;
