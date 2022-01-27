@@ -193,7 +193,9 @@ class PaymentService
             $merchantEnrollment = app(MerchantEnrollment::class);
             $completion = $merchantEnrollment->setPartner($this->partner)->setKey($key)->getCompletion()->toArray();
             if ($completion['can_apply'] == 1) {
-                $this->status = 'mef_completed';
+                $survey =  Survey::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->where('key','reseller_payment')->first();
+                if($survey)
+                    $this->status = 'mef_completed';
                 return true;
             }
         }
