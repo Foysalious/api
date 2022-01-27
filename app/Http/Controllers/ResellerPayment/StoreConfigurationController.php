@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
+use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
 use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
 use Sheba\ResellerPayment\Exceptions\StoreValidationException;
@@ -28,15 +29,12 @@ class StoreConfigurationController extends Controller
     public function get(Request $request): JsonResponse
     {
         try {
-            $this->validate($request, ["key" => "required"]);
+            $this->validate($request, ["key" => "required|in:" . implode(',', MEFGeneralStatics::payment_gateway_keys())]);
             $configuration = $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)->getConfiguration();
             return api_response($request, $configuration, 200, ['data' => $configuration]);
         } catch (ResellerPaymentException $e) {
             logError($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
         }
     }
 

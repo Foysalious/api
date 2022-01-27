@@ -193,7 +193,9 @@ class PaymentService
             $merchantEnrollment = app(MerchantEnrollment::class);
             $completion = $merchantEnrollment->setPartner($this->partner)->setKey($key)->getCompletion()->toArray();
             if ($completion['can_apply'] == 1) {
-                $this->status = 'mef_completed';
+                $survey =  Survey::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->where('key','reseller_payment')->first();
+                if($survey)
+                    $this->status = 'mef_completed';
                 return true;
             }
         }
@@ -261,7 +263,7 @@ class PaymentService
         $partner = Partner::where('id', $partnerId)->first();
         $pgwStores = new PgwStore();
 
-        $pgwStores = $pgwStores->select('id', 'name', 'key', 'name_bn', 'icon')->get();
+        $pgwStores = $pgwStores->publishedForMEF()->select('id', 'name', 'key', 'name_bn', 'icon')->get();
         foreach ($pgwStores as $pgwStore) {
             $completionData = (new MerchantEnrollment())->setPartner($partner)->setKey($pgwStore->key)->getCompletion();
             $mor_status = $this->getMORStatus($pgwStore->key);

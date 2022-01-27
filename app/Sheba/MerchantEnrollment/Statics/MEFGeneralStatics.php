@@ -2,6 +2,8 @@
 
 namespace Sheba\MerchantEnrollment\Statics;
 
+use Sheba\Dal\PgwStore\Model as PgwStore;
+
 class MEFGeneralStatics
 {
     const USER_TYPE_PARTNER = "Partner";
@@ -10,7 +12,7 @@ class MEFGeneralStatics
 
     public static function payment_gateway_keys()
     {
-        return config('reseller_payment.available_payment_gateway_keys');
+        return PgwStore::query()->publishedForMEF()->pluck('key')->toArray();
     }
 
     public static function payment_gateway_key_validation(): array
