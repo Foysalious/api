@@ -48,4 +48,9 @@ class Bkash extends PaymentStore
         $auth = $this->store->getAuth();
         return $this->getAndSetConfiguration(json_encode($auth->toArray()));
     }
+
+    public function account_status_update($status)
+    {
+        // TODO: Implement account_status_update() method.
+    }
 }
