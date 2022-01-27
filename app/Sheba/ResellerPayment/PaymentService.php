@@ -375,7 +375,7 @@ class PaymentService
 
     public function sendNotificationOnStatusChange()
     {
-        if(!$this->newStatus == 'processing')
+        if($this->newStatus !== 'processing')
             $this->sendSMS();
         $this->sendPushNotification();
     }
