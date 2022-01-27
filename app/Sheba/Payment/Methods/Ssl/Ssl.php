@@ -307,4 +307,11 @@ class Ssl extends PaymentMethod
             ->setMethod(TPRequest::METHOD_POST)->setInput($data);
         return $this->tpClient->call($request);
     }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        if(isset($transaction_details->status) && $transaction_details->status === "VALID") {
+            return $transaction_details->amount - $transaction_details->store_amount;
+        }
+    }
 }

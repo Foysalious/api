@@ -8,10 +8,18 @@ use Sheba\Dal\TaxHistory\TaxHistory;
 
 class TaxHistoryListTransformer extends TransformerAbstract
 {
+    private $profiles;
+
+    public function __construct($profiles)
+    {
+        $this->profiles = $profiles;
+    }
+
     public function transform(TaxHistory $tax_history)
     {
         $business_member = $tax_history->businessMember;
-        $department = $business_member->department();
+        $business_member_role = $business_member->role;
+        $business_member_department = $business_member_role ? $business_member_role->businessDepartment->name : 'N/A';
         $exemption_amount = $tax_history->exemption_amount;
         $remaining_taxable_income = $tax_history->remaining_taxable_income;
         $components_breakdown = $this->getTaxableComponentAmount($tax_history);
@@ -20,9 +28,9 @@ class TaxHistoryListTransformer extends TransformerAbstract
         return array_merge([
             'id' =>   $tax_history->id,
             'business_member_id' => $tax_history->business_member_id,
-            'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
-            'employee_name' => $business_member->profile()->name,
-            'department' => $department ? $department->name : 'N/A',
+            'employee_id' => $business_member->employee_id ?: 'N/A',
+            'employee_name' => $this->profiles[$business_member->id],
+            'department' => $business_member_department,
             'generated_at' => Carbon::parse($tax_history->generated_at)->format('Y-m-d'),
             'exemption_amount' => floatValFormat($exemption_amount),
             'remaining_taxable_income' => floatValFormat($remaining_taxable_income),
