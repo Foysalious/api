@@ -68,7 +68,7 @@ class PaymentLinkController extends Controller
                 $store_default_link = $this->creator->save();
                 $link->defaultPaymentLinkData($store_default_link, 0);
             }
-            $dashboard = $link->dashboard();
+            $dashboard = $link->dashboard($request->partner);
             return api_response($request, $dashboard, 200, ["data" => $dashboard]);
         } catch (Throwable $e) {
             logError($e);
@@ -127,7 +127,9 @@ class PaymentLinkController extends Controller
             if ($link) {
                 $receiver = $link->getPaymentReceiver();
                 if ($receiver instanceof Partner) {
-                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules()) || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED]) || !(int)$link->getIsActive())
+                    if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $receiver->subscription->getAccessRules())
+                        || in_array($receiver->status, [PartnerStatuses::BLACKLISTED, PartnerStatuses::PAUSED])
+                        || !(int)$link->getIsActive() || $link->getIsDefault())
                         return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                     $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
                     if(!count($available_methods))

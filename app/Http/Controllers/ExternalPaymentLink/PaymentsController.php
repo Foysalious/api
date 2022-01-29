@@ -13,6 +13,7 @@ use Sheba\Dal\PaymentClientAuthentication\Model as PaymentClientAuthentication;
 use Sheba\ExternalPaymentLink\Exceptions\ExternalPaymentLinkException;
 use Sheba\ExternalPaymentLink\ExternalPayments;
 use Sheba\ExternalPaymentLink\Statics\ExternalPaymentStatics;
+use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
 
 class PaymentsController extends Controller
 {
@@ -91,9 +92,12 @@ class PaymentsController extends Controller
     {
         try {
             $partner = Partner::find($partner_id);
+            if(!$partner) throw new ResellerPaymentException("Partner not found", 400);
             $data = $payments->getPaymentGatewayStatus($partner);
             return response()->json($data);
-        }  catch (\Throwable $e) {
+        }  catch (ResellerPaymentException $e) {
+            return response()->json(["message" => $e->getMessage(), "code" => $e->getCode()], $e->getCode());
+        } catch (\Throwable $e) {
             logError($e);
             return response()->json(["message" => "Something went wrong", "code" => 500], 500);
         }

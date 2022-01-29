@@ -59,4 +59,17 @@ class StoreConfigurationController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function statusUpdate(Request $request): JsonResponse
+    {
+        try {
+            $this->validate($request, StoreConfigurationStatic::statusUpdateValidation());
+            $this->storeConfiguration->setGatewayId($request->gateway_id)
+                ->setPartner($request->partner)->setKey($request->key)->updatePaymentGatewayStatus($request->status);
+            return api_response($request, null, 200);
+        } catch (ResellerPaymentException $e) {
+            logError($e);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+    }
 }
