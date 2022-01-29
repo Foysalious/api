@@ -10,6 +10,7 @@ use App\Sheba\Business\Payslip\PayReportList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
 use Sheba\Dal\Payslip\PayslipRepository;
@@ -58,7 +59,11 @@ class PayReportController extends Controller
             ->setGrossSalaryProrated($request->gross_salary_prorated)
             ->get();
         $count = count($payslip);
-        if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_report')->get();
+
+        if ($request->file == 'excel') {
+            $excel = new PayslipExcel($business_member_repo, $payslip->toArray());
+            return MaatwebsiteExcel::download($excel, 'Pay_report.xlsx');
+        }
         if ($request->limit == 'all') $limit = $count;
         $payslip = collect($payslip)->splice($offset, $limit);
 

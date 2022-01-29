@@ -35,7 +35,8 @@ class BaseRepository
      */
     public function setPartner(Partner $partner)
     {
-        if (!$partner->expense_account_id) {
+        $this->partnerId = $partner->id;
+        if (!$partner->expense_account_id&&!$this->isMigratedToAccounting()) {
             $this->setModifier($partner);
             $data = ['account_holder_type' => get_class($partner), 'account_holder_id' => $partner->id];
             $result = $this->client->post('accounts', $data);
@@ -43,7 +44,7 @@ class BaseRepository
             $partner->update($data);
         }
         $this->accountId = $partner->expense_account_id;
-        $this->partnerId = $partner->id;
+
         return $this;
     }
 
