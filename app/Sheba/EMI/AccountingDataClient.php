@@ -7,7 +7,7 @@ use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 
 class AccountingDataClient extends ClientRepository
 {
-    private $api = '/api/entries/emi-entry-list';
+    private $api = 'api/entries/emi-entry-list/';
     private $userType = UserType::PARTNER;
     /** @var AccountingEntryClient */
     private $client;
@@ -40,7 +40,7 @@ class AccountingDataClient extends ClientRepository
     public function getDetailEntry($id)
     {
         try {
-            return $this->client->setUserId($this->userId)->setUserType($this->userType)->get($this->api . '/' . $id);
+            return $this->client->setUserId($this->userId)->setUserType($this->userType)->get($this->api . $id);
         } catch (\Exception $e) {
             app('sentry')->captureException($e);
             return null;
