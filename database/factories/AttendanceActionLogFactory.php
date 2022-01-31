@@ -10,6 +10,9 @@ class AttendanceActionLogFactory extends Factory
 
     public function definition(): array
     {
-        return [];
+        return array_merge($this->commonSeeds, [
+            'action'             => 'checkin',
+            'status'             => 'on_time',
+        ]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use Carbon\Carbon;
 use Sheba\Dal\Announcement\Announcement;
 
 class AnnouncementFactory extends Factory
@@ -17,6 +18,7 @@ class AnnouncementFactory extends Factory
             'long_description'  => 'As you know the current situation is a work situation. You can work the hole day and you should as you have no interruption',
             'type'              => 'holiday',
             'is_published'      => 1,
+            'end_date'          =>Carbon::now(),
         ]);
     }
 }

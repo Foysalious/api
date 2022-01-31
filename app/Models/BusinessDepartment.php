@@ -1,11 +1,14 @@
 <?php namespace App\Models;
 
+use Database\Factories\BusinessDepartmentFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
 use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 
 class BusinessDepartment extends Model
 {
+    use HasFactory;
     protected $guarded = ['id',];
 
     public function __construct(array $attributes = [])
@@ -53,5 +56,15 @@ class BusinessDepartment extends Model
     public function scopePublished($query)
     {
         return $query->where('is_published', 1);
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return BusinessDepartmentFactory
+     */
+    protected static function newFactory(): BusinessDepartmentFactory
+    {
+        return new BusinessDepartmentFactory();
     }
 }
