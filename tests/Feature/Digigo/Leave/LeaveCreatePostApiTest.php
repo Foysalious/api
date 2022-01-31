@@ -77,7 +77,7 @@ class LeaveCreatePostApiTest extends FeatureTestCase
         $this->business_member = BusinessMember::factory()->create([
             'business_id' => 1,
             'member_id' => 2,
-            'business_role_id' => 2,
+            'business_role_id' => 1,
             'manager_id' => 1
         ]);
         ApprovalFlow::factory()->create([
@@ -87,7 +87,7 @@ class LeaveCreatePostApiTest extends FeatureTestCase
         DB::table('approval_flow_approvers')->insert(
             [
                 'approval_flow_id' => 1,
-                'business_member_id' => 1,
+                'business_member_id' => 2,
             ]
         );
         ApprovalSetting::factory()->create([
