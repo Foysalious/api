@@ -8,6 +8,7 @@ use Carbon\Carbon;
 class BusinessRole extends Model
 {
     use HasFactory;
+
     protected $guarded = ['id',];
 
     public function __construct(array $attributes = [])
@@ -40,5 +41,4 @@ class BusinessRole extends Model
     {
         return new BusinessRoleFactory();
     }
-
 }

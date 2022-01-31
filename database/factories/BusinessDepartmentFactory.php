@@ -7,12 +7,12 @@ use App\Models\BusinessDepartment;
 class BusinessDepartmentFactory extends Factory
 {
     protected $model = BusinessDepartment::class;
-    public function definition()
+
+    public function definition(): array
     {
-        // TODO: Implement definition() method.
         return array_merge($this->commonSeeds, [
-            'name'          => 'IT',
-            'is_published'  => 1
+            'name'         => 'IT',
+            'is_published' => 1,
         ]);
     }
 }

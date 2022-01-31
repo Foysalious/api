@@ -7,11 +7,11 @@ use App\Models\Department;
 class DepartmentFactory extends Factory
 {
     protected $model = Department::class;
-    public function definition()
+
+    public function definition(): array
     {
-        // TODO: Implement definition() method.
         return array_merge($this->commonSeeds, [
-            'name'    => 'IT',
+            'name' => 'IT',
         ]);
     }
 }
