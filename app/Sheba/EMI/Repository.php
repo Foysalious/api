@@ -2,10 +2,11 @@
 
 
 use App\Models\Partner;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-class Repository extends ClientRepository {
+class Repository {
     /** @var Partner */
     private $partner;
     /** @var DataClient */
@@ -46,10 +47,16 @@ class Repository extends ClientRepository {
     /**
      * @param mixed $partner
      * @return Repository
+     * @throws \Exception
      */
     public function setPartner(Partner $partner) {
         $this->partner = $partner;
-        $this->client  = new DataClient($partner);
+        if ($partner->isMigrated(Modules::EXPENSE)) {
+            $this->client = new AccountingDataClient($partner);
+        }
+        else {
+            $this->client = new DataClient($partner);
+        }
         return $this;
     }
 
