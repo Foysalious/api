@@ -11,11 +11,10 @@ class BusinessOfficeFactory extends Factory
     public function definition(): array
     {
         return array_merge($this->commonSeeds, [
-            'business_id'       => 1,
-            'name'              => 'Sheba Banani Office',
-            'location'          => '{}',
-            'ip'                => '103.197.207.12',
-
+            'business_id' => 1,
+            'name'        => 'Sheba Banani Office',
+            'location'    => '{}',
+            'ip'          => '103.197.207.12',
         ]);
     }
 }

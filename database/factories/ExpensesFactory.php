@@ -7,9 +7,9 @@ use Sheba\Dal\Expense\Expense;
 class ExpensesFactory extends Factory
 {
     protected $model = Expense::class;
-    public function definition()
+
+    public function definition(): array
     {
-        // TODO: Implement definition() method.
         return array_merge($this->commonSeeds, [
             'amount'                    => '100',
             'remarks'                   => 'Test Expense',

@@ -8,13 +8,12 @@ class ApprovalFlowFactory extends Factory
 {
     protected $model = ApprovalFlow::class;
 
-    public function definition()
+    public function definition(): array
     {
         return array_merge($this->commonSeeds, [
-            'title' => 'Test flow',
-            'type' => 'leave',
+            'title'                  => 'Test flow',
+            'type'                   => 'leave',
             'business_department_id' => 1,
         ]);
     }
-
 }
