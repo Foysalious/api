@@ -5,9 +5,12 @@ namespace Tests\Feature;
 use App\Models\Affiliate;
 use App\Models\Bonus;
 use App\Models\Business;
+use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\Department;
 use App\Models\Job;
 use App\Models\Location;
 use App\Models\Member;
@@ -99,6 +102,7 @@ class FeatureTestCase extends TestCase
     protected $order;
     /** @var Job $job */
     protected $job;
+    protected $businessDepartment;
 
     public function setUp(): void
     {
@@ -120,6 +124,14 @@ class FeatureTestCase extends TestCase
         $uri = trim($this->baseUrl, '/').'/'.trim($uri, '/');
 
         return parent::post($uri, $data, $headers);
+    }
+
+
+    public function delete($uri, array $data = [], array $headers = [])
+    {
+        $uri = trim($this->baseUrl, '/').'/'.trim($uri, '/');
+
+        return parent::delete($uri, $data, $headers);
     }
 
     public function postWithFiles($uri, array $data = [], array $files = [], array $headers = []): FeatureTestCase
@@ -205,8 +217,15 @@ class FeatureTestCase extends TestCase
         $this->business = Business::factory()->create();
         $this->partner_resource = PartnerResource::factory()->create(
             ['resource_id' => $this->resource->id, 'partner_id' => $this->partner->id, 'resource_type' => "Admin"]);
+        Department::factory()->create();
+        $this->businessDepartment = BusinessDepartment::factory()->create([
+            'business_id' => $this->business->id
+        ]);
+        BusinessRole::factory()->create([
+            'business_department_id' => 1
+        ]);
         $this->business_member = BusinessMember::factory()->create(
-            ['business_id' => $this->business->id, 'member_id' => $this->member->id]);
+            ['business_id' => $this->business->id, 'member_id' => $this->member->id, 'department' => 1, 'business_role_id' => 1]);
     }
 
     protected function generateToken(): string
@@ -251,7 +270,7 @@ class FeatureTestCase extends TestCase
             "exp"                      => Carbon::now()->addDay()->timestamp,
         ];
 
-        return JWTAuth::fromUser($this->profile, $data);
+        return JWTAuth::customClaims($data)->fromUser($this->profile);
     }
 
     private function createAuthTables()

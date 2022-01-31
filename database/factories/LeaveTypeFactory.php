@@ -10,6 +10,10 @@ class LeaveTypeFactory extends Factory
 
     public function definition(): array
     {
-        return [];
+        return [
+            'title' => 'Test Leave',
+            'total_days' => '10',
+            'is_half_day_enable' => 0,
+        ];
     }
 }

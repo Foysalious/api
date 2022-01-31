@@ -1,10 +1,14 @@
 <?php namespace App\Models;
 
+use Database\Factories\NotificationFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Helpers\TimeFrame;
 
 class Notification extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
 
     const UPDATED_AT = null;
@@ -55,5 +59,15 @@ class Notification extends Model
     public function scopeDateBetween($query, $field, TimeFrame $time_frame)
     {
         $query->whereBetween($field, $time_frame->getArray());
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return NotificationFactory
+     */
+    protected static function newFactory(): NotificationFactory
+    {
+        return new NotificationFactory();
     }
 }

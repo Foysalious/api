@@ -1,10 +1,14 @@
 <?php namespace App\Models;
 
+use Database\Factories\BusinessRoleFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 
 class BusinessRole extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id',];
 
     public function __construct(array $attributes = [])
@@ -27,5 +31,14 @@ class BusinessRole extends Model
     public function members()
     {
         return $this->hasMany(BusinessMember::class, 'business_role_id');
+    }
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return BusinessRoleFactory
+     */
+    protected static function newFactory(): BusinessRoleFactory
+    {
+        return new BusinessRoleFactory();
     }
 }
