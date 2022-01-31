@@ -1,11 +1,10 @@
 <?php
 
-namespace Tests\Feature\Digigo;
+namespace Tests\Feature\Digigo\Dashboard;
 
 /**
  * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
  */
-
 class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
 {
     public function setUp(): void

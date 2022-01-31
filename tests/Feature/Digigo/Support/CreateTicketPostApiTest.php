@@ -8,7 +8,6 @@ use Tests\Feature\FeatureTestCase;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class CreateTicketPostApiTest extends FeatureTestCase
 {
     public function setUp(): void

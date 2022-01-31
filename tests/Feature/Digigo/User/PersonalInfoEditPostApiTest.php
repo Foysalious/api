@@ -7,7 +7,6 @@ use Tests\Feature\FeatureTestCase;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class PersonalInfoEditPostApiTest extends FeatureTestCase
 {
     public function setUp(): void

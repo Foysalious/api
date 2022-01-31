@@ -10,7 +10,6 @@ use Tests\Mocks\MockAccountServerClient;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class DigigoLoginPostApiTest extends FeatureTestCase
 {
     public function setUp(): void

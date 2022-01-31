@@ -16,7 +16,6 @@ use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class LeaveDetailsGetApiTest extends FeatureTestCase
 {
     public function setUp(): void

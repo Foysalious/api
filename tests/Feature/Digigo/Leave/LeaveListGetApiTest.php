@@ -5,10 +5,10 @@ namespace Tests\Feature\Digigo\Leave;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Sheba\Dal\Leave\Model as Leave;
+
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class LeaveListGetApiTest extends FeatureTestCase
 {
     public function setUp(): void
@@ -32,5 +32,4 @@ class LeaveListGetApiTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
-
 }

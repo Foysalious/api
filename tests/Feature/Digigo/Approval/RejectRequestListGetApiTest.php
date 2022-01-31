@@ -1,12 +1,12 @@
 <?php
 
 namespace Tests\Feature\Digigo\Approval;
+
 use Tests\Feature\FeatureTestCase;
 
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class RejectRequestListGetApiTest extends FeatureTestCase
 {
     public function setUp(): void
@@ -14,6 +14,7 @@ class RejectRequestListGetApiTest extends FeatureTestCase
         parent::setUp();
         $this->logIn();
     }
+
     public function testCheckAPiReturnRejectReasonListForRejectAnyLeaveRequest()
     {
         $response = $this->get("/v1/employee/leaves/reject-reasons", [
@@ -22,5 +23,4 @@ class RejectRequestListGetApiTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
-
 }

@@ -8,7 +8,6 @@ use Tests\Feature\FeatureTestCase;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class CreateExpensePostApiTest extends FeatureTestCase
 {
     public function setUp(): void
