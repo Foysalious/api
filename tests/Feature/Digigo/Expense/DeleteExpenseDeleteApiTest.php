@@ -24,10 +24,9 @@ class DeleteExpenseDeleteApiTest extends FeatureTestCase
 
     public function testCheckAPiReturnSuccessResponseAfterDeleteExpenseFromList()
     {
-        $response = $this->delete("/v1/employee/expense/1", [
+        $response = $this->delete("/v1/employee/expense/1", [], [
             'Authorization' => "Bearer $this->token",
         ]);
-      //  dd($response);
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
