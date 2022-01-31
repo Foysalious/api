@@ -73,17 +73,23 @@ class Repository {
 
     public function get() {
         $dItems = collect();
-        $list   = collect($this->client->emiList());
-
+        $items = $list = collect($this->client->emiList());
         if ($this->query) {
-            $items = $this->getShortItems($list);
+            if (!$this->partner->isMigrated(Modules::EXPENSE)) {
+                $items = $this->getShortItems($list);
+            }
             $items = $items->filter(function ($item) {
                 return preg_match("/{$this->query}/i", $item['customer_name']) || preg_match("/{$this->query}/i", $item['customer_mobile']);
             })->values();
             $items = $items->slice($this->offset)->take($this->limit)->values();
         } else {
             $list  = $list->slice($this->offset)->take($this->limit)->values();
-            $items = $this->getShortItems($list);
+            if (!$this->partner->isMigrated(Modules::EXPENSE)) {
+                $items = $this->getShortItems($list);
+            }
+        }
+        if ($this->partner->isMigrated(Modules::EXPENSE)) {
+            return $items;
         }
         $dateWise = $items->groupBy('date')->toArray();
         foreach ($dateWise as $key => $dItem) {
@@ -102,6 +108,9 @@ class Repository {
 
     public function details($id) {
         $item = $this->client->getDetailEntry($id);
+        if ($this->partner->isMigrated(Modules::EXPENSE)) {
+            return $item;
+        }
         return $item ? (new Item((array)$item))->setPartner($this->partner)->toDetails() : null;
     }
 }
