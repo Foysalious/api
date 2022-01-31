@@ -10,7 +10,7 @@ class CollectionService
     protected $description;
     protected $partner_id, $is_published, $thumb, $banner, $app_thumb, $app_banner, $sharding_id;
     protected $collection_id, $products;
-    protected $offset,$limit;
+    protected $collection_ids;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -128,20 +128,11 @@ class CollectionService
     }
 
     /**
-     * @param mixed $offset
+     * @param mixed $collection_ids
      */
-    public function setOffset($offset)
+    public function setCollectionIds($collection_ids)
     {
-        $this->offset = $offset;
-        return $this;
-    }
-
-    /**
-     * @param mixed $limit
-     */
-    public function setLimit($limit)
-    {
-        $this->limit = $limit;
+        $this->collection_ids = $collection_ids;
         return $this;
     }
 
@@ -191,7 +182,16 @@ class CollectionService
 
     public function delete()
     {
-        return $this->client->delete('api/v1/partners/' . $this->partner_id .'/collection/' . $this->collection_id);
+        return $this->client->delete('api/v1/partners/' . $this->partner_id .'/collections/' . $this->collection_id);
+    }
+
+    public function changeStatus()
+    {
+        $data = [
+            'collection_ids' => $this->collection_ids,
+            'is_published' => $this->is_published
+        ];
+        return $this->client->put('api/v1/partners/' . $this->partner_id .'/collections/change-status', $data, false );
     }
 
 }

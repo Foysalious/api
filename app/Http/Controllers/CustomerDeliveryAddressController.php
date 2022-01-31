@@ -57,7 +57,7 @@ class CustomerDeliveryAddressController extends Controller
         }]);
         $location = null;
         $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no', 'house_no', 'road_no', 'area', 'landmark')->get();
-        if ($request->has('lat') && $request->has('lng')) {
+        if ($request->filled('lat') && $request->filled('lng')) {
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;
             if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
@@ -208,18 +208,18 @@ class CustomerDeliveryAddressController extends Controller
      */
     private function setAddressProperties(CustomerDeliveryAddress $delivery_address, $request)
     {
-        if ($request->has('address')) $delivery_address->address = trim($request->address);
-        if ($request->has('name')) $delivery_address->name = trim(ucwords($request->name));
-        if ($request->has('location_id')) $delivery_address->location_id = $request->location_id;
-        if ($request->has('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
-        if ($request->has('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
-        if ($request->has('street_address')) $delivery_address->street_address = trim($request->street_address);
-        if ($request->has('landmark')) $delivery_address->landmark = trim($request->landmark);
-        if ($request->has('lat') && $request->has('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
-        if ($request->has('house_no')) $delivery_address->house_no = trim($request->house_no);
-        if ($request->has('road_no')) $delivery_address->road_no = trim($request->road_no);
-        if ($request->has('area')) $delivery_address->area = trim($request->area);
-        if ($request->has('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
+        if ($request->filled('address')) $delivery_address->address = trim($request->address);
+        if ($request->filled('name')) $delivery_address->name = trim(ucwords($request->name));
+        if ($request->filled('location_id')) $delivery_address->location_id = $request->location_id;
+        if ($request->filled('mobile')) $delivery_address->mobile = formatMobile($request->mobile);
+        if ($request->filled('flat_no')) $delivery_address->flat_no = trim($request->flat_no);
+        if ($request->filled('street_address')) $delivery_address->street_address = trim($request->street_address);
+        if ($request->filled('landmark')) $delivery_address->landmark = trim($request->landmark);
+        if ($request->filled('lat') && $request->filled('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+        if ($request->filled('house_no')) $delivery_address->house_no = trim($request->house_no);
+        if ($request->filled('road_no')) $delivery_address->road_no = trim($request->road_no);
+        if ($request->filled('area')) $delivery_address->area = trim($request->area);
+        if ($request->filled('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
         return $delivery_address;
     }
 

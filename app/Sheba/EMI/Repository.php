@@ -2,10 +2,11 @@
 
 
 use App\Models\Partner;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-class Repository extends ClientRepository {
+class Repository {
     /** @var Partner */
     private $partner;
     /** @var DataClient */
@@ -46,10 +47,16 @@ class Repository extends ClientRepository {
     /**
      * @param mixed $partner
      * @return Repository
+     * @throws \Exception
      */
     public function setPartner(Partner $partner) {
         $this->partner = $partner;
-        $this->client  = new DataClient($partner);
+        if ($partner->isMigrated(Modules::EXPENSE)) {
+            $this->client = new AccountingDataClient($partner);
+        }
+        else {
+            $this->client = new DataClient($partner);
+        }
         return $this;
     }
 
@@ -66,17 +73,23 @@ class Repository extends ClientRepository {
 
     public function get() {
         $dItems = collect();
-        $list   = collect($this->client->emiList());
-
+        $items = $list = collect($this->client->emiList());
         if ($this->query) {
-            $items = $this->getShortItems($list);
+            if (!$this->partner->isMigrated(Modules::EXPENSE)) {
+                $items = $this->getShortItems($list);
+            }
             $items = $items->filter(function ($item) {
                 return preg_match("/{$this->query}/i", $item['customer_name']) || preg_match("/{$this->query}/i", $item['customer_mobile']);
             })->values();
             $items = $items->slice($this->offset)->take($this->limit)->values();
         } else {
             $list  = $list->slice($this->offset)->take($this->limit)->values();
-            $items = $this->getShortItems($list);
+            if (!$this->partner->isMigrated(Modules::EXPENSE)) {
+                $items = $this->getShortItems($list);
+            }
+        }
+        if ($this->partner->isMigrated(Modules::EXPENSE)) {
+            return $items;
         }
         $dateWise = $items->groupBy('date')->toArray();
         foreach ($dateWise as $key => $dItem) {
@@ -95,6 +108,9 @@ class Repository extends ClientRepository {
 
     public function details($id) {
         $item = $this->client->getDetailEntry($id);
+        if ($this->partner->isMigrated(Modules::EXPENSE)) {
+            return $item;
+        }
         return $item ? (new Item((array)$item))->setPartner($this->partner)->toDetails() : null;
     }
 }

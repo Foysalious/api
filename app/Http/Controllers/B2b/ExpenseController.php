@@ -50,7 +50,8 @@ class ExpenseController extends Controller
         /** @var Business $business */
         $business = $request->business;
         $business_members = $business->getAccessibleBusinessMember();
-        if ($request->has('department_id')) {
+
+        if ($request->filled('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
                 $q->whereHas('businessDepartment', function ($q) use ($request) {
                     $q->where('business_departments.id', $request->department_id);
@@ -61,7 +62,8 @@ class ExpenseController extends Controller
         $expenses = $this->expense_repo->getExpenseByBusinessMember($business_members_ids);
         $start_date = date('Y-m-01');
         $end_date = date('Y-m-t');
-        if ($request->has('date')) {
+
+        if ($request->filled('date')) {
             $dates = $this->getStartDateEndDate($request->date);
             $start_date = $dates['start_date'];
             $end_date = $dates['end_date'];
@@ -69,19 +71,22 @@ class ExpenseController extends Controller
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         $expenses_data = $expenseList->setData($expenses->get())->get();
         $expenses = $expenses_data['expense_breakdown'];
-        if ($request->has('search')) $expenses = $this->searchExpenseList($expenses, $request);
+        if ($request->filled('search')) $expenses = $this->searchExpenseList($expenses, $request);
         $total_expense_count = count($expenses);
-        if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
-        if ($request->has('sort_employee_name')) {
+        if ($request->filled('limit')) $expenses = collect($expenses)->splice($offset, $limit);
+        if ($request->filled('sort_employee_name')) {
             $expenses = $this->sortByName($expenses, $request->sort_employee_name)->values();
         }
         if ($request->filled('sort_amount')) {
             $expenses = $this->sortByAmount($expenses, $request->sort_amount)->values();
         }
-        if ($request->file == 'excel') return $excel->setData(is_array($expenses) ? $expenses : $expenses->toArray())
-            ->setName('Expense Report')
-            ->get();
-        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $expenses_data['expense_summary']]);
+
+        if ($request->file == 'excel') {
+             $excel = new ExpenseExcel(is_array($expenses) ? $expenses : $expenses->toArray());
+             return MaatwebsiteExcel::download($excel, 'Expense_Report.xlsx');
+        }
+
+        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $total_calculation]);
     }
 
     /**

@@ -9,7 +9,7 @@ class ResellerPaymentSurvey implements SurveyInterface
 {
     private $partner;
 
-    public function setUser($user)
+    public function setUser($user): SurveyInterface
     {
         $this->partner = $user;
         return $this;
@@ -27,9 +27,10 @@ class ResellerPaymentSurvey implements SurveyInterface
     public function storeResult($result)
     {
         $this->validateResult($result);
-        $survey = Survey::where('user_id',$this->partner->id)->where('user_type',get_class($this->partner))->first();
+        $survey = Survey::where('user_id',$this->partner->id)
+            ->where('key', SurveyKeys::RESELLER_PAYMENT)->where('user_type',get_class($this->partner))->first();
         if($survey)
-            throw new SurveyException("Survey already exist for this user");
+            throw new SurveyException("Reseller payment survey already exist for this user", 409);
         $data = [
             'user_id' => $this->partner->id,
             'user_type' => get_class($this->partner),

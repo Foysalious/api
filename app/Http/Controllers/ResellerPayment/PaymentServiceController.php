@@ -2,14 +2,18 @@
 
 namespace App\Http\Controllers\ResellerPayment;
 
+use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\Exceptions\MORServiceServerError;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
+use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\ResellerPayment\Statics\ResellerPaymentGeneralStatic;
 use Throwable;
 
@@ -22,6 +26,13 @@ class PaymentServiceController extends Controller
         $this->paymentService = $paymentService;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws NotFoundAndDoNotReportException
+     * @throws MORServiceServerError
+     * @throws InvalidKeyException
+     */
     public function getPaymentGateway(Request $request): JsonResponse
     {
         $completion = $request->query('completion');
@@ -49,7 +60,7 @@ class PaymentServiceController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function storePaymentServiceCharge(Request $request)
+    public function storePaymentServiceCharge(Request $request): JsonResponse
     {
         try {
             $this->validate($request, [
@@ -75,7 +86,7 @@ class PaymentServiceController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function emiInformationForManager(Request $request)
+    public function emiInformationForManager(Request $request): JsonResponse
     {
         try {
             $partner = $request->partner;
@@ -95,17 +106,29 @@ class PaymentServiceController extends Controller
         }
     }
 
-    public function bannerAndStatus(Request $request, PaymentService $paymentService)
+    /**
+     * @param Request $request
+     * @param PaymentService $paymentService
+     * @return JsonResponse
+     * @throws MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     */
+    public function bannerAndStatus(Request $request, PaymentService $paymentService): JsonResponse
     {
         $partner = $request->partner;
         $data = $paymentService->setPartner($partner)->getStatusAndBanner();
         return api_response($request, null, 200, ['data' => $data]);
     }
 
-    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService)
+    /**
+     * @param Request $request
+     * @param PaymentService $paymentService
+     * @return JsonResponse
+     */
+    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService): JsonResponse
     {
         $this->validate($request, [
-            'key' => 'required|in:'.implode(',', config('reseller_payment.available_payment_gateway_keys'))
+            'key' => 'required|in:'.implode(',', MEFGeneralStatics::payment_gateway_keys())
         ]);
         $partner = $request->partner;
         $detail = $paymentService->setPartner($partner)->setKey($request->key)->getPGWDetails();

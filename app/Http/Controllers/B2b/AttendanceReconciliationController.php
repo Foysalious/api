@@ -102,9 +102,12 @@ class AttendanceReconciliationController extends Controller
             } elseif (!$profile->member->activeBusinessMember->first()) {
                 $halt_execution = true;
                 $excel_error = 'Business Member not found';
+            } elseif ($profile->member->activeBusinessMember->first()->business_id != $business->id) {
+                $halt_execution = true;
+                $excel_error = 'Business Member not found';
             } elseif ($this->isInCorrectFormat($date)) {
                 $halt_execution = true;
-                $excel_error = 'Date Format should be in yyyy-mm-dd or dd/mm/yyyy';
+                $excel_error = 'Date Format should be in yyyy-mm-dd';
             } elseif ($this->isInCorrectFormat($checkin)) {
                 $halt_execution = true;
                 $excel_error = 'Checkin Time format should be hh:mm';
@@ -128,7 +131,8 @@ class AttendanceReconciliationController extends Controller
             return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
         }
         $this->setModifier($business_member->member);
-        $data->each(function ($value) use ($employee_id, $employee_email, $business, $requester, $creator, $reconciliation_checkin_time, $reconciliation_checkout_time, $reconciliation_date) {
+        $is_processed = false;
+        $data->each(function ($value) use ($employee_id, $employee_email, $business, $requester, $creator, $reconciliation_checkin_time, $reconciliation_checkout_time, $reconciliation_date, &$is_processed) {
             if (!$value->$employee_id && !$value->$employee_email && !$value->$reconciliation_date && !$value->$reconciliation_checkin_time && !$value->$reconciliation_checkout_time) return;
             $profile = $this->profileRepo->checkExistingEmail($value->$employee_email);
             /** @var Member $member */
@@ -141,7 +145,9 @@ class AttendanceReconciliationController extends Controller
                 ->setCheckoutTime($value->$reconciliation_checkout_time->format('H:i') . ':59')
                 ->setDate($value->$reconciliation_date->format('Y-m-d'));
             $creator->setRequester($requester)->create();
+            $is_processed = true;
         });
+        if (!$is_processed) return api_response($request, null, 400, ['message' => 'Wrong Excel File Uploaded! Check The Excel Properly.']);
         return api_response($request, null, 200);
     }
 

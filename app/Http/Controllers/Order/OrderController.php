@@ -196,12 +196,16 @@ class OrderController extends Controller
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         if (!$this->isSendingServedConfirmationSms($order)) return;
 
-        (new SmsHandler('order-created'))
-            ->setBusinessType(BusinessType::MARKETPLACE)
-            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
-            ->send($customer->profile->mobile, [
-                'order_code' => $order->code()
-            ]);
+        try {
+            (new SmsHandler('order-created'))
+                ->setBusinessType(BusinessType::MARKETPLACE)
+                ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                ->send($customer->profile->mobile, [
+                    'order_code' => $order->code()
+                ]);
+        } catch (Throwable $e) {
+            logError($e);
+        }
     }
 
     public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
