@@ -49,11 +49,11 @@ class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
 
         $this->assertEquals(1, $data['info']['id']);
         $this->assertEquals(0, $data['info']['notification_count']);
-        $this->assertEquals(0, $data['info']['attendance']['can_checkin']);
-        $this->assertEquals(1, $data['info']['attendance']['can_checkout']);
+        $this->assertEquals(1, $data['info']['attendance']['can_checkin']);
+        $this->assertEquals(0, $data['info']['attendance']['can_checkout']);
         $this->assertEquals(0, $data['info']['note_data']['is_note_required']);
-        $this->assertEquals(1, $data['info']['is_approval_request_required']);
-        $this->assertEquals(1, $data['info']['approval_requests']['pending_request']);
+        $this->assertEquals(0, $data['info']['is_approval_request_required']);
+        $this->assertEquals(0, $data['info']['approval_requests']['pending_request']);
         $this->assertEquals(1, $data['info']['is_profile_complete']);
         $this->assertEquals(null, $data['info']['is_eligible_for_lunch']);
     }
