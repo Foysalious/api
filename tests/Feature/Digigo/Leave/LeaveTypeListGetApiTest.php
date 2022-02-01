@@ -8,7 +8,6 @@ use Tests\Feature\FeatureTestCase;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class LeaveTypeListGetApiTest extends FeatureTestCase
 {
     public function setUp(): void
@@ -29,5 +28,4 @@ class LeaveTypeListGetApiTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
-
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Digigo;
+namespace Tests\Feature\Digigo\Notification;
 
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\BusinessPushNotificationLogs\Model as BusinessPushNotificationLog;
@@ -8,7 +8,6 @@ use Sheba\Dal\BusinessPushNotificationLogs\Model as BusinessPushNotificationLog;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class LastNotificationGetApiTest extends FeatureTestCase
 {
     public function setUp(): void

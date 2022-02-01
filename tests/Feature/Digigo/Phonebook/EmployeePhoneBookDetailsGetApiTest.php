@@ -12,7 +12,6 @@ use Tests\Feature\FeatureTestCase;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class EmployeePhoneBookDetailsGetApiTest extends FeatureTestCase
 {
     public function setUp(): void

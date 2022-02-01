@@ -9,7 +9,6 @@ use Tests\Feature\FeatureTestCase;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
 class EmployeeLeaveDataGetApiTest extends FeatureTestCase
 {
     public function setUp(): void

@@ -16,8 +16,7 @@ use Sheba\Dal\BusinessWeekend\Model as BusinessWeekend;
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-
-class MonthwiseAttendanceReportGetApiTest extends FeatureTestCase
+class MonthWiseAttendanceReportGetApiTest extends FeatureTestCase
 {
     public function setUp(): void
     {
