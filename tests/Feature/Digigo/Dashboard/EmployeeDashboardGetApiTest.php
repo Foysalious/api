@@ -48,7 +48,7 @@ class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
         $data = $response->decodeResponseJson();
 
         $this->assertEquals(1, $data['info']['id']);
-        $this->assertEquals(1, $data['info']['notification_count']);
+        $this->assertEquals(0, $data['info']['notification_count']);
         $this->assertEquals(0, $data['info']['attendance']['can_checkin']);
         $this->assertEquals(1, $data['info']['attendance']['can_checkout']);
         $this->assertEquals(0, $data['info']['note_data']['is_note_required']);
