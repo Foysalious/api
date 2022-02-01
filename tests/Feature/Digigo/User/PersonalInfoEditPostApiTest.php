@@ -15,14 +15,14 @@ class PersonalInfoEditPostApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckApiShouldReturnOKResponseIfUserUpdateAnyPersonalData()
+    public function testApiShouldReturnOKResponseIfUserUpdateAnyPersonalData()
     {
         $response = $this->post("/v2/employee/profile/personal", [
             'address' => 'North/Badda-1212',
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

@@ -60,14 +60,14 @@ class LeaveCancelPostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnSuccessResponseAfterCanceledPendingLeaveRequest()
+    public function testApiReturnSuccessResponseAfterCanceledPendingLeaveRequest()
     {
         $response = $this->post("/v1/employee/leaves/1/cancel?%20status=canceled", [
             'status' => 'canceled',
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

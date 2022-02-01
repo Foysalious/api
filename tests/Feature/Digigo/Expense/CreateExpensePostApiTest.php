@@ -17,7 +17,7 @@ class CreateExpensePostApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnSuccessResponseAfterCreateExpenseWithValidData()
+    public function testApiReturnSuccessResponseAfterCreateExpenseWithValidData()
     {
         $response = $this->post("/v1/employee/expense", [
             'amount' => '100',
@@ -26,7 +26,7 @@ class CreateExpensePostApiTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

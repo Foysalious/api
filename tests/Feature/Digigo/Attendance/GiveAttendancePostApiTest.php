@@ -28,17 +28,17 @@ class GiveAttendancePostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnOKResponseForOnTImeCheckIn()
+    public function testApiReturnOKResponseForOnTImeIn()
     {
         $response = $this->post("/v1/employee/attendances/action", [
-            'action' => 'checkin',
+            'action' => 'in',
             'device_id' => '6356516637b06549',
             'is_in_wifi_area' => 0,
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
-        $this->assertEquals('You have successfully checked-in', $data['message']);
+        $this->assertEquals('You have successfully ed-in', $data['message']);
     }
 }

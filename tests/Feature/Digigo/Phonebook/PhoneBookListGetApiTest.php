@@ -25,12 +25,12 @@ class PhoneBookListGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnAllEmployeeContactListUnderACompany()
+    public function testApiReturnAllEmployeeContactListUnderACompany()
     {
         $response = $this->get("v1/employee?for=phone_book", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

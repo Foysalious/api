@@ -21,12 +21,12 @@ class DeleteExpenseDeleteApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnSuccessResponseAfterDeleteExpenseFromList()
+    public function testApiReturnSuccessResponseAfterDeleteExpenseFromList()
     {
         $response = $this->delete("/v1/employee/expense/1", [], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

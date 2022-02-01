@@ -21,12 +21,12 @@ class ExpenseListGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnExpenseListAccordingToLimitAndDateRangeParams()
+    public function testApiReturnExpenseListAccordingToLimitAndDateRangeParams()
     {
         $response = $this->get("/v1/employee/expense?&limit=1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

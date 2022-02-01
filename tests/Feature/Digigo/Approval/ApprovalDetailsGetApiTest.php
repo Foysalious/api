@@ -35,12 +35,12 @@ class ApprovalDetailsGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiSuccessfullyReturnEmployeeLeaveApprovalRequestDetailsAccordingToApprovalRequestId()
+    public function testApiSuccessfullyReturnEmployeeLeaveApprovalRequestDetailsAccordingToApprovalRequestId()
     {
         $response = $this->get("/v1/employee/approval-requests/1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

@@ -24,12 +24,12 @@ class EmployeeLeaveDataGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnUserAppliedLeaveListIfUserAlreadyApplyForLeave()
+    public function testApiReturnUserAppliedLeaveListIfUserAlreadyApplyForLeave()
     {
         $response = $this->get("/v1/employee/leaves/dates", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

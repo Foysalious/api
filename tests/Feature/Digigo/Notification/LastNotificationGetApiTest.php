@@ -18,12 +18,12 @@ class LastNotificationGetApiTest extends FeatureTestCase
         BusinessPushNotificationLog::factory()->create();
     }
 
-    public function testCheckAPiReturnUnreadNotificationCountAccordingToTimeParams()
+    public function testApiReturnUnreadNotificationCountAccordingToTimeParams()
     {
         $response = $this->get("/v1/employee/last-notifications?time=2021-11-28%2017:55:49", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

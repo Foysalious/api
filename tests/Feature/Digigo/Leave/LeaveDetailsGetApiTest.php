@@ -53,12 +53,12 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
         BusinessOfficeHour::factory()->create();
     }
 
-    public function testCheckAPiReturnLeaveDetailsWithValidLeaveId()
+    public function testApiReturnLeaveDetailsWithValidLeaveId()
     {
         $response = $this->get("/v1/employee/leaves/1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

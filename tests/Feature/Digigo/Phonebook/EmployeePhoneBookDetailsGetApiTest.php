@@ -24,12 +24,12 @@ class EmployeePhoneBookDetailsGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnEmployeeDetailsIfEmployeeIdIsValid()
+    public function testApiReturnEmployeeDetailsIfEmployeeIdIsValid()
     {
         $response = $this->get("v1/employee/1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

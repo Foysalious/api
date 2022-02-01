@@ -53,12 +53,12 @@ class MonthWiseAttendanceReportGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnEmployeeAttendanceReportMonthwise()
+    public function testApiReturnEmployeeAttendanceReportMonthwise()
     {
         $response = $this->get("/v1/employee/attendances?year=2022&month=1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

@@ -21,12 +21,12 @@ class ExpenseDetailsGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnExpenseDetailsWithValidExpenseId()
+    public function testApiReturnExpenseDetailsWithValidExpenseId()
     {
         $response = $this->get("/v1/employee/expense/1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

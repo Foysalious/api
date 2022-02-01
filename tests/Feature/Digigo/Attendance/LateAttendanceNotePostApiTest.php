@@ -19,15 +19,15 @@ class LateAttendanceNotePostApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnOkResponseForSuccessfullySubmitNoteForLateCheckIn()
+    public function testApiReturnOkResponseForSuccessfullySubmitNoteForLateIn()
     {
         $response = $this->post("/v1/employee/attendances/note", [
-            'action' => 'checkin',
+            'action' => 'in',
             'note' => 'traffic issue',
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         // dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);

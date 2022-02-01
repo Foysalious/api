@@ -15,12 +15,12 @@ class FinancialInfoGetApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnUserFinancialInformation()
+    public function testApiReturnUserFinancialInformation()
     {
         $response = $this->get("/v1/employee/profile/1/financial", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

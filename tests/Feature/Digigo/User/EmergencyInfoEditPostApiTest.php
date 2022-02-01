@@ -15,7 +15,7 @@ class EmergencyInfoEditPostApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckApiShouldReturnOKResponseIfUserUpdateAnyEmergencyData()
+    public function testApiShouldReturnOKResponseIfUserUpdateAnyEmergencyData()
     {
         $response = $this->post("/v2/employee/profile/emergency", [
             'name' => 'Sadab',
@@ -23,7 +23,7 @@ class EmergencyInfoEditPostApiTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

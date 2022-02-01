@@ -18,12 +18,12 @@ class TicketListGetApiTest extends FeatureTestCase
         Support::factory()->create();
     }
 
-    public function testCheckAPiReturnSupportListAccordingToLimitParams()
+    public function testApiReturnSupportListAccordingToLimitParams()
     {
         $response = $this->get("/v1/employee/supports?status=open&limit=5&offset=0", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

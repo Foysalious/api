@@ -15,12 +15,12 @@ class OfficeInfoGetApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnUserOfficialInformation()
+    public function testApiReturnUserOfficialInformation()
     {
         $response = $this->get("/v1/employee/profile/1/official", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

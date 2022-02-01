@@ -61,7 +61,7 @@ class LeaveCreatePostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnSuccessResponseAfterCreateLeaveWithValidData()
+    public function testApiReturnSuccessResponseAfterCreateLeaveWithValidData()
     {
         $this->createNewUser();
         $response = $this->post("/v1/employee/leaves", [
@@ -76,7 +76,7 @@ class LeaveCreatePostApiTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

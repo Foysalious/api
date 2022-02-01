@@ -32,12 +32,12 @@ class AttendanceLocationInfoGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnEmployeeLocationAddressAccordingToLatLng()
+    public function testApiReturnEmployeeLocationAddressAccordingToLatLng()
     {
         $response = $this->get("/v1/employee/attendances/info?lat=23.7980928&lng=90.4047646", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

@@ -24,12 +24,12 @@ class LeaveListGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnUserLeaveListAccordingLeaveTypeId()
+    public function testApiReturnUserLeaveListAccordingLeaveTypeId()
     {
         $response = $this->get("/v1/employee/leaves?type=1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

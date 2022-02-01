@@ -15,12 +15,12 @@ class PersonalInfoGetApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnUserPersonalInformation()
+    public function testApiReturnUserPersonalInformation()
     {
         $response = $this->get("/v1/employee/profile/1/personal", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

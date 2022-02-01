@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Announcement;
 
+use Carbon\Carbon;
 use Sheba\Dal\Announcement\Announcement;
 use Tests\Feature\FeatureTestCase;
 
@@ -18,12 +19,27 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         Announcement::factory()->create();
     }
 
-    public function testCheckAPiReturnAnnouncementsDetailsAccordingToAnnouncementId()
+    public function testApiReturnAnnouncementsDetails()
     {
         $response = $this->get("/v1/employee/announcements/1", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
+    }
+    public function testApiReturnAnnouncementDataInAArrayFormat()
+    {
+        $response = $this->get("/v1/employee/announcements/1", [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $data = $response->json();
+        $this->assertEquals(1, $data['announcement']['id']);
+        $this->assertEquals('Holiday notice', $data['announcement']['title']);
+        $this->assertEquals('holiday', $data['announcement']['type']);
+        $this->assertEquals('As you know the current situation is a work situation. You can work the hole day and you should as you have no interruption', $data['announcement']['short_description']);
+        $this->assertEquals('As you know the current situation is a work situation. You can work the hole day and you should as you have no interruption', $data['announcement']['description']);
+        $this->assertEquals('Previous', $data['announcement']['status']);
+        $this->assertEquals(Carbon::now(), $data['announcement']['end_date']);
+        $this->assertEquals(Carbon::now(), $data['announcement']['created_at']);
     }
 }

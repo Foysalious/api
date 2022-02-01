@@ -15,12 +15,12 @@ class HomeDashboardMenuInfoGetApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnApprovalRequestDataIfUserRoleIsManager()
+    public function testApiReturnApprovalRequestDataIfUserRoleIsManager()
     {
         $response = $this->get("/v1/employee/menu-info", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

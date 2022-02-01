@@ -40,12 +40,12 @@ class ApprovalListGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiSuccessfullyReturnApprovalListAccordingToLimitParams()
+    public function testApiSuccessfullyReturnApprovalListAccordingToLimitParams()
     {
         $response = $this->get("/v1/employee/approval-requests?type=&limit=1&offset=0", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

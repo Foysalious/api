@@ -18,15 +18,15 @@ class DigigoLoginPostApiTest extends FeatureTestCase
         $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
     }
 
-    public function testCheckApiShouldReturnOKResponseIfEmailAndPasswordIsValid()
+    public function testApiShouldReturnOKResponseIfEmailAndPasswordIsValid()
     {
         $this->logIn();
         MockAccountServerClient::$token = $this->token;
         $response = $this->post('/v1/employee/login', [
             'email' => 'tisha@sheba.xyz', 'password' => '12345'
         ]);
-        $data = $response->decodeResponseJson();
-        $response->decodeResponseJson();
+        $data = $response->json();
+        $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

@@ -15,12 +15,12 @@ class EmergencyInfoGetApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnUserEmergencyInformation()
+    public function testApiReturnUserEmergencyInformation()
     {
         $response = $this->get("/v1/employee/profile/1/emergency", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

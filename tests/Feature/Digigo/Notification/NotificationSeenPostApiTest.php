@@ -20,14 +20,14 @@ class NotificationSeenPostApiTest extends FeatureTestCase
         Notification::factory()->create();
     }
 
-    public function testCheckAPiReturnSuccessResponseWhenUserSeenAnUnseenNotificationFromList()
+    public function testApiReturnSuccessResponseWhenUserSeenAnUnseenNotificationFromList()
     {
         $response = $this->post("/v1/employee/notifications/seen", [
             'notifications' => '[1]',
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

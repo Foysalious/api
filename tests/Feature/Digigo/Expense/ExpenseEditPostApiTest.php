@@ -24,7 +24,7 @@ class ExpenseEditPostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnSuccessResponseAndUpdateExpenseDetailsWithValidExpenseFieldInfo()
+    public function testApiReturnSuccessResponseAndUpdateExpenseDetailsWithValidExpenseFieldInfo()
     {
         $response = $this->post("/v1/employee/expense/1", [
             'amount' => '200',
@@ -33,7 +33,7 @@ class ExpenseEditPostApiTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

@@ -18,14 +18,14 @@ class CreateTicketPostApiTest extends FeatureTestCase
         Support::factory()->create();
     }
 
-    public function testCheckAPiReturnSuccessResponseAfterCreateNewSupport()
+    public function testApiReturnSuccessResponseAfterCreateNewSupport()
     {
         $response = $this->post("/v1/employee/supports", [
             'description' => 'Test Support ticket',
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

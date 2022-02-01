@@ -15,12 +15,12 @@ class RejectRequestListGetApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testCheckAPiReturnRejectReasonListForRejectAnyLeaveRequest()
+    public function testApiReturnRejectReasonListForRejectAnyLeaveRequest()
     {
         $response = $this->get("/v1/employee/leaves/reject-reasons", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

@@ -22,12 +22,12 @@ class NotificationListGetApiTest extends FeatureTestCase
         Notification::factory()->create();
     }
 
-    public function testCheckAPiReturnNotificationListAccordingToLimitParams()
+    public function testApiReturnNotificationListAccordingToLimitParams()
     {
         $response = $this->get("/v1/employee/notifications?limit=1&offset=0", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

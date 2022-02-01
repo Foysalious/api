@@ -54,14 +54,14 @@ class LeaveUpdatePostApiTest extends FeatureTestCase
         BusinessOfficeHour::factory()->create();
     }
 
-    public function testCheckAPiReturnSuccessResponseAfterUpdateLeaveInformation()
+    public function testApiReturnSuccessResponseAfterUpdateLeaveInformation()
     {
         $response = $this->post("/v1/employee/leaves/1/update", [
             'note' => 'Test Leave Update',
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

@@ -20,12 +20,12 @@ class HolidayListGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnHolidayList()
+    public function testApiReturnHolidayList()
     {
         $response = $this->get("/v1/employee/holidays", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

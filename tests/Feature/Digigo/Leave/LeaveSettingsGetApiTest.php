@@ -24,12 +24,12 @@ class LeaveSettingsGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnLeaveSettingsInfo()
+    public function testApiReturnLeaveSettingsInfo()
     {
         $response = $this->get("/v1/employee/leaves/settings", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 

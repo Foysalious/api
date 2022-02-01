@@ -18,12 +18,12 @@ class AnnouncementsListGetApiTest extends FeatureTestCase
         Announcement::factory()->create();
     }
 
-    public function testCheckAPiReturnAnnouncementsListAccordingToLimitParams()
+    public function testApiReturnAnnouncementsListAccordingToLimitParams()
     {
         $response = $this->get("/v1/employee/announcements?limit=10&offset=0", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }

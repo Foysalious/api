@@ -20,12 +20,12 @@ class LeaveTypeListGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnLeaveTypeList()
+    public function testApiReturnLeaveTypeList()
     {
         $response = $this->get("/v1/employee/leaves/types", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

@@ -32,12 +32,12 @@ class TodaysAttendanceStatusGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnEmployeeDailyAttendanceInfo()
+    public function testApiReturnEmployeeDailyAttendanceInfo()
     {
         $response = $this->get("/v1/employee/attendances/today", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

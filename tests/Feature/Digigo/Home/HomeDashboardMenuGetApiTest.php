@@ -20,12 +20,12 @@ class HomeDashboardMenuGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnDashboardMenuList()
+    public function testApiReturnDashboardMenuList()
     {
         $response = $this->get("/v1/employee/dashboard-menu", [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
 }

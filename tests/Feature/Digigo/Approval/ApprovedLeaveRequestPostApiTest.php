@@ -36,7 +36,7 @@ class ApprovedLeaveRequestPostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testCheckAPiReturnSuccessResponseAfterApprovedLeaveRequest()
+    public function testApiReturnSuccessResponseAfterApprovedLeaveRequest()
     {
         $response = $this->post("/v1/employee/approval-requests/status", [
             'type' => 'Annual Leave',
@@ -46,7 +46,7 @@ class ApprovedLeaveRequestPostApiTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }
