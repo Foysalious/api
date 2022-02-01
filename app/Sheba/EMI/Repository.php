@@ -63,12 +63,21 @@ class Repository {
 
     public function getRecent() {
         $list = collect($this->client->emiList(3));
-        $data = $list->map(function ($item) {
+        if ($this->partner->isMigrated(Modules::EXPENSE)) {
+            $response = $list->flatMap(function ($item) {
+                $res = [];
+                foreach ($item['items'] as $i) {
+                  $res[] = $i;
+                }
+                return $res;
+            });
+            return $response->take(3);
+        }
+        return $list->map(function ($item) {
             $item['partner'] = $this->partner;
             $nItem = new Item((array)$item);
             return $nItem->toShort();
         });
-        return $data;
     }
 
     public function get() {
