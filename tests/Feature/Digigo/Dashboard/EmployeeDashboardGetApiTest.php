@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Digigo\Dashboard;
 
+use Sheba\Dal\PayrollSetting\PayrollSetting;
+
 /**
  * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
  */
@@ -10,7 +12,11 @@ class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
     public function setUp(): void
     {
         parent::setUp();
+        $this->truncateTables([PayrollSetting::class]);
         $this->logIn();
+        PayrollSetting::factory()->create([
+            'business_id' => $this->business->id
+        ]);
     }
 
     public function testDashboardSuccessfulResponseCode()

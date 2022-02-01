@@ -10,11 +10,12 @@ class PayrollSettingsFactory extends Factory
 
     public function definition(): array
     {
-        return array_merge($this->commonSeeds, [
-            'business_id'                     => 1,
-            'is_enable'                       => 0,
-            'payment_schedule'                => 'once_a_month',
-            'show_tax_report_download_banner' => 1,
-        ]);
+        return [
+            'is_enable'       => '1',
+            'created_by'      => '1',
+            'created_by_name' => 'Nawshin Tabassum',
+            'updated_by'      => '1',
+            'updated_by_name' => 'Nawshin Tabassum',
+        ];
     }
 }

@@ -15,7 +15,9 @@ class HomeDashboardMenuGetApiTest extends FeatureTestCase
         parent::setUp();
         $this->truncateTables([PayrollSetting::class]);
         $this->logIn();
-        PayrollSetting::factory()->create();
+        PayrollSetting::factory()->create([
+            'business_id' => $this->business->id
+        ]);
     }
 
     public function testCheckAPiReturnDashboardMenuList()
