@@ -21,17 +21,16 @@ class PhoneBookListGetApiTest extends FeatureTestCase
         $this->truncateTables([BusinessDepartment::class]);
         $this->logIn();
         BusinessDepartment::factory()->create([
-            'business_id'  => 1,
+            'business_id' => 1,
         ]);
     }
 
     public function testCheckAPiReturnAllEmployeeContactListUnderACompany()
     {
         $response = $this->get("v1/employee?for=phone_book", [
-            'Authorization'     => "Bearer $this->token",
+            'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
-
 }

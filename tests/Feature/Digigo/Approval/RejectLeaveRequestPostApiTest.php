@@ -33,9 +33,10 @@ class RejectLeaveRequestPostApiTest extends FeatureTestCase
             'leave_type_id' => 1
         ]);
         ApprovalRequest::factory()->create([
-            'requestable_id'     =>'1', //requestable_id is leave id
+            'requestable_id' => '1', //requestable_id is leave id
         ]);
     }
+
     public function testCheckAPiReturnSuccessResponseAfterRejectLeaveRequest()
     {
         $response = $this->post("/v1/employee/approval-requests/status", [

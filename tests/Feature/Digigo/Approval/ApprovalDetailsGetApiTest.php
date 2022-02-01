@@ -21,7 +21,6 @@ class ApprovalDetailsGetApiTest extends FeatureTestCase
             Leave::class,
             ApprovalRequest::class,
         ]);
-        DB::table('approval_flow_approvers')->truncate();
         $this->logIn();
 
         LeaveType::factory()->create([
@@ -32,9 +31,10 @@ class ApprovalDetailsGetApiTest extends FeatureTestCase
             'leave_type_id' => 1
         ]);
         ApprovalRequest::factory()->create([
-            'requestable_id'     =>'1', //requestable_id is leave id
+            'requestable_id' => '1', //requestable_id is leave id
         ]);
     }
+
     public function testCheckAPiSuccessfullyReturnEmployeeLeaveApprovalRequestDetailsAccordingToApprovalRequestId()
     {
         $response = $this->get("/v1/employee/approval-requests/1", [
@@ -43,5 +43,4 @@ class ApprovalDetailsGetApiTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
-
 }

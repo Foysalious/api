@@ -71,5 +71,4 @@ class LeaveCancelPostApiTest extends FeatureTestCase
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }
-
 }

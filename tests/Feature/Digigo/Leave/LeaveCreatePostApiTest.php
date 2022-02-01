@@ -33,7 +33,7 @@ class LeaveCreatePostApiTest extends FeatureTestCase
             ApprovalSettingApprover::class,
             LeaveType::class,
             Leave::class,
-           ]);
+        ]);
         DB::table('approval_flow_approvers')->truncate();
         $this->logIn();
         ApprovalFlow::factory()->create([
@@ -61,7 +61,28 @@ class LeaveCreatePostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function createNewUser(){
+    public function testCheckAPiReturnSuccessResponseAfterCreateLeaveWithValidData()
+    {
+        $this->createNewUser();
+        $response = $this->post("/v1/employee/leaves", [
+            'title' => 'Annual Leave',
+            'leave_type_id' => 1,
+            'start_date' => Carbon::now(),
+            'end_date' => Carbon::now(),
+            'note' => 'Test Leave',
+            'substitute' => '2',
+            'is_half_day' => 0,
+            'half_day_configuration' => 'first_half',
+        ], [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+    }
+
+    public function createNewUser()
+    {
         $this->profile = Profile::factory()->create([
             'mobile' => '+8801620011019',
             'email' => 'khairun@sheba.xyz',
@@ -103,26 +124,6 @@ class LeaveCreatePostApiTest extends FeatureTestCase
         LeaveType::factory()->create([
             'business_id' => $this->business->id
         ]);
-    }
-
-    public function testCheckAPiReturnSuccessResponseAfterCreateLeaveWithValidData()
-    {
-        $this->createNewUser();
-        $response = $this->post("/v1/employee/leaves", [
-            'title' => 'Annual Leave',
-            'leave_type_id' => 1,
-            'start_date' => Carbon::now(),
-            'end_date' => Carbon::now(),
-            'note' => 'Test Leave',
-            'substitute' => '2',
-            'is_half_day' => 0,
-            'half_day_configuration' => 'first_half',
-        ], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->decodeResponseJson();
-        $this->assertEquals(200, $data['code']);
-        $this->assertEquals('Successful', $data['message']);
     }
 
 }

@@ -22,7 +22,7 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->truncateTables([BusinessDepartment::class, ApprovalSetting::class,Leave::class, LeaveType::class, BusinessHoliday::class, BusinessMemberLeaveType::class, BusinessOffice::class, BusinessOfficeHour::class,ApprovalRequest::class]);
+        $this->truncateTables([BusinessDepartment::class, ApprovalSetting::class, Leave::class, LeaveType::class, BusinessHoliday::class, BusinessMemberLeaveType::class, BusinessOffice::class, BusinessOfficeHour::class, ApprovalRequest::class]);
         $this->logIn();
         BusinessDepartment::factory()->create([
             'business_id' => $this->business->id
@@ -46,7 +46,7 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
             'leave_type_id' => 1
         ]);
         ApprovalRequest::factory()->create([
-            'requestable_id'     =>'1', //requestable_id is leave id
+            'requestable_id' => '1', //requestable_id is leave id
         ]);
 
         BusinessOffice::factory()->create();

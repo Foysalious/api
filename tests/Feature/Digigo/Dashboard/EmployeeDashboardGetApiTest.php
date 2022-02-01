@@ -26,7 +26,7 @@ class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
     public function testDashboardResponseWhenSessionIsExpired()
     {
         $response = $this->get('/v1/employee/dashboard', [
-            'Authorization' => "Bearer $this->token"."jksdghfjgjhyv",
+            'Authorization' => "Bearer $this->token" . "jksdghfjgjhyv",
         ]);
         $data = $response->decodeResponseJson();
 

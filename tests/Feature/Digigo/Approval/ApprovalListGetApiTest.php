@@ -36,9 +36,10 @@ class ApprovalListGetApiTest extends FeatureTestCase
             'leave_type_id' => 1
         ]);
         ApprovalRequest::factory()->create([
-            'requestable_id'     =>'1', //requestable_id is leave id
+            'requestable_id' => '1', //requestable_id is leave id
         ]);
     }
+
     public function testCheckAPiSuccessfullyReturnApprovalListAccordingToLimitParams()
     {
         $response = $this->get("/v1/employee/approval-requests?type=&limit=1&offset=0", [
@@ -47,5 +48,4 @@ class ApprovalListGetApiTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
     }
-
 }
