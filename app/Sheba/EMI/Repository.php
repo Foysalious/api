@@ -63,16 +63,7 @@ class Repository {
 
     public function getRecent() {
         $list = collect($this->client->emiList(3));
-        if ($this->partner->isMigrated(Modules::EXPENSE)) {
-            $response = $list->flatMap(function ($item) {
-                $res = [];
-                foreach ($item['items'] as $i) {
-                  $res[] = $i;
-                }
-                return $res;
-            });
-            return $response->take(3);
-        }
+        $list = $list->take(3);
         return $list->map(function ($item) {
             $item['partner'] = $this->partner;
             $nItem = new Item((array)$item);
@@ -82,23 +73,16 @@ class Repository {
 
     public function get() {
         $dItems = collect();
-        $items = $list = collect($this->client->emiList());
+        $list = collect($this->client->emiList());
         if ($this->query) {
-            if (!$this->partner->isMigrated(Modules::EXPENSE)) {
-                $items = $this->getShortItems($list);
-            }
+            $items = $this->getShortItems($list);
             $items = $items->filter(function ($item) {
                 return preg_match("/{$this->query}/i", $item['customer_name']) || preg_match("/{$this->query}/i", $item['customer_mobile']);
             })->values();
             $items = $items->slice($this->offset)->take($this->limit)->values();
         } else {
             $list  = $list->slice($this->offset)->take($this->limit)->values();
-            if (!$this->partner->isMigrated(Modules::EXPENSE)) {
-                $items = $this->getShortItems($list);
-            }
-        }
-        if ($this->partner->isMigrated(Modules::EXPENSE)) {
-            return $items;
+            $items = $this->getShortItems($list);
         }
         $dateWise = $items->groupBy('date')->toArray();
         foreach ($dateWise as $key => $dItem) {
@@ -117,9 +101,6 @@ class Repository {
 
     public function details($id) {
         $item = $this->client->getDetailEntry($id);
-        if ($this->partner->isMigrated(Modules::EXPENSE)) {
-            return $item;
-        }
         return $item ? (new Item((array)$item))->setPartner($this->partner)->toDetails() : null;
     }
 }
