@@ -10,6 +10,9 @@ class BusinessMemberLeaveTypeFactory extends Factory
 
     public function definition(): array
     {
-        return [];
+        return array_merge($this->commonSeeds, [
+            'total_days' => 20,
+            'note'       => 'Leave Auto prorated based on employee joining date',
+        ]);
     }
 }

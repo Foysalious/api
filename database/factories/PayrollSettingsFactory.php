@@ -4,7 +4,7 @@ namespace Database\Factories;
 
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 
-class PayrollSettingFactory extends Factory
+class PayrollSettingsFactory extends Factory
 {
     protected $model = PayrollSetting::class;
 

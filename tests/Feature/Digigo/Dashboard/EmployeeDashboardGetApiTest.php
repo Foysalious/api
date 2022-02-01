@@ -1,16 +1,22 @@
 <?php
 
-namespace Tests\Feature\DigigoDashboard;
+namespace Tests\Feature\Digigo\Dashboard;
+
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 
 /**
  * @author Nawshin Tabassum <nawshin.tabassum@sheba.xyz>
  */
-class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
+class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
 {
     public function setUp(): void
     {
         parent::setUp();
+        $this->truncateTables([PayrollSetting::class]);
         $this->logIn();
+        PayrollSetting::factory()->create([
+            'business_id' => $this->business->id
+        ]);
     }
 
     public function testDashboardSuccessfulResponseCode()
@@ -19,7 +25,6 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }
@@ -27,7 +32,7 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
     public function testDashboardResponseWhenSessionIsExpired()
     {
         $response = $this->get('/v1/employee/dashboard', [
-            'Authorization' => "Bearer $this->token"."jksdghfjgjhyv",
+            'Authorization' => "Bearer $this->token" . "jksdghfjgjhyv",
         ]);
         $data = $response->decodeResponseJson();
 
@@ -46,10 +51,10 @@ class DashboardGetApiTest extends \Tests\Feature\FeatureTestCase
         $this->assertEquals(0, $data['info']['notification_count']);
         $this->assertEquals(1, $data['info']['attendance']['can_checkin']);
         $this->assertEquals(0, $data['info']['attendance']['can_checkout']);
-        $this->assertEquals(0, $data['info']['attendance']['is_note_required']);
+        $this->assertEquals(0, $data['info']['note_data']['is_note_required']);
         $this->assertEquals(0, $data['info']['is_approval_request_required']);
         $this->assertEquals(0, $data['info']['approval_requests']['pending_request']);
-        $this->assertEquals(0, $data['info']['is_profile_complete']);
+        $this->assertEquals(1, $data['info']['is_profile_complete']);
         $this->assertEquals(null, $data['info']['is_eligible_for_lunch']);
     }
 }

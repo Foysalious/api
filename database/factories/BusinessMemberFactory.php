@@ -15,6 +15,7 @@ class BusinessMemberFactory extends Factory
             'is_verified' => 1,
             'status'      => 'active',
             'is_super'    => 1,
+            'is_payroll_enable' => 0,
         ]);
     }
 }

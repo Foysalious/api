@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use Carbon\Carbon;
 use Sheba\Dal\BusinessWeekend\Model as BusinessWeekend;
 
 class BusinessWeekendFactory extends Factory
@@ -10,6 +11,8 @@ class BusinessWeekendFactory extends Factory
 
     public function definition(): array
     {
-        return [];
+        return array_merge($this->commonSeeds, [
+            'weekday_name' => 'Sunday',
+        ]);
     }
 }

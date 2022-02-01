@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Database\Factories\MemberFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\CoWorker\Statuses;
@@ -114,5 +115,15 @@ class Member extends Model
     public function scopeActive($query)
     {
         return $query->where('status', Statuses::ACTIVE);
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return MemberFactory
+     */
+    protected static function newFactory(): MemberFactory
+    {
+        return new MemberFactory();
     }
 }
