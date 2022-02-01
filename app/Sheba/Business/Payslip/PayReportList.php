@@ -3,10 +3,12 @@
 use App\Models\Business;
 use App\Transformers\Business\BkashSalaryReportTransformer;
 use App\Transformers\Business\PayReportListTransformer;
+use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepoImplementation;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Payslip\Status;
@@ -14,6 +16,9 @@ use Sheba\Dal\Salary\SalaryRepository;
 
 class PayReportList
 {
+    const AUTO_GENERATED = 'auto';
+    const MANUALLY_GENERATED = 'manual';
+
     private $business;
     private $payslipRepository;
     private $payslipList;
@@ -138,12 +143,12 @@ class PayReportList
      */
     private function getData()
     {
+        $profiles = $this->getBusinessMembersProfileName();
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $payreport_list_transformer = new PayReportListTransformer();
+        $payreport_list_transformer = new PayReportListTransformer($profiles);
         $payslip_list = new Collection($this->payslipList, $payreport_list_transformer);
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
-
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
         $this->isProratedFilterApplicable = $payreport_list_transformer->getIsProratedFilterApplicable();
@@ -213,7 +218,9 @@ class PayReportList
      */
     private function filterByMonthYear($payslips)
     {
-        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%');
+        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->orWhere(function ($query) {
+            return $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+        });
     }
 
     /**
@@ -255,5 +262,13 @@ class PayReportList
                     ]);
                 }]);
             }]);
+    }
+
+    private function getBusinessMembersProfileName()
+    {
+        return DB::table('business_member')
+            ->join('members', 'members.id', '=', 'business_member.member_id')
+            ->join('profiles', 'profiles.id', '=', 'members.profile_id')
+            ->whereIn('business_member.id', $this->businessMemberIds)->pluck('name', 'business_member.id');
     }
 }

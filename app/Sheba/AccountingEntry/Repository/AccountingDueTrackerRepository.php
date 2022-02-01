@@ -54,16 +54,8 @@ class AccountingDueTrackerRepository extends BaseRepository
             throw new PosCustomerNotFoundException('Sorry! cannot create entry without customer', 404);
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
-        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
-        if ($type == EntryTypes::DEPOSIT && !$with_update) {
-            foreach ($data as $datum) {
-                if ($datum['source_type'] == EntryTypes::POS && $datum['amount_cleared'] > 0) {
-                    $this->createPosOrderPayment($datum['amount_cleared'], $datum['source_id'], 'advance_balance');
-                }
-            }
-        }
-        return $data;
     }
 
     /**

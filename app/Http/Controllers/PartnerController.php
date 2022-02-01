@@ -1324,7 +1324,7 @@ class PartnerController extends Controller
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
-        $this->validate($request, ['logo' => 'required|file|image']);
+        $this->validate($request, ['logo' => 'required|file|image|max:2048']);
         $repo = new PartnerRepository($partner);
         return $repo->updateLogo($request);
     }

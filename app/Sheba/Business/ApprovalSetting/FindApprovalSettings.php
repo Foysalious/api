@@ -32,22 +32,25 @@ class FindApprovalSettings
 
         $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id)
             ->where('target_type', Targets::EMPLOYEE)->where('target_id', $business_member->id);
-        if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings, $module);
+        $approval_settings_count = $approval_settings->count();
+        if ($approval_settings_count > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings, $module);
 
-        if ($approval_settings->count() == 0 || !$approval_settings_with_leave) {
+        if ($approval_settings_count == 0 || !$approval_settings_with_leave) {
             $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id)
                 ->where('target_type', Targets::DEPARTMENT)->where('target_id', $business_member->department()->id);
-            if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings, $module);
+            $approval_settings_count = $approval_settings->count();
+            if ($approval_settings_count > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings, $module);
         }
         /*if ($approval_settings->count() == 0 || !$approval_settings_with_leave) {
             $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id)
                 ->where('target_type', Targets::GENERAL_MODULE);
             if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings, $module);
         }*/
-        if ($approval_settings->count() == 0 || !$approval_settings_with_leave) {
+        if ($approval_settings_count == 0 || !$approval_settings_with_leave) {
             $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id)
                 ->where('target_type', Targets::GENERAL);
-            if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings, $module);
+            $approval_settings_count = $approval_settings->count();
+            if ($approval_settings_count > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings, $module);
         }
 
         return $approval_settings_with_leave;

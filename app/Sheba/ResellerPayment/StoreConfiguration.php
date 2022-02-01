@@ -104,4 +104,16 @@ class StoreConfiguration
         }
     }
 
+    /**
+     * @param $status
+     * @return void
+     * @throws InvalidKeyException
+     */
+    public function updatePaymentGatewayStatus($status)
+    {
+        /** @var PaymentStore $store */
+        $store = (new StoreFactory())->setKey($this->key)->get();
+        $store->setGatewayId($this->gateway_id)->setPartner($this->partner)->account_status_update($status);
+    }
+
 }
