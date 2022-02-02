@@ -115,7 +115,7 @@ trait PayrollCommonCalculation
         $gross_component = $payroll_setting->components->find($component);
         if ($gross_component) {
             $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
-            $amount = ($this->businessMemberSalay * $percentage) / 100;
+            $amount = ($business_member->salary->gross_salary * $percentage) / 100;
             $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
         }
         return $one_working_day_amount;

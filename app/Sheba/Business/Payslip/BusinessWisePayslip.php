@@ -148,6 +148,8 @@ class BusinessWisePayslip
                 $payslip_data = [
                     'business_member_id' => $business_member->id,
                     'schedule_date' => $schedule_date ?: Carbon::now(),
+                    'cycle_start_date' => $start_date,
+                    'cycle_end_date' => $end_date,
                     'status' => 'pending',
                     'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
                 ];
