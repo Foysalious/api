@@ -105,6 +105,8 @@ class BusinessWisePayslip
         $schedule_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $start_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $end_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
+        $business_pay_cycle_start = $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d'));
+        $business_pay_cycle_end = $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d');
         foreach ($this->businessMembers as $business_member) {
             try {
                 if ($this->generatedBusinessMemberIds && in_array($business_member->id, $this->generatedBusinessMemberIds)) continue;
@@ -148,8 +150,8 @@ class BusinessWisePayslip
                 $payslip_data = [
                     'business_member_id' => $business_member->id,
                     'schedule_date' => $schedule_date ?: Carbon::now(),
-                    'cycle_start_date' => $start_date,
-                    'cycle_end_date' => $end_date,
+                    'cycle_start_date' => $business_pay_cycle_start,
+                    'cycle_end_date' => $business_pay_cycle_end,
                     'status' => 'pending',
                     'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
                 ];
