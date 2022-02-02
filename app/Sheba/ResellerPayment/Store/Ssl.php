@@ -14,11 +14,21 @@ use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 
 class Ssl extends PaymentStore
 {
-
-
     protected $key='ssl';
     /** @var DynamicSslStoreConfiguration $store */
     private $store;
+
+
+    public static function buildData($static_data, $dynamic_configuration)
+    {
+        foreach ($static_data as &$data) {
+            $field_name = $data["id"];
+            if($data["input_type"] === "password") continue;
+            $data["data"] = $dynamic_configuration ? $dynamic_configuration->$field_name : "";
+        }
+
+        return $static_data;
+    }
 
     /**
      * @return void
