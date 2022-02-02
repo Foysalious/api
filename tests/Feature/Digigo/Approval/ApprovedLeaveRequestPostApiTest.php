@@ -46,8 +46,29 @@ class ApprovedLeaveRequestPostApiTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
+
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
+    }
+
+    public function testLeaveRequestStatusWillUpdateAfterApprovedLeaveRequest()
+    {
+        $response = $this->post("/v1/employee/approval-requests/status", [
+            'type' => 'Annual Leave',
+            'type_id' => '[1]',
+            'status' => 'accepted',
+
+        ], [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $response->json();
+        $leave = Leave::first();
+        $approvalRequests = ApprovalRequest::first();
+        $this->assertEquals($this->business_member->id, $leave->business_member_id);
+        $this->assertEquals('pending', $leave->status);
+        $this->assertEquals(1, $approvalRequests->requestable_id);
+        $this->assertEquals('pending', $approvalRequests->status);
+        $this->assertEquals(1, $approvalRequests->approver_id);
     }
 }

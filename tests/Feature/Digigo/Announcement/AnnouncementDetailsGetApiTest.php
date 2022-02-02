@@ -27,6 +27,7 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
+    
     public function testApiReturnValidDataForSuccessResponse()
     {
         $response = $this->get("/v1/employee/announcements/1", [
