@@ -67,7 +67,7 @@ class ApprovalListGetApiTest extends FeatureTestCase
         $this->assertEquals('leave', $data['type_lists'][0]);
     }
 
-    public function testApiReturnApprovalListDataInAArrayFormat()
+    public function testApprovalListDataApiFormat()
     {
         $response = $this->get("/v1/employee/approval-requests?type=&limit=1&offset=0", [
             'Authorization' => "Bearer $this->token",

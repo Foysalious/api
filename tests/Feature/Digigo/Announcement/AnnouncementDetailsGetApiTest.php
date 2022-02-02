@@ -27,7 +27,7 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
-    
+
     public function testApiReturnValidDataForSuccessResponse()
     {
         $response = $this->get("/v1/employee/announcements/1", [
@@ -44,7 +44,7 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals(Carbon::now(), $data['announcement']['created_at']);
     }
 
-    public function testApiReturnAnnouncementListDataInAArrayFormat()
+    public function testAnnouncementListDataApiFormat()
     {
         $response = $this->get("/v1/employee/announcements?limit=10&offset=0", [
             'Authorization' => "Bearer $this->token",

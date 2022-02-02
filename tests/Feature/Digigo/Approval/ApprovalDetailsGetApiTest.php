@@ -82,7 +82,7 @@ class ApprovalDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals('Manager', $data['approval_details']['department']['designation']);
     }
 
-    public function testApiReturnApprovalDetailsDataInAArrayFormat()
+    public function testApprovalDetailsDataApiFormat()
     {
         $response = $this->get("/v1/employee/approval-requests/1", [
             'Authorization' => "Bearer $this->token",

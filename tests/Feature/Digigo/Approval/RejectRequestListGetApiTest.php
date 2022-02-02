@@ -40,7 +40,7 @@ class RejectRequestListGetApiTest extends FeatureTestCase
         $this->assertEquals('Other', $data['reject_reasons'][3]['value']);
     }
 
-    public function testApiReturnEmployeeRejectRequestListDataInAArrayFormat()
+    public function testEmployeeRejectRequestListDataApiFormat()
     {
         $response = $this->get("/v1/employee/leaves/reject-reasons", [
             'Authorization' => "Bearer $this->token",

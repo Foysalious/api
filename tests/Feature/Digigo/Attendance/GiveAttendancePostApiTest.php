@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Attendance;
 
+use Carbon\Carbon;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
@@ -31,7 +32,7 @@ class GiveAttendancePostApiTest extends FeatureTestCase
     public function testApiReturnOKResponseForOnTImeIn()
     {
         $response = $this->post("/v1/employee/attendances/action", [
-            'action' => 'in',
+            'action' => 'checkin',
             'device_id' => '6356516637b06549',
             'is_in_wifi_area' => 0,
         ], [
@@ -39,6 +40,23 @@ class GiveAttendancePostApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
-        $this->assertEquals('You have successfully ed-in', $data['message']);
+        $this->assertEquals('You have successfully checked-in', $data['message']);
+    }
+
+    public function testLeaveRequestStatusWillUpdateAfterApprovedLeaveRequest()
+    {
+        $response = $this->post("/v1/employee/attendances/action", [
+            'action' => 'checkin',
+            'device_id' => '6356516637b06549',
+            'is_in_wifi_area' => 0,
+        ], [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $response->json();
+        $attendance = Attendance::first();
+        $this->assertEquals($this->business_member->id, $attendance->business_member_id);
+        $this->assertEquals(Carbon::now()->format('Y').'-'. Carbon::now()->format('m').'-'. Carbon::now()->format('d'), $attendance->date);
+        $this->assertEquals(Carbon::now()->isoFormat('H:mm:ss'), $attendance->checkin_time);
+        $this->assertEquals('on_time', $attendance->status);
     }
 }
