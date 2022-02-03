@@ -36,7 +36,7 @@ class HomeDashboardMenuInfoGetApiTest extends FeatureTestCase
         $this->assertEquals(0, $data['info']['is_manager']);
     }
 
-    public function testAnnouncementDetailsDataApiFormat()
+    public function testHomeDashBoardMenuInfoApiFormat()
     {
         $response = $this->get("/v1/employee/menu-info", [
             'Authorization' => "Bearer $this->token",

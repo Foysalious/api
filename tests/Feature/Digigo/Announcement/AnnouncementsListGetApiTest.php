@@ -50,7 +50,6 @@ class AnnouncementsListGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        $this->assertArrayHasKey('announcements', $data);
         $this->assertArrayHasKey('id', $data['announcements'][0]);
         $this->assertArrayHasKey('title', $data['announcements'][0]);
         $this->assertArrayHasKey('type', $data['announcements'][0]);
