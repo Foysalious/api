@@ -5,6 +5,7 @@ use App\Http\Route\Prefix\V2\Partner\ID\Auth\EmiRoute as EmiRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\IndexRoute as IDAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\LoanRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\NeoBankingRoute;
+use App\Http\Route\Prefix\V2\Partner\ID\Auth\ResellerPaymentRouteV2;
 use App\Http\Route\Prefix\V2\Partner\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\PosRoute as PosRoute;
 use App\Http\Route\Prefix\V2\Partner\ReferralRoute as ReferralRoute;
@@ -36,6 +37,7 @@ class PartnerRoute
         (new LoanRoute())->set($api);
         (new NeoBankingRoute())->set($api);
         (new DeliveryRoute())->set($api);
+        (new ResellerPaymentRouteV2())->set($api);
 
     }
 }

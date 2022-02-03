@@ -28,7 +28,6 @@ class Item implements Arrayable {
      * Get the instance as an array.
      *
      * @return array
-     * @throws \ReflectionException
      */
     public function toShort() {
         $this->setExtras();
@@ -47,7 +46,7 @@ class Item implements Arrayable {
 
     public function setExtras() {
         $this->date     = Carbon::parse($this->entry_at)->format('Y-m-d');
-        if (!$this->customer_name && !$this->customer_mobile) {
+        if (!$this->customer_name && !$this->customer_mobile && isset($this->customer_id)) {
             $this->customer = $this->getCustomer();
         }
         if ($this->customer) {
