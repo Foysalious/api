@@ -37,6 +37,7 @@ class DigigoLoginPostApiTest extends FeatureTestCase
             'email' => 'tisha@sheba.xyz', 'password' => '12345'
         ]);
         $data = $response->json();
+        dd($data);
         $this->assertNotNull($data['token'],"token is not null");
         $this->assertEquals("+8801678242955", $data['user']['mobile']);
         $this->assertEquals(1, $data['user']['business_id']);

@@ -35,7 +35,7 @@ class LastNotificationGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        $this->assertEquals(8, $data['notifications']);
+        $this->assertEquals(1, $data['notifications']);
     }
 
     public function testLastNotificationDataApiFormat()
