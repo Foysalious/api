@@ -43,8 +43,8 @@ class GiveAttendancePostApiTest extends FeatureTestCase
         $this->assertEquals('You have successfully checked-in', $data['message']);
     }
 
-    public function testLeaveRequestStatusWillUpdateAfterApprovedLeaveRequest()
-    {
+    public function ()
+    {testLeaveRequestStatusWillUpdateAfterApprovedLeaveRequest
         $response = $this->post("/v1/employee/attendances/action", [
             'action' => 'checkin',
             'device_id' => '6356516637b06549',
@@ -56,7 +56,7 @@ class GiveAttendancePostApiTest extends FeatureTestCase
         $attendance = Attendance::first();
         $this->assertEquals($this->business_member->id, $attendance->business_member_id);
         $this->assertEquals(Carbon::now()->format('Y').'-'. Carbon::now()->format('m').'-'. Carbon::now()->format('d'), $attendance->date);
-        $this->assertEquals(Carbon::now()->isoFormat('HH:mm:ss'), $attendance->checkin_time);
+        $this->assertEquals(Carbon::now()->format('H:i:s'), $attendance->checkin_time);
         $this->assertEquals('on_time', $attendance->status);
     }
 }
