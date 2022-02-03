@@ -28,7 +28,6 @@ class Item implements Arrayable {
      * Get the instance as an array.
      *
      * @return array
-     * @throws \ReflectionException
      */
     public function toShort() {
         $this->setExtras();
