@@ -27,7 +27,7 @@ class Ssl extends PaymentStore
     {
         foreach ($static_data as &$data) {
             $field_name = $data["id"];
-            if($field_name === "password") continue;
+            if($data["input_type"] === "password") continue;
             $data["data"] = $dynamic_configuration ? $dynamic_configuration->$field_name : "";
         }
 

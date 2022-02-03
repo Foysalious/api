@@ -2,11 +2,21 @@
 
 namespace Sheba\ResellerPayment\Statics;
 
+use Sheba\PaymentLink\PaymentLinkStatics;
+
 class StoreConfigurationStatic
 {
     public static function getStoreConfiguration($key)
     {
         return config("store_configuration.dynamic_store_configuration.$key");
+    }
+
+    public static function storeConfigurationGetResponse($configuration): array
+    {
+        return [
+            "configuration"               => $configuration,
+            "terms_and_condition_webview" => PaymentLinkStatics::paymentTermsAndConditionWebview()
+        ];
     }
 
     public static function validateStoreConfigurationPost(): array
