@@ -2,6 +2,7 @@
 
 use App\Models\Job;
 use App\Models\PartnerOrder;
+use App\Repositories\ResourceJobRepository;
 use App\Sheba\Order\OrderRequestResend;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -83,28 +84,48 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
-        $this->jobStatusChanger->acceptJobAndAssignResource($request);
-        if ($this->jobStatusChanger->hasError()) {
-            $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
+
+        $existingPartnerOrder = $this->getExistingPartnerOrder($partner_order->order_id, $request->partner->id);
+        $availableResource = $this->jobStatusChanger->getAvailableResource($request);
+        if (is_null($availableResource)) {
+            $this->setError(403, "No Available Resource Found");
             return;
         }
-        try {
-            DB::transaction(function () use ($request, $partner_order, $job) {
+
+        if ($existingPartnerOrder) {
+            $resourceJobRepo = app()->make(ResourceJobRepository::class);
+            try {
+                $resourceJobRepo->createNewJobWithExistingPartnerOrder($job->id, $existingPartnerOrder->id, $availableResource, $request);
                 $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
-                $partner_order->update(['partner_id' => $request->partner->id]);
+            } catch (\Exception $e) {
+                $job = $partner_order->lastJob();
+                $request->merge(['job' => $job]);
+                $this->jobStatusChanger->unacceptJobAndUnAssignResource($request);
+                throw $e;
+            }
+        } else {
+            $this->jobStatusChanger->acceptJobAndAssignResource($request);
+            if ($this->jobStatusChanger->hasError()) {
+                $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
+                return;
+            }
+            try {
+                DB::transaction(function () use ($request, $partner_order, $job) {
+                    $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
+                    $partner_order->update(['partner_id' => $request->partner->id]);
 
-                $commissions = (new CommissionCalculator())->setCategory($job->category)->setPartner($request->partner);
-                $job->update([
-                    'commission_rate' => $commissions->getServiceCommission(),
-                    'material_commission_rate' => $commissions->getMaterialCommission()
-                ]);
+                    $commissions = (new CommissionCalculator())->setCategory($job->category)->setPartner($request->partner);
+                    $job->update([
+                        'commission_rate' => $commissions->getServiceCommission(),
+                        'material_commission_rate' => $commissions->getMaterialCommission()
+                    ]);
 
-                $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
-            });
-        } catch (\Exception $e) {
-            $this->jobStatusChanger->unacceptJobAndUnAssignResource($request);
+                    $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
+                });
+            } catch (\Exception $e) {
+                $this->jobStatusChanger->unacceptJobAndUnAssignResource($request);
+            }
         }
-
     }
 
     public function decline(Request $request)
@@ -131,5 +152,12 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->getErrorMessage());
             return;
         }
+    }
+
+    public function getExistingPartnerOrder($orderId, $partnerId)
+    {
+        return PartnerOrder::where('order_id', $orderId)
+            ->where('partner_id', $partnerId)
+            ->first();
     }
 }
