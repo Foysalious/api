@@ -48,12 +48,11 @@ class TodaysAttendanceStatusGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        dd($data);
         $this->assertEquals(0, $data['attendance']['can_checkin']);
         $this->assertEquals(1, $data['attendance']['can_checkout']);
         $this->assertEquals('09:01:17', $data['attendance']['checkin_time']);
         $this->assertEquals('18:01:17', $data['attendance']['checkout_time']);
-        $this->assertEquals(1, $data['attendance']['is_geo_required']);
+        $this->assertEquals('1', $data['attendance']['is_geo_required']);
         $this->assertEquals(true, $data['attendance']['is_remote_enable']);
 
     }
