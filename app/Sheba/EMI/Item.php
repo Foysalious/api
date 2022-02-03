@@ -46,7 +46,7 @@ class Item implements Arrayable {
 
     public function setExtras() {
         $this->date     = Carbon::parse($this->entry_at)->format('Y-m-d');
-        if (!$this->customer_name && !$this->customer_mobile) {
+        if (!$this->customer_name && !$this->customer_mobile && isset($this->customer_id)) {
             $this->customer = $this->getCustomer();
         }
         if ($this->customer) {
