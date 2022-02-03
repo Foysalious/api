@@ -29,4 +29,14 @@ class DeleteExpenseDeleteApiTest extends FeatureTestCase
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
     }
+
+    public function testExpenseIsDeletedFromDb()
+    {
+        $response = $this->delete("/v1/employee/expense/1", [], [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $response->json();
+        $expense = Expense::first();
+        $this->assertEquals(null, $expense);
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Expense;
 
+use Carbon\Carbon;
 use Sheba\Dal\Expense\Expense;
 use Tests\Feature\FeatureTestCase;
 
@@ -21,12 +22,55 @@ class ExpenseDetailsGetApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testApiReturnExpenseDetailsWithValidExpenseId()
+    public function testApiReturnExpenseDetails()
     {
         $response = $this->get("/v1/employee/expense/1", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+    }
+
+    public function testApiReturnExpenseDetailsDataForSuccessResponse()
+    {
+        $response = $this->get("/v1/employee/expense/1", [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $data = $response->json();
+        $this->assertEquals(1, $data['expense']['id']);
+        $this->assertEquals(1, $data['expense']['member_id']);
+        $this->assertEquals(1, $data['expense']['business_member_id']);
+        $this->assertEquals('100.00', $data['expense']['amount']);
+        $this->assertEquals('pending', $data['expense']['status']);
+        $this->assertEquals(0, $data['expense']['is_updated_by_super_admin']);
+        $this->assertEquals('Test Expense', $data['expense']['remarks']);
+        $this->assertEquals('other', $data['expense']['type']);
+        $this->assertEquals(Carbon::now()->format('Y-d-m').' '. Carbon::now()->isoFormat('HH:mm:ss'), $data['expense']['updated_at']);
+        $this->assertEquals(Carbon::now()->format('M').' '.Carbon::now()->format('d'), $data['expense']['date']);
+        $this->assertEquals(Carbon::now()->isoFormat('hh:mm A'), $data['expense']['time']);
+        $this->assertEquals(1, $data['expense']['can_edit']);
+        $this->assertEquals(null, $data['expense']['reason']);
+    }
+
+    public function testExpenseDetailsDataApiFormat()
+    {
+        $response = $this->get("/v1/employee/expense/1", [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $data = $response->json();
+        $this->assertArrayHasKey('id', $data['expense']);
+        $this->assertArrayHasKey('member_id', $data['expense']);
+        $this->assertArrayHasKey('business_member_id', $data['expense']);
+        $this->assertArrayHasKey('business_member_id', $data['expense']);
+        $this->assertArrayHasKey('status', $data['expense']);
+        $this->assertArrayHasKey('is_updated_by_super_admin', $data['expense']);
+        $this->assertArrayHasKey('remarks', $data['expense']);
+        $this->assertArrayHasKey('type', $data['expense']);
+        $this->assertArrayHasKey('created_at', $data['expense']);
+        $this->assertArrayHasKey('updated_at', $data['expense']);
+        $this->assertArrayHasKey('date', $data['expense']);
+        $this->assertArrayHasKey('time', $data['expense']);
+        $this->assertArrayHasKey('can_edit', $data['expense']);
+        $this->assertArrayHasKey('reason', $data['expense']);
     }
 }
