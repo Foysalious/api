@@ -43,8 +43,8 @@ class GiveAttendancePostApiTest extends FeatureTestCase
         $this->assertEquals('You have successfully checked-in', $data['message']);
     }
 
-    public function ()
-    {testLeaveRequestStatusWillUpdateAfterApprovedLeaveRequest
+    public function testLeaveRequestStatusWillUpdateAfterApprovedLeaveRequest()
+    {
         $response = $this->post("/v1/employee/attendances/action", [
             'action' => 'checkin',
             'device_id' => '6356516637b06549',

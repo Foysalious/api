@@ -44,13 +44,12 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals(Carbon::now(), $data['announcement']['created_at']);
     }
 
-    public function testAnnouncementListDataApiFormat()
+    public function testAnnouncementDetailsDataApiFormat()
     {
         $response = $this->get("/v1/employee/announcements/1", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        $this->assertArrayHasKey('announcement', $data);
         $this->assertArrayHasKey('id', $data['announcement']);
         $this->assertArrayHasKey('title', $data['announcement']);
         $this->assertArrayHasKey('type', $data['announcement']);
