@@ -2,6 +2,10 @@
 
 namespace Tests\Feature\Digigo\User;
 
+use App\Models\BusinessMember;
+use App\Models\Member;
+use Carbon\Carbon;
+use Sheba\Dal\Attendance\Model as Attendance;
 use Tests\Feature\FeatureTestCase;
 
 /**
@@ -26,5 +30,19 @@ class EmergencyInfoEditPostApiTest extends FeatureTestCase
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
+    }
+
+    public function testEmployeeEmergencyInfoWillUpdate()
+    {
+        $response = $this->post("/v2/employee/profile/emergency", [
+            'name' => 'Sadab',
+            'mobile' => '+8801819069484',
+        ], [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $response->json();
+        $member = Member::first();
+        $this->assertEquals('+8801819069484', $member->emergency_contract_person_number);
+        $this->assertEquals('Sadab', $member->emergency_contract_person_name);
     }
 }
