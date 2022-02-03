@@ -25,7 +25,7 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        $this->assertEquals(200, $data['code']);
+      $this->assertEquals(200, $data['code']);
     }
 
     public function testApiReturnValidDataForSuccessResponse()
@@ -46,18 +46,18 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
 
     public function testAnnouncementListDataApiFormat()
     {
-        $response = $this->get("/v1/employee/announcements?limit=10&offset=0", [
+        $response = $this->get("/v1/employee/announcements/1", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
         $this->assertArrayHasKey('announcement', $data);
-        $this->assertArrayHasKey('id', $data['announcement'][0]);
-        $this->assertArrayHasKey('title', $data['announcement'][0]);
-        $this->assertArrayHasKey('type', $data['announcement'][0]);
-        $this->assertArrayHasKey('short_description', $data['announcement'][0]);
-        $this->assertArrayHasKey('description', $data['announcement'][0]);
-        $this->assertArrayHasKey('status', $data['announcement'][0]);
-        $this->assertArrayHasKey('end_date', $data['announcement'][0]);
-        $this->assertArrayHasKey('created_at', $data['announcement'][0]);
+        $this->assertArrayHasKey('id', $data['announcement']);
+        $this->assertArrayHasKey('title', $data['announcement']);
+        $this->assertArrayHasKey('type', $data['announcement']);
+        $this->assertArrayHasKey('short_description', $data['announcement']);
+        $this->assertArrayHasKey('description', $data['announcement']);
+        $this->assertArrayHasKey('status', $data['announcement']);
+        $this->assertArrayHasKey('end_date', $data['announcement']);
+        $this->assertArrayHasKey('created_at', $data['announcement']);
     }
 }

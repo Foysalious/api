@@ -56,7 +56,7 @@ class GiveAttendancePostApiTest extends FeatureTestCase
         $attendance = Attendance::first();
         $this->assertEquals($this->business_member->id, $attendance->business_member_id);
         $this->assertEquals(Carbon::now()->format('Y').'-'. Carbon::now()->format('m').'-'. Carbon::now()->format('d'), $attendance->date);
-        $this->assertEquals(Carbon::now()->isoFormat('H:mm:ss'), $attendance->checkin_time);
+        $this->assertEquals(Carbon::now()->isoFormat('HH:mm:ss'), $attendance->checkin_time);
         $this->assertEquals('on_time', $attendance->status);
     }
 }

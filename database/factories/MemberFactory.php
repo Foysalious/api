@@ -11,7 +11,7 @@ class MemberFactory extends Factory
     public function definition(): array
     {
         return array_merge($this->commonSeeds, [
-            'remember_token' => $this->faker->randomLetter,
+            'remember_token' => $this->faker->randomLetter(5),
             'is_verified'    => 1,
         ]);
     }
