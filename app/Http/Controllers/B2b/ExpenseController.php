@@ -39,7 +39,7 @@ class ExpenseController extends Controller
 
     /**
      * @param Request $request
-     * @return JsonResponse|BinaryFileResponse
+     * @return JsonResponse
      */
     public function index(Request $request, ExpenseList $expenseList)
     {
@@ -50,8 +50,7 @@ class ExpenseController extends Controller
         /** @var Business $business */
         $business = $request->business;
         $business_members = $business->getAccessibleBusinessMember();
-
-        if ($request->filled('department_id')) {
+        if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
                 $q->whereHas('businessDepartment', function ($q) use ($request) {
                     $q->where('business_departments.id', $request->department_id);
@@ -86,7 +85,7 @@ class ExpenseController extends Controller
              return MaatwebsiteExcel::download($excel, 'Expense_Report.xlsx');
         }
 
-        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $total_calculation]);
+        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count, 'total_calculation' => $expenses_data['expense_summary']]);
     }
 
     /**
