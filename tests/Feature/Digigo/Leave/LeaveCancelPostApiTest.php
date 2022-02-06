@@ -4,6 +4,7 @@ namespace Tests\Feature\Digigo\Leave;
 
 use App\Models\BusinessDepartment;
 use App\Models\Department;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
@@ -70,5 +71,24 @@ class LeaveCancelPostApiTest extends FeatureTestCase
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
+    }
+
+    public function testAfterCancelLeaveRequestLeaveDataWillUpdateInDatabase()
+    {
+        $response = $this->post("/v1/employee/leaves/1/cancel?%20status=canceled", [
+            'status' => 'canceled',
+        ], [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $response->json();
+        $Leave = Leave::first();
+        $this->assertEquals('Test Leave', $Leave->title);
+        $this->assertEquals($this->business_member->id, $Leave->business_member_id);
+        $this->assertEquals(1, $Leave->leave_type_id);
+        $this->assertEquals(Carbon::now(), $Leave->start_date);
+        $this->assertEquals(Carbon::now()->addDay()->timestamp, $Leave->end_date);
+        $this->assertEquals(0, $Leave->is_half_day);
+        $this->assertEquals('Test Leave', $Leave->note);
+        $this->assertEquals('canceled', $Leave->status);
     }
 }

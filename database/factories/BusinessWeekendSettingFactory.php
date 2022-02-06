@@ -12,7 +12,7 @@ class BusinessWeekendSettingFactory extends Factory
     {
         // TODO: Implement definition() method.
         return array_merge($this->commonSeeds, [
-            'weekday_name'       => '["friday", "monday"]',
+            'weekday_name'       => '["friday"]',
             'start_date'         => Carbon::now(),
         ]);
     }

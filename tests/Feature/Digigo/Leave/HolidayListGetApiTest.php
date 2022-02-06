@@ -2,9 +2,13 @@
 
 namespace Tests\Feature\Digigo\Leave;
 
+
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
+use Illuminate\Support\Facades\DB;
+use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettings;
+use Sheba\Dal\GovernmentHolidays\Model as GovernmentHoliday;
 use Sheba\Dal\BusinessHoliday\Model as BusinessHoliday;
+use Sheba\Dal\BusinessWeekend\Model as BusinessWeekend;
 use Tests\Feature\FeatureTestCase;
 
 /**
@@ -15,14 +19,21 @@ class HolidayListGetApiTest extends FeatureTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->truncateTables([BusinessHoliday::class]);
+        $this->truncateTables([GovernmentHoliday::class, BusinessWeekendSettings::class, BusinessWeekend::class, BusinessHoliday::class]);
         $this->logIn();
+        GovernmentHoliday::factory()->create();
         BusinessHoliday::factory()->create([
+            'business_id' => $this->business->id
+        ]);
+        BusinessWeekendSettings::factory()->create([
+            'business_id' => $this->business->id
+        ]);
+        BusinessWeekend::factory()->create([
             'business_id' => $this->business->id
         ]);
     }
 
-    public function testApiReturnHolidayList()
+    public function testApiReturnHolidayListForAParticularBusiness()
     {
         $response = $this->get("/v1/employee/holidays", [
             'Authorization' => "Bearer $this->token",
@@ -31,40 +42,64 @@ class HolidayListGetApiTest extends FeatureTestCase
         $this->assertEquals(200, $data['code']);
     }
 
- /*   public function testApiReturnValidLeaveTypeList()
+    public function testApiReturnBusinessHolidayAndWeekendList()
     {
         $response = $this->get("/v1/employee/holidays", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
+        $weekends = DB::table('business_weekends')->where('business_id', $this->business->id)->get();
+        $weekend_dates = [];
 
-        foreach ($weekend as $date) {
-            array_push($date_array, $date->format('Y-m-d'));
+        foreach ($weekends as $weekend){
+            $dayOfWeek = $this->dayOfWeek($weekend->weekday_name);
+            $startDate = Carbon::now()->startOfMonth()->subMonth()->subDay(1)->next($dayOfWeek);
+            $endDate = Carbon::now()->startOfMonth()->addMonths(1)->endOfMonth();
+
+            for ($date = $startDate; $date->lte($endDate); $date->addWeek()) {
+                array_push($weekend_dates, $date->format('Y-m-d'));
+            }
         }
-        foreach ($data['weekends'] as $item) {
-            $this->assertEquals(1,$item['id']);
-            $this->assertEquals('Test Leave',$item['title']);
-            $this->assertEquals(20,$item['total_days']);
-            $this->assertEquals(0,$item['is_half_day_enable']);
-            $this->assertEquals(20,$item['available_days']);
+
+        foreach ($data['holidays'] as $item) {
+            $this->assertEquals(Carbon::now()->format('Y-m-d'),$item);
         }
+            $this->assertEquals($weekend_dates,$data['weekends']);
     }
 
-    public function testEmployeeLevaeTypeListApiFormat()
+    public function testHolidayListApiFormat()
     {
         $response = $this->get("/v1/employee/holidays", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        foreach ($data['leave_types'] as $item) {
-            $this->assertArrayHasKey('id',$item);
-            $this->assertArrayHasKey('title',$item);
-            $this->assertArrayHasKey('total_days',$item);
-            $this->assertArrayHasKey('is_half_day_enable',$item);
-            $this->assertArrayHasKey('available_days',$item);
+        $this->assertArrayHasKey('holidays',$data);
+        $this->assertArrayHasKey('weekends',$data);
+    }
+    private function dayOfWeek($day)
+    {
+        switch ($day) {
+            case "sunday":
+                return 0;
+                break;
+            case "monday":
+                return 1;
+                break;
+            case "tuesday":
+                return 2;
+                break;
+            case "wednesday":
+                return 3;
+                break;
+            case "thursday":
+                return 4;
+                break;
+            case "friday":
+                return 5;
+                break;
+            case "saturday":
+                return 6;
+                break;
         }
-        $this->assertArrayHasKey('half_day_configuration', $data);
-        $this->assertArrayHasKey('start_date', $data['fiscal_year']);
-        $this->assertArrayHasKey('end_date', $data['fiscal_year']);
-    }*/
+    }
 }

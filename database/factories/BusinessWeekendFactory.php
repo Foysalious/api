@@ -12,7 +12,7 @@ class BusinessWeekendFactory extends Factory
     public function definition(): array
     {
         return array_merge($this->commonSeeds, [
-            'weekday_name' => 'Sunday',
+            'weekday_name' => 'Friday',
         ]);
     }
 }

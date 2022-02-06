@@ -47,7 +47,7 @@ class LeaveTypeListGetApiTest extends FeatureTestCase
         $this->assertEquals('2022-06-30', $data['fiscal_year']['end_date']);
     }
 
-    public function testEmployeeLevaeTypeListApiFormat()
+    public function testEmployeeLevaveTypeListApiFormat()
     {
         $response = $this->get("/v1/employee/leaves/types", [
             'Authorization' => "Bearer $this->token",

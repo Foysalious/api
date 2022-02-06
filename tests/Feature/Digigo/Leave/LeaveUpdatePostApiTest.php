@@ -65,4 +65,22 @@ class LeaveUpdatePostApiTest extends FeatureTestCase
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
     }
+
+    public function testUserUpdatedLeaveInfoWillStoreInDatabase()
+    {
+        $response = $this->post("/v1/employee/leaves/1/update", [
+            'note' => 'Test Leave Update',
+        ], [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $response->json();
+        $Leave = Leave::first();
+        $this->assertEquals('Test Leave', $Leave->title);
+        $this->assertEquals(1, $Leave->leave_type_id);
+        //$this->assertEquals(Carbon::now(), $Leave->start_date);
+        //$this->assertEquals(Carbon::now()->addDay()->timestamp, $Leave->end_date);
+        $this->assertEquals(0, $Leave->is_half_day);
+        $this->assertEquals('Test Leave Update', $Leave->note);
+        $this->assertEquals('pending', $Leave->status);
+    }
 }
