@@ -25,7 +25,7 @@ class Route
             $api->post('orders/{order}/payment-link/create', "PosOrder\OrderController@createPaymentLinkFromWebstore");
             $api->group(['prefix' => 'partners'], function ($api) {
                 $api->group(['prefix' => '{partner}'], function ($api) {
-                    $api->get('/', 'Pos\PartnerController@findById')->middleware('ip.whitelist');
+                    $api->get('/', 'Pos\PartnerController@findById')/*->middleware('ip.whitelist')*/;
                     $api->get('/webstore-banner', 'Pos\PartnerController@getWebStoreBanner');
                     $api->group(['prefix' => 'orders'], function ($api) {
                         $api->group(['prefix' => '{order}'], function ($api) {
