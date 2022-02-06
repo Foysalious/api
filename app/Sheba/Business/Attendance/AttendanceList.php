@@ -770,8 +770,9 @@ class AttendanceList
      */
     private function getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave)
     {
+        if ($is_weekend_or_holiday) return null;
         if ($is_on_half_day_leave) return $action->status;
-        if ($is_weekend_or_holiday || $is_on_leave) return null;
+        if ($is_on_leave) return null;
 
         return $action->status;
     }
