@@ -6,6 +6,7 @@ use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Transformers\Business\PayRunListTransformer;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
@@ -19,6 +20,9 @@ use Sheba\Dal\Payslip\Status;
 
 class PayrunList
 {
+
+    const AUTO_GENERATED = 'auto';
+    const MANUALLY_GENERATED = 'manual';
 
     /*** @var Business */
     private $business;
@@ -143,12 +147,13 @@ class PayrunList
      */
     private function getData()
     {
+        $payroll_components = $this->business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('name');
+        $profiles = $this->getBusinessMembersProfileName();
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $payrun_list_transformer = new PayRunListTransformer();
+        $payrun_list_transformer = new PayRunListTransformer($payroll_components, $profiles);
         $payslip_list = new Collection($this->payslipList, $payrun_list_transformer);
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
-
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
         $this->isProratedFilterApplicable = $payrun_list_transformer->getIsProratedFilterApplicable();
@@ -216,7 +221,9 @@ class PayrunList
      */
     private function filterByMonthYear($payslips)
     {
-        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%');
+        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->orWhere(function ($query) {
+            return $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+        });
     }
 
     /**
@@ -258,5 +265,13 @@ class PayrunList
                     ]);
                 }]);
             }]);
+    }
+
+    private function getBusinessMembersProfileName()
+    {
+        return DB::table('business_member')
+            ->join('members', 'members.id', '=', 'business_member.member_id')
+            ->join('profiles', 'profiles.id', '=', 'members.profile_id')
+            ->whereIn('business_member.id', $this->businessMemberIds)->pluck('name', 'business_member.id');
     }
 }

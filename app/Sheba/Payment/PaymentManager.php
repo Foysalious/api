@@ -124,7 +124,7 @@ class PaymentManager
             if ($payment->canComplete()) {
                 $completion_class = $this->payable->getCompletionClass();
                 $completion_class->setPayment($payment);
-                $payment = $completion_class->complete();
+                $payment = $completion_class->setMethod($this->method)->complete();
             }
             $this->unsetRunningCompletion();
             return $payment;

@@ -91,6 +91,10 @@ class OrderController extends Controller
             'created_by' => 'numeric',
             'created_by_name' => 'string',
         ], ['mobile' => 'Invalid mobile number!']);
+        $api_request_id = null;
+        if ($request->has('api_request')) {
+            $api_request_id = $request->api_request ? $request->api_request->id : null;
+        }
         $this->setModifierFromRequest($request);
         $userAgentInformation->setRequest($request);
         $order = $order_place
@@ -114,6 +118,7 @@ class OrderController extends Controller
             ->setScheduleTime($request->time)
             ->setVendorId($request->vendor_id)
             ->setUserAgentInformation($userAgentInformation)
+            ->setApiRequestId($api_request_id)
             ->create();
 
         if (!$order) return api_response($request, null, 500);
@@ -178,8 +183,8 @@ class OrderController extends Controller
                     ->setBusinessType(BusinessType::SMANAGER)
                     ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                     ->send($partner->getContactNumber(), [
-                    'order_code' => $order->code(), 'partner_name' => $partner->name
-                ]);
+                        'order_code' => $order->code(), 'partner_name' => $partner->name
+                    ]);
             }
         } catch (Throwable $e) {
             logError($e);
@@ -191,12 +196,16 @@ class OrderController extends Controller
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         if (!$this->isSendingServedConfirmationSms($order)) return;
 
-        (new SmsHandler('order-created'))
-            ->setBusinessType(BusinessType::MARKETPLACE)
-            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
-            ->send($customer->profile->mobile, [
-                'order_code' => $order->code()
-            ]);
+        try {
+            (new SmsHandler('order-created'))
+                ->setBusinessType(BusinessType::MARKETPLACE)
+                ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                ->send($customer->profile->mobile, [
+                    'order_code' => $order->code()
+                ]);
+        } catch (Throwable $e) {
+            logError($e);
+        }
     }
 
     public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)

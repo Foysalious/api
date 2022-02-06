@@ -29,6 +29,14 @@ class ProfileUpdateRepository
         return $data;
     }
 
+    public function createDataForNidOcr($nid_image_front, $nid_image_back, $nid_no): array
+    {
+        $data['nid_image_front'] = $nid_image_front;
+        $data['nid_image_back']  = $nid_image_back;
+        $data['nid_no']          = $nid_no;
+        return $data;
+    }
+
     /**
      * @param Request $request
      * @return array
@@ -38,7 +46,9 @@ class ProfileUpdateRepository
         $resource = $request->manager_resource;
         $profile = $resource->profile;
         $status = $resource->status;
-
+        if ($profile->nid_verification_request_count >= 3 && in_array($status, [Statuses::UNVERIFIED, Statuses::REJECTED])) {
+            $status = Statuses::PENDING;
+        }
         if ($status == Statuses::VERIFIED) {
 
              return $data = [
@@ -68,7 +78,7 @@ class ProfileUpdateRepository
                     'en' => $status == Statuses::PENDING ? 'Profile verification process pending' : 'Profile verification rejected',
                     'bn' => $status == Statuses::PENDING ? 'আপনার NID ভেরিফিকেশন প্রক্রিয়াধীন রয়েছে। ভেরিফিকেশন প্রক্রিয়া দ্রুত করতে চাইলে ১৬১৬৫ নাম্বারে যোগাযোগ করুন' : 'দুঃখিত। আপনার NID ভেরিফিকেশন সফল হয় নি।পুনরায় চেষ্টা করুন।'
                 ],
-                'status' => $resource->status,
+                'status' => $status,
                 'restricted_feature' => $this->getRestrictedFeature(),
                 'nid_verification_request_count' =>  $profile->nid_verification_request_count,
             ];

@@ -9,6 +9,7 @@ use App\Sheba\Business\Payslip\TaxHistory\TaxHistoryExcel;
 use App\Sheba\Business\Payslip\TaxHistoryList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Cache;
 use NumberFormatter;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
@@ -49,12 +50,14 @@ class TaxHistoryController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
+        $cache_key = 'tax_history_business_'.$business->id.'_month_'.$request->month.'_year_'.$request->year;
         $time_period = $this->timeFrame->forAMonth($request->month, $request->year);
-        $tax_report = $tax_history_list->setBusiness($business)->setTimePeriod($time_period)
-            ->setDepartmentID($request->department_id)->setSearch($request->search)
-            ->setSortKey($request->sort)->setSortColumn($request->sort_column)
-            ->get();
-
+        $tax_report = Cache::remember($cache_key, 60 , function () use ($business, $request, $tax_history_list, $time_period) {
+            return $tax_history_list->setBusiness($business)->setTimePeriod($time_period)
+                ->setDepartmentID($request->department_id)->setSearch($request->search)
+                ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+                ->get();
+        });
         $total_report_count = $tax_report->count();
         $total_tax_amount = $tax_report->sum('total_tax_amount_monthly');
         if ($request->file == 'excel') return $tax_history_excel->setTaxHistoryData($tax_report->toArray())->get();
@@ -140,7 +143,11 @@ class TaxHistoryController extends Controller
                 $data[$x]['amount'] = $component_value;
             }
             else {
-                $custom_component = $this->payrollComponentRepo->where('name', $component_name)->where('payroll_setting_id', $payroll_setting->id)->first();
+                $custom_component = $this->payrollComponentRepo
+                    ->where('name', $component_name)
+                    ->where('payroll_setting_id', $payroll_setting->id)
+                    ->withTrashed()
+                    ->first();
                 $name = $custom_component->value;
                 $data[$x]['value'] = $name;
                 $data[$x]['display_index'] = 9;

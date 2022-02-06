@@ -1,14 +1,9 @@
-<?php
-
-
-namespace Sheba\TopUp\Vendor\Response;
-
+<?php namespace Sheba\TopUp\Vendor\Response;
 
 use Sheba\TopUp\Gateway\BdRecharge;
 
 class BdRechargeResponse extends TopUpResponse
 {
-
     /**
      * @inheritDoc
      */

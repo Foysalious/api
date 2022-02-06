@@ -174,10 +174,21 @@ class EventDataConverter
                         'event_class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Event',
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Rule',
                         'parameters' => [
-                            'amount' => [
+                            'amount_greater_than' => [
                                 'type' => 'number',
                                 'min' => 1,
-                                'class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Parameter\Amount'
+                                'class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Parameter\AmountGreaterThan'
+                            ],
+                            'fixed_amount' => [
+                                'type' => 'number',
+                                'min' => 0,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Parameter\FixedAmount'
+                            ],
+                            'operator' => [
+                                'type' => 'select',
+                                'possible_value' => $this->operator,
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Parameter\Operator'
                             ]
                         ]
                     ]

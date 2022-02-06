@@ -1,10 +1,8 @@
 <?php namespace App\Repositories;
 
 use App\Models\TopUpOrder;
-use App\Models\Vendor;
 use Illuminate\Http\Request;
 use Sheba\TopUp\TopUpFailedReason;
-use Sheba\TopUp\Vendor\VendorFactory;
 
 class VendorRepository
 {

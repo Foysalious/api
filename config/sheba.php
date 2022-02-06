@@ -16,6 +16,7 @@ return [
     'socket_on' => env('SHEBA_SOCKET_ON', true),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS', true),
     'partners_url' => env('SHEBA_PARTNER_END_URL') . '/' . env('SHEBA_PARTNERS_URL_PREFIX'),
+    'partners_base_url' => env('SHEBA_PARTNER_END_URL'),
     'db_backup' => env('SHEBA_DB_BACKUP', false),
     'portal' => 'customer-portal',
     //'revision' => file_get_contents(base_path()."/revision"),
@@ -107,7 +108,7 @@ return [
     'partner_registration_package_id' => env('PARTNER_REGISTRATION_PACKAGE_ID', 18),
     'lite_package_message' => 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!',
     'partner_subscription_vat' => 5.00,
-    'welcome_message_image' => env('WELCOME_MSG_IMAGE', 'images/manager_app/welcome.jpg'),
+    'welcome_message_image' => env('WELCOME_MSG_IMAGE', 'images/manager_app/welcome-splash.png'),
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]
@@ -165,8 +166,10 @@ return [
     'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID'),
     'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
     'webstore_url' => env('SHEBA_WEBSTORE_URL'),
+    'new_webstore_url' => env('SHEBA_NEW_WEBSTORE_URL'),
     'last_job_before_commission' => env('LAST_JOB_BEFORE_PARTNER_COMMISSION_DEPLOY'),
     'sheba_services_vendor_id' => env('SHEBA_SERVICES_VENDOR_ID', '60cb5b0f6fe71675a8564683'),
     'notification_services_app_key' => env('SHEBA_NOTIFICATION_SERVICES_APP_KEY', 'sheba1234'),
     'notification_services_app_secret' => env('SHEBA_NOTIFICATION_SERVICES_APP_SECRET', 'sheba1234'),
+    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
 ];

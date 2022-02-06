@@ -1,5 +1,7 @@
 <?php namespace App\Console;
 
+use App\Console\Commands\GeneratePayslip;
+use App\Console\Commands\LeaveAdjustmentOnEndOfFiscalYear;
 use App\Console\Commands\ProductUpload;
 use App\Console\Commands\SetReleaseVersion;
 use App\Console\Commands\TestCommand;
@@ -23,6 +25,8 @@ class Kernel extends ConsoleKernel
         TopUpTestCommand::class,
         Payslip::class,
         TestCommand::class,
+        GeneratePayslip::class,
+        LeaveAdjustmentOnEndOfFiscalYear::class
     ];
 
     /**
@@ -34,6 +38,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         #$schedule->command('product-upload-csv')->dailyAt('00:00');
+        $schedule->command('sheba:leave-adjustment')->dailyAt('00:05');
         $schedule->command('sheba:generate-payslips')->dailyAt('00:20');
     }
 }

@@ -2,9 +2,28 @@
 
 class  PaymentLinkStatics
 {
-    public static function faq_webview()
+    const SERVICE_CHARGE = 2.0;
+
+    const PAYMENT_LINK_TYPE_EMI = "emi";
+    const PAYMENT_LINK_TYPE_DIGITAL_COLLECTION = "digital_collection";
+
+    const INACTIVE_DIGITAL_COLLECTION = "আপনার পেমেন্ট সার্ভিসটি নিষ্ক্রিয় রয়েছে, ডিজিটাল উপায়ে পেমেন্ট গ্রহন করতে সার্ভিসটি সক্রিয় করুন।";
+
+    const INACTIVE_EMI_PAYMENT = "আপনার পেমেন্ট সার্ভিসটি নিষ্ক্রিয় রয়েছে, EMI (কিস্তি) উপায়ে পেমেন্ট গ্রহন করতে সার্ভিসটি সক্রিয় করুন";
+
+    public static function faq_webview(): string
     {
         return config('sheba.partners_url') . "/api/payment-link-faq";
+    }
+
+    public static function payment_setup_faq_webview(): string
+    {
+        return config('sheba.partners_url') . "/api/payment-setup-faq";
+    }
+
+    public static function how_to_use_webview(): string
+    {
+        return config('sheba.partners_url') . "/api/how-to-use";
     }
 
     public static function get_payment_link_tax()
@@ -17,7 +36,7 @@ class  PaymentLinkStatics
         return config('payment_link.payment_link_commission');
     }
 
-    public static function get_transaction_message()
+    public static function get_transaction_message(): string
     {
         $tax        = en2bnNumber(self::get_payment_link_tax());
         $commission = en2bnNumber(self::get_payment_link_commission());
@@ -39,7 +58,7 @@ class  PaymentLinkStatics
         return config('payment_link.maximum_percentage');
     }
 
-    public static function customPaymentLinkData()
+    public static function customPaymentLinkData(): array
     {
         return [
             "step"                           => self::get_step_margin(),
@@ -51,7 +70,22 @@ class  PaymentLinkStatics
         ];
     }
 
-    public static function paidByTypes()
+    public static function customPaymentServiceData(): array
+    {
+        return [
+            "step"                           => self::get_step_margin(),
+            "minimum_percentage"             => self::get_minimum_percentage(),
+            "maximum_percentage"             => self::get_maximum_percentage(),
+            "terms_and_condition"            => self::faq_webview()
+        ];
+    }
+
+    public static function paymentTermsAndConditionWebview(): string
+    {
+        return config('sheba.partners_base_url') . "/" . "payment-solution-terms-condition";
+    }
+
+    public static function paidByTypes(): array
     {
         return ['partner', 'customer'];
     }

@@ -2,7 +2,9 @@
 
 
 use App\Models\PosOrder;
+use App\Sheba\PosOrderService\Services\OrderService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
@@ -29,11 +31,17 @@ class OrderPlace
      */
     private $posOrderRepository;
     private $token;
+    /**
+     * @var OrderService
+     */
+    private $orderService;
+    private $posOrderId;
 
-    public function __construct(DeliveryServerClient $client, PosOrderRepository $posOrderRepository)
+    public function __construct(DeliveryServerClient $client, PosOrderRepository $posOrderRepository, OrderService $orderService)
     {
         $this->client = $client;
         $this->posOrderRepository = $posOrderRepository;
+        $this->orderService = $orderService;
     }
 
     public function setPartner($partner)
@@ -122,6 +130,7 @@ class OrderPlace
 
     public function setPosOrder($posOrderId)
     {
+        $this->posOrderId = $posOrderId;
         $this->posOrder  = PosOrder::find($posOrderId);
         return $this;
     }
@@ -135,14 +144,15 @@ class OrderPlace
         return $this->client->setToken($this->token)->post('orders', $data);
     }
 
+
     /**
      * @param $info
-     * @return Model
+     * @return array|Model|object|string|null
      */
     public function storeDeliveryInformation($info)
     {
         $data = [
-            'delivery_vendor_name' => $info['logistic_partner_id'],
+            'delivery_vendor_name' => Methods::SDELIVERY,
             'address' => $info['delivery_address']['address'],
             'delivery_district' => $info['delivery_address']['district'],
             'delivery_thana' => $info['delivery_address']['thana'],
@@ -150,10 +160,9 @@ class OrderPlace
             'delivery_request_id' => $info['uid'],
             'status' => OrderStatuses::SHIPPED
         ];
-
-        return $this->posOrderRepository->update($this->posOrder, $data);
+        if ($this->posOrder && !$this->posOrder->is_migrated) return $this->posOrderRepository->update($this->posOrder, $data);
+        return $this->orderService->setPartnerId($this->partner->id)->setOrderId($this->posOrderId)->storeDeliveryInformation($data);
     }
-
 
 
     private function makeData()

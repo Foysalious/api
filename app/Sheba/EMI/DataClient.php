@@ -3,10 +3,9 @@
 
 use App\Models\Partner;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ServerException;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 
-class DataClient {
+class DataClient extends ClientRepository {
     /** @var ExpenseTrackerClient $client */
     private $client;
     /** @var Partner $partner */

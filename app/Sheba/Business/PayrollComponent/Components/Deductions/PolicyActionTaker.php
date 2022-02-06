@@ -10,10 +10,13 @@ use Sheba\Business\Prorate\Updater as ProrateUpdater;
 use Sheba\Dal\BusinessMemberLeaveType\Contract as BusinessMemberLeaveTypeInterface;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficePolicyRule\ActionType;
+use App\Sheba\Business\LeaveProrateLogs\Creator as LeaveProrateLogCreator;
 
 class PolicyActionTaker
 {
     use PayrollCommonCalculation;
+
+    const LEAVE_PRORATE_TYPE = 'leave_policy';
 
     /*** @var Business */
     private $business;
@@ -33,11 +36,10 @@ class PolicyActionTaker
     private $additionBreakdown;
     private $policyType;
     private $isUnpaidLeavePolicyEnable;
-    private $businessMemberSalay;
-    /**
-     * @var bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
-     */
+    private $businessMemberSalary;
     private $businessOfficeHour;
+    /*** @var LeaveProrateLogCreator $leaveProrateLogCreator */
+    private $leaveProrateLogCreator;
 
     public function __construct()
     {
@@ -45,6 +47,7 @@ class PolicyActionTaker
         $this->prorateRequester = app(ProrateRequester::class);
         $this->prorateCreator = app(ProrateCreator::class);
         $this->prorateUpdater = app(ProrateUpdater::class);
+        $this->leaveProrateLogCreator = app(LeaveProrateLogCreator::class);
     }
 
     public function setBusiness(Business $business)
@@ -57,7 +60,7 @@ class PolicyActionTaker
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
-        $this->businessMemberSalay = $business_member->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
+        $this->businessMemberSalary = $business_member->salary ? floatValFormat($this->businessMember->salary->gross_salary) : 0;
         return $this;
     }
 
@@ -123,19 +126,29 @@ class PolicyActionTaker
             $penalty_type = intval($this->policyRules->penalty_type);
             $penalty_amount = floatValFormat($this->policyRules->penalty_amount);
             $existing_prorate = $this->businessMemberLeaveTypeRepo->where('business_member_id', $this->businessMember->id)->where('leave_type_id', $penalty_type)->first();
-            $total_leave_type_days = $existing_prorate ? floatValFormat($existing_prorate->total_days) : floatValFormat($this->business->leaveTypes->find($penalty_type)->total_days);
+            $leave_type = $this->business->leaveTypes->find($penalty_type);
+            $total_leave_type_days = $leave_type ? $leave_type->total_days : 0;
+            $total_leave_type_days = $existing_prorate ? floatValFormat($existing_prorate->total_days) : floatValFormat($total_leave_type_days);
             if ($total_leave_type_days < $penalty_amount) {
                 $one_working_day_amount = $this->oneWorkingDayAmount($business_member_salary, floatValFormat($this->totalWorkingDays));
                 return $this->totalPenaltyAmountByOneWorkingDay($one_working_day_amount, $penalty_amount);
             }
+            $previous_leave_type_total_days = $existing_prorate ? $existing_prorate->total_days : $leave_type->total_days;
             $total_leave_type_days_after_penalty = $total_leave_type_days - $penalty_amount;
             $this->prorateRequester->setBusinessMemberIds([$this->businessMember->id])
                 ->setLeaveTypeId($penalty_type)
                 ->setTotalDays($total_leave_type_days_after_penalty)
                 ->setNote(PayrollConstGetter::LEAVE_PRORATE_NOTE_FOR_POLICY_ACTION);
-            if ($existing_prorate) $this->prorateUpdater->setRequester($this->prorateRequester)->setBusinessMemberLeaveType($existing_prorate)->update();
-            else $this->prorateCreator->setRequester($this->prorateRequester)->create();
-
+            $this->leaveProrateLogCreator->setBusinessMember($this->businessMember)->setProratedType(self::LEAVE_PRORATE_TYPE)->setProratedLeaveDays($total_leave_type_days_after_penalty)->setPreviousLeaveTypeTotalDays($previous_leave_type_total_days);
+            if ($existing_prorate) {
+                $this->prorateUpdater->setRequester($this->prorateRequester)->setBusinessMemberLeaveType($existing_prorate)->update();
+                $this->leaveProrateLogCreator->setLeaveType($existing_prorate)->setLeaveTypeTarget(get_class($existing_prorate));
+            }
+            else {
+                $this->prorateCreator->setRequester($this->prorateRequester)->create();
+                $this->leaveProrateLogCreator->setLeaveType($leave_type)->setLeaveTypeTarget(get_class($leave_type));
+            }
+            $this->leaveProrateLogCreator->create();
             return $policy_total;
         }
         if ($action === ActionType::SALARY_ADJUSTMENT) {

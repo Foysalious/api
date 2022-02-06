@@ -11,6 +11,7 @@ use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\PersonalInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
+use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\Business\EmergencyContactInfoTransformer;
 use App\Transformers\Business\FinancialInfoTransformer;
@@ -22,6 +23,7 @@ use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Redis;
 use Intervention\Image\Image;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -52,6 +54,7 @@ use App\Transformers\Business\EmployeeTransformer;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Throwable;
+use Illuminate\Support\Facades\Cache;
 
 class EmployeeController extends Controller
 {
@@ -108,7 +111,7 @@ class EmployeeController extends Controller
             'name' => 'string',
             'date_of_birth' => 'date',
             'profile_picture' => 'file',
-            'gender' => 'in:Female,Male,Other',
+            'gender' => 'in:' . Gender::implodeEnglish(),
             'address' => 'string',
             'blood_group' => 'in:' . implode(',', getBloodGroupsList(false)),
         ]);
@@ -173,6 +176,8 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $department = $business_member->department();
+        $profile = $business_member->profile();
+        $designation = $business_member->role()->first();
 
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
@@ -192,7 +197,7 @@ class EmployeeController extends Controller
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::STARTED, Status::REACHED]);
+            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED]);
         $pending_visit_count = $pending_visit->count();
 
         $current_visit = $visit_repository->where('visitor_id', $business_member->id)
@@ -246,7 +251,12 @@ class EmployeeController extends Controller
             ] : null,
             'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,
-            'is_manager' => $is_manager
+            'is_manager' => $is_manager,
+            'user_profile' => [
+                'name' => $profile->name ?: null,
+                'pro_pic' => $profile->pro_pic ?: null,
+                'designation' => $designation ? ucwords($designation->name) : null
+            ]
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
@@ -262,17 +272,28 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        $business_members = $this->accessibleBusinessMembers($business, $request);
-
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_members->get(), new BusinessEmployeesTransformer());
-        $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
-
+        $employees_with_dept_data = $this->lazyLoadingStrategy($business, $request);
         return api_response($request, null, 200, [
             'employees' => $employees_with_dept_data['employees'],
             'departments' => $employees_with_dept_data['departments']
         ]);
+    }
+
+    /**
+     * @param $business
+     * @param $request
+     * @return mixed
+     */
+    public function lazyLoadingStrategy($business, $request)
+    {
+        $cache_key = 'phonebook:' . (int)$business->id;
+        return Cache::store('redis')->remember($cache_key, 5, function () use ($business, $request) {
+            $business_members = $this->accessibleBusinessMembers($business, $request);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($business_members->get(), new BusinessEmployeesTransformer());
+            return $manager->createData($resource)->toArray()['data'];
+        });
     }
 
     /**
@@ -466,7 +487,7 @@ class EmployeeController extends Controller
             'department' => 'required|string',
             'designation' => 'required|string',
             'joining_date' => 'required|date',
-            'gender' => 'required|string|in:Female,Male,Other'
+            'gender' => 'required|string|in:' . Gender::implodeEnglish()
         ]);
 
         try {

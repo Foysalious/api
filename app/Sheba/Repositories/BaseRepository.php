@@ -22,7 +22,6 @@ class BaseRepository implements BaseRepositoryInterface
 
     /** @var string $modelClass */
     protected $modelClass;
-
     public function __construct()
     {
         $this->requestIdentification = new RequestIdentification();

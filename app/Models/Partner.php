@@ -1,9 +1,15 @@
 <?php namespace App\Models;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Transport\TransportTicketOrder;
+use App\Sheba\InventoryService\Partner\Events\Updated;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\UserMigration\UserMigrationService;
+use App\Sheba\UserMigration\AccountingUserMigration;
+use App\Sheba\UserMigration\UserMigrationRepository;
 use Carbon\Carbon;
 use DB;
+use Exception;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -12,10 +18,14 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
+use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
+use Sheba\Dal\Survey\Model as Survey;
+use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
@@ -48,9 +58,12 @@ use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBankingInfo;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
+use Sheba\Dal\UserMigration\Model as UserMigration;
+
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
+    CONST NOT_ELIGIBLE = 'not_eligible';
     use Wallet, TopUpTrait, MovieTicketTrait;
 
     public $totalCreditForSubscription;
@@ -128,6 +141,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         'updated_at'
     ];
     private $resourceTypes;
+
+    public static $updatedEventClass = Updated::class;
 
     public function __construct($attributes = [])
     {
@@ -384,6 +399,24 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return null;
     }
 
+    public function getNidNo()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->nid_no;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->nid_no;
+        return null;
+    }
+
+    public function getDob()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->dob;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->dob;
+        return null;
+    }
+
     public function operationResources()
     {
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Operation'])->withPivot($this->resourcePivotColumns);
@@ -590,7 +623,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      * @param $package
      * @param null $upgradeRequest
      * @param int $sms
-     * @throws \Exception
+     * @throws Exception
      */
     public function subscriptionUpgrade($package, $upgradeRequest = null, $sms = 1)
     {
@@ -661,9 +694,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())
+        return (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())
             ->setSource(TransactionSources::TOP_UP)->setType(Types::debit())->setLog($transaction->getLog())
-            ->dispatch();
+            ->store();
     }
 
     public function todayJobs($jobs = null)
@@ -742,9 +775,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return new \Sheba\TopUp\Commission\Partner();
     }
 
+    /**
+     * @return mixed
+     * @throws HyperLocationNotFoundException
+     */
     public function getHyperLocation()
     {
         $geo = json_decode($this->geo_informations);
+        if (empty($geo)){
+            throw  new HyperLocationNotFoundException();
+        }
         return HyperLocal::insidePolygon($geo->lat, $geo->lng)->first();
     }
 
@@ -1037,6 +1077,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
+    public function dataMigration()
+    {
+        return $this->hasOne(PartnerDataMigration::class);
+    }
+
     public function topupChangeLogs()
     {
         return $this->hasMany(CanTopUpUpdateLog::class);
@@ -1050,5 +1095,64 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getGatewayChargesId()
     {
         return $this->subscription_rules->payment_gateway_configuration_id;
+    }
+
+    public function userMigration()
+    {
+        return $this->hasMany(UserMigration::class, 'user_id');
+    }
+
+    public function lastUpdatedUserMigration()
+    {
+        return $this->userMigration->max('updated_at') ?? null;
+    }
+
+    public function lastUpdatedSubscription()
+    {
+        return $this->subscription->updated_at ?? null;
+    }
+
+    public function lastUpdatedPosSetting()
+    {
+        return $this->posSetting->updated_at ?? null;
+    }
+
+    public function lastBilledDate()
+    {
+        return $this->last_billed_date ?? null;
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function isMigrated($module_name): bool
+    {
+        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+        /** @var UserMigrationService $userMigrationService */
+        $userMigrationService = app(UserMigrationService::class);
+        $class = $userMigrationService->resolveClass($module_name);
+        $userStatus = $class->setUserId($this->id)->setModuleName($module_name)->getStatus();
+        if (in_array($userStatus, $arr)) return false;
+        return true;
+    }
+
+    public function pgwStoreAccounts()
+    {
+        return $this->morphMany(PgwStoreAccount::class, 'user');
+    }
+
+    public function lastUpdatedPGWStore()
+    {
+        return $this->pgwStoreAccounts->max('updated_at') ?? null;
+    }
+
+    public function lastResourceUpdated()
+    {
+        return $this->getFirstAdminResource()->updated_at;
+    }
+
+    public function survey()
+    {
+        return $this->morphMany(Survey::class, 'user');
     }
 }

@@ -1,9 +1,14 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\DueTracker\DueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
@@ -12,6 +17,7 @@ use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
+use Sheba\Pos\Repositories\PosOrderPaymentRepository;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
@@ -22,11 +28,13 @@ class DueTrackerController extends Controller
     use ModificationFields;
     private $entryRepo;
     private $paymentLinkCreator;
+    private $accDueTrackerRepository;
 
-    public function __construct(EntryRepository $entry_repo, PaymentLinkCreator $paymentLinkCreator)
+    public function __construct(EntryRepository $entry_repo, PaymentLinkCreator $paymentLinkCreator, AccountingDueTrackerRepository $accDueTrackerRepository)
     {
         $this->entryRepo = $entry_repo;
         $this->paymentLinkCreator = $paymentLinkCreator;
+        $this->accDueTrackerRepository = $accDueTrackerRepository;
     }
 
     /**
@@ -42,7 +50,6 @@ class DueTrackerController extends Controller
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
-
         if (!$request->partner->expense_account_id) {
             $account = $this->entryRepo->createExpenseUser($request->partner);
             $this->setModifier($request->partner);
@@ -82,7 +89,7 @@ class DueTrackerController extends Controller
         ini_set('max_execution_time', 420);
 
         $request->merge(['customer_id' => $customer_id]);
-        $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $request);
+        $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $customer_id, $request);
         if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
             $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
             $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
@@ -136,6 +143,7 @@ class DueTrackerController extends Controller
 
         $request->merge(['customer_id' => $customer_id]);
         $response = $dueTrackerRepository->setPartner($request->partner)->update($request->partner, $request);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_ENTRY_UPDATE)->create($request->manager_resource);
         return api_response($request, $response, 200, ['data' => $response]);
     }
 
@@ -148,10 +156,16 @@ class DueTrackerController extends Controller
     public function setDueDateReminder(Request $request, PartnerPosCustomerRepository $partner_pos_customer_repo)
     {
         $this->validate($request, ['due_date_reminder' => 'required|date']);
-        $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $request->customer_id)->first();
-        if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
-        $this->setModifier($request->partner);
-        $partner_pos_customer_repo->update($partner_pos_customer, ['due_date_reminder' => $request->due_date_reminder]);
+        $data['due_date_reminder'] = Carbon::parse($request->due_date_reminder)->format('Y-m-d H:i:s');
+        if ($this->accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+            $this->accDueTrackerRepository->updateDueDate($request->customer_id, $request->partner->id, $data);
+        } else {
+            $partner_pos_customer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $request->customer_id)->first();
+            if (empty($partner_pos_customer)) throw new InvalidPartnerPosCustomer();
+            $this->setModifier($request->partner);
+            $partner_pos_customer_repo->update($partner_pos_customer, $data);
+        }
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::REMINDER_SET)->create($request->manager_resource);
         return api_response($request, null, 200);
     }
 
@@ -159,29 +173,24 @@ class DueTrackerController extends Controller
      * @param Request $request
      * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
-     * @throws ExpenseTrackingServerError
      */
     public function dueDateWiseCustomerList(Request $request, DueTrackerRepository $dueTrackerRepository)
     {
-        $request->merge(['balance_type' => 'due']);
-        $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
-        $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
-        return api_response($request, null, 200, ['data' => $response]);
-    }
+        try {
+            $request->merge(['balance_type' => 'due']);
+            // checking the partner is migrated to accounting
+            if ($this->accDueTrackerRepository->isMigratedToAccounting($request->partner->id)) {
+                $response = $this->accDueTrackerRepository->setPartner($request->partner)->dueDateWiseCustomerList();
+            } else {
+                $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
+                $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
+            }
 
-    /**
-     * @param Request $request
-     * @param DueTrackerRepository $dueTrackerRepository
-     * @return JsonResponse
-     * @throws ExpenseTrackingServerError
-     */
-    public function getDueCalender(Request $request, DueTrackerRepository $dueTrackerRepository)
-    {
-        $this->validate($request, ['month' => 'required', 'year' => 'required']);
-        $request->merge(['balance_type' => 'due']);
-        $dueList = $dueTrackerRepository->setPartner($request->partner)->getDueList($request, false);
-        $response = $dueTrackerRepository->generateDueCalender($dueList, $request);
-        return api_response($request, null, 200, ['data' => $response]);
+            return api_response($request, null, 200, ['data' => $response]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**
@@ -195,6 +204,7 @@ class DueTrackerController extends Controller
     public function delete(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $entry_id)
     {
         $dueTrackerRepository->setPartner($request->partner)->removeEntry($entry_id);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_ENTRY_DELETE)->create($request->manager_resource);
         return api_response($request, true, 200);
     }
 
@@ -208,13 +218,29 @@ class DueTrackerController extends Controller
      */
     public function sendSMS(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
-        $request->merge(['customer_id' => $customer_id]);
-        $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required']);
-        if ($request->type == 'due') {
-            $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
+//        TODO: new "receivable", "payable" support should be in V3 API
+        try {
+            $request->merge(['customer_id' => $customer_id]);
+            $this->validate($request, ['type' => 'required|in:due,deposit,receivable,payable', 'amount' => 'required']);
+            if ($request->type == 'receivable' || $request->type == 'due') {
+                $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
+            }
+            $dueTrackerRepository->sendSMS($request);
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_SMS_SEND)->create($request->manager_resource);
+            return api_response($request, true, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (InvalidPartnerPosCustomer $e) {
+            $message = "Invalid pos customer for this partner";
+            return api_response($request, $message, 403, ['message' => $message]);
+        } catch(InsufficientBalance $e) {
+            $message = "Insufficient Balance";
+            return api_response($request, $message, 402, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
         }
-        $dueTrackerRepository->sendSMS($request);
-        return api_response($request, true, 200);
     }
 
     /**
@@ -229,6 +255,9 @@ class DueTrackerController extends Controller
     }
 
     /**
+     * @param Request $request
+     * @param DueTrackerRepository $dueTrackerRepository
+     * @return JsonResponse
      * @throws UnauthorizedRequestFromExpenseTrackerException
      */
     public function createPosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository)
