@@ -33,8 +33,8 @@ class Item implements Arrayable {
         $this->setExtras();
         return [
             'id'              => $this->id,
-            'customer_name'   => $this->customer_name,
-            'customer_mobile' => $this->customer_mobile,
+            'customer_name'   => $this->customer_name ?? 'N/A',
+            'customer_mobile' => $this->customer_mobile ?? 'N/A',
             'date'            => $this->date,
             'created_at'      => $this->created_at,
             'amount'          => round((double)$this->amount, 2),
