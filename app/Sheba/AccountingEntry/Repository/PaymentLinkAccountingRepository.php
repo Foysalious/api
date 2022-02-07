@@ -261,13 +261,13 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['amount'] = $this->amount;
         $data['amount_cleared'] = $this->amount_cleared;
         $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
-        $data['bank_transaction_charge'] = 0;
+        $data['bank_transaction_charge'] = $this->bank_transaction_charge;
         $data['interest'] = 0;
         $data['source_id'] = $this->source_id;
         $data['source_type'] = $this->source_type;
         $data['to_account_key'] = $this->debit_account_key;
         $data['from_account_key'] = $this->credit_account_key;
-        $data['reference'] = 'Entry using Payment Link';
+        $data['reference'] = null;
         $data['note'] = $this->note;
         $data['details'] = $this->details;
         $data['partner'] = $userId;

@@ -69,6 +69,7 @@ class BusinessRoute
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
                     $api->post('reconciliation', 'B2b\AttendanceReconciliationController@create');
+                    $api->post('bulk-reconciliation', 'B2b\AttendanceReconciliationController@bulkReconciliation');
                 });
                 $api->group(['prefix' => 'office-time'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getOfficeTime');
