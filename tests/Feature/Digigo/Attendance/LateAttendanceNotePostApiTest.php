@@ -38,6 +38,7 @@ class LateAttendanceNotePostApiTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
+        $response->json();
         $attendance_action_logs = AttendanceActionLog::first();
         $this->assertEquals(1, $attendance_action_logs->attendance_id);
         $this->assertEquals('checkin', $attendance_action_logs->action);
