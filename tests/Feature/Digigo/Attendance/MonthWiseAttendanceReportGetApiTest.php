@@ -85,11 +85,11 @@ class MonthWiseAttendanceReportGetApiTest extends FeatureTestCase
         $this->assertEquals(0, $data['attendance']['statistics']['full_day_leave']);
         $this->assertEquals(0, $data['attendance']['statistics']['half_day_leave']);
         foreach ($data['attendance']['daily_breakdown'] as $item) {
-            $this->assertIsArray($date_array,"Has Dates");
-            $this->assertEquals(null,$item['weekend_or_holiday_tag']);
-            $this->assertEquals(0,$item['show_attendance']);
-            $this->assertEquals(null,$item['attendance']);
-            $this->assertEquals(1,$item['is_absent']);
+            $this->assertIsArray($date_array, "Has Dates");
+            $this->assertEquals(null, $item['weekend_or_holiday_tag']);
+            $this->assertEquals(0, $item['show_attendance']);
+            $this->assertEquals(null, $item['attendance']);
+            $this->assertEquals(1, $item['is_absent']);
         }
     }
 

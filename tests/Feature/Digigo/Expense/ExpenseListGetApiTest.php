@@ -37,14 +37,14 @@ class ExpenseListGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-            $this->assertEquals(1, $data['data']['expenses'][0]['id']);
-            $this->assertEquals(1, $data['data']['expenses'][0]['member_id']);
-            $this->assertEquals('100.00', $data['data']['expenses'][0]['amount']);
-            $this->assertEquals('pending', $data['data']['expenses'][0]['status']);
-            $this->assertEquals(0, $data['data']['expenses'][0]['is_updated_by_super_admin']);
-            $this->assertEquals('Test Expense', $data['data']['expenses'][0]['remarks']);
-            $this->assertEquals('other', $data['data']['expenses'][0]['type']);
-            $this->assertEquals(100, $data['data']['sum']);
+        $this->assertEquals(1, $data['data']['expenses'][0]['id']);
+        $this->assertEquals(1, $data['data']['expenses'][0]['member_id']);
+        $this->assertEquals('100.00', $data['data']['expenses'][0]['amount']);
+        $this->assertEquals('pending', $data['data']['expenses'][0]['status']);
+        $this->assertEquals(0, $data['data']['expenses'][0]['is_updated_by_super_admin']);
+        $this->assertEquals('Test Expense', $data['data']['expenses'][0]['remarks']);
+        $this->assertEquals('other', $data['data']['expenses'][0]['type']);
+        $this->assertEquals(100, $data['data']['sum']);
     }
 
     public function testExpenseListDataApiFormat()
@@ -53,13 +53,13 @@ class ExpenseListGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-            $this->assertArrayHasKey('id', $data['data']['expenses'][0]);
-            $this->assertArrayHasKey('member_id', $data['data']['expenses'][0]);
-            $this->assertArrayHasKey('amount', $data['data']['expenses'][0]);
-            $this->assertArrayHasKey('status', $data['data']['expenses'][0]);
-            $this->assertArrayHasKey('is_updated_by_super_admin', $data['data']['expenses'][0]);
-            $this->assertArrayHasKey('remarks', $data['data']['expenses'][0]);
-            $this->assertArrayHasKey('type', $data['data']['expenses'][0]);
-            $this->assertArrayHasKey('sum', $data['data']);
+        $this->assertArrayHasKey('id', $data['data']['expenses'][0]);
+        $this->assertArrayHasKey('member_id', $data['data']['expenses'][0]);
+        $this->assertArrayHasKey('amount', $data['data']['expenses'][0]);
+        $this->assertArrayHasKey('status', $data['data']['expenses'][0]);
+        $this->assertArrayHasKey('is_updated_by_super_admin', $data['data']['expenses'][0]);
+        $this->assertArrayHasKey('remarks', $data['data']['expenses'][0]);
+        $this->assertArrayHasKey('type', $data['data']['expenses'][0]);
+        $this->assertArrayHasKey('sum', $data['data']);
     }
 }

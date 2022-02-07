@@ -67,10 +67,10 @@ class ApprovalDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals(null, $data['approval_details']['leave']['half_day_configuration']);
         $this->assertEquals(null, $data['approval_details']['leave']['substitute']);
         $this->assertEquals(false, $data['approval_details']['leave']['is_leave_days_exceeded']);
-        $this->assertEquals(Carbon::now()->format('M d, Y') .' - '. Carbon::now()->addDay()->format('M d, Y'), $data['approval_details']['leave']['leave_date']);
+        $this->assertEquals(Carbon::now()->format('M d, Y') . ' - ' . Carbon::now()->addDay()->format('M d, Y'), $data['approval_details']['leave']['leave_date']);
         $this->assertEquals('pending', $data['approval_details']['leave']['status']);
         $this->assertEquals('Test leave', $data['approval_details']['leave']['note']);
-        $this->assertEquals(Carbon::now()->format('M d').' - '. Carbon::now()->addDay()->format('M d'), $data['approval_details']['leave']['period']);
+        $this->assertEquals(Carbon::now()->format('M d') . ' - ' . Carbon::now()->addDay()->format('M d'), $data['approval_details']['leave']['period']);
         $this->assertEquals(10, $data['approval_details']['leave']['total_leave_days']);
         $this->assertEquals(null, $data['approval_details']['leave']['super_admin_action_reason']);
         $this->assertEquals(1, $data['approval_details']['leave']['business_member_id']);

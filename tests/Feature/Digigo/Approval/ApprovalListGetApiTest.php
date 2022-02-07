@@ -62,7 +62,7 @@ class ApprovalListGetApiTest extends FeatureTestCase
         $this->assertEquals(null, $data['request_lists'][0]['leave']['total_days']);
         $this->assertEquals(0, $data['request_lists'][0]['leave']['is_half_day']);
         $this->assertEquals(null, $data['request_lists'][0]['leave']['half_day_configuration']);
-        $this->assertEquals(Carbon::now()->format('M d, Y').' - '. Carbon::now()->addDay()->format('M d, Y'), $data['request_lists'][0]['leave']['leave_date']);
+        $this->assertEquals(Carbon::now()->format('M d, Y') . ' - ' . Carbon::now()->addDay()->format('M d, Y'), $data['request_lists'][0]['leave']['leave_date']);
         $this->assertEquals('pending', $data['request_lists'][0]['leave']['status']);
         $this->assertEquals('leave', $data['type_lists'][0]);
     }
@@ -73,18 +73,18 @@ class ApprovalListGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        $this->assertArrayHasKey('id',$data['request_lists'][0]);
-        $this->assertArrayHasKey('type',$data['request_lists'][0]);
-        $this->assertArrayHasKey('status',$data['request_lists'][0]);
-        $this->assertArrayHasKey('id',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('business_member_id',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('title',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('type',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('total_days',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('is_half_day',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('half_day_configuration',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('leave_date',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey('status',$data['request_lists'][0]['leave']);
-        $this->assertArrayHasKey(0,$data['type_lists']);
+        $this->assertArrayHasKey('id', $data['request_lists'][0]);
+        $this->assertArrayHasKey('type', $data['request_lists'][0]);
+        $this->assertArrayHasKey('status', $data['request_lists'][0]);
+        $this->assertArrayHasKey('id', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('business_member_id', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('title', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('type', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('total_days', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('is_half_day', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('half_day_configuration', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('leave_date', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey('status', $data['request_lists'][0]['leave']);
+        $this->assertArrayHasKey(0, $data['type_lists']);
     }
 }

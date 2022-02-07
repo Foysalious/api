@@ -40,8 +40,8 @@ class EmployeeLeaveDataGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        $this->assertEquals(Carbon::now(),$data['full_day_leaves'][0]);
-        $this->assertEquals(Carbon::now()->addDay()->timestamp,$data['full_day_leaves'][1]);
+        $this->assertEquals(Carbon::now(), $data['full_day_leaves'][0]);
+        $this->assertEquals(Carbon::now()->addDay()->timestamp, $data['full_day_leaves'][1]);
     }
 
     public function testUserAppliedLeaveListApiFormat()

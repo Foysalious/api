@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Digigo\User;
 
-use Carbon\Carbon;
 use Tests\Feature\FeatureTestCase;
 
 /**

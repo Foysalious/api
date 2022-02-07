@@ -25,7 +25,7 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-      $this->assertEquals(200, $data['code']);
+        $this->assertEquals(200, $data['code']);
     }
 
     public function testApiReturnValidDataForSuccessResponse()

@@ -17,7 +17,6 @@ use Sheba\Dal\LeaveLog\Model as LeaveLog;
 use Sheba\Dal\LeaveStatusChangeLog\Model as LeaveStatusChangeLog;
 
 
-
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
@@ -88,17 +87,17 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals(null, $data['leave']['total_days']);
         $this->assertEquals(0, $data['leave']['is_half_day']);
         $this->assertEquals(0, $data['leave']['half_day_configuration']);
-        $this->assertEquals(Carbon::now()->addMinutes(15)->format('h:i')."-".Carbon::now()->subMinutes(15)->format('h:i'), $data['leave']['time']);
+        $this->assertEquals(Carbon::now()->addMinutes(15)->format('h:i') . "-" . Carbon::now()->subMinutes(15)->format('h:i'), $data['leave']['time']);
         $this->assertEquals('pending', $data['leave']['status']);
         $this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $data['leave']['requested_on']['date']);
-        $this->assertEquals(3,  $data['leave']['requested_on']['timezone_type']);
+        $this->assertEquals(3, $data['leave']['requested_on']['timezone_type']);
         $this->assertEquals('Asia/Dhaka', $data['leave']['requested_on']['timezone']);
         $this->assertEquals('Test leave', $data['leave']['note']);
         $this->assertEquals(null, $data['leave']['substitute']);
         $this->assertEquals('pending', $data['leave']['approvers'][0]['status']);
         $this->assertEquals(1, $data['leave']['approver_count']);
         $this->assertEquals('Super Admin changed this leave status from Pending to Accepted', $data['leave']['leave_log_details'][0]['log']);
-        $this->assertEquals(Carbon::now()->format('h:i A')." - ".Carbon::now()->format('d M, Y'), $data['leave']['leave_log_details'][0]['created_at']);
+        $this->assertEquals(Carbon::now()->format('h:i A') . " - " . Carbon::now()->format('d M, Y'), $data['leave']['leave_log_details'][0]['created_at']);
         $this->assertEquals(1, $data['leave']['is_substitute_required']);
         $this->assertEquals(0, $data['leave']['is_cancelable_request']);
     }
@@ -123,7 +122,7 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
         $this->assertArrayHasKey('time', $data['leave']);
         $this->assertArrayHasKey('status', $data['leave']);
         $this->assertArrayHasKey('date', $data['leave']['requested_on']);
-        $this->assertArrayHasKey('timezone_type',  $data['leave']['requested_on']);
+        $this->assertArrayHasKey('timezone_type', $data['leave']['requested_on']);
         $this->assertArrayHasKey('timezone', $data['leave']['requested_on']);
         $this->assertArrayHasKey('note', $data['leave']);
         $this->assertArrayHasKey('substitute', $data['leave']);

@@ -35,12 +35,12 @@ class TicketListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         foreach ($data['supports'] as $item) {
-            $this->assertEquals(1,$item['id']);
-            $this->assertEquals(1,$item['member_id']);
-            $this->assertEquals('open',$item['status']);
-            $this->assertEquals('Test Ticket',$item['long_description']);
-            $this->assertEquals(Carbon::now()->format('M d'),$item['date']);
-            $this->assertEquals(Carbon::now()->format('h:i A'),$item['time']);
+            $this->assertEquals(1, $item['id']);
+            $this->assertEquals(1, $item['member_id']);
+            $this->assertEquals('open', $item['status']);
+            $this->assertEquals('Test Ticket', $item['long_description']);
+            $this->assertEquals(Carbon::now()->format('M d'), $item['date']);
+            $this->assertEquals(Carbon::now()->format('h:i A'), $item['time']);
         }
     }
 
@@ -51,13 +51,13 @@ class TicketListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         foreach ($data['supports'] as $item) {
-            $this->assertArrayHasKey('id',$item);
-            $this->assertArrayHasKey('member_id',$item);
-            $this->assertArrayHasKey('status',$item);
-            $this->assertArrayHasKey('long_description',$item);
-            $this->assertArrayHasKey('created_at',$item);
-            $this->assertArrayHasKey('date',$item);
-            $this->assertArrayHasKey('time',$item);
+            $this->assertArrayHasKey('id', $item);
+            $this->assertArrayHasKey('member_id', $item);
+            $this->assertArrayHasKey('status', $item);
+            $this->assertArrayHasKey('long_description', $item);
+            $this->assertArrayHasKey('created_at', $item);
+            $this->assertArrayHasKey('date', $item);
+            $this->assertArrayHasKey('time', $item);
         }
     }
 }
