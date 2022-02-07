@@ -11,7 +11,8 @@ class Statics
     CONST REJECTED         = "rejected";
     CONST INCOMPLETE       = "incomplete";
     CONST SUCCESS_MESSAGE  = "আপনার NID-এর তথ্য এবং ছবি সফলভাবে বাংলাদেশ সরকার কর্তৃক ভেরিফাইড হয়েছে।";
-    CONST FAIL_MESSAGE     = "সক্রিয়ভাবে প্রাপ্ত তথ্যে কিছু ভুলের কারনে আপনার NID যাচাই করা সম্ভব হয়নি। sManager কর্তৃপক্ষ ম্যানুয়াল ভেরিফিকেশন নিয়ে কাজ করছে সকল তথ্য ঠিক থাকলে আগামী ৩ কার্যদিবসের মধ্যে ভেরিফিকেশন সম্পন্ন হবে।  অথবা আপনি চাইলে সক্রিয়ভাবে";
+    CONST FAIL_MESSAGE     = "স্বয়ংক্রিয় ভাবে প্রাপ্ত তথ্যে কিছু ভুলের কারনে আপনার NID যাচাই করা সম্ভব হয়নি। sManager কর্তৃপক্ষ ম্যানুয়াল ভেরিফিকেশন নিয়ে কাজ করছে। সকল তথ্য ঠিক থাকলে আগামী ৩ কার্যদিবসের মধ্যে ভেরিফিকেশন সম্পন্ন হবে অথবা আপনি চাইলে স্বয়ংক্রিয় ভাবে আরও %s বার চেষ্টা করতে পারেন।";
+    CONST FINAL_FAIL_MESSAGE = "আপনি সর্বোচ্চ সংখ্যকবার NID ভেরিফিকেশনের জন্য চেষ্টা করেছেন। sManager কর্তৃপক্ষ আপনার NID ভেরিফিকেশন নিয়ে কাজ করছে।আগামী ৩ কার্যদিবসের মধ্যে আপনাকে ফলাফল জানানো হবে। বিস্তারিত জানতে চাইলে 16516 এ কল করুন।";
     CONST PENDING_MESSAGE  = "আপনার NID ভেরিফিকেশন প্রক্রিয়াধীন রয়েছে। ভেরিফিকেশন প্রক্রিয়া দ্রুত করতে চাইলে 16516-এ কল করুন।";
     CONST MAX_PORICHOY_VERIFICATION_ATTEMPT = 3;
     public static function faceVerificationValidate(): array
@@ -33,16 +34,26 @@ class Statics
 
     /**
      * @param $status
+     * @param $nid_verification_request_count
      * @param $message
      * @return array
      */
-    public static function faceVerificationResponse($status, $message): array
+    public static function faceVerificationResponse($status, $nid_verification_request_count, $message): array
     {
         if($status === self::UNVERIFIED) $status = self::REJECTED;
+        $remaining_attempt = self::MAX_PORICHOY_VERIFICATION_ATTEMPT - $nid_verification_request_count;
+
+        if ($nid_verification_request_count < self::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
+            $count_format = convertNumbersToBangla($remaining_attempt, false);
+            $fail_message = sprintf(self::FAIL_MESSAGE, $count_format);
+        } else {
+            $fail_message = self::FINAL_FAIL_MESSAGE;
+        }
         return [
             'status'  => $status,
             'title'   => $status === self::VERIFIED ? "ভেরিফিকেশন সফল হয়েছে !" : "ভেরিফিকেশন প্রক্রিয়াধীন",
-            'message' => $status === self::VERIFIED ? self::SUCCESS_MESSAGE : self::FAIL_MESSAGE
+            'message' => $status === self::VERIFIED ? self::SUCCESS_MESSAGE : $fail_message,
+            'message_count' => $remaining_attempt
         ];
     }
 
