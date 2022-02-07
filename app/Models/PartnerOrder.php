@@ -78,6 +78,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalDeliveryDiscount = 0.00;
     public $totalDeliveryDiscountShebaContribution = 0.00;
     public $totalDeliveryDiscountPartnerContribution = 0.00;
+    public $dueWithLogisticWithoutRoundingCutoff = 0;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -143,6 +144,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->due = floatValFormat($this->grossAmount - $this->paid);
         $this->paidWithLogistic = floatValFormat($this->paid + $this->totalLogisticPaid);
         $this->dueWithLogistic = floatValFormat($this->due + $this->totalLogisticDue);
+        $this->dueWithLogisticWithoutRoundingCutoff = floatValFormat($this->due + $this->totalLogisticDue + $this->roundingCutOff);
         $this->overPaid = $this->isOverPaid() ? floatValFormat($this->paid - $this->grossAmount) : 0;
         $this->profitBeforeDiscount = floatValFormat($this->jobPrices - $this->totalCost);
         $this->totalDiscountedCost = ($this->totalDiscountedCost < 0) ? 0 : $this->totalDiscountedCost;
