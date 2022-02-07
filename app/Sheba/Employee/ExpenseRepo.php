@@ -226,6 +226,6 @@ class ExpenseRepo
                         ]);
                     }
                 ]);
-            }])/*->select('id', 'member_id', 'business_member_id', 'employee_id', 'profiles.name', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('YEAR(created_at) year, MONTH(created_at) month'))*/;
+            }]);
     }
 }

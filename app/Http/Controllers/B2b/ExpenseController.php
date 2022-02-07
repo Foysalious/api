@@ -218,6 +218,13 @@ class ExpenseController extends Controller
         /** @var Business $business */
         $business = $request->business;
         $business_members = $business->getAccessibleBusinessMember();
+        if ($request->has('department_id')) {
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department_id);
+                });
+            });
+        }
         $business_members_ids = $business_members->pluck('id')->toArray();
         $expenses = $this->expense_repo->getDetailExpenseByBusinessMember($business_members_ids);
         $start_date = date('Y-m-01');
