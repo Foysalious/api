@@ -208,4 +208,25 @@ class ExpenseRepo
                 ]);
             }])->select('id', 'member_id', 'business_member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'), DB::raw('YEAR(created_at) year, MONTH(created_at) month'))->groupby(['business_member_id', 'type']);
     }
+
+    public function getDetailExpenseByBusinessMember($business_members_ids)
+    {
+        return Expense::whereIn('business_member_id', $business_members_ids)->with([
+            'businessMember' => function ($query) {
+                $query->select('business_member.id', 'business_member.member_id', 'business_id', 'business_member.employee_id', 'business_role_id')->with([
+                    'member' => function ($query) {
+                        $query->select('members.id', 'members.profile_id')->with(['profile' => function ($query) {
+                            $query->select('profiles.id', 'profiles.name');
+                        }]);
+                    },
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }]);
+    }
 }
