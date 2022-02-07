@@ -15,7 +15,7 @@ class ExpenseReportDetailsExcel
         return $this;
     }
 
-    public function get()
+    public function download()
     {
         $this->makeData();
         Excel::create('Details_Expense_Report', function ($excel) {

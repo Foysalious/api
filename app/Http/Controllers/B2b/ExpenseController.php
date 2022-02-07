@@ -228,6 +228,7 @@ class ExpenseController extends Controller
             $end_date = $dates['end_date'];
         }
         $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->orderBy('created_at', 'DESC');
-        $expense_report_details_excel->setData($expenses->get())->get();
+        $expense_report_details_excel->setData($expenses->get())->download();
+        return api_response($request, null, 200);
     }
 }
