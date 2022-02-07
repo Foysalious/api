@@ -81,14 +81,15 @@ class LeaveCancelPostApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $response->json();
+        $current_time = Carbon::now()->format('Y-m-d h:i');
         $Leave = Leave::first();
         $this->assertEquals('Test Leave', $Leave->title);
         $this->assertEquals($this->business_member->id, $Leave->business_member_id);
         $this->assertEquals(1, $Leave->leave_type_id);
-        $this->assertEquals(Carbon::now(), $Leave->start_date);
-        $this->assertEquals(Carbon::now()->addDay()->timestamp, $Leave->end_date);
+        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->format('Y-m-d h:i'));
+        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->format('Y-m-d h:i'));
         $this->assertEquals(0, $Leave->is_half_day);
-        $this->assertEquals('Test Leave', $Leave->note);
+        $this->assertEquals('Test leave', $Leave->note);
         $this->assertEquals('canceled', $Leave->status);
     }
 }

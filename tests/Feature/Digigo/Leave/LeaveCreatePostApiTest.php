@@ -67,8 +67,8 @@ class LeaveCreatePostApiTest extends FeatureTestCase
         $response = $this->post("/v1/employee/leaves", [
             'title' => 'Annual Leave',
             'leave_type_id' => 1,
-            'start_date' => Carbon::now()->format('Y-m-d'),
-            'end_date' => Carbon::now()->addDay()->format('Y-m-d'),
+            'start_date' => Carbon::now(),
+            'end_date' => Carbon::now()->addDay()->timestamp,
             'note' => 'Test Leave',
             'substitute' => '2',
             'is_half_day' => 0,
@@ -133,7 +133,7 @@ class LeaveCreatePostApiTest extends FeatureTestCase
             'title' => 'Annual Leave',
             'leave_type_id' => 1,
             'start_date' => Carbon::now(),
-            'end_date' => Carbon::now(),
+            'end_date' => Carbon::now()->addDay()->timestamp,
             'note' => 'Test Leave',
             'substitute' => '2',
             'is_half_day' => 0,
@@ -142,11 +142,12 @@ class LeaveCreatePostApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $response->json();
+        $current_time = Carbon::now()->format('Y-m-d h:i');
         $Leave = Leave::first();
         $this->assertEquals('Annual Leave', $Leave->title);
         $this->assertEquals(1, $Leave->leave_type_id);
-        //$this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $Leave->start_date);
-        //$this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $Leave->end_date);
+        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->format('Y-m-d h:i'));
+        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->format('Y-m-d h:i'));
         $this->assertEquals(0, $Leave->is_half_day);
         $this->assertEquals('Test Leave', $Leave->note);
         $this->assertEquals('pending', $Leave->status);

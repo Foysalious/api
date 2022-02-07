@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Notification;
 
+use App\Models\Notification;
 use Carbon\Carbon;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\BusinessPushNotificationLogs\Model as BusinessPushNotificationLog;
@@ -14,14 +15,15 @@ class LastNotificationGetApiTest extends FeatureTestCase
     public function setUp(): void
     {
         parent::setUp();
-        $this->truncateTables([BusinessPushNotificationLog::class]);
+        $this->truncateTables([Notification::class, BusinessPushNotificationLog::class]);
         $this->logIn();
+        Notification::factory()->create();
         BusinessPushNotificationLog::factory()->create();
     }
 
     public function testApiReturnUnreadNotificationCount()
     {
-        $response = $this->get("/v1/employee/last-notifications?time=2021-11-28%2017:55:49", [
+        $response = $this->get("/v1/employee/last-notifications?time=".Carbon::now()->format('Y-m-d H:i:s')."", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
@@ -31,7 +33,7 @@ class LastNotificationGetApiTest extends FeatureTestCase
 
     public function testApiReturnValidDataForSuccessResponse()
     {
-        $response = $this->get("/v1/employee/last-notifications?time=2021-11-28%2017:55:49", [
+        $response = $this->get("/v1/employee/last-notifications?time=".Carbon::now()->format('Y-m-d H:i:s')."", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
@@ -40,7 +42,7 @@ class LastNotificationGetApiTest extends FeatureTestCase
 
     public function testLastNotificationDataApiFormat()
     {
-        $response = $this->get("/v1/employee/last-notifications?time=2021-11-28%2017:55:49", [
+        $response = $this->get("/v1/employee/last-notifications?time=".Carbon::now()->format('Y-m-d H:i:s')."", [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();

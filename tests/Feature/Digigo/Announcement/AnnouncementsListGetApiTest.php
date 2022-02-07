@@ -29,7 +29,7 @@ class AnnouncementsListGetApiTest extends FeatureTestCase
         $this->assertEquals('Successful', $data['message']);
     }
 
-    public function testApiReturnValidDataForSuccessResponse()
+    public function testApiReturnAnnouncementLisForSuccessResponse()
     {
         $response = $this->get("/v1/employee/announcements?limit=10&offset=0", [
             'Authorization' => "Bearer $this->token",
@@ -41,8 +41,8 @@ class AnnouncementsListGetApiTest extends FeatureTestCase
         $this->assertEquals('As you know the current situation is a work situation. You can work the hole day and you should as you have no interruption', $data['announcements'][0]['short_description']);
         $this->assertEquals('As you know the current situation is a work situation. You can work the hole day and you should as you have no interruption', $data['announcements'][0]['description']);
         $this->assertEquals('Previous', $data['announcements'][0]['status']);
-        $this->assertEquals(Carbon::now(), $data['announcements'][0]['end_date']);
-        $this->assertEquals(Carbon::now(), $data['announcements'][0]['created_at']);
+        $this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $data['announcements'][0]['end_date']);
+        $this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $data['announcements'][0]['created_at']);
     }
 
     public function testAnnouncementListDataApiFormat()
