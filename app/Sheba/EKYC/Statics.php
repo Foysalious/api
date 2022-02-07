@@ -52,7 +52,7 @@ class Statics
             'status'  => $status,
             'title'   => $status === self::VERIFIED ? "ভেরিফিকেশন সফল হয়েছে !" : "ভেরিফিকেশন প্রক্রিয়াধীন",
             'message' => $status === self::VERIFIED ? self::SUCCESS_MESSAGE : $fail_message,
-            'message_count' => $remaining_attempt
+            'remaining_attempt' => $remaining_attempt
         ];
     }
 
