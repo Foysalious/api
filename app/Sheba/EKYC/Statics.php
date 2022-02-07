@@ -44,8 +44,7 @@ class Statics
         $remaining_attempt = self::MAX_PORICHOY_VERIFICATION_ATTEMPT - $nid_verification_request_count;
 
         if ($nid_verification_request_count < self::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
-            $count_format = convertNumbersToBangla($remaining_attempt, false);
-            $fail_message = sprintf(self::FAIL_MESSAGE, $count_format);
+            $fail_message = sprintf(self::FAIL_MESSAGE, convertNumbersToBangla($remaining_attempt, false));
         } else {
             $fail_message = self::FINAL_FAIL_MESSAGE;
         }
