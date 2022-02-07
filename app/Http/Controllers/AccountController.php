@@ -10,14 +10,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Redis;
 use JWTAuth;
-use Sheba\Sms\Sms;
+use Cache;
 
 class AccountController extends Controller
 {
+    /**
+     * @param  Request  $request
+     * @return JsonResponse|void
+     */
     public function checkForAuthentication(Request $request)
     {
-        $key = Redis::get($request->input('access_token'));
-        //key exists
+        /** @var \Illuminate\Support\Facades\Cache $key */
+        $key = Cache::get($request->input('access_token'));
+
         if ($key != null) {
             $info = json_decode($key);
             if ($info->avatar == 'customer') {
