@@ -25,7 +25,7 @@ class ReportsController extends Controller
      */
     public function product(Request $request)
     {
-        try {
+//        try {
             if ($request->has('download_excel')) {
                 $name = 'Product Wise Sales Report';
                 return $this->repository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->downloadExcel($name);
@@ -37,13 +37,13 @@ class ReportsController extends Controller
                 $data = $this->repository->getProductWise()->prepareQuery($request, $request->partner)->prepareData()->getData();
                 return api_response($request, $data, 200, ['result' => $data]);
             }
-        } catch (ValidationException $e) {
-            $errorMessage = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, null, 400, ['message' => $errorMessage]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+//        } catch (ValidationException $e) {
+//            $errorMessage = getValidationErrorMessage($e->validator->errors()->all());
+//            return api_response($request, null, 400, ['message' => $errorMessage]);
+//        } catch (Throwable $e) {
+//            app('sentry')->captureException($e);
+//            return api_response($request, null, 500);
+//        }
     }
 
     /**
