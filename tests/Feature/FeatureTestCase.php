@@ -36,7 +36,9 @@ use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
+use Sheba\OAuth2\AccountServerClient;
 use Sheba\Services\Type as ServiceType;
+use Tests\Mocks\MockAccountServerClient;
 use Tests\Mocks\MockInventoryServerClient;
 use Tests\Mocks\MockPosOrderServerClient;
 use Tests\TestCase;
@@ -110,6 +112,7 @@ class FeatureTestCase extends TestCase
 
         $this->app->singleton(InventoryServerClient::class, MockInventoryServerClient::class);
         $this->app->singleton(PosOrderServerClient::class, MockPosOrderServerClient::class);
+        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
     }
 
     public function get($uri, array $headers = [])

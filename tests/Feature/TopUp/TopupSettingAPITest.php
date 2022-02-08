@@ -26,8 +26,8 @@ class TopupSettingAPITest extends FeatureTestCase
 
         $this->logIn();
 
-        $this->topUpVendor = factory(TopUpVendor::class)->create();
-        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
+        TopUpVendor::factory()->create();
+        TopUpVendorCommission::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id
         ]);
     }

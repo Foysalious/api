@@ -10,11 +10,13 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerClient;
 use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
+use Tests\Mocks\MockAccountServerClient;
 use Throwable;
 
 /**
@@ -68,14 +70,15 @@ class SingleTopUpTest extends FeatureTestCase
         ]);
 
         $this->topBlocklistNumbers = TopUpBlacklistNumber::factory()->create();
+        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
 
-        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs(
-            [$this->app->make(AccountServer::class)])->onlyMethods(['verify'])->getMock();
+/*        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs(
+            [$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
         $verify_pin_mock->method('setAgent')->will($this->returnSelf());
         $verify_pin_mock->method('setProfile')->will($this->returnSelf());
         $verify_pin_mock->method('setRequest')->will($this->returnSelf());
 
-        $this->app->instance(VerifyPin::class, $verify_pin_mock);
+        $this->app->instance(VerifyPin::class, $verify_pin_mock);*/
     }
 
     public function testInvalidMobileNumberIsRejected()

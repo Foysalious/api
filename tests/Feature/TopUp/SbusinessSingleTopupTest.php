@@ -16,8 +16,10 @@ use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerClient;
 use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
+use Tests\Mocks\MockAccountServerClient;
 
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
@@ -41,7 +43,7 @@ class SbusinessSingleTopupTest extends FeatureTestCase
 
     /** @var $topBlocklistNumbers */
     private $topBlocklistNumbers;
-    
+
     public function setUp(): void
     {
         parent::setUp();
@@ -50,35 +52,32 @@ class SbusinessSingleTopupTest extends FeatureTestCase
         ]);
         $this->logIn();
 
-        $this->topUpVendor = factory(TopUpVendor::class)->create();
-        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
+        $this->topUpVendor = TopUpVendor::factory()->create();
+        $this->topUpVendorCommission = TopUpVendorCommission::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id, 'agent_commission' => '1.00', 'type' => "App\Models\Business", 'type_id' => 1
         ]);
 
-        $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
+        $this->topUpOtfSettings = TopUpOTFSettings::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id
         ]);
 
-        $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
+        $this->topUpVendorOtf = TopUpVendorOTF::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id
         ]);
 
-        $this->topUpStatusChangeLog = factory(TopUpVendorOTFChangeLog::class)->create([
+        $this->topUpStatusChangeLog = TopUpVendorOTFChangeLog::factory()->create([
             'otf_id' => $this->topUpVendorOtf->id
         ]);
 
-        /*
-         * create topup topBlocklistNumbers table
-         */
+        $this->topBlocklistNumbers = TopUpBlacklistNumber::factory()->create();
+        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
 
-        $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
-
-        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
+        /*$verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
         $verify_pin_mock->method('setAgent')->will($this->returnSelf());
         $verify_pin_mock->method('setProfile')->will($this->returnSelf());
         $verify_pin_mock->method('setRequest')->will($this->returnSelf());
 
-        $this->app->instance(VerifyPin::class, $verify_pin_mock);
+        $this->app->instance(VerifyPin::class, $verify_pin_mock);*/
     }
 
     public function testSuccessfulBusinessTopupResponse()

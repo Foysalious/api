@@ -15,9 +15,11 @@ use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerClient;
 use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockAccountingEntryClient;
+use Tests\Mocks\MockAccountServerClient;
 use Tests\Mocks\MockExpenseClient;
 
 /**
@@ -62,39 +64,37 @@ class SmanagerTopupTest extends FeatureTestCase
 
         $this->logIn();
 
-        $this->topUpVendor = factory(TopUpVendor::class)->create();
+        TopUpVendor::factory()->create();
 
-        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
+        TopUpVendorCommission::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id, 'agent_commission' => '1.00', 'type' => "App\Models\Partner"
         ]);
 
-        $this->SubscriptionWisePaymentGateways = factory(Model::class)->create();
+        Model::factory()->create();
 
-        $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
+        TopUpOTFSettings::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id, 'applicable_gateways' => '["ssl","airtel"]', 'type' => 'App\Models\Partner', 'agent_commission' => '5.03',
         ]);
 
-        $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
+        TopUpVendorOTF::factory()->create([
             'topup_vendor_id' => $this->topUpVendor->id
         ]);
 
-        $this->topUpStatusChangeLog = factory(TopUpVendorOTFChangeLog::class)->create([
+        TopUpVendorOTFChangeLog::factory()->create([
             'otf_id' => $this->topUpVendorOtf->id
         ]);
 
-        /**
-         * TODO create topup topBlocklistNumbers table
-         */
-        $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
+        TopUpBlacklistNumber::factory()->create();
 
-        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->onlyMethods(['verify'])->getMock();
+       /* $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
         $verify_pin_mock->method('setAgent')->will($this->returnSelf());
         $verify_pin_mock->method('setProfile')->will($this->returnSelf());
         $verify_pin_mock->method('setRequest')->will($this->returnSelf());
 
-        $this->app->instance(VerifyPin::class, $verify_pin_mock);
+        $this->app->instance(VerifyPin::class, $verify_pin_mock);*/
         $this->app->singleton(ExpenseTrackerClient::class, MockExpenseClient::class);
         $this->app->singleton(AccountingEntryClient::class, MockAccountingEntryClient::class);
+        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
     }
 
     public function testSuccessfulTopupResponse()
