@@ -41,8 +41,8 @@ class AnnouncementsListGetApiTest extends FeatureTestCase
         $this->assertEquals('As you know the current situation is a work situation. You can work the hole day and you should as you have no interruption', $data['announcements'][0]['short_description']);
         $this->assertEquals('As you know the current situation is a work situation. You can work the hole day and you should as you have no interruption', $data['announcements'][0]['description']);
         $this->assertEquals('Previous', $data['announcements'][0]['status']);
-        $this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $data['announcements'][0]['end_date']);
-        $this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $data['announcements'][0]['created_at']);
+        $this->assertEquals(Carbon::now()->format('Y-m-d H:i'), Carbon::parse($data['announcements'][0]['end_date'])->format('Y-m-d H:i'));
+        $this->assertEquals(Carbon::now()->format('Y-m-d H:i'), Carbon::parse($data['announcements'][0]['created_at'])->format('Y-m-d H:i'));
     }
 
     public function testAnnouncementListDataApiFormat()
