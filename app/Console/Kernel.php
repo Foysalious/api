@@ -5,7 +5,9 @@ namespace App\Console;
 use App\Console\Commands\GeneratePayslip;
 use App\Console\Commands\Payslip;
 use App\Console\Commands\GenerateTestAuthorList;
+use App\Console\Commands\LeaveAdjustmentOnEndOfFiscalYear;
 use App\Console\Commands\ProductUpload;
+use App\Console\Commands\RunAnnouncementNotifications;
 use App\Console\Commands\SetReleaseVersion;
 use App\Console\Commands\TestCommand;
 use App\Console\Commands\TopUpTestCommand;
@@ -31,7 +33,11 @@ class Kernel extends ConsoleKernel
         TestCommand::class,
         GeneratePayslip::class,
         GenerateTestAuthorList::class,
+        LeaveAdjustmentOnEndOfFiscalYear::class,
+        RunAnnouncementNotifications::class
     ];
+    /*** @var Schedule $schedule */
+    private $schedule;
 
     /**
      * Define the application's command schedule.
@@ -41,7 +47,26 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('sheba:leave-adjustment')->dailyAt('00:05');
-        $schedule->command('sheba:generate-payslips')->dailyAt('00:20');
+        $this->schedule = $schedule;
+
+        #$schedule->command('product-upload-csv')->dailyAt('00:00');
+        $this->leaveAdjustmentCommand();
+        $this->generatePayslipCommand();
+        $this->announcementNotificationsCommand();
+    }
+
+    private function leaveAdjustmentCommand()
+    {
+        $this->schedule->command('sheba:leave-adjustment')->dailyAt('00:05');
+    }
+
+    private function generatePayslipCommand()
+    {
+        $this->schedule->command('sheba:generate-payslips')->dailyAt('00:20');
+    }
+
+    private function announcementNotificationsCommand()
+    {
+        $this->schedule->command('sheba:announcement-notifications')->everyMinute();
     }
 }
