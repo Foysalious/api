@@ -183,6 +183,8 @@ class FeatureTestCase extends TestCase
             Partner::class,
             Business::class,
             BusinessMember::class,
+            BusinessDepartment::class,
+            BusinessRole::class,
         ]);
 
         $this->profile = Profile::factory()->create();
