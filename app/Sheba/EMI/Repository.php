@@ -2,10 +2,11 @@
 
 
 use App\Models\Partner;
+use App\Sheba\UserMigration\Modules;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
-class Repository extends ClientRepository {
+class Repository {
     /** @var Partner */
     private $partner;
     /** @var DataClient */
@@ -46,28 +47,33 @@ class Repository extends ClientRepository {
     /**
      * @param mixed $partner
      * @return Repository
+     * @throws \Exception
      */
     public function setPartner(Partner $partner) {
         $this->partner = $partner;
-        $this->client  = new DataClient($partner);
+        if ($partner->isMigrated(Modules::EXPENSE)) {
+            $this->client = new AccountingDataClient($partner);
+        }
+        else {
+            $this->client = new DataClient($partner);
+        }
         return $this;
     }
 
 
     public function getRecent() {
         $list = collect($this->client->emiList(3));
-        $data = $list->map(function ($item) {
+        $list = $list->take(3);
+        return $list->map(function ($item) {
             $item['partner'] = $this->partner;
             $nItem = new Item((array)$item);
             return $nItem->toShort();
         });
-        return $data;
     }
 
     public function get() {
         $dItems = collect();
-        $list   = collect($this->client->emiList());
-
+        $list = collect($this->client->emiList());
         if ($this->query) {
             $items = $this->getShortItems($list);
             $items = $items->filter(function ($item) {

@@ -39,7 +39,7 @@ class NidOcr
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
         $ocrData = $nid_ocr_data['data'];
-        $ocrData = json_encode(array_except($ocrData, ['id_front_image', 'id_back_image', 'id_front_name', 'id_back_name']));
+        $ocrData = json_encode(array_except($ocrData, ['id_front_name', 'id_back_name']));
         $log = "NID submitted by the user";
 
         $data = [
