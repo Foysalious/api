@@ -3,6 +3,7 @@
 namespace Tests\Feature\Digigo\Leave;
 
 use App\Models\BusinessDepartment;
+use App\Models\Career;
 use Carbon\Carbon;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
@@ -78,7 +79,7 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
         $data = $response->json();
         $this->assertEquals('Test Leave', $data['leave']['title']);
         $this->assertEquals('Test Leave', $data['leave']['leave_type']);
-        $this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $data['leave']['start_date']['date']);
+        $this->assertEquals(Carbon::now()->format('Y-m-d H:i'), Carbon::parse($data['leave']['start_date']['date'])->format('Y-m-d H:i'));
         $this->assertEquals(3, $data['leave']['start_date']['timezone_type']);
         $this->assertEquals('Asia/Dhaka', $data['leave']['start_date']['timezone']);
         $this->assertEquals(Carbon::now()->addDay()->format('Y-m-d H:i:s'), $data['leave']['end_date']['date']);
@@ -89,7 +90,7 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals(0, $data['leave']['half_day_configuration']);
         $this->assertEquals(Carbon::now()->addMinutes(15)->format('h:i') . "-" . Carbon::now()->subMinutes(15)->format('h:i'), $data['leave']['time']);
         $this->assertEquals('pending', $data['leave']['status']);
-        $this->assertEquals(Carbon::now()->format('Y-m-d H:i:s'), $data['leave']['requested_on']['date']);
+        $this->assertEquals(Carbon::now()->format('Y-m-d H:i'), Carbon::parse($data['leave']['requested_on']['date'])->format('Y-m-d H:i'));
         $this->assertEquals(3, $data['leave']['requested_on']['timezone_type']);
         $this->assertEquals('Asia/Dhaka', $data['leave']['requested_on']['timezone']);
         $this->assertEquals('Test leave', $data['leave']['note']);
