@@ -87,7 +87,7 @@ class SmanagerTopupTest extends FeatureTestCase
          */
         $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
 
-        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->setMethods(['verify'])->getMock();
+        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs([$this->app->make(AccountServer::class)])->onlyMethods(['verify'])->getMock();
         $verify_pin_mock->method('setAgent')->will($this->returnSelf());
         $verify_pin_mock->method('setProfile')->will($this->returnSelf());
         $verify_pin_mock->method('setRequest')->will($this->returnSelf());
