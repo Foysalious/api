@@ -287,7 +287,6 @@ class ShebaController extends Controller
      */
     public function getPayments(Request $request, PaymentGatewayRepository $paymentGateWayRepository)
     {
-        $this->validate($request, ["payable_type_id" => "sometimes|numeric"]);
         $version_code  = (int)$request->header('Version-Code');
         $platform_name = $request->header('Platform-Name');
         $user_type = $request->type;
