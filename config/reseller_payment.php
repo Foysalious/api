@@ -426,7 +426,7 @@ return [
                 'upload_folder'  => 'getTradeLicenceDocumentsFolder'
             ],
             [
-                'label'          => 'টিন অথবা ভ্যাট সার্টিফিকেটের ছবি',
+                'label'          => 'টিন সার্টিফিকেটের ছবি',
                 'message'        => '',
                 'hint'           => '',
                 'id'             => 'tin_certificate',
@@ -439,6 +439,22 @@ return [
                 'mandatory'      => false,
                 'data_source'    => 'first_admin_profile',
                 'data_source_id' => 'tin_certificate',
+                'upload_folder'  => 'getVatRegistrationImagesFolder'
+            ],
+            [
+                'label'          => 'ভ্যাট সার্টিফিকেটের ছবি',
+                'message'        => '',
+                'hint'           => '',
+                'id'             => 'vat_registration_attachment',
+                'error'          => "Vat registration is required",
+                'input_type'     => 'document',
+                'data'           => '',
+                "min_length"     => "",
+                "max_length"     => "",
+                'is_editable'    => true,
+                'mandatory'      => false,
+                'data_source'    => 'partner_basic_information',
+                'data_source_id' => 'vat_registration_attachment',
                 'upload_folder'  => 'getVatRegistrationImagesFolder'
             ],
         ],
