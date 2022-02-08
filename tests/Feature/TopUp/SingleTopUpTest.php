@@ -67,10 +67,6 @@ class SingleTopUpTest extends FeatureTestCase
             'otf_id' => $this->topUpVendorOtf->id,
         ]);
 
-        /*
-         * create topup topBlocklistNumbers table
-         */
-
         $this->topBlocklistNumbers = TopUpBlacklistNumber::factory()->create();
 
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs(

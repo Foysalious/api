@@ -225,7 +225,10 @@ class FeatureTestCase extends TestCase
             'business_department_id' => 1
         ]);
         $this->business_member = BusinessMember::factory()->create(
-            ['business_id' => $this->business->id, 'member_id' => $this->member->id, 'department' => 1, 'business_role_id' => 1]);
+            ['business_id' => $this->business->id,
+                'member_id' => $this->member->id,
+                'department' => 1,
+                'business_role_id' => 1]);
     }
 
     protected function generateToken(): string
