@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
 use Sheba\Dal\Announcement\AnnouncementTarget;
 use Sheba\Dal\Announcement\ScheduledFor;
+use Throwable;
 
 class RunAnnouncementNotifications extends Command
 {
@@ -27,27 +28,32 @@ class RunAnnouncementNotifications extends Command
     public function handle()
     {
         $announcements = $this->announcementRepo->where('scheduled_for', ScheduledFor::LATER)->where('start_date', Carbon::now()->toDateString())->whereBetween('start_time', [Carbon::now()->format('H:i') . ':00', Carbon::now()->format('H:i') . ':59'])->select('id', 'business_id', 'title', 'target_type', 'target_id')->orderBy('id', 'DESC')->get();
+        
+        if ($announcements->isEmpty()) return;
+        try {
+            foreach ($announcements as $announcement) {
+                /** @var Business $business */
+                $business = $announcement->business;
+                $target = $announcement->target_type;
 
-        foreach ($announcements as $announcement) {
-            /** @var Business $business */
-            $business = $announcement->business;
-            $target = $announcement->target_type;
+                if ($target == AnnouncementTarget::ALL) {
+                    $members_ids = $business->getActiveBusinessMember()->pluck('member_id')->toArray();
+                } else if ($target == AnnouncementTarget::EMPLOYEE) {
+                    $members_ids = $business->getActiveBusinessMember()->whereIn('id', json_decode($announcement->target_id, 1))->pluck('member_id')->toArray();
+                } else if ($target == AnnouncementTarget::DEPARTMENT) {
+                    $members_ids = $business->getActiveBusinessMember()->whereHas('role', function ($q) use ($announcement) {
+                        $q->whereHas('businessDepartment', function ($q) use ($announcement) {
+                            $q->whereIn('business_departments.id', json_decode($announcement->target_id, 1));
+                        });
+                    })->pluck('member_id')->toArray();
+                } else if ($target == AnnouncementTarget::EMPLOYEE_TYPE) {
+                    $members_ids = $business->getActiveBusinessMember()->whereIn('employee_type', json_decode($announcement->target_id, 1))->pluck('member_id')->toArray();
+                } else continue;
 
-            if ($target == AnnouncementTarget::ALL) {
-                $members_ids = $business->getActiveBusinessMember()->pluck('member_id')->toArray();
-            } else if ($target == AnnouncementTarget::EMPLOYEE) {
-                $members_ids = $business->getActiveBusinessMember()->whereIn('id', json_decode($announcement->target_id, 1))->pluck('member_id')->toArray();
-            } else if ($target == AnnouncementTarget::DEPARTMENT) {
-                $members_ids = $business->getActiveBusinessMember()->whereHas('role', function ($q) use ($announcement) {
-                    $q->whereHas('businessDepartment', function ($q) use ($announcement) {
-                        $q->whereIn('business_departments.id', json_decode($announcement->target_id, 1));
-                    });
-                })->pluck('member_id')->toArray();
-            } else if ($target == AnnouncementTarget::EMPLOYEE_TYPE) {
-                $members_ids = $business->getActiveBusinessMember()->whereIn('employee_type', json_decode($announcement->target_id, 1))->pluck('member_id')->toArray();
-            } else continue;
-
-            (new AnnouncementNotifications($members_ids, $announcement))->shoot();
+                (new AnnouncementNotifications($members_ids, $announcement))->shoot();
+            }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
         }
     }
 }
