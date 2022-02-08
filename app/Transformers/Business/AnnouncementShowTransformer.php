@@ -12,6 +12,13 @@ class AnnouncementShowTransformer extends TransformerAbstract
     const DEPARTMENT = "department";
     const EMPLOYEE = "employee";
 
+    const NOW = 'now';
+    const LATER = 'later';
+
+    const PUBLISHED = 'published';
+    const SCHEDULED = 'scheduled';
+    const EXPIRED = 'expired';
+
     public function transform(Announcement $announcement)
     {
         return [
@@ -19,14 +26,21 @@ class AnnouncementShowTransformer extends TransformerAbstract
             'title' => $announcement->title,
             'description' => $announcement->long_description,
             'type' => $announcement->type,
+            'is_published' => $announcement->is_published,
             'target' => [
                 'type' => $announcement->target_type,
                 'type_ids' => $this->targetTypeInfo($announcement),
                 'count' => $this->getCount($announcement),
             ],
             'active_between' => 'Dec 02,2020-Dec 05,2020',
-            'status' => $this->getStatus($announcement->end_date),
-            'end_date' => $announcement->end_date->toDateTimeString(),
+            'status' => $this->getStatus($announcement),
+            'scheduled_info' => [
+                'scheduled_for' => $announcement->scheduled_for,
+                'start_date' => $announcement->scheduled_for == self::LATER ? $announcement->start_date : null,
+                'start_time' => $announcement->scheduled_for == self::LATER ? $announcement->start_time : null,
+                'end_date' => $announcement->end_date->toDateString(),
+                'end_time' => $announcement->end_time,
+            ],
             'created_by' => $announcement->created_by ?: 'N/S',
             'created_at' => $announcement->created_at->toDateTimeString(),
             'updated_by' => $announcement->updated_by ?: 'N/S',
@@ -84,10 +98,11 @@ class AnnouncementShowTransformer extends TransformerAbstract
         return $department_info;
     }
 
-    private function getStatus($end_date)
+    private function getStatus($announcement)
     {
         $today_date = Carbon::now();
-        if ($end_date->greaterThanOrEqualTo($today_date)) return "Scheduled";
-        return "Published";
+        if ($announcement->end_date->greaterThanOrEqualTo($today_date)) return "Expired";
+        if ($announcement->status == self::PUBLISHED) return "Published";
+        if ($announcement->status == self::SCHEDULED) return "Scheduled";
     }
 }
