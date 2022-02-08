@@ -18,6 +18,7 @@ class CreatorRequester
     private $endDate;
     private $endTime;
     private $status;
+    private $announcement;
 
 
     public function setType($type)
@@ -152,5 +153,16 @@ class CreatorRequester
     public function getStatus()
     {
         return $this->status;
+    }
+
+    public function setAnnouncement($announcement)
+    {
+        $this->announcement = $announcement;
+        return $this;
+    }
+
+    public function getAnnouncement()
+    {
+        return $this->announcement;
     }
 }
