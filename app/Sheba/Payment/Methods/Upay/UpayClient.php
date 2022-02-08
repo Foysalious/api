@@ -40,7 +40,7 @@ class UpayClient
                 'read_timeout'    => self::TIMEOUT,
                 'connect_timeout' => self::TIMEOUT,
                 'http_errors'     => false
-            ])->getBody();
+            ])->getBody()->getContents();
             return (new UpayApiResponse())->setServerResponse($res);
         } catch (GuzzleException $e) {
             $server_response = json_encode(['code' => $e->getCode(), 'message' => $e->getMessage()]);

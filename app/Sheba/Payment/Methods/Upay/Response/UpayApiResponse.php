@@ -23,7 +23,7 @@ class UpayApiResponse
      * @param mixed $server_response
      * @return UpayApiResponse
      */
-    public function setServerResponse($server_response)
+    public function setServerResponse($server_response): UpayApiResponse
     {
         $this->server_response = json_decode($server_response, 0);
         foreach ($this->server_response as $key => $value) {
