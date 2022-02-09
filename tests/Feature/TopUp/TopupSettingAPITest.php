@@ -26,16 +26,16 @@ class TopupSettingAPITest extends FeatureTestCase
 
         $this->logIn();
 
-        $this->topUpVendor = factory(TopUpVendor::class)->create();
-        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id
+        TopUpVendor::factory()->create();
+        TopUpVendorCommission::factory()->create([
+            'topup_vendor_id' => 1
         ]);
     }
 
     public function testTopupSettingSuccessResponse()
     {
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
         $this->assertEquals(1, $data['vendors'][0]['id']);
@@ -51,7 +51,7 @@ class TopupSettingAPITest extends FeatureTestCase
     {
         TopUpVendor::find(1)->update(["name" => 'mock2']);
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
         $this->assertEquals(1, $data['vendors'][0]['id']);
@@ -62,7 +62,7 @@ class TopupSettingAPITest extends FeatureTestCase
     {
         TopUpVendor::find(1)->update(["is_published" => '0']);
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
         $this->assertEquals([], $data['vendors']);
@@ -72,7 +72,7 @@ class TopupSettingAPITest extends FeatureTestCase
     {
         TopUpVendor::find(1)->update(["sheba_commission" => '2']);
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $response->decodeResponseJson();
+        $response->json();
         $TopUpVendor = TopUpVendor::first();
         $this->assertEquals("2", $TopUpVendor->sheba_commission);
     }
@@ -80,7 +80,7 @@ class TopupSettingAPITest extends FeatureTestCase
     public function testTopupSettingVendorShebaCommissionCheck()
     {
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $response->decodeResponseJson();
+        $response->json();
         $TopUpVendor = TopUpVendor::first();
         $this->assertEquals(4, $TopUpVendor->sheba_commission);
     }
@@ -88,7 +88,7 @@ class TopupSettingAPITest extends FeatureTestCase
     public function testTopupSettingVendorGatewayCheck()
     {
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $response->decodeResponseJson();
+        $response->json();
         $TopUpVendor = TopUpVendor::first();
         $this->assertEquals("ssl", $TopUpVendor->gateway);
     }
@@ -97,7 +97,7 @@ class TopupSettingAPITest extends FeatureTestCase
     {
         TopUpVendor::find(1)->update(["gateway" => 'paywell']);
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $response->decodeResponseJson();
+        $response->json();
         $TopUpVendor = TopUpVendor::first();
         $this->assertEquals("paywell", $TopUpVendor->gateway);
     }
@@ -105,7 +105,7 @@ class TopupSettingAPITest extends FeatureTestCase
     public function testTopupSettingVendorAmountCheck()
     {
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $response->decodeResponseJson();
+        $response->json();
         $TopUpVendor = TopUpVendor::first();
         $this->assertEquals(100000, $TopUpVendor->amount);
     }
@@ -113,7 +113,7 @@ class TopupSettingAPITest extends FeatureTestCase
     public function testTopupSettingVendorRegexChange()
     {
         $response = $this->get('/v2/settings/top-up?bondhu_app');
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
         $this->assertEquals('^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)', $data['regex']['typing']);

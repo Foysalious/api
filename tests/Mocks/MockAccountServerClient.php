@@ -17,8 +17,6 @@ class MockAccountServerClient extends AccountServerClient
         if ($uri == 'api/v3/profile/login') {
             return $this->getLoginData($data);
         }
-
-        return self::$token;
     }
 
     private function getLoginData($data)
@@ -31,7 +29,7 @@ class MockAccountServerClient extends AccountServerClient
             '{
             "code": 200,
             "message": "Successful",
-            "token": "'.self::$token.'",
+            "token": "' . self::$token . '",
             "user": {
                 "name": "Tiara Wuckert",
                 "mobile": "+8801678242955",
@@ -40,6 +38,28 @@ class MockAccountServerClient extends AccountServerClient
                 "business_name": "My Company",
                 "is_remote_attendance_enable": true
             }
+            }',
+            true
+        );
+    }
+
+    public function passwordAuthenticatePost($uri, $data)
+    {
+        if ($uri == 'api/v1/authenticate/password') {
+            return $this->getPasswordAuthenticate($data);
+        }
+    }
+
+    private function getPasswordAuthenticate($data)
+    {
+        if ($data['mobile'] != '+8801678242955' || $data['mobile'] != '+8801620011019' || $data['password'] != '12345') {
+            throw new Exception("Data Mismatch");
+        }
+
+        return json_decode(
+            '{
+            "code": 200,
+            "message": "Successful",
             }',
             true
         );
