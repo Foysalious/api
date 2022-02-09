@@ -143,10 +143,9 @@ class PayReportList
      */
     private function getData()
     {
-        $profiles = $this->getBusinessMembersProfileName();
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $payreport_list_transformer = new PayReportListTransformer($profiles);
+        $payreport_list_transformer = new PayReportListTransformer();
         $payslip_list = new Collection($this->payslipList, $payreport_list_transformer);
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
@@ -247,7 +246,9 @@ class PayReportList
     public function getPaySlipByStatus($business_member_ids, $status)
     {
         return $this->paysliprepo->where('status', $status)
-            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q) {
+            ->whereIn('business_member_id', $business_member_ids)->orWhere(function ($query) {
+                return $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+            })->with(['businessMember' => function ($q) {
                 $q->with(['member' => function ($q) {
                     $q->select('id', 'profile_id')
                         ->with([
@@ -262,13 +263,5 @@ class PayReportList
                     ]);
                 }]);
             }]);
-    }
-
-    private function getBusinessMembersProfileName()
-    {
-        return DB::table('business_member')
-            ->join('members', 'members.id', '=', 'business_member.member_id')
-            ->join('profiles', 'profiles.id', '=', 'members.profile_id')
-            ->whereIn('business_member.id', $this->businessMemberIds)->pluck('name', 'business_member.id');
     }
 }
