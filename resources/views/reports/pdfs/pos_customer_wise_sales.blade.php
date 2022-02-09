@@ -3,10 +3,8 @@
 <head>
     <title>Product wise sales report</title>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <style type="text/css">
-        @import url('https://fonts.maateen.me/mukti/font.css');
-
+        @import url('https://fonts.maateen.me/kalpurush/font.css');
 
         .page-break {
             page-break-after: always;
@@ -16,9 +14,42 @@
             page-break-before: auto;
         }
         body {
-            font-family: 'Mukti',  'Roboto',sans-serif;
+            font-family: 'kalpurush', sans-serif!important;
             color: #4a4a4a;
             font-style: normal;
+            font-weight: normal;
+        }
+
+        .table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            font-family: 'kalpurush', sans-serif!important;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #ddd !important;
+        }
+        .table-bordered {
+            border: 1px solid #ddd;
+        }
+
+        td, th {
+            text-align: left;
+            padding: 20px;
+            font-weight: normal;
+            box-sizing: border-box;
+            position: relative;
+            vertical-align: baseline;
+        }
+
+        th {
+            padding: 10px;
+        }
+
+        .table-head {
+            background-color: #ededed;
             font-weight: normal;
         }
 
@@ -33,38 +64,22 @@
 
         .heading .sub-heading {
             font-size: 1rem;
-            font-family: 'Mukti','Roboto',sans-serif;
+            font-family: 'kalpurush', sans-serif!important;
         }
 
         .heading .sub-text {
             font-size: .9rem;
-            font-family: 'Mukti','Roboto',sans-serif;
-        }
-
-        .table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-            font-family: 'Mukti','Roboto',sans-serif;
-        }
-
-        th {
-            padding: 10px;
-        }
-
-        .table-head {
-            background-color: #ededed;
-            font-weight: normal;
+            font-family: 'kalpurush', sans-serif!important;
         }
 
         .table-head th {
-            font-family: 'Mukti','Roboto',sans-serif;
+            font-family: 'kalpurush', sans-serif!important;
             font-weight: normal;
         }
         @page {
             margin: 40px;
             padding: 2cm;
-            footer:page-footer;
+            footer: page-footer;
         }
 
         @media print {
@@ -80,8 +95,10 @@
             }
 
         }
+
         /** Define the footer rules **/
         footer {
+            display: block;
             position: fixed;
             bottom: 0cm;
             left: 0cm;
@@ -110,7 +127,7 @@
     </style>
 </head>
 <body align="center">
-<table style="max-width: 800px;margin: auto;min-width: 600px;page-break-after: avoid;">
+<table style="max-width: 800px;margin: auto;min-width: 600px;page-break-before: avoid;">
     <tbody>
     <tr>
         <td>
@@ -155,10 +172,6 @@
 <footer align="center" class="footer">
     <div class="text-center pt-1 w-100" id="footer"><span>Powered by <a
                     href="{{config('sheba.partners_url')}}">sManager</a></span></div>
-    <div id="counter">
-        <div id="pageCounter">
-        </div>
-    </div>
 </footer>
 </body>
 </html>
