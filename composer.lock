@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "27e4063a1e709e354c688e46ff84abef",
+    "content-hash": "97a9445bf582d18dbfdf4988618df51f",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -7155,7 +7155,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "f1f2e690f6257ee4d129c70e7031f13079c31efa"
+                "reference": "de7600baeea3f1c5131b2b756078d5403fcacd89"
             },
             "require": {
                 "php": ">=5.4"
@@ -7182,7 +7182,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2022-02-09T15:23:21+00:00"
+            "time": "2022-02-09T06:36:36+00:00"
         },
         {
             "name": "sheba/elasticsearch",
@@ -7190,7 +7190,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_elasticsearch.git",
-                "reference": "54a02dc2023fbada0fd7f0ff463a5a1bc526968a"
+                "reference": "9454c20111407d7835ad178170203dcae2442a5a"
             },
             "require": {
                 "elasticsearch/elasticsearch": "v6.7.2",
@@ -7229,7 +7229,7 @@
                 "laravel",
                 "search"
             ],
-            "time": "2021-04-06T15:57:13+00:00"
+            "time": "2021-11-13T08:27:33+00:00"
         },
         {
             "name": "sheba/notification",
