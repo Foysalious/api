@@ -5,7 +5,7 @@ use App\Models\Partner;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
-use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
+use Sheba\Dal\GatewayAccount\Model as GatewayAccount;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\EMI\Banks;
 use Sheba\EMI\CalculatorForManager;
@@ -217,7 +217,7 @@ class PaymentService
 
     public function getPgwStatusForHomePage()
     {
-        $pgw_store_accounts = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->get();
+        $pgw_store_accounts = GatewayAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->get();
 
         if(!$pgw_store_accounts->isEmpty()){
             foreach ($pgw_store_accounts as $pgw_store_account) {
@@ -236,7 +236,7 @@ class PaymentService
 
     private function getPgwStatus()
     {
-        $pgw_store_account = $this->partner->pgwStoreAccounts()->join('pgw_stores', 'pgw_store_id', '=', 'pgw_stores.id')
+        $pgw_store_account = $this->partner->pgwGatewayAccounts()->join('pgw_stores', 'gateway_type_id', '=', 'pgw_stores.id')
             ->where('pgw_stores.key', $this->key)->first();
         if($pgw_store_account)
         {
@@ -267,7 +267,7 @@ class PaymentService
         foreach ($pgwStores as $pgwStore) {
             $completionData = (new MerchantEnrollment())->setPartner($partner)->setKey($pgwStore->key)->getCompletion();
             $mor_status = $this->getMORStatus($pgwStore->key);
-            $partner_account = $partner->pgwStoreAccounts()->where('pgw_store_id', $pgwStore->id)->select('status')->first();
+            $partner_account = $partner->pgwGatewayAccounts()->where('gateway_type_id', $pgwStore->id)->select('status')->first();
             if ( !$mor_status && !$partner_account) {
                 $status = PaymentLinkStatus::UNREGISTERED;
             } else if ($mor_status == "pending" && !$partner_account) {

@@ -2,7 +2,7 @@
 
 namespace Sheba\ResellerPayment\Store;
 
-use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
+use Sheba\Dal\GatewayAccount\Contract as GatewayAccountRepo;
 use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\ResellerPayment\EncryptionAndDecryption;
@@ -42,12 +42,12 @@ class Ssl extends PaymentStore
     {
         $data = $this->makeStoreAccountData();
         $this->test();
-        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
+        $storeAccount = $this->partner->pgwGatewayAccounts()->where("gateway_type_id", $this->gateway_id)->first();
         if(isset($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];
             $storeAccount->save();
         } else {
-            $pgw_store_repo = app()->make(PgwStoreAccountRepo::class);
+            $pgw_store_repo = app()->make(GatewayAccountRepo::class);
             $pgw_store_repo->create($data);
         }
     }
@@ -74,11 +74,11 @@ class Ssl extends PaymentStore
         $configuration = json_encode($this->makeAndGetConfigurationData());
         $this->conn_data = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
         return [
-            "pgw_store_id"  => (int)$this->gateway_id,
-            "user_id"       => $this->partner->id,
-            "user_type"     => get_class($this->partner),
-            "name"          => "dynamic_ssl",
-            "configuration" => $this->conn_data
+            "gateway_type_id" => (int)$this->gateway_id,
+            "user_id"         => $this->partner->id,
+            "user_type"       => get_class($this->partner),
+            "name"            => "dynamic_ssl",
+            "configuration"   => $this->conn_data
         ];
     }
 
@@ -101,7 +101,7 @@ class Ssl extends PaymentStore
      */
     public function account_status_update($status)
     {
-        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
+        $storeAccount = $this->partner->pgwGatewayAccounts()->where("gateway_type_id", $this->gateway_id)->first();
         if(!$storeAccount) throw new StoreAccountNotFoundException();
         if($status == $storeAccount->status) throw new ResellerPaymentException("The account is already in this status");
         $storeAccount->status = $status;

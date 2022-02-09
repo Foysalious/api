@@ -25,7 +25,7 @@ use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\RequestIdentification;
 use Sheba\PaymentLink\Creator;
-use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
+use Sheba\Dal\GatewayAccount\Model as GatewayAccount;
 
 class ExternalPayments
 {
@@ -249,7 +249,7 @@ class ExternalPayments
     {
         if(!$partner && !$this->client) return false;
         $partner = $partner ? : $this->client->partner;
-        return (bool)$partner->pgwStoreAccounts()->published()->first();
+        return (bool)$partner->pgwGatewayAccounts()->published()->first();
     }
 
     /**
@@ -260,7 +260,7 @@ class ExternalPayments
     public function getPaymentLinkStatus($partner, $for_emi = 0): bool
     {
         if(!isset($partner)) return false;
-        $partner_store_accounts = $partner->pgwStoreAccounts()->published()->get();
+        $partner_store_accounts = $partner->pgwGatewayAccounts()->published()->get();
         if (isset($partner_store_accounts) && count($partner_store_accounts)) {
             foreach ($partner_store_accounts as $account) {
                 $pgw_store = $account->pgw_store;

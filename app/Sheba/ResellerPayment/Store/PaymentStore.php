@@ -51,7 +51,7 @@ abstract class PaymentStore
     protected function getStoreAccount()
     {
         if(isset($this->partner))
-            return $this->partner->pgwStoreAccounts()->join('pgw_stores', 'pgw_store_id', '=', 'pgw_stores.id')
+            return $this->partner->pgwGatewayAccounts()->join('pgw_stores', 'gateway_type_id', '=', 'pgw_stores.id')
                 ->where('pgw_stores.key', $this->key)->first();
     }
 
