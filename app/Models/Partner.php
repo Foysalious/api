@@ -64,9 +64,6 @@ use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 use Sheba\Dal\PartnerGeneralSetting\Model as PartnerGeneralSetting;
 use Sheba\Dal\UserMigration\Model as UserMigration;
 
-/**
- * @method static find(int $int)
- */
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
     CONST NOT_ELIGIBLE = 'not_eligible';
