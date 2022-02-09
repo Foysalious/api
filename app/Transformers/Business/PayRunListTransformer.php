@@ -13,12 +13,10 @@ class PayRunListTransformer extends TransformerAbstract
     private $grossSalary;
     private $isProratedFilterApplicable = 0;
     private $payrollComponent;
-    private $profiles;
 
-    public function __construct($payroll_component, $profiles)
+    public function __construct($payroll_component)
     {
         $this->payrollComponent = $payroll_component;
-        $this->profiles = $profiles;
     }
 
     /**
@@ -37,8 +35,8 @@ class PayRunListTransformer extends TransformerAbstract
         return [
             'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,
-            'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
-            'employee_name' => $this->profiles[$business_member->id],
+            'employee_id' => $business_member->employee_id ?: 'N/A',
+            'employee_name' => $business_member->member->profile->name,
             'department' => $business_member_department,
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
             'schedule_type' => $payslip->generation_type,
