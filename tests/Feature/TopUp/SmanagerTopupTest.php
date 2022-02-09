@@ -517,7 +517,7 @@ class SmanagerTopupTest extends FeatureTestCase
         $this->assertEquals("Successful", $top_up_order->status);
         $this->assertEquals('+8801620011019', $top_up_order->payee_mobile);
         $this->assertEquals('prepaid', $top_up_order->payee_mobile_type);
-        $this->assertEquals('10', $top_up_order->amount);
+        $this->assertEquals('10.00', $top_up_order->amount);
         $this->assertEquals('1', $top_up_order->vendor_id);
         $this->assertEquals('App\Models\Partner', $top_up_order->agent_type);
         $this->assertEquals($this->partner->id, $top_up_order->agent_id);

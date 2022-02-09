@@ -94,19 +94,9 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         ]);
 
         $this->topBlocklistNumbers = TopUpBlacklistNumber::factory()->create();
-        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
-
-        /*$verify_pin_mock = $this->getMockBuilder(VerifyPin::class)->setConstructorArgs(
-            [$this->app->make(AccountServer::class)]
-        )->setMethods(['verify'])->getMock();
-        $verify_pin_mock->method('setAgent')->will($this->returnSelf());
-        $verify_pin_mock->method('setProfile')->will($this->returnSelf());
-        $verify_pin_mock->method('setRequest')->will($this->returnSelf());
-
-        $this->app->instance(VerifyPin::class, $verify_pin_mock);*/
     }
 
-    /*public function testSuccessfulBulkTopupResponse()
+    public function testSuccessfulBulkTopupResponse()
     {
         Business::find(1)->update(["wallet" => 1000]);
         $file = $this->getFileForUpload([
@@ -137,18 +127,18 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             "Your top-up request has been received and will be transferred and notified shortly.",
             $data['message']
         );
-    }*/
+    }
 
-    /*private function getFileForUpload(array $data)
+    private function getFileForUpload(array $data)
     {
         $file = $this->getExcelFile($data)->save("xlsx");
         $file_name = $file->getFileName() . '.' . $file->ext;
         $path = $file->storagePath . DIRECTORY_SEPARATOR . $file_name;
 
         return new UploadedFile($path, $file_name, null, null, null, true);
-    }*/
+    }
 
-    /*private function getExcelFile(array $data)
+    private function getExcelFile(array $data)
     {
         return $this->excel->create($this->excelFileName, function (LaravelExcelWriter $excel) use ($data) {
             $excel->setTitle($this->excelFileName);
@@ -187,9 +177,9 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(420, $data['code']);
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
-    }*/
+    }
 
-    /*public function testBulkTopupNonIntegerResponse()
+    public function testBulkTopupNonIntegerResponse()
     {
         Business::find(1)->update(["wallet" => 4000]);
         $file = $this->getFileForUpload([
@@ -266,9 +256,9 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
         $excel_item = $this->downloadExcelFile($data['excel_errors']);
         $this->assertEquals('Mobile number Invalid, Amount Should be Integer', $excel_item['+88016200110197896']);
-    }*/
+    }
 
-    /*public function testBulkTopupAmountExceededTopUpPrepaidLimitExitResponse()
+    public function testBulkTopupAmountExceededTopUpPrepaidLimitExitResponse()
     {
         Business::find(1)->update(["wallet" => 1000]);
         $file = $this->getFileForUpload([
@@ -327,13 +317,13 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $this->assertEquals("Check The Excel Data Format Properly.", $data['message']);
         $excel_item = $this->downloadExcelFile($data['excel_errors']);
         $this->assertEquals('The amount exceeded your topUp prepaid limit', $excel_item['+8801620011019']);
-    }*/
+    }
 
     /**
      * API Failed to handle minimum amount error
      */
 
-    /*public function testBulkMinTopupAmountExceededTopUpPrepaidLimitResponse()
+    public function testBulkMinTopupAmountExceededTopUpPrepaidLimitResponse()
     {
         Business::find(1)->update(["wallet" => 1000]);
 
@@ -366,9 +356,9 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             "Your top-up request has been received and will be transferred and notified shortly.",
             $data['message']
         );
-    }*/
+    }
 
-   /* public function testBulkTopupAFileExtensionResponse()
+    public function testBulkTopupAFileExtensionResponse()
     {
         Business::find(1)->update(["wallet" => 2000]);
         $file = $this->getFileForUploadWrongExtention([
@@ -405,14 +395,14 @@ class SbusinessBulkTopupTest extends FeatureTestCase
         $path = $file->storagePath . DIRECTORY_SEPARATOR . $file_name;
 
         return new UploadedFile($path, $file_name, null, null, null, true);
-    }*/
+    }
 
     /**
      * Bulk topup API support Excel without vendor field,
      *
      */
 
-    /*public function testBulkTopupNonVendorResponse()
+    public function testBulkTopupNonVendorResponse()
     {
         Business::find(1)->update(["wallet" => 2000]);
         $file = $this->getFileForUpload([
@@ -442,13 +432,13 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             "Your top-up request has been received and will be transferred and notified shortly.",
             $data['message']
         );
-    }*/
+    }
 
     /**
      * Bulk topup API support Excel without Amount field,
      */
 
-    /*public function testBulkTopupNonAmountResponse()
+    public function testBulkTopupNonAmountResponse()
     {
         Business::find(1)->update(["wallet" => 2000]);
 
@@ -479,13 +469,13 @@ class SbusinessBulkTopupTest extends FeatureTestCase
             "Your top-up request has been received and will be transferred and notified shortly.",
             $data['message']
         );
-    }*/
+    }
 
     /**
      * Bulk topup API support Excel without Mobile Number field,
      */
 
-    /*public function testBulkTopupNonNumberResponse()
+    public function testBulkTopupNonNumberResponse()
     {
         Business::find(1)->update(["wallet" => 2000]);
         $file = $this->getFileForUpload([
@@ -570,5 +560,5 @@ class SbusinessBulkTopupTest extends FeatureTestCase
                 $sheet->fromArray($data);
             });
         });
-    }*/
+    }
 }
