@@ -204,7 +204,7 @@ abstract class PosReport
             ->setViewFile($template)
             ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
             ->setFolder($this->folder_pdf)
-            ->save();
+            ->save(true);
         return $cdn;
     }
 
