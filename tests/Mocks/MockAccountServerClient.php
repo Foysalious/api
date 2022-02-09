@@ -43,7 +43,7 @@ class MockAccountServerClient extends AccountServerClient
         );
     }
 
-    public function passwordAuthenticatePost($uri, $mobile, $data, $password, $purpose)
+    public function passwordAuthenticatePost($uri, $data)
     {
         if ($uri == 'api/v1/authenticate/password') {
             return $this->getPasswordAuthenticate($data);
