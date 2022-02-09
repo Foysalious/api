@@ -4,7 +4,7 @@
     <title>Product wise sales report</title>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <style type="text/css">
-        @import url('https://fonts.maateen.me/mukti/font.css');
+        @import url('https://fonts.maateen.me/kalpurush/font.css');
 
         .page-break {
             page-break-after: always;
@@ -172,10 +172,8 @@
     </table>
 </div>
 <footer align="center" class="footer">
-    Powered by <a href="{{config('sheba.partners_url')}}">sManager</a></span></div>
-    <div id="counter">
-        <div id="pageCounter"></div>
-    </div>
+    <div class="text-center pt-1 w-100" id="footer"><span>Powered by <a
+                    href="{{config('sheba.partners_url')}}">sManager</a></span></div>
 </footer>
 </body>
 </html>
