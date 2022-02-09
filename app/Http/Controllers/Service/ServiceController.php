@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\PriceCalculation\PriceCalculation;
 use Sheba\Dal\Service\Service;
 use App\Transformers\Service\ServiceTransformer;
 use Illuminate\Http\JsonResponse;
@@ -18,23 +19,29 @@ class ServiceController extends Controller
      * @param ServiceTransformer $service_transformer
      * @return JsonResponse
      */
-    public function show($service, Request $request, ServiceTransformer $service_transformer)
+    public function show($service, Request $request, ServiceTransformer $service_transformer, PriceCalculation $priceCalculation)
     {
         $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
 
+        $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+        if (is_null($hyper_location)) return api_response($request, null, 404);
+
         /** @var Service $service */
-        $service = Service::find($service);
+        $service = Service::with(['locationServices' => function($q) use ($hyper_location){
+            $q->where('location_id', $hyper_location->location_id);
+        }])->find($service);
+
         if (!$service) return api_response($request, null, 404);
 
-        $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-
-        $location_service = $hyper_location ? LocationService::where('location_id', $hyper_location->location_id)->where('service_id', $service->id)->first() : null;
+        $location_service = $service->locationServices->first();
 
         $fractal = new Manager();
         if($location_service) $service_transformer->setLocationService($location_service);
         else return api_response($request, null, 404);
+
         $resource = new Item($service, $service_transformer);
         $data = $fractal->createData($resource)->toArray()['data'];
+        $data['start_price'] = $priceCalculation->calculateStartPrice($service);
 
         return api_response($request, $data, 200, ['service' => $data]);
     }
