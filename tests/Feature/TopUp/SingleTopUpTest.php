@@ -11,14 +11,10 @@ use App\Models\TopUpVendorCommission;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\Dal\TopUpBlockedAgent\TopUpBlockedAgent;
 use Sheba\Dal\TopUpBlockedAgentLog\TopUpBlockedAgentLog;
-use Sheba\OAuth2\AccountServer;
-use Sheba\OAuth2\AccountServerClient;
-use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
-use Tests\Mocks\MockAccountServerClient;
 use Throwable;
 
 /**
@@ -72,7 +68,8 @@ class SingleTopUpTest extends FeatureTestCase
         $this->topUpStatusChangeLog = TopUpVendorOTFChangeLog::factory()->create([
             'otf_id' => $this->topUpVendorOtf->id,
         ]);
-        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
+
+        TopUpBlacklistNumber::factory()->create();
     }
 
     public function testInvalidMobileNumberIsRejected()
@@ -86,7 +83,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
     }
@@ -103,7 +100,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801620011019',
             'vendor_id' => $this->topUpVendor->id,
@@ -113,7 +110,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("এই নাম্বারে কিছুক্ষন আগে টপ-আপ করা হয়েছে । পুনরায় এই নাম্বারে টপ-আপ করার জন্য অনুগ্রহপূর্বক 1 মিনিট অপেক্ষা করুন ।",
             $data['message']
@@ -124,10 +121,12 @@ class SingleTopUpTest extends FeatureTestCase
     {
         TopUpBlockedAgent::factory()->create([
             'agent_id' => 1,
+            'agent_type' => 'App\Models\Affiliate'
         ]);
 
         TopUpBlockedAgentLog::factory()->create([
             'agent_id' => 1,
+            'agent_type' => 'App\Models\Affiliate'
         ]);
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801620011019',
@@ -174,7 +173,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(429, $data['code']);
         $this->assertEquals('You have been blocked to do top up. Please contact customer care.', $data['message']
         );
@@ -190,7 +189,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.", $data['message']);
     }
@@ -205,7 +204,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The vendor id field is required.", $data['message']);
     }
@@ -220,7 +219,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The connection type field is required.", $data['message']);
     }
@@ -235,7 +234,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount field is required.", $data['message']);
     }
@@ -250,7 +249,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The password field is required.", $data['message']);
     }
@@ -280,13 +279,13 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals(1, $top_up_order->id);
         $this->assertEquals('Successful', $top_up_order->status);
         $this->assertEquals('+8801678242955', $top_up_order->payee_mobile);
         $this->assertEquals('prepaid', $top_up_order->payee_mobile_type);
-        $this->assertEquals('112', $top_up_order->amount);
+        $this->assertEquals('112.00', $top_up_order->amount);
         $this->assertEquals('1', $top_up_order->vendor_id);
         $this->assertEquals('App\Models\Affiliate', $top_up_order->agent_type);
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
@@ -304,7 +303,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Recharge Request Successful", $data['message']);
     }
@@ -320,7 +319,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals("The amount may not be greater than 1000.", $data['message']);
     }
 
@@ -335,7 +334,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals("The amount must be at least 10.", $data['message']);
     }
 
@@ -350,7 +349,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals("The selected vendor id is invalid.", $data['message']);
     }
 
@@ -365,7 +364,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The vendor id field is required.", $data['message']);
     }
@@ -380,7 +379,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The vendor id field is required.", $data['message']);
     }
@@ -396,7 +395,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
     }
 
@@ -412,7 +411,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You don't have sufficient balance to recharge.", $data['message']);
     }
@@ -427,7 +426,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount field is required.", $data['message']);
     }
@@ -443,7 +442,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount field is required.", $data['message']);
     }
@@ -459,7 +458,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The connection type field is required.", $data['message']);
     }
@@ -474,7 +473,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The connection type field is required.", $data['message']);
     }
@@ -489,7 +488,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The password field is required.", $data['message']);
     }
@@ -505,7 +504,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The password field is required.", $data['message']);
     }
@@ -522,12 +521,12 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You are not verified to do this operation.", $data['message']);
     }
 
-    public function testTopupWithRejecteddUser()
+    public function testTopupWithRejectedUser()
     {
         Affiliate::find(1)->update(["verification_status" => 'rejected']);
         $response = $this->post('/v2/top-up/affiliate', [
@@ -539,7 +538,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You are not verified to do this operation.", $data['message']);
     }
@@ -555,7 +554,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.", $data['message']);
     }
@@ -569,7 +568,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.The password field is required.", $data['message']);
     }
@@ -585,7 +584,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.The password field is required.", $data['message']);
     }
@@ -601,7 +600,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You can't recharge to a blocked number.", $data['message']);
     }
@@ -617,7 +616,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $this->affiliate->reload();
         /**
          * Initial wallet balance = 10000 -> AffiliateFactory
@@ -638,7 +637,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(11.4, $top_up_order->otf_sheba_commission);
@@ -655,7 +654,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(.6, $top_up_order->otf_agent_commission);
@@ -675,7 +674,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(1, $top_up_order->vendor_id);
@@ -692,7 +691,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $affiliate_transactions = AffiliateTransaction::first();
         /**
          * Initial wallet balance = 10000 -> AffiliateFactory
@@ -714,7 +713,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(1, $top_up_order->agent_commission);
@@ -751,7 +750,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals(0, $top_up_order->agent_commission);
@@ -768,7 +767,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $Top_up_orders = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $Top_up_orders->agent_id);
         $this->assertEquals(null, $Top_up_orders->lat);
@@ -786,7 +785,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $Top_up_orders = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $Top_up_orders->agent_id);
         $this->assertEquals("127.0.0.1", $Top_up_orders->ip);
@@ -803,7 +802,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $Top_up_orders = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $Top_up_orders->agent_id);
         $this->assertEquals("App\Models\Affiliate", $Top_up_orders->agent_type);
@@ -820,7 +819,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $Top_up_orders = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $Top_up_orders->agent_id);
         $this->assertEquals(0, $Top_up_orders->ambassador_commission);
@@ -837,10 +836,10 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $Top_up_orders = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $Top_up_orders->agent_id);
-        $this->assertEquals("Symfony/3.X", $Top_up_orders->user_agent);
+        $this->assertEquals("Symfony", $Top_up_orders->user_agent);
     }
 
     public function testTopupTransactionStoreTransactionID()
@@ -854,7 +853,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $Top_up_orders = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $Top_up_orders->agent_id);
         $this->assertEquals("123456", $Top_up_orders->transaction_id);
@@ -871,7 +870,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token" . "jgfjh",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(401, $data['code']);
     }
 
@@ -886,7 +885,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals("Failed", $top_up_order->status);
@@ -904,7 +903,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_order = TopUpOrder::first();
         $this->assertEquals($this->affiliate->id, $top_up_order->agent_id);
         $this->assertEquals("Failed", $top_up_order->status);
@@ -922,7 +921,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999',
             'vendor_id' => $this->topUpVendor->id,
@@ -932,7 +931,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999',
             'vendor_id' => $this->topUpVendor->id,
@@ -942,7 +941,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999',
             'vendor_id' => $this->topUpVendor->id,
@@ -952,7 +951,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '+8801700999999',
             'vendor_id' => $this->topUpVendor->id,
@@ -962,7 +961,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $response->decodeResponseJson();
+        $response->json();
         $top_up_vendor = TopUpVendor::first();
         $this->assertEquals(0, $top_up_vendor->is_published);
         $response = $this->post('/v2/top-up/affiliate', [
@@ -974,7 +973,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-        $data = $response->decodeResponseJson();
+        $data = $response->json();
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("Sorry, we don't support this operator at this moment.", $data['message']);
     }

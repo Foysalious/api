@@ -12,7 +12,6 @@ class TopupBlockedAgentLogFactory extends Factory
     public function definition(): array
     {
         return array_merge([
-            'agent_type' => ' App\Models\Affiliate',
             'action' => 'block',
             'reason' => 'recurring_top_up',
             'created_by' => '1',
