@@ -2,7 +2,7 @@
 
 namespace Sheba\ResellerPayment\Store;
 
-use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
+use Sheba\Dal\GatewayAccount\Contract as GatewayAccountRepo;
 use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Exceptions\StoreNotFoundException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStore;
@@ -86,7 +86,7 @@ class Ssl extends PaymentStore
      */
     public function account_status_update($status)
     {
-        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
+        $storeAccount = $this->partner->pgwGatewayAccounts()->where("gateway_type_id", $this->gateway_id)->first();
         if(!$storeAccount) throw new StoreAccountNotFoundException();
         if($status == $storeAccount->status) throw new ResellerPaymentException("The account is already in this status");
         $storeAccount->status = $status;

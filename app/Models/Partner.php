@@ -25,7 +25,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
-use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
+use Sheba\Dal\GatewayAccount\Model as GatewayAccount;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
@@ -1091,11 +1091,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->subscription_rules->payment_gateway_configuration_id;
     }
 
-    public function pgwStoreAccounts()
-    {
-        return $this->morphMany(PgwStoreAccount::class, 'user');
-    }
-
     public function userMigration()
     {
         return $this->hasMany(UserMigration::class, 'user_id');
@@ -1135,9 +1130,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return true;
     }
 
+    public function pgwGatewayAccounts()
+    {
+        return $this->morphMany(GatewayAccount::class, 'user')->where('gateway_type', 'pgw');
+    }
+
     public function lastUpdatedPGWStore()
     {
-        return $this->pgwStoreAccounts->max('updated_at') ?? null;
+        return $this->pgwGatewayAccounts->max('updated_at') ?? null;
     }
 
     public function survey()
