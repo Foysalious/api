@@ -165,7 +165,7 @@ abstract class PosReport
         return $this->pdfHandler->setName($name)
             ->setViewFile($template)
             ->setData(['data' => $this->data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
-            ->download();
+            ->download(true);
     }
 
     abstract public function prepareData($paginate = true);
@@ -204,7 +204,7 @@ abstract class PosReport
             ->setViewFile($template)
             ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
             ->setFolder($this->folder_pdf)
-            ->save();
+            ->save(true);
         return $cdn;
     }
 
