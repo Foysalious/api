@@ -263,7 +263,7 @@ class ExternalPayments
         $partner_store_accounts = $partner->pgwGatewayAccounts()->published()->get();
         if (isset($partner_store_accounts) && count($partner_store_accounts)) {
             foreach ($partner_store_accounts as $account) {
-                $pgw_store = $account->pgw_store;
+                $pgw_store = $account->gateway;
                 if ($for_emi === 1 && $pgw_store->is_emi_enabled) return true;
             }
             return !$for_emi;

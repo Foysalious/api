@@ -202,9 +202,9 @@ class AvailableMethods
     public function getPublishedPartnerPaymentGateways($partner): array
     {
         $payment_methods = array();
-        $partnerStoreAccounts = $partner->pgwGatewayAccounts()->published()->with('pgw_store')->get();
+        $partnerStoreAccounts = $partner->pgwGatewayAccounts()->published()->with('gateway')->get();
         foreach ($partnerStoreAccounts as $storeAccount) {
-            $name = $storeAccount->pgw_store->key;
+            $name = $storeAccount->gateway->key;
             $payment_methods[] = $name;
         }
         return $payment_methods;
