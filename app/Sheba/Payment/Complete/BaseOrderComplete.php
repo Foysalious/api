@@ -28,6 +28,10 @@ abstract class BaseOrderComplete extends PaymentComplete
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
+        $category_ids = [];
+        foreach ($job->jobServices as $jobService) {
+            array_push($category_ids, $jobService->service->category_id);
+        }
         if ($job->isOnlinePaymentDiscountApplicable()) {
             $payment_gateway = $this->payment->paymentDetails[0]->method;
             if ($payment_gateway == 'ssl') $payment_gateway = PaymentStrategy::ONLINE;
@@ -39,7 +43,7 @@ abstract class BaseOrderComplete extends PaymentComplete
             $this->jobDiscountHandler->setType(DiscountTypes::ONLINE_PAYMENT)
                 ->setCheckingParams($discount_checking_params)->calculate();
 
-            if ($this->jobDiscountHandler->hasDiscount()) {
+            if ($this->jobDiscountHandler->hasDiscount($category_ids)) {
                 $this->jobDiscountHandler->create($job);
                 $job->discount += $this->jobDiscountHandler->getApplicableAmount();
                 $job->update();
