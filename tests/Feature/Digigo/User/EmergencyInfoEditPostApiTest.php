@@ -19,30 +19,22 @@ class EmergencyInfoEditPostApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testApiShouldReturnOKResponseIfUserUpdateAnyEmergencyData()
+    public function testApiUpdateUserEmergencyDataAndUpdatedDataStoreInMemberTable()
     {
         $response = $this->post("/v2/employee/profile/emergency", [
             'name' => 'Sadab',
             'mobile' => '+8801819069484',
+            'relationship' => 'brother',
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
+        $member = Member::first();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
-    }
-
-    public function testEmployeeEmergencyInfoWillUpdate()
-    {
-        $response = $this->post("/v2/employee/profile/emergency", [
-            'name' => 'Sadab',
-            'mobile' => '+8801819069484',
-        ], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $response->json();
-        $member = Member::first();
         $this->assertEquals('+8801819069484', $member->emergency_contract_person_number);
         $this->assertEquals('Sadab', $member->emergency_contract_person_name);
+        $this->assertEquals('brother', $member->emergency_contract_person_relationship);
     }
+
 }
