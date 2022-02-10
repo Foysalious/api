@@ -103,7 +103,7 @@ class OrderAdapter implements PayableAdapter
 
     private function discountedAmount()
     {
-        $category_id = $this->job->jobServices->first()->category_id;
+        $category_id = $this->job->jobServices->first()->service->category_id;
         $discount_checking_params = (new JobDiscountCheckingParams())
             ->setDiscountableAmount($this->partnerOrder->due)
             ->setOrderAmount($this->partnerOrder->grossAmount)

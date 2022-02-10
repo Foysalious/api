@@ -28,7 +28,7 @@ abstract class BaseOrderComplete extends PaymentComplete
     {
         $partner_order->calculate(true);
         $job = $partner_order->getActiveJob();
-        $category_id = $job->jobServices->first()->category_id;
+        $category_id = $job->jobServices->first()->service->category_id;
 
         if ($job->isOnlinePaymentDiscountApplicable()) {
             $payment_gateway = $this->payment->paymentDetails[0]->method;
