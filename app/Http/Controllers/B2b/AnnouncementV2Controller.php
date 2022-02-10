@@ -16,6 +16,7 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\Dal\AnnouncementNotificationInfo\AnnouncementNotificationInfoRepositoryInterface;
 use Sheba\ModificationFields;
 
 class AnnouncementV2Controller extends Controller
@@ -135,6 +136,22 @@ class AnnouncementV2Controller extends Controller
         $announcement_update = $updater->setRequest($creator_requester)->update();
         if ($announcement_update == false) return api_response($request, null, 400, ['message' => 'You cannot edit an expired announcement.']);
         return api_response($request, null, 200);
+    }
+
+    public function notificationCount($business_id, $announcement_id, Request $request, AnnouncementNotificationInfoRepositoryInterface $announcement_notification_repo)
+    {
+        /** @var  Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $announcement_notification = $announcement_notification_repo->where('announcement_id', $announcement_id);
+        $in_queue_count = $announcement_notification;
+        $in_queue_count = $in_queue_count->where('queue_in', 1)->count();
+        $queue_out_count = $announcement_notification;
+        $queue_out_count = $queue_out_count->where('queue_out', 1)->count();
+        return api_response($request, null, 200, ['total_count' => $in_queue_count, 'total_sent' => $queue_out_count]);
     }
 
     private function getLimit(Request $request, $limit, $total_announcements)
