@@ -12,10 +12,10 @@ use Tests\Mocks\MockAccountServerClient;
  */
 class DigigoLoginPostApiTest extends FeatureTestCase
 {
+
     public function setUp(): void
     {
         parent::setUp();
-        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
     }
 
     public function testApiShouldReturnOKResponseIfEmailAndPasswordIsValid()
@@ -37,7 +37,7 @@ class DigigoLoginPostApiTest extends FeatureTestCase
             'email' => 'tisha@sheba.xyz', 'password' => '12345'
         ]);
         $data = $response->json();
-        $this->assertNotNull($data['token'], "token is not null");
+        $this->assertEquals($this->token, $data['token']);
         $this->assertEquals("+8801678242955", $data['user']['mobile']);
         $this->assertEquals(1, $data['user']['business_id']);
         $this->assertEquals("My Company", $data['user']['business_name']);
