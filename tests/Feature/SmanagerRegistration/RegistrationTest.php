@@ -157,8 +157,8 @@ class RegistrationTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->decodeResponseJson();
-        $this->assertEquals(403, $data["code"]);
-        $this->assertEquals("Successful", $data["message"]);
+        $this->assertEquals(500, $data["code"]);
+        $this->assertEquals("Something went wrong.", $data["message"]);
     }
 
     public function testRRegistrationPartnerWithEmptyPayload()
