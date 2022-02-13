@@ -51,7 +51,7 @@ class SettingController extends Controller
     {
         try {
             $partner = resolvePartnerFromAuthMiddleware($request);
-            $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
+            $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice', 'printer_name', 'printer_model')->first();
             if (!$settings) {
                 $data = ['partner_id' => $partner->id];
                 $creator->setData($data)->create();
@@ -64,8 +64,18 @@ class SettingController extends Controller
             {
                 $data = ['partner_id' => $partner->id, 'sub_domain' => $partner->sub_domain, 'vat_percentage' => $settings->vat_percentage];
                 $settings->vat_percentage = $partnerService->setPartner($partner)->storeOrGet($data)['partner']['vat_percentage'];
-                $pos_order_settings_data = ['partner_id' => $partner->id, 'sub_domain' => $partner->sub_domain, 'qr_code_account_type' => $partner->qr_code_account_type,
-                    'qr_code_image' => $partner->qr_code_image];
+                $pos_order_settings_data = [
+                    'partner_id' => $partner->id,
+                    'name' => $partner->name,
+                    'sub_domain' => $partner->sub_domain,
+                    'sms_invoice' => $settings->sms_invoice,
+                    'auto_printing' => $settings->auto_printing,
+                    'printer_name' => $settings->printer_name,
+                    'printer_model' => $settings->printer_model,
+                    'delivery_charge' => $partner->delivery_charge,
+                    'qr_code_account_type' => $partner->qr_code_account_type,
+                    'qr_code_image' => $partner->qr_code_image
+                ];
                 $partnerDetailsFromOderService = $orderService->setPartnerId($partner->id)->storeOrGet($pos_order_settings_data);
                 $settings->has_qr_code = $partnerDetailsFromOderService['partner']['qr_code_account_type'] && $partnerDetailsFromOderService['partner']['qr_code_image'] ?  1 : 0;
             }

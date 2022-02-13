@@ -24,11 +24,13 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
     private $businessMember;
     /*** @var ApprovalRequestRepository */
     private $approvalRequestRepository;
+    private $leaveTypes;
 
-    public function __construct(Business $business, BusinessMember $business_member)
+    public function __construct(Business $business, BusinessMember $business_member, $leave_types)
     {
         $this->business = $business;
         $this->businessMember = $business_member;
+        $this->leaveTypes = $leave_types;
         $this->approvalRequestRepository = app(ApprovalRequestRepository::class);
     }
 
@@ -40,12 +42,11 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
     {
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-        $business_member = $requestable->businessMember->load('member');
+        $business_member = $requestable->businessMember;
         /** @var Member $member */
         $member = $business_member->member;
         /** @var Profile $profile */
         $profile = $member->profile;
-        $leave_type = $requestable->leaveType()->withTrashed()->first();
         $approvers = $this->getApprover($requestable);
         return [
             'id' => $approval_request->id,
@@ -61,7 +62,7 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'name' => $profile->name,
-                'type' => $leave_type->title,
+                'type' => $this->leaveTypes[$requestable->leave_type_id],
                 'total_days' => $requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
 
@@ -97,21 +98,19 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
 
     private function getApprover($requestable)
     {
+        $approval_request_ids = $requestable->requests->pluck('id')->toArray();
         $approvers = [];
-        foreach ($requestable->requests as $approval_request) {
-            $profile = DB::table('approval_requests')
-                ->join('business_member', 'business_member.id', '=', 'approval_requests.approver_id')
-                ->join('members', 'members.id', '=', 'business_member.member_id')
-                ->join('profiles', 'profiles.id', '=', 'members.profile_id')
-                ->where('approval_requests.id', '=', $approval_request->id)
-                ->first();
-
+        $profiles_with_status = DB::table('approval_requests')
+            ->join('business_member', 'business_member.id', '=', 'approval_requests.approver_id')
+            ->join('members', 'members.id', '=', 'business_member.member_id')
+            ->join('profiles', 'profiles.id', '=', 'members.profile_id')
+            ->whereIn('approval_requests.id', $approval_request_ids)->select('profiles.name','approval_requests.status');
+        foreach ($profiles_with_status->get() as $profile_with_status) {
             array_push($approvers, [
-                'name' => $profile->name ? $profile->name : 'n/s',
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
+                'name' => $profile_with_status->name ?: 'n/s',
+                'status' => ApprovalRequestPresenter::statuses()[$profile_with_status->status]
             ]);
         }
-
         return $approvers;
     }
 }

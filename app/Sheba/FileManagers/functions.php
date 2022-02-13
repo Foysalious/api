@@ -1591,3 +1591,18 @@ if (!function_exists('getEmployeeVisitFolder')) {
         return $url . 'images/employee_visit_images';
     }
 }
+
+if (!function_exists('getAttendanceReconciliationFolder')) {
+
+    /**
+     * @param $with_base_url
+     * @return string
+     */
+    function getAttendanceReconciliationFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'attendance_reconciliation/';
+    }
+}

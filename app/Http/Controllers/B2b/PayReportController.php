@@ -39,10 +39,8 @@ class PayReportController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-
         $payroll_setting = $business->payrollSetting;
         list($offset, $limit) = calculatePagination($request);
-
         $payslip = $pay_report_list->setBusiness($business)
             ->setSearch($request->search)
             ->setSortKey($request->sort)
@@ -51,7 +49,6 @@ class PayReportController extends Controller
             ->setDepartmentID($request->department_id)
             ->setGrossSalaryProrated($request->gross_salary_prorated)
             ->get();
-
         $count = count($payslip);
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_report')->get();
         if ($request->limit == 'all') $limit = $count;

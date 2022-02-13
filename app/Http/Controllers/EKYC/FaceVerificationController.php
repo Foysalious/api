@@ -54,6 +54,7 @@ class FaceVerificationController extends Controller
             $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
             $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
             $faceVerificationData = $this->client->post($this->api, $requestedData);
             $status = ($faceVerificationData['data']['status']);
             if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
@@ -61,7 +62,7 @@ class FaceVerificationController extends Controller
                 $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
             } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
             $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
-            return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
+            return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $profile->nid_verification_request_count, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
@@ -133,6 +134,17 @@ class FaceVerificationController extends Controller
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
             return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @throws EKycException
+     */
+    private function stopIfNotEligibleForPorichoyVerificationFurther($profile)
+    {
+        $verification_req_count = $profile->nid_verification_request_count;
+        if($verification_req_count > Statics::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
+            throw new EKycException(Statics::PENDING_MESSAGE, 400);
         }
     }
 }

@@ -1,14 +1,14 @@
 <?php namespace Sheba\OAuth2;
 
+use App\Exceptions\AllarKosomWillNotReportException;
 use App\Exceptions\DoNotReportException;
 use App\Models\Affiliate;
 use App\Models\Partner;
-use GuzzleHttp\Exception\ClientException;
+use Exception;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\AuthenticationRequest\Statuses;
 use Sheba\Dal\AuthorizationToken\BlacklistedReason;
 use Sheba\ModificationFields;
-use Sheba\OAuth2\AccountServer;
 use Sheba\TopUp\Exception\PinMismatchException;
 
 class VerifyPin
@@ -85,9 +85,9 @@ class VerifyPin
     /**
      * @throws DoNotReportException
      * @throws PinMismatchException
-     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
-     * @throws \Sheba\OAuth2\AccountServerNotWorking
-     * @throws \Sheba\OAuth2\WrongPinError
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function verify()
     {
@@ -95,18 +95,18 @@ class VerifyPin
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      * @throws DoNotReportException
      * @throws PinMismatchException
-     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
-     * @throws \Sheba\OAuth2\AccountServerNotWorking
-     * @throws \Sheba\OAuth2\WrongPinError
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     private function authenticateWithPassword()
     {
         try {
             $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, $this->purpose);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             if ($e->getCode() != 403) throw $e;
             $this->getAuthenticateRequests();
         }
@@ -115,9 +115,9 @@ class VerifyPin
     /**
      * @throws DoNotReportException
      * @throws PinMismatchException
-     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
-     * @throws \Sheba\OAuth2\AccountServerNotWorking
-     * @throws \Sheba\OAuth2\WrongPinError
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     private function getAuthenticateRequests()
     {
@@ -150,21 +150,21 @@ class VerifyPin
 
     /**
      * @throws DoNotReportException
-     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
-     * @throws \Sheba\OAuth2\AccountServerNotWorking
-     * @throws \Sheba\OAuth2\WrongPinError
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     private function sessionOut()
     {
         $this->logout();
         $this->resetRememberToken();
-        throw new DoNotReportException("You have been logged out", 401);
+        throw new AllarKosomWillNotReportException("You have been logged out", 401);
     }
 
     /**
-     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
-     * @throws \Sheba\OAuth2\AccountServerNotWorking
-     * @throws \Sheba\OAuth2\WrongPinError
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     private function logout()
     {
