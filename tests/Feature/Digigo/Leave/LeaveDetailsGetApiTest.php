@@ -5,6 +5,9 @@ namespace Tests\Feature\Digigo\Leave;
 use App\Models\BusinessDepartment;
 use App\Models\Career;
 use Carbon\Carbon;
+use Database\Factories\ApprovalRequestFactory;
+use Database\Factories\BusinessMemberFactory;
+use Database\Factories\LeaveFactory;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\Dal\BusinessHoliday\Model as BusinessHoliday;
@@ -69,14 +72,16 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->geLeaveDetailsFromDatabase($data);
+        $this->returnLeaveDetailDataInArrayFormat($data);
     }
 
-    public function testApiReturnValidDataForSuccessResponse()
+    private function geLeaveDetailsFromDatabase($data)
     {
-        $response = $this->get("/v1/employee/leaves/1", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  Leave info @return LeaveFactory
+         */
         $this->assertEquals('Test Leave', $data['leave']['title']);
         $this->assertEquals('Test Leave', $data['leave']['leave_type']);
         $this->assertEquals(Carbon::now()->format('Y-m-d H:i'), Carbon::parse($data['leave']['start_date']['date'])->format('Y-m-d H:i'));
@@ -95,20 +100,25 @@ class LeaveDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals('Asia/Dhaka', $data['leave']['requested_on']['timezone']);
         $this->assertEquals('Test leave', $data['leave']['note']);
         $this->assertEquals(null, $data['leave']['substitute']);
+        /**
+         *  approvers info @return ApprovalRequestFactory
+         */
         $this->assertEquals('pending', $data['leave']['approvers'][0]['status']);
         $this->assertEquals(1, $data['leave']['approver_count']);
         $this->assertEquals('Super Admin changed this leave status from Pending to Accepted', $data['leave']['leave_log_details'][0]['log']);
         $this->assertEquals(Carbon::now()->format('h:i A') . " - " . Carbon::now()->format('d M, Y'), $data['leave']['leave_log_details'][0]['created_at']);
+        /**
+         *  is_substitute_required when memeber is "Manager". this info   @return BusinessMemberFactory
+         */
         $this->assertEquals(1, $data['leave']['is_substitute_required']);
+        /**
+         *  is_cancelable_request depends on leave start dates and end dates  @return LeaveFactory
+         */
         $this->assertEquals(0, $data['leave']['is_cancelable_request']);
     }
 
-    public function testLeaveDetailsDataApiFormat()
+    private function returnLeaveDetailDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/leaves/1", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('title', $data['leave']);
         $this->assertArrayHasKey('leave_type', $data['leave']);
         $this->assertArrayHasKey('date', $data['leave']['start_date']);

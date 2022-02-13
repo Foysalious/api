@@ -4,6 +4,8 @@ namespace Tests\Feature\Digigo\Notification;
 
 use App\Models\Notification;
 use Carbon\Carbon;
+use Database\Factories\MemberFactory;
+use Database\Factories\NotificationFactory;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\BusinessPushNotificationLogs\Model as BusinessPushNotificationLog;
 
@@ -29,23 +31,10 @@ class LastNotificationGetApiTest extends FeatureTestCase
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
-    }
-
-    public function testApiReturnValidDataForSuccessResponse()
-    {
-        $response = $this->get("/v1/employee/last-notifications?time=".Carbon::now()->format('Y-m-d H:i:s')."", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  Unread notification count  @return NotificationFactory
+         */
         $this->assertEquals(1, $data['notifications']);
-    }
-
-    public function testLastNotificationDataApiFormat()
-    {
-        $response = $this->get("/v1/employee/last-notifications?time=".Carbon::now()->format('Y-m-d H:i:s')."", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('notifications', $data);
     }
 }

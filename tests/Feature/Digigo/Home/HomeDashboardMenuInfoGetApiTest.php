@@ -2,6 +2,9 @@
 
 namespace Tests\Feature\Digigo\Home;
 
+use Database\Factories\ApprovalFlowFactory;
+use Database\Factories\ApprovalRequestFactory;
+use Database\Factories\BusinessMemberFactory;
 use Tests\Feature\FeatureTestCase;
 
 /**
@@ -21,27 +24,30 @@ class HomeDashboardMenuInfoGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
+        dd($data);
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getUserDashboardMenuInfo($data);
+        $this->returnUserDashboardMenuInfoDataInArrayFormat($data);
     }
 
-    public function testApiReturnValidDataForSuccessResponse()
+    private function getUserDashboardMenuInfo($data)
     {
-        $response = $this->get("/v1/employee/menu-info", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  is_approval_request_required and is_manager Data @return BusinessMemberFactory
+         */
         $this->assertEquals(1, $data['info']['is_approval_request_required']);
+        $this->assertEquals(0, $data['info']['is_manager']);
+
+        /**
+         *  pending_request count @return ApprovalRequestFactory
+         */
         $this->assertEquals(1, $data['info']['pending_request']);
         $this->assertEquals(0, $data['info']['pending_visit_count']);
-        $this->assertEquals(0, $data['info']['is_manager']);
     }
 
-    public function testHomeDashBoardMenuInfoApiFormat()
+    private function returnUserDashboardMenuInfoDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/menu-info", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('is_approval_request_required', $data['info']);
         $this->assertArrayHasKey('pending_request', $data['info']);
         $this->assertArrayHasKey('pending_visit_count', $data['info']);

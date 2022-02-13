@@ -40,14 +40,17 @@ class HolidayListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getBusinessHolidayAndWeekendList($data);
+        $this->assertArrayHasKey('holidays', $data);
+        $this->assertArrayHasKey('weekends', $data);
     }
 
-    public function testApiReturnBusinessHolidayAndWeekendList()
+    private function getBusinessHolidayAndWeekendList($data)
     {
-        $response = $this->get("/v1/employee/holidays", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  Weekends data from  @return BusinessWeekend
+         */
         $weekends = DB::table('business_weekends')->where('business_id', $this->business->id)->get();
         $weekend_dates = [];
 
@@ -60,6 +63,10 @@ class HolidayListGetApiTest extends FeatureTestCase
                 array_push($weekend_dates, $date->format('Y-m-d'));
             }
         }
+
+        /**
+         *  Holiday data from  @return BusinessHoliday
+         */
 
         foreach ($data['holidays'] as $item) {
             $this->assertEquals(Carbon::now()->format('Y-m-d'), $item);
@@ -92,15 +99,5 @@ class HolidayListGetApiTest extends FeatureTestCase
                 return 6;
                 break;
         }
-    }
-
-    public function testHolidayListApiFormat()
-    {
-        $response = $this->get("/v1/employee/holidays", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
-        $this->assertArrayHasKey('holidays', $data);
-        $this->assertArrayHasKey('weekends', $data);
     }
 }

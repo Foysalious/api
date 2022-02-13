@@ -3,6 +3,7 @@
 namespace Tests\Feature\Digigo\Leave;
 
 use Carbon\Carbon;
+use Database\Factories\ApprovalRequestFactory;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Sheba\Dal\Leave\Model as Leave;
@@ -32,14 +33,17 @@ class LeaveListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getLeaveListAccordingToLeaveType($data);
+        $this->returnLeaveListDataInArrayFormat($data);
+
     }
 
-    public function testApiReturnValidDataForSuccessResponse()
+    private function getLeaveListAccordingToLeaveType($data)
     {
-        $response = $this->get("/v1/employee/leaves?type=1", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  Leave List Info @return ApprovalRequestFactory
+         */
         $this->assertEquals(1, $data['pending_approval_request'][0]['id']);
         $this->assertEquals(1, $data['pending_approval_request'][0]['requestable_id']);
         $this->assertEquals('pending', $data['pending_approval_request'][0]['status']);
@@ -50,12 +54,8 @@ class LeaveListGetApiTest extends FeatureTestCase
         $this->assertEquals(1, $data['approval_requests']['pending_request']);
     }
 
-    public function testLeaveListDataApiFormat()
+    private function returnLeaveListDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/leaves?type=1", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('id', $data['pending_approval_request'][0]);
         $this->assertArrayHasKey('requestable_id', $data['pending_approval_request'][0]);
         $this->assertArrayHasKey('status', $data['pending_approval_request'][0]);

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Leave;
 
+use Database\Factories\LeaveTypeFactory;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Tests\Feature\FeatureTestCase;
 
@@ -27,14 +28,16 @@ class LeaveTypeListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getLeaveTypeListFromDatabase($data);
+        $this->returnLeaveTypeListDataInArrayFormat($data);
     }
 
-    public function testApiReturnValidLeaveTypeList()
+    public function getLeaveTypeListFromDatabase($data)
     {
-        $response = $this->get("/v1/employee/leaves/types", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  Leave type @return LeaveTypeFactory
+         */
         foreach ($data['leave_types'] as $item) {
             $this->assertEquals(1, $item['id']);
             $this->assertEquals('Test Leave', $item['title']);
@@ -47,12 +50,8 @@ class LeaveTypeListGetApiTest extends FeatureTestCase
         $this->assertEquals('2022-06-30', $data['fiscal_year']['end_date']);
     }
 
-    public function testEmployeeLevaveTypeListApiFormat()
+    public function returnLeaveTypeListDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/leaves/types", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         foreach ($data['leave_types'] as $item) {
             $this->assertArrayHasKey('id', $item);
             $this->assertArrayHasKey('title', $item);

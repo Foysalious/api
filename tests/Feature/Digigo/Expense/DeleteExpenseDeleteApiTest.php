@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Expense;
 
+use Database\Factories\ExpensesFactory;
 use Sheba\Dal\Expense\Expense;
 use Tests\Feature\FeatureTestCase;
 
@@ -21,22 +22,18 @@ class DeleteExpenseDeleteApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testApiReturnSuccessResponseAfterDeleteExpenseFromList()
+    public function testApiReturnSuccessResponseAfterDeleteExpenseFromExpenseDatabase()
     {
         $response = $this->delete("/v1/employee/expense/1", [], [
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        $this->assertEquals(200, $data['code']);
-    }
-
-    public function testExpenseIsDeletedFromDb()
-    {
-        $response = $this->delete("/v1/employee/expense/1", [], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $response->json();
         $expense = Expense::first();
+        $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        /**
+         *   expense Data delete @return ExpensesFactory
+         */
         $this->assertEquals(null, $expense);
     }
 }

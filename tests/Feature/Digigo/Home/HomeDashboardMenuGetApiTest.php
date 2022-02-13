@@ -27,14 +27,16 @@ class HomeDashboardMenuGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getUserDashboardMenuList($data);
+        $this->returnUserDashboardMenuListDataInArrayFormat($data);
     }
 
-    public function testApiReturnValidDataForSuccessResponse()
+    private function getUserDashboardMenuList($data)
     {
-        $response = $this->get("/v1/employee/dashboard-menu", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  Menu list fetch from code base
+         */
         $this->assertEquals('Support', $data['dashboard'][0]['title']);
         $this->assertEquals('support', $data['dashboard'][0]['target_type']);
         $this->assertEquals('Attendance', $data['dashboard'][1]['title']);
@@ -56,12 +58,8 @@ class HomeDashboardMenuGetApiTest extends FeatureTestCase
         $this->assertEquals('https://sheba.freshdesk.com/support/tickets/new', $data['dashboard'][8]['link']);
     }
 
-    public function testDashboardMenuListApiFormat()
+    private function returnUserDashboardMenuListDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/dashboard-menu", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('title', $data['dashboard'][0]);
         $this->assertArrayHasKey('target_type', $data['dashboard'][0]);
         $this->assertArrayHasKey('title', $data['dashboard'][1]);

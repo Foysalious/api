@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Leave;
 
+use Database\Factories\BusinessMemberFactory;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Tests\Feature\FeatureTestCase;
@@ -31,23 +32,11 @@ class LeaveSettingsGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
-    }
-
-    public function testApiReturnValidDataForSuccessResponse()
-    {
-        $response = $this->get("/v1/employee/leaves/settings", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        $this->assertEquals('Successful', $data['message']);
+        /**
+         *  is_substitute_required when memeber is "Manager". this info   @return BusinessMemberFactory
+         */
         $this->assertEquals(1, $data['settings']['is_substitute_required']);
-    }
-
-    public function testLeaveSettingsApiFormat()
-    {
-        $response = $this->get("/v1/employee/leaves/settings", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('is_substitute_required', $data['settings']);
     }
 }

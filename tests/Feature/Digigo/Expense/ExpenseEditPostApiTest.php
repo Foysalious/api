@@ -24,7 +24,7 @@ class ExpenseEditPostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testApiReturnSuccessResponseAndUpdateExpenseDetails()
+    public function testApiReturnSuccessResponseAndUpdatedDataStoreInExpenseTable()
     {
         $response = $this->post("/v1/employee/expense/1", [
             'amount' => '200',
@@ -34,21 +34,9 @@ class ExpenseEditPostApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
+        $expense = Expense::first();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
-    }
-
-    public function testStoreUpdatedExpenseDataInExpenseDb()
-    {
-        $response = $this->post("/v1/employee/expense/1", [
-            'amount' => '200',
-            'remarks' => 'Test Expense',
-            'type' => 'other',
-        ], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $response->json();
-        $expense = Expense::first();
         $this->assertEquals($this->member->id, $expense->member_id);
         $this->assertEquals($this->business_member->id, $expense->business_member_id);
         $this->assertEquals('200.00', $expense->amount);

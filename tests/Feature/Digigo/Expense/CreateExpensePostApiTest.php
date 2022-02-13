@@ -17,7 +17,7 @@ class CreateExpensePostApiTest extends FeatureTestCase
         $this->logIn();
     }
 
-    public function testApiReturnSuccessResponseAfterCreateExpense()
+    public function testCreateNewExpenseAndStoreInExpenseTable()
     {
         $response = $this->post("/v1/employee/expense", [
             'amount' => '100',
@@ -27,40 +27,16 @@ class CreateExpensePostApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
+        $expense = Expense::first();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
-    }
-
-    public function testCreateNewExpenseAndDataWillStoreInExpenseDb()
-    {
-        $response = $this->post("/v1/employee/expense", [
-            'amount' => '100',
-            'remarks' => 'Test Expense',
-            'type' => 'transport',
-        ], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $response->json();
-        $expense = Expense::first();
+        $this->assertEquals(1, $data['expense']['id']);
+        $this->assertArrayHasKey('id', $data['expense']);
         $this->assertEquals($this->member->id, $expense->member_id);
         $this->assertEquals($this->business_member->id, $expense->business_member_id);
         $this->assertEquals('100.00', $expense->amount);
         $this->assertEquals('Test Expense', $expense->remarks);
         $this->assertEquals('transport', $expense->type);
         $this->assertEquals('pending', $expense->status);
-    }
-
-    public function testExpenseCreateApiReturnExpenseId()
-    {
-        $response = $this->post("/v1/employee/expense", [
-            'amount' => '100',
-            'remarks' => 'Test Expense',
-            'type' => 'transport',
-        ], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
-        $this->assertEquals(1, $data['expense']['id']);
-        $this->assertArrayHasKey('id', $data['expense']);
     }
 }

@@ -5,6 +5,8 @@ namespace Tests\Feature\Digigo\Leave;
 use App\Models\BusinessDepartment;
 use App\Models\Department;
 use Carbon\Carbon;
+use Database\Factories\BusinessMemberFactory;
+use Database\Factories\LeaveFactory;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\Dal\BusinessHoliday\Model as BusinessHoliday;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
@@ -62,23 +64,16 @@ class LeaveUpdatePostApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
+        $Leave = Leave::first();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
-    }
-
-    public function testUserUpdatedLeaveInfoWillStoreInDatabase()
-    {
-        $response = $this->post("/v1/employee/leaves/1/update", [
-            'note' => 'Test Leave Update',
-        ], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $response->json();
-        $Leave = Leave::first();
+        /**
+         *  Leave updated data @return LeaveFactory
+         */
         $this->assertEquals('Test Leave', $Leave->title);
         $this->assertEquals(1, $Leave->leave_type_id);
-        //$this->assertEquals(Carbon::now(), $Leave->start_date);
-        //$this->assertEquals(Carbon::now()->addDay()->timestamp, $Leave->end_date);
+        $this->assertEquals(Carbon::now()->format('Y-m-d H:i'), Carbon::parse($Leave->start_date)->format('Y-m-d H:i'));
+        $this->assertEquals(Carbon::now()->addDay()->format('Y-m-d H:i'), Carbon::parse($Leave->end_date)->format('Y-m-d H:i'));
         $this->assertEquals(0, $Leave->is_half_day);
         $this->assertEquals('Test Leave Update', $Leave->note);
         $this->assertEquals('pending', $Leave->status);

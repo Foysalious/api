@@ -5,6 +5,7 @@ namespace Tests\Feature\Digigo\Leave;
 use App\Models\BusinessDepartment;
 use App\Models\Department;
 use Carbon\Carbon;
+use Database\Factories\LeaveFactory;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
@@ -61,7 +62,7 @@ class LeaveCancelPostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testApiReturnSuccessResponseAfterCanceledPendingLeaveRequest()
+    public function testUserCanCancelLeaveBeforeTwentyFourHour()
     {
         $response = $this->post("/v1/employee/leaves/1/cancel?%20status=canceled", [
             'status' => 'canceled',
@@ -69,25 +70,18 @@ class LeaveCancelPostApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
+        $current_time = Carbon::now()->addDays(1)->format('Y-m-d h:i');
+        $Leave = Leave::first();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
-    }
-
-    public function testAfterCancelLeaveRequestLeaveDataWillUpdateInDatabase()
-    {
-        $response = $this->post("/v1/employee/leaves/1/cancel?%20status=canceled", [
-            'status' => 'canceled',
-        ], [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $response->json();
-        $current_time = Carbon::now()->format('Y-m-d h:i');
-        $Leave = Leave::first();
+        /**
+         * leave date @return LeaveFactory
+         */
         $this->assertEquals('Test Leave', $Leave->title);
         $this->assertEquals($this->business_member->id, $Leave->business_member_id);
         $this->assertEquals(1, $Leave->leave_type_id);
-        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->format('Y-m-d h:i'));
-        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->format('Y-m-d h:i'));
+        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->addDays(1)->format('Y-m-d h:i'));
+        $this->assertEquals($current_time, Carbon::parse($Leave->start_date)->addDays(1)->format('Y-m-d h:i'));
         $this->assertEquals(0, $Leave->is_half_day);
         $this->assertEquals('Test leave', $Leave->note);
         $this->assertEquals('canceled', $Leave->status);

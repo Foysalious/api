@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Digigo\Approval;
 
+use Carbon\Carbon;
 use Database\Factories\ApprovalRequestFactory;
-use Database\Factories\ApprovalSettingFactory;
 use Database\Factories\LeaveFactory;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
@@ -12,13 +12,14 @@ use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\Dal\ApprovalSettingApprover\ApprovalSettingApprover;
 use Sheba\Dal\ApprovalSettingModule\ApprovalSettingModule;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\LeaveStatusChangeLog\Model as LeaveStatusChangeLog;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Tests\Feature\FeatureTestCase;
 
 /**
  * @author Khairun Nahar <khairun@sheba.xyz>
  */
-class ApprovedLeaveRequestPostApiTest extends FeatureTestCase
+class LeaveRejectPostApiTest extends FeatureTestCase
 {
     public function setUp(): void
     {
@@ -31,6 +32,7 @@ class ApprovedLeaveRequestPostApiTest extends FeatureTestCase
             ApprovalSettingApprover::class,
             LeaveType::class,
             Leave::class,
+            LeaveStatusChangeLog::class,
         ]);
         DB::table('approval_flow_approvers')->truncate();
         $this->logIn();
@@ -67,17 +69,18 @@ class ApprovedLeaveRequestPostApiTest extends FeatureTestCase
         ]);
     }
 
-    public function testApiReturnSuccessResponseAfterApprovedLeaveRequest()
+    public function testApiReturnSuccessResponseAfterRejectLeaveRequest()
     {
         $response = $this->post("/v1/employee/approval-requests/status", [
             'type' => 'leave',
             'type_id' => '[1]',
-            'status' => 'accepted',
+            'status' => 'rejected',
+            'reasons' => '["violation_of_leave_policy"]',
+            'note' => 'Test Reject Leave',
 
         ], [
             'Authorization' => "Bearer $this->token",
         ]);
-
         $data = $response->json();
         $approvalRequests = ApprovalRequest::first();
         $leave = Leave::first();
@@ -87,12 +90,12 @@ class ApprovedLeaveRequestPostApiTest extends FeatureTestCase
          *  store @return ApprovalRequestFactory
          */
         $this->assertEquals(1, $approvalRequests->requestable_id);
-        $this->assertEquals('accepted', $approvalRequests->status);
+        $this->assertEquals('rejected', $approvalRequests->status);
         $this->assertEquals(1, $approvalRequests->approver_id);
         /**
          *  Store @return LeaveFactory
          */
         $this->assertEquals($this->business_member->id, $leave->business_member_id);
-        $this->assertEquals('accepted', $leave->status);
+        $this->assertEquals('rejected', $leave->status);
     }
 }

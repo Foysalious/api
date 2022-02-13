@@ -149,7 +149,7 @@ class EmployeeDashboardGetApiTest extends \Tests\Feature\FeatureTestCase
         $this->assertEquals('Manager', $data['info']['user_profile']['designation']);
     }
 
-    public function testDashboardDataApiResponse()
+    public function testApiReturnDashboardDataApiResponseInArrayFormat()
     {
         $response = $this->get('/v1/employee/dashboard', [
             'Authorization' => "Bearer $this->token",

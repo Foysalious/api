@@ -3,6 +3,7 @@
 namespace Tests\Feature\Digigo\Announcement;
 
 use Carbon\Carbon;
+use Database\Factories\AnnouncementFactory;
 use Sheba\Dal\Announcement\Announcement;
 use Tests\Feature\FeatureTestCase;
 
@@ -26,14 +27,16 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getAnnouncementDetailsDataFromDatabase($data);
+        $this->returnAnnouncementDetailsDataInArrayFormat($data);
     }
 
-    public function testApiReturnValidDataForSuccessResponse()
+    private function getAnnouncementDetailsDataFromDatabase($data)
     {
-        $response = $this->get("/v1/employee/announcements/1", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  User Emergency Data @return AnnouncementFactory
+         */
         $this->assertEquals(1, $data['announcement']['id']);
         $this->assertEquals('Holiday notice', $data['announcement']['title']);
         $this->assertEquals('holiday', $data['announcement']['type']);
@@ -44,12 +47,8 @@ class AnnouncementDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals(Carbon::now()->format('Y-m-d H:i'), Carbon::parse($data['announcement']['created_at'])->format('Y-m-d H:i'));
     }
 
-    public function testAnnouncementDetailsDataApiFormat()
+    private function returnAnnouncementDetailsDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/announcements/1", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('id', $data['announcement']);
         $this->assertArrayHasKey('title', $data['announcement']);
         $this->assertArrayHasKey('type', $data['announcement']);

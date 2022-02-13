@@ -3,6 +3,8 @@
 namespace Tests\Feature\Digigo\Approval;
 
 use Carbon\Carbon;
+use Database\Factories\ApprovalSettingFactory;
+use Database\Factories\LeaveFactory;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
@@ -44,14 +46,17 @@ class ApprovalListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getApprovalLeaveTypeListFromDatabase($data);
+        $this->returnApprovalListDataInArrayFormat($data);
     }
 
-    public function testApiReturnValidApprovalListForSuccessResponse()
+    private function getApprovalLeaveTypeListFromDatabase($data)
     {
-        $response = $this->get("/v1/employee/approval-requests?type=&limit=1&offset=0", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+
+        /**
+         *  leave data @return LeaveFactory
+         */
         $this->assertEquals(1, $data['request_lists'][0]['id']);
         $this->assertEquals('leave', $data['request_lists'][0]['type']);
         $this->assertEquals('pending', $data['request_lists'][0]['status']);
@@ -64,15 +69,15 @@ class ApprovalListGetApiTest extends FeatureTestCase
         $this->assertEquals(null, $data['request_lists'][0]['leave']['half_day_configuration']);
         $this->assertEquals(Carbon::now()->format('M d, Y') . ' - ' . Carbon::now()->addDay()->format('M d, Y'), $data['request_lists'][0]['leave']['leave_date']);
         $this->assertEquals('pending', $data['request_lists'][0]['leave']['status']);
+
+        /**
+         *  type_lists @return ApprovalSettingFactory
+         */
         $this->assertEquals('leave', $data['type_lists'][0]);
     }
 
-    public function testApprovalListDataApiFormat()
+    private function returnApprovalListDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/approval-requests?type=&limit=1&offset=0", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
         $this->assertArrayHasKey('id', $data['request_lists'][0]);
         $this->assertArrayHasKey('type', $data['request_lists'][0]);
         $this->assertArrayHasKey('status', $data['request_lists'][0]);

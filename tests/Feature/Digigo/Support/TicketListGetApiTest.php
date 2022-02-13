@@ -3,6 +3,7 @@
 namespace Tests\Feature\Digigo\Support;
 
 use Carbon\Carbon;
+use Database\Factories\SupportFactory;
 use Sheba\Dal\Support\Model as Support;
 use Tests\Feature\FeatureTestCase;
 
@@ -26,14 +27,16 @@ class TicketListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+        $this->getTicketListFromSupportTable($data);
+        $this->returnTicketListDataInArrayFormat($data);
     }
 
-    public function testApiReturnValidDataForSuccessResponse()
+    private function getTicketListFromSupportTable($data)
     {
-        $response = $this->get("/v1/employee/supports?status=open&limit=5&offset=0", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  User Support ticket Data @return SupportFactory
+         */
         foreach ($data['supports'] as $item) {
             $this->assertEquals(1, $item['id']);
             $this->assertEquals(1, $item['member_id']);
@@ -44,12 +47,12 @@ class TicketListGetApiTest extends FeatureTestCase
         }
     }
 
-    public function testEmployeeSupportTicketListDataApiFormat()
+    private function returnTicketListDataInArrayFormat($data)
     {
-        $response = $this->get("/v1/employee/supports?status=open&limit=5&offset=0", [
-            'Authorization' => "Bearer $this->token",
-        ]);
-        $data = $response->json();
+        /**
+         *  User Support ticket Data @return SupportFactory
+         */
+
         foreach ($data['supports'] as $item) {
             $this->assertArrayHasKey('id', $item);
             $this->assertArrayHasKey('member_id', $item);
