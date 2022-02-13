@@ -219,8 +219,10 @@ class PayrunList
      */
     private function filterByMonthYear($payslips)
     {
-        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->orWhere(function ($query) {
-            return $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->where(function ($query) {
+            return $query->where('generation_type', self::AUTO_GENERATED)->OrWhere(function ($query) {
+                $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+            });
         });
     }
 

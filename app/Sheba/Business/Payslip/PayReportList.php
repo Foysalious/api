@@ -217,8 +217,10 @@ class PayReportList
      */
     private function filterByMonthYear($payslips)
     {
-        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->orWhere(function ($query) {
-            return $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->where(function ($query) {
+            return $query->where('generation_type', self::AUTO_GENERATED)->OrWhere(function ($query) {
+                $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+            });
         });
     }
 
@@ -246,9 +248,7 @@ class PayReportList
     public function getPaySlipByStatus($business_member_ids, $status)
     {
         return $this->paysliprepo->where('status', $status)
-            ->whereIn('business_member_id', $business_member_ids)->orWhere(function ($query) {
-                return $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
-            })->with(['businessMember' => function ($q) {
+            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q) {
                 $q->with(['member' => function ($q) {
                     $q->select('id', 'profile_id')
                         ->with([

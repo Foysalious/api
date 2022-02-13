@@ -8,6 +8,7 @@ use App\Sheba\UserMigration\UserMigrationService;
 use App\Sheba\UserMigration\AccountingUserMigration;
 use App\Sheba\UserMigration\UserMigrationRepository;
 use Carbon\Carbon;
+use Database\Factories\PartnerFactory;
 use DB;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -66,6 +67,7 @@ use Sheba\Dal\UserMigration\Model as UserMigration;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
+    use HasFactory;
     CONST NOT_ELIGIBLE = 'not_eligible';
     use Wallet, TopUpTrait, MovieTicketTrait, HasFactory;
 
@@ -76,6 +78,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     protected $dates = [
         'last_billed_date',
         'billing_start_date',
+        'next_billing_date',
         'original_created_at'
     ];
     protected $casts = [
@@ -1132,6 +1135,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function pgwGatewayAccounts()
     {
+        Relation::morphMap([
+            'Partner' => 'App\Models\Partner',
+        ]);
         return $this->morphMany(GatewayAccount::class, 'user')->where('gateway_type', 'pgw');
     }
 
@@ -1150,4 +1156,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->getFirstAdminResource()->updated_at;
     }
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return PartnerFactory
+     */
+    protected static function newFactory(): PartnerFactory
+    {
+        return new PartnerFactory();
+    }
+
 }
