@@ -3,7 +3,8 @@
 use App\Jobs\Business\SendPayslipDisburseNotificationToEmployee;
 use App\Jobs\Business\SendPayslipDisbursePushNotificationToEmployee;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
-use Sheba\Business\Salary\Requester as SalaryRequester;
+use App\Sheba\Business\Salary\Requester as SalaryRequester;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
@@ -97,7 +98,12 @@ class Updater
     public function disburse()
     {
         DB::transaction(function () {
-            $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->update(['status' => Status::DISBURSED]);
+            $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)
+                ->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')
+                ->update([
+                    'status' => Status::DISBURSED,
+                    'disbursed_at' => Carbon::now()
+                ]);
         });
 
         $this->sendNotifications();
