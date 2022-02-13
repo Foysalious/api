@@ -11,6 +11,7 @@ class AnnouncementShowTransformer extends TransformerAbstract
     const ALL = "all";
     const DEPARTMENT = "department";
     const EMPLOYEE = "employee";
+    const EMPLOYEE_TYPE = "employee_type";
 
     const NOW = 'now';
     const LATER = 'later';
@@ -53,6 +54,7 @@ class AnnouncementShowTransformer extends TransformerAbstract
         if ($announcement->target_type == self::ALL) return 'all';
         if ($announcement->target_type == self::EMPLOYEE) return $this->getEmployeeInfo($announcement);
         if ($announcement->target_type == self::DEPARTMENT) return $this->getDepartmentInfo($announcement);
+        if ($announcement->target_type == self::EMPLOYEE_TYPE) return $this->getEmployeeTypeInfo($announcement);
     }
 
     private function getCount($announcement)
@@ -60,6 +62,7 @@ class AnnouncementShowTransformer extends TransformerAbstract
         if ($announcement->target_type == self::ALL) return 0;
         if ($announcement->target_type == self::EMPLOYEE) return count($this->getDecodedTarget($announcement));
         if ($announcement->target_type == self::DEPARTMENT) return count($this->getDecodedTarget($announcement));
+        if ($announcement->target_type == self::EMPLOYEE_TYPE) return count($this->getDecodedTarget($announcement));
     }
 
 
@@ -96,6 +99,20 @@ class AnnouncementShowTransformer extends TransformerAbstract
             ];
         }
         return $department_info;
+    }
+
+    private function getEmployeeTypeInfo($announcement)
+    {
+        $employee_type_info = [];
+        $employee_types = $this->getDecodedTarget($announcement);
+
+        foreach ($employee_types as $employee_type) {
+            $employee_type_info [] = [
+                'type' => $employee_type,
+                'name' => $employee_type,
+            ];
+        }
+        return $employee_type_info;
     }
 
     private function getStatus($announcement)
