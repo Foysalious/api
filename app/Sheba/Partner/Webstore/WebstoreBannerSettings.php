@@ -2,7 +2,7 @@
 
 
 use App\Models\Partner;
-use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner ;
+use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\Dal\WebstoreBanner\Model as WebstoreBanner;
 use Sheba\ModificationFields;
 
@@ -34,7 +34,6 @@ class WebstoreBannerSettings
     }
 
 
-
     /**
      * @param PartnerWebstoreBanner $partner_banner_settings
      * @return $this
@@ -51,14 +50,12 @@ class WebstoreBannerSettings
      */
     public function getBannerList($partner)
     {
-        $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner->id)->orWhereHas('banner' , function($q) {
-            $q->where('is_published_for_sheba', 1);
-        })->pluck('banner_id')->toArray();
+        $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner->id)->pluck('banner_id')->toArray();
 
-      return $banners = WebstoreBanner::whereIn('id', array_unique($partnerBanners))->orWhere('is_published_for_sheba', 1)->get()->map(function($banner){
+        return WebstoreBanner::whereIn('id', array_unique($partnerBanners))->orWhere('is_published_for_sheba', 1)->get()->map(function ($banner) {
             return [
-              'id' => $banner->id,
-              'image_link' => $banner->image_link
+                'id' => $banner->id,
+                'image_link' => $banner->image_link
             ];
         });
     }
@@ -70,19 +67,19 @@ class WebstoreBannerSettings
     public function update()
     {
         $this->format();
-        if(!empty($this->updatedData))
-       return $this->partnerBannerSettings->update($this->updatedData);
+        if (!empty($this->updatedData))
+            return $this->partnerBannerSettings->update($this->updatedData);
     }
 
     public function format()
     {
-        if(isset($this->data['banner_id']) && $this->data['banner_id'] != $this->partnerBannerSettings->banner_id)
+        if (isset($this->data['banner_id']) && $this->data['banner_id'] != $this->partnerBannerSettings->banner_id)
             $this->updatedData['banner_id'] = $this->data['banner_id'];
-        if(isset($this->data['title']) && $this->data['title'] != $this->partnerBannerSettings->title)
+        if (isset($this->data['title']) && $this->data['title'] != $this->partnerBannerSettings->title)
             $this->updatedData['title'] = $this->data['title'];
-        if(isset($this->data['description']) && $this->data['description'] != $this->partnerBannerSettings->description)
+        if (isset($this->data['description']) && $this->data['description'] != $this->partnerBannerSettings->description)
             $this->updatedData['description'] = $this->data['description'];
-        if(isset($this->data['is_published']) && $this->data['is_published'] != $this->partnerBannerSettings->is_published)
+        if (isset($this->data['is_published']) && $this->data['is_published'] != $this->partnerBannerSettings->is_published)
             $this->updatedData['is_published'] = $this->data['is_published'];
     }
 }
