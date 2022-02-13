@@ -12,9 +12,9 @@ class BusinessHolidayFactory extends Factory
     public function definition(): array
     {
         return array_merge($this->commonSeeds, [
-            'title'      => 'Test Holiday',
-            'start_date' => Carbon::parse('2021-02-21'),
-            'end_date'   => Carbon::parse('2021-02-23'),
+            'title' => 'Independence day',
+            'start_date' => Carbon::now()->format('Y-m-d'),
+            'end_date' => Carbon::now()->format('Y-m-d'),
         ]);
     }
 }

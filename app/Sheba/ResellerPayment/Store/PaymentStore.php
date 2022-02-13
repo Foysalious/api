@@ -2,7 +2,7 @@
 
 namespace Sheba\ResellerPayment\Store;
 
-use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
+use Sheba\Dal\GatewayAccount\Contract as PgwGatewayAccountRepo;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\ResellerPayment\EncryptionAndDecryption;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
@@ -73,19 +73,19 @@ abstract class PaymentStore
     }
 
     public function saveStore($data){
-        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
+        $storeAccount = $this->partner->pgwGatewayAccounts()->where("gateway_type_id", $this->gateway_id)->first();
         if(isset($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];
             $storeAccount->save();
         } else {
-            $pgw_store_repo = app()->make(PgwStoreAccountRepo::class);
+            $pgw_store_repo = app()->make(PgwGatewayAccountRepo::class);
             $pgw_store_repo->create($data);
         }
     }
     protected function getStoreAccount()
     {
         if(isset($this->partner))
-            return $this->partner->pgwStoreAccounts()->join('pgw_stores', 'pgw_store_id', '=', 'pgw_stores.id')
+            return $this->partner->pgwGatewayAccounts()->join('pgw_stores', 'gateway_type_id', '=', 'pgw_stores.id')
                 ->where('pgw_stores.key', $this->key)->first();
         return null;
     }
@@ -93,11 +93,11 @@ abstract class PaymentStore
     public function getAndSetConfiguration($configuration){
         $this->conn_data = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
         return [
-            "pgw_store_id"  => (int)$this->gateway_id,
-            "user_id"       => $this->partner->id,
-            "user_type"     => get_class($this->partner),
-            "name"          => "dynamic_ssl",
-            "configuration" => $this->conn_data
+            "gateway_type_id" => (int)$this->gateway_id,
+            "user_id"         => $this->partner->id,
+            "user_type"       => get_class($this->partner),
+            "name"            => "dynamic_ssl",
+            "configuration"   => $this->conn_data
         ];
     }
     public abstract function postConfiguration();

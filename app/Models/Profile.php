@@ -9,6 +9,9 @@ use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
+/**
+ * @method static find(int $int)
+ */
 class Profile extends Model implements JWTSubject
 {
     use HasFactory;

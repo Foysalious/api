@@ -12,7 +12,9 @@ class GovernmentHolidayFactory extends Factory
     public function definition(): array
     {
         return array_merge($this->commonSeeds, [
-            'end_date'          =>Carbon::now(),
+            'title' => 'Independence day',
+            'start_date' => Carbon::now(),
+            'end_date'   => Carbon::now(),
         ]);
     }
 }

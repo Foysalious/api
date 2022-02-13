@@ -41,13 +41,13 @@ class PhoneBookListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         foreach ($data['employees']['IT'] as $item) {
-            $this->assertEquals(1,$item['id']);
-            $this->assertEquals(null,$item['mobile']);
-            $this->assertEquals('Manager',$item['designation']);
-            $this->assertEquals(false,$item['is_employee_new_joiner']);
+            $this->assertEquals(1, $item['id']);
+            $this->assertEquals(null, $item['mobile']);
+            $this->assertEquals('Manager', $item['designation']);
+            $this->assertEquals(false, $item['is_employee_new_joiner']);
         }
         foreach ($data['departments'] as $item) {
-            $this->assertEquals('I',$item[0]);
+            $this->assertEquals('I', $item[0]);
         }
     }
 
@@ -58,10 +58,10 @@ class PhoneBookListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         foreach ($data['employees']['IT'] as $item) {
-            $this->assertArrayHasKey('id',$item);
-            $this->assertArrayHasKey('mobile',$item);
-            $this->assertArrayHasKey('designation',$item);
-            $this->assertArrayHasKey('is_employee_new_joiner',$item);
+            $this->assertArrayHasKey('id', $item);
+            $this->assertArrayHasKey('mobile', $item);
+            $this->assertArrayHasKey('designation', $item);
+            $this->assertArrayHasKey('is_employee_new_joiner', $item);
         }
     }
 }

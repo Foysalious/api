@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Digigo\Leave;
 
+use Carbon\Carbon;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Tests\Feature\FeatureTestCase;
@@ -31,5 +32,25 @@ class EmployeeLeaveDataGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         $this->assertEquals(200, $data['code']);
+    }
+
+    public function testApiReturnEmployeeLeaveRequestList()
+    {
+        $response = $this->get("/v1/employee/leaves/dates", [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $data = $response->json();
+        $this->assertEquals(Carbon::now()->format('Y-m-d'), $data['full_day_leaves'][0]);
+        $this->assertEquals(Carbon::now()->addDay()->format('Y-m-d'), $data['full_day_leaves'][1]);
+    }
+
+    public function testUserAppliedLeaveListApiFormat()
+    {
+        $response = $this->get("/v1/employee/leaves/dates", [
+            'Authorization' => "Bearer $this->token",
+        ]);
+        $data = $response->json();
+        $this->assertArrayHasKey(0, $data['full_day_leaves']);
+        $this->assertArrayHasKey(1, $data['full_day_leaves']);
     }
 }

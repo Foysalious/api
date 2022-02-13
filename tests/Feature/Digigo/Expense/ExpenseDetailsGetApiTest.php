@@ -45,7 +45,7 @@ class ExpenseDetailsGetApiTest extends FeatureTestCase
         $this->assertEquals(0, $data['expense']['is_updated_by_super_admin']);
         $this->assertEquals('Test Expense', $data['expense']['remarks']);
         $this->assertEquals('other', $data['expense']['type']);
-        $this->assertEquals(Carbon::now()->format('M').' '.Carbon::now()->format('d'), $data['expense']['date']);
+        $this->assertEquals(Carbon::now()->format('M') . ' ' . Carbon::now()->format('d'), $data['expense']['date']);
         $this->assertEquals(Carbon::now()->isoFormat('hh:mm A'), $data['expense']['time']);
         $this->assertEquals(1, $data['expense']['can_edit']);
         $this->assertEquals(null, $data['expense']['reason']);

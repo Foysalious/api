@@ -49,8 +49,9 @@ class BusinessRoute
                     $api->get('/', 'B2b\AnnouncementV2Controller@index');
                     $api->post('/', 'B2b\AnnouncementV2Controller@store');
                     $api->group(['prefix' => '{announcement}'], function ($api) {
-                        $api->put('/', 'B2b\AnnouncementV2Controller@update');
+                        $api->post('/', 'B2b\AnnouncementV2Controller@update');
                         $api->get('/', 'B2b\AnnouncementV2Controller@show');
+                        $api->get('notification', 'B2b\AnnouncementV2Controller@notificationCount');
                     });
                 });
             });

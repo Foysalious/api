@@ -40,12 +40,12 @@ class NotificationListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         foreach ($data['notifications'] as $item) {
-            $this->assertEquals(1,$item['id']);
-            $this->assertEquals('Test notification',$item['message']);
-            $this->assertEquals('announcement',$item['type']);
-            $this->assertEquals(1,$item['type_id']);
-            $this->assertEquals(0,$item['is_seen']);
-            $this->assertEquals(Carbon::now(),$item['created_at']);
+            $this->assertEquals(1, $item['id']);
+            $this->assertEquals('Test notification', $item['message']);
+            $this->assertEquals('announcement', $item['type']);
+            $this->assertEquals(1, $item['type_id']);
+            $this->assertEquals(0, $item['is_seen']);
+            $this->assertEquals(Carbon::now(), $item['created_at']);
         }
     }
 
@@ -56,12 +56,12 @@ class NotificationListGetApiTest extends FeatureTestCase
         ]);
         $data = $response->json();
         foreach ($data['notifications'] as $item) {
-            $this->assertArrayHasKey('id',$item);
-            $this->assertArrayHasKey('message',$item);
-            $this->assertArrayHasKey('type',$item);
-            $this->assertArrayHasKey('type_id',$item);
-            $this->assertArrayHasKey('is_seen',$item);
-            $this->assertArrayHasKey('created_at',$item);
+            $this->assertArrayHasKey('id', $item);
+            $this->assertArrayHasKey('message', $item);
+            $this->assertArrayHasKey('type', $item);
+            $this->assertArrayHasKey('type_id', $item);
+            $this->assertArrayHasKey('is_seen', $item);
+            $this->assertArrayHasKey('created_at', $item);
         }
     }
 }

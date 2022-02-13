@@ -36,7 +36,9 @@ use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
+use Sheba\OAuth2\AccountServerClient;
 use Sheba\Services\Type as ServiceType;
+use Tests\Mocks\MockAccountServerClient;
 use Tests\Mocks\MockInventoryServerClient;
 use Tests\Mocks\MockPosOrderServerClient;
 use Tests\TestCase;
@@ -110,6 +112,7 @@ class FeatureTestCase extends TestCase
 
         $this->app->singleton(InventoryServerClient::class, MockInventoryServerClient::class);
         $this->app->singleton(PosOrderServerClient::class, MockPosOrderServerClient::class);
+        $this->app->singleton(AccountServerClient::class, MockAccountServerClient::class);
     }
 
     public function get($uri, array $headers = [])
@@ -183,6 +186,8 @@ class FeatureTestCase extends TestCase
             Partner::class,
             Business::class,
             BusinessMember::class,
+            BusinessDepartment::class,
+            BusinessRole::class,
         ]);
 
         $this->profile = Profile::factory()->create();
@@ -225,7 +230,10 @@ class FeatureTestCase extends TestCase
             'business_department_id' => 1
         ]);
         $this->business_member = BusinessMember::factory()->create(
-            ['business_id' => $this->business->id, 'member_id' => $this->member->id, 'department' => 1, 'business_role_id' => 1]);
+            ['business_id' => $this->business->id,
+                'member_id' => $this->member->id,
+                'department' => 1,
+                'business_role_id' => 1]);
     }
 
     protected function generateToken(): string
