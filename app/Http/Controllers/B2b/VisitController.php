@@ -82,7 +82,7 @@ class VisitController extends Controller
         $visits = new Collection($visits->get(), new TeamVisitListTransformer());
         $visits = collect($manager->createData($visits)->toArray()['data']);
 
-        if ($request->has('search')) $visits = $this->searchWithEmployeeName($visits, $request);
+        if ($request->has('search')) $visits = $this->multipleSearch($visits, $request);
 
         $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
@@ -198,5 +198,30 @@ class VisitController extends Controller
         return $visits->filter(function ($visit) use ($request) {
             return str_contains(strtoupper($visit['title']), strtoupper($request->search));
         });
+    }
+
+    /**
+     * @param $visits
+     * @param Request $request
+     * @return array
+     */
+    private function multipleSearch($visits, Request $request)
+    {
+        $visits = $visits->toArray();
+        $employee_ids = array_filter($visits, function ($visit) use ($request) {
+            return str_contains($visit['profile']['employee_id'], $request->search);
+        });
+        $employee_names = array_filter($visits, function ($visit) use ($request) {
+            return str_contains(strtoupper($visit['profile']['name']), strtoupper($request->search));
+        });
+        $titles = array_filter($visits, function ($visit) use ($request) {
+            return str_contains(strtoupper($visit['title']), strtoupper($request->search));
+        });
+
+        $searched_results = collect(array_merge($employee_ids, $employee_names, $titles));
+        $searched_results = $searched_results->unique(function ($search) {
+            return $search['id'];
+        });
+        return $searched_results->values()->all();
     }
 }
