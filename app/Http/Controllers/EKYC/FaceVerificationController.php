@@ -62,7 +62,7 @@ class FaceVerificationController extends Controller
                 $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
             } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
             $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
-            return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
+            return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $profile->nid_verification_request_count, $faceVerificationData['data']['message'])]);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);

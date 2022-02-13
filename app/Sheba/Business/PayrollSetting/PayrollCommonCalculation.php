@@ -111,11 +111,12 @@ trait PayrollCommonCalculation
     public function getOneWorkingDayAmountForGrossComponent(PayrollSetting $payroll_setting, BusinessMember $business_member, $component)
     {
         $one_working_day_amount = null;
-        if ($component === Type::GROSS) return $this->oneWorkingDayAmount($business_member->salary->gross_salary,  floatValFormat($this->totalWorkingDays));
+        $business_member_salary = $business_member->salary->gross_salary;
+        if ($component === Type::GROSS) return $this->oneWorkingDayAmount($business_member_salary,  floatValFormat($this->totalWorkingDays));
         $gross_component = $payroll_setting->components->find($component);
         if ($gross_component) {
             $percentage = floatValFormat(json_decode($gross_component->setting, 1)['percentage']);
-            $amount = ($business_member->salary->gross_salary * $percentage) / 100;
+            $amount = ($business_member_salary * $percentage) / 100;
             $one_working_day_amount = $this->oneWorkingDayAmount($amount,  floatValFormat($this->totalWorkingDays));
         }
         return $one_working_day_amount;
