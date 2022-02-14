@@ -86,6 +86,7 @@ class VisitController extends Controller
 
         if ($request->filled('search')) $visits = $this->searchWithEmployeeName($visits, $request);
 
+        $visits = collect($visits);
         $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
         if ($request->filled('limit') && !$request->filled('file')) $visits = $visits->splice($offset, $limit);
