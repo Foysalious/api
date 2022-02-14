@@ -9,9 +9,6 @@ use Sheba\Elasticsearch\ElasticsearchTrait;
 use Sheba\Payment\PayableType;
 use Sheba\TopUp\Gateway\Names;
 
-/**
- * @method static first()
- */
 class TopUpOrder extends BaseModel implements PayableType
 {
     use ElasticsearchTrait;

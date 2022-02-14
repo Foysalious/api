@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\PartnerSubscriptionPackageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -140,5 +141,15 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
     public function validPaymentGatewayAndTopUpCharges(): BelongsTo
     {
         return $this->belongsTo(SubscriptionWisePaymentGateway::class, 'id', 'package_id')->notExpired();
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return PartnerSubscriptionPackageFactory
+     */
+    protected static function newFactory(): PartnerSubscriptionPackageFactory
+    {
+        return new PartnerSubscriptionPackageFactory();
     }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
@@ -9,9 +10,6 @@ use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
-/**
- * @method static find(int $int)
- */
 class Profile extends Model implements JWTSubject
 {
     use HasFactory;
@@ -189,5 +187,15 @@ class Profile extends Model implements JWTSubject
     public function getJWTCustomClaims(): array
     {
         return [];
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return ProfileFactory
+     */
+    protected static function newFactory(): ProfileFactory
+    {
+        return new ProfileFactory();
     }
 }
