@@ -84,7 +84,6 @@ class VisitController extends Controller
 
         if ($request->has('search')) $visits = $this->multipleSearch($visits, $request);
 
-        $visits = collect($visits);
         $total_visits = $visits->count();
         #$limit = $this->getLimit($request, $limit, $total_visits);
         if ($request->has('limit') && !$request->has('file')) $visits = $visits->splice($offset, $limit);
