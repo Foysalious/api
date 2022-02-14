@@ -1144,6 +1144,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->morphMany(GatewayAccount::class, 'user')->where('gateway_type', 'pgw');
     }
 
+    public function QRGatewayAccounts()
+    {
+        Relation::morphMap([
+            'Partner' => 'App\Models\Partner',
+        ]);
+        return $this->morphMany(GatewayAccount::class, 'user')->where('gateway_type', 'qr');
+    }
+
     public function lastUpdatedPGWStore()
     {
         return $this->pgwGatewayAccounts->max('updated_at') ?? null;

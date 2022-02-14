@@ -73,10 +73,11 @@ class Ssl extends PaymentStore
     {
         $configuration = json_encode($this->makeAndGetConfigurationData());
         $this->conn_data = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
+        $user_types = explode('\\', get_class($this->partner));
         return [
             "gateway_type_id" => (int)$this->gateway_id,
             "user_id"         => $this->partner->id,
-            "user_type"       => get_class($this->partner),
+            "user_type"       => end($user_types),
             "name"            => "dynamic_ssl",
             "configuration"   => $this->conn_data
         ];
