@@ -109,7 +109,7 @@ class AnnouncementShowTransformer extends TransformerAbstract
         foreach ($employee_types as $employee_type) {
             $employee_type_info [] = [
                 'type' => $employee_type,
-                'name' => $employee_type,
+                'name' => ucwords(str_replace("_", " ", $employee_type), " "),
             ];
         }
         return $employee_type_info;

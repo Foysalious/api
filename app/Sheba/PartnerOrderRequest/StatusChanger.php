@@ -97,6 +97,7 @@ class StatusChanger
             try {
                 $resourceJobRepo->createNewJobWithExistingPartnerOrder($job->id, $existingPartnerOrder->id, $availableResource, $request);
                 $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
+                return $existingPartnerOrder->id;
             } catch (\Exception $e) {
                 $job = $partner_order->lastJob();
                 $request->merge(['job' => $job]);
@@ -121,6 +122,7 @@ class StatusChanger
                     ]);
 
                     $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
+                    return $partner_order->id;
                 });
             } catch (\Exception $e) {
                 $this->jobStatusChanger->unacceptJobAndUnAssignResource($request);
