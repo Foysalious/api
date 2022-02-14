@@ -39,7 +39,7 @@ class ExpenseReportDetailsExcel
         foreach ($this->expenses as $expense)
         {
             $this->data[] = [
-                'month' => Carbon::now()->month(($expense->month))->format('F'),
+                'month' => $expense->created_at->format('F'),
                 'created_at_date' => $expense->created_at->toDateString(),
                 'created_at_time' => $expense->created_at->format('g:i A'),
                 'employee_id' => $expense->businessMember->employee_id ?: 'N/A',
