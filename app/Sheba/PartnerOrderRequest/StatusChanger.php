@@ -122,11 +122,11 @@ class StatusChanger
                     ]);
 
                     $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
-                    return $partner_order->id;
                 });
             } catch (\Exception $e) {
                 $this->jobStatusChanger->unacceptJobAndUnAssignResource($request);
             }
+            return $partner_order->id;
         }
     }
 
