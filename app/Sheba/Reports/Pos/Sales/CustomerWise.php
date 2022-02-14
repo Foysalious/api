@@ -127,6 +127,6 @@ class CustomerWise extends PosReport
         return $this->pdfHandler->setName($name)
             ->setViewFile($template)
             ->setData(['data' => $data, 'partner' => $this->partner, 'from' => $this->from, 'to' => $this->to])
-            ->download();
+            ->download(true);
     }
 }
