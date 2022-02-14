@@ -56,9 +56,7 @@ class AttendanceController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         $time_frame = $time_frame->forAMonth($month, $year);
         $business_member_joining_date = $business_member->join_date;
-        $joining_date = null;
         if ($this->checkJoiningDate($business_member_joining_date, $month, $year)){
-            $joining_date = $business_member_joining_date->format('d F');
             $start_date = $business_member_joining_date;
             $end_date = Carbon::now()->month($month)->year($year)->lastOfMonth();
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
@@ -75,7 +73,7 @@ class AttendanceController extends Controller
         $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $weekend_settings, $business_member_leave));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $joining_date]);
+        return api_response($request, null, 200, ['attendance' => $attendances_data, 'joining_date' => $business_member_joining_date ? $business_member_joining_date->format('Y-m-d') : null]);
     }
 
     private function checkJoiningDate($business_member_joining_date, $month, $year)

@@ -17,7 +17,7 @@ abstract class SslStore
      */
     public function getStoreId()
     {
-        return $this->storeId;
+        return trim($this->storeId);
     }
 
     /**
@@ -25,7 +25,7 @@ abstract class SslStore
      */
     public function getStorePassword()
     {
-        return $this->storePassword;
+        return trim($this->storePassword);
     }
 
     /**

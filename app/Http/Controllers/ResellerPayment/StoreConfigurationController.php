@@ -34,9 +34,23 @@ class StoreConfigurationController extends Controller
         } catch (ResellerPaymentException $e) {
             logError($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
-        } catch (\Throwable $e) {
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getV2(Request $request): JsonResponse
+    {
+        try {
+            $this->validate($request, ["key" => "required"]);
+            $configuration = $this->storeConfiguration->setPartner($request->partner)->setKey($request->key)->getConfiguration();
+            $data = StoreConfigurationStatic::storeConfigurationGetResponse($configuration);
+            return api_response($request, $configuration, 200, ['data' => $data]);
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
 
@@ -54,9 +68,19 @@ class StoreConfigurationController extends Controller
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (\Throwable $e) {
+        }
+    }
+
+    public function statusUpdate(Request $request): JsonResponse
+    {
+        try {
+            $this->validate($request, StoreConfigurationStatic::statusUpdateValidation());
+            $this->storeConfiguration->setGatewayId($request->gateway_id)
+                ->setPartner($request->partner)->setKey($request->key)->updatePaymentGatewayStatus($request->status);
+            return api_response($request, null, 200);
+        } catch (ResellerPaymentException $e) {
             logError($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
 }

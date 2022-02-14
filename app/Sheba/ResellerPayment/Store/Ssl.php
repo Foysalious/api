@@ -6,6 +6,8 @@ use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
 use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\ResellerPayment\EncryptionAndDecryption;
+use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
+use Sheba\ResellerPayment\Exceptions\StoreAccountNotFoundException;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 
 class Ssl extends PaymentStore
@@ -25,7 +27,7 @@ class Ssl extends PaymentStore
     {
         foreach ($static_data as &$data) {
             $field_name = $data["id"];
-            if($field_name === "password") continue;
+            if($data["input_type"] === "password") continue;
             $data["data"] = $dynamic_configuration ? $dynamic_configuration->$field_name : "";
         }
 
@@ -89,6 +91,21 @@ class Ssl extends PaymentStore
         /** @var \Sheba\Payment\Methods\Ssl\Ssl $ssl_method */
         $ssl_method = app()->make(\Sheba\Payment\Methods\Ssl\Ssl::class);
         $ssl_method->testInit($this->conn_data);
+    }
+
+    /**
+     * @param $status
+     * @return void
+     * @throws ResellerPaymentException
+     * @throws StoreAccountNotFoundException
+     */
+    public function account_status_update($status)
+    {
+        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
+        if(!$storeAccount) throw new StoreAccountNotFoundException();
+        if($status == $storeAccount->status) throw new ResellerPaymentException("The account is already in this status");
+        $storeAccount->status = $status;
+        $storeAccount->save();
     }
 
 }

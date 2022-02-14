@@ -66,7 +66,7 @@ class BaseRepository
     }
     private function uploadFiles($request){
         $attachments=[];
-        if (isset($request->attachments) && $request->hasFile('attachments')) {
+        if (isset($request->attachments) && !empty($request->attachments) && $request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
                     list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');

@@ -1141,6 +1141,23 @@ if (!function_exists('getPosServiceBannerFolder')) {
     }
 }
 
+if (!function_exists('getWebstoreBannerFolder')) {
+
+    /**
+     * Get Service Thumb Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getWebstoreBannerFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = config('s3.url');
+
+        return $url . 'webstore/banners/';
+    }
+}
+
 if (!function_exists('getVatRegistrationImagesFolder')) {
 
     /**
@@ -1572,5 +1589,20 @@ if (!function_exists('getEmployeeVisitFolder')) {
         if ($with_base_url) $url = env('S3_URL');
 
         return $url . 'images/employee_visit_images';
+    }
+}
+
+if (!function_exists('getAttendanceReconciliationFolder')) {
+
+    /**
+     * @param $with_base_url
+     * @return string
+     */
+    function getAttendanceReconciliationFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'attendance_reconciliation/';
     }
 }
