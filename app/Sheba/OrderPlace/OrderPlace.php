@@ -555,6 +555,7 @@ class OrderPlace
         $order->vendor_id = $this->vendorId;
         $order->delivery_address_id = $this->deliveryAddress->id;
         $order->api_request_id = $this->apiRequestId;
+        $order->is_credit_limit_adjustable = $this->getCategory() ? $this->getCategory()->is_credit_limit_adjustable : 0;
         $order->fill((new RequestIdentification())->get());
         $this->withCreateModificationField($order);
         $order->save();
