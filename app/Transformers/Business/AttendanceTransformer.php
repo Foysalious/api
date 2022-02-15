@@ -39,7 +39,6 @@ class AttendanceTransformer extends TransformerAbstract
         $data = [];
         $check_weekend = new CheckWeekend();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray();
-
         foreach ($this->businessHoliday as $holiday) {
             $start_date = Carbon::parse($holiday->start_date);
             $end_date = Carbon::parse($holiday->end_date);
@@ -267,7 +266,12 @@ class AttendanceTransformer extends TransformerAbstract
     {
         if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) return 'full_day';
         if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) return $this->whichHalfDayLeave($date, $leaves_date_with_half_and_full_day);
-        if ($this->isHoliday($date, $dates_of_holidays_formatted)) return 'holiday';
+        if ($this->isHoliday($date, $dates_of_holidays_formatted)) {
+            $day = $this->businessHoliday->filter(function($item) use ($date){
+                if ($date->between($item->start_date, $item->end_date)) return $item;
+            })->first();
+            return $day->title;
+        }
         return 'weekend';
     }
 
