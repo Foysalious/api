@@ -42,7 +42,7 @@ class ProductWise extends PosReport
 
         $data = $paginate ? $full->paginate($this->limit) : $full->toArray();
         if ($paginate) {
-            $this->data['data'] = $data->items();
+            $this->data['data'] = array_values($data->items());
             $this->data['total_price'] = $full->sum('total_price');
             $this->data['total_quantity'] = $full->sum('total_quantity');
             $this->data['total'] = $data->total();
