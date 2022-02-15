@@ -1,17 +1,23 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
 use App\Exceptions\DoNotReportException;
-use App\Jobs\WebstoreSettingsSyncJob;
 use App\Sheba\InventoryService\Services\ProductService;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
+use App\Transformers\Partner\WebstoreBannerTransformer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\WebstoreBanner\Model as WebstoreBanner;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 use Sheba\Subscription\Partner\Access\AccessManager;
@@ -20,7 +26,7 @@ use Throwable;
 
 class WebstoreSettingsController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, FileManager, CdnFileManager;
 
     public function index(Request $request)
     {
@@ -45,13 +51,13 @@ class WebstoreSettingsController extends Controller
      */
     public function update(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
-        $this->updateWebstoreSettings($request,$webstoreSettingsUpdateRequest);
+        $this->updateWebstoreSettings($request, $webstoreSettingsUpdateRequest);
         return api_response($request, null, 200, ['message' => 'Successful']);
     }
 
     public function updateV2(Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
-        $this->updateWebstoreSettings($request,$webstoreSettingsUpdateRequest);
+        $this->updateWebstoreSettings($request, $webstoreSettingsUpdateRequest);
         return http_response($request, null, 200, ['message' => 'Successful']);
     }
 
@@ -63,13 +69,13 @@ class WebstoreSettingsController extends Controller
      */
     public function bannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $list = $this->getBannerList($request,$webstoreBannerSettings);
+        $list = $this->getBannerList($request, $webstoreBannerSettings);
         return api_response($request, null, 200, ['data' => $list]);
     }
 
     public function bannerListV2(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $list = $this->getBannerList($request,$webstoreBannerSettings);
+        $list = $this->getBannerList($request, $webstoreBannerSettings);
         return http_response($request, null, 200, ['data' => $list]);
     }
 
@@ -80,22 +86,101 @@ class WebstoreSettingsController extends Controller
      */
     public function updateBanner(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $banner_settings_updated = $this->updateBannerSettings($request,$webstoreBannerSettings);
+        $banner_settings_updated = $this->updateBannerSettings($request, $webstoreBannerSettings);
         if (!$banner_settings_updated) {
-            return api_response($request, null, 400, ['message' => 'Banner Settings not found'] );
-        } else{
-           return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+            return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        } else {
+            return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
         }
     }
 
     public function updateBannerV2(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        $banner_settings_updated = $this->updateBannerSettings($request,$webstoreBannerSettings);
+        $banner_settings_updated = $this->updateBannerSettings($request, $webstoreBannerSettings);
         if (!$banner_settings_updated) {
-            return http_response($request, null, 400, ['message' => 'Banner Settings not found'] );
-        } else{
+            return http_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        } else {
             return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
         }
+    }
+
+    public function updateBannerV3($id, Request $request)
+    {
+        $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image']);
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
+        $this->setModifier($manager_resource);
+        $banner_id = $request->banner_id;
+        if ($request->file('image')) $banner_id = $this->createWebstoreBanner($request->file('image'), $request->title);
+        $data = [
+            'banner_id' => $banner_id,
+            'title' => $request->title,
+            'description' => $request->description,
+            'is_published' => $request->is_published
+        ];
+        $banner_settings_updated = $this->updateBannerSettingsV3($id, $partner, $data);
+        if (!$banner_settings_updated) {
+            return http_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        } else {
+            return http_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image', 'is_published' => 'required']);
+            $partner = resolvePartnerFromAuthMiddleware($request);
+            $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
+            $this->setModifier($manager_resource);
+            $banner_id = $request->banner_id;
+            if ($request->file('image')) $banner_id = $this->createWebstoreBanner($request->file('image'), $request->title);
+            $data = [
+                'partner_id' => $partner->id,
+                'title' => $request->title,
+                'description' => $request->description,
+                'is_published' => $request->is_published,
+                'banner_id' => $banner_id
+            ];
+
+            /** @var WebstoreBannerSettings $webstoreBannerSettings */
+            $webstoreBannerSettings = app(WebstoreBannerSettings::class);
+            $webstoreBannerSettings->setData($data)->store();
+            return http_response($request, null, 200, ['message' => 'Successful']);
+        } catch (\Exception $e) {
+            return http_response($request, null, 400, ['message' => 'Please Provide the required fields']);
+        }
+    }
+
+    public function createWebstoreBanner($file, $filename)
+    {
+        /** @var UploadedFile $avatar */
+        /** @var string $avatar_filename */
+        list($avatar, $avatar_filename) = $this->makeWebstoreBanner($file, $filename);
+        $banner_link = $this->saveFileToCDN($avatar, getWebstoreBannerFolder(), $avatar_filename);
+        $data = [
+            'image_link' => $banner_link,
+            'small_image_link' => $banner_link,
+            'is_published' => 1,
+            'is_published_for_sheba' => 0
+        ];
+        $banner = WebstoreBanner::create($this->withCreateModificationField($data));
+        return $banner->id;
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBanners(Request $request)
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner->id)->get();
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Collection($partnerBanners, new WebstoreBannerTransformer());
+        $banners = $fractal->createData($resource)->toArray()['data'];
+        return http_response($request, $resource, 200, ['banners' => $banners]);
     }
 
     private function getWebstoreSettingsData(Request $request)
@@ -155,7 +240,8 @@ class WebstoreSettingsController extends Controller
 
     private function getBannerList(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        return $webstoreBannerSettings->getBannerList();
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        return $webstoreBannerSettings->getBannerList($partner);
     }
 
     private function updateBannerSettings(Request $request, WebstoreBannerSettings $webstoreBannerSettings)
@@ -165,13 +251,30 @@ class WebstoreSettingsController extends Controller
         $manager_resource = resolveManagerResourceFromAuthMiddleware($request);
         $this->setModifier($manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
-        if(!$banner_settings) {
+        if (!$banner_settings) {
             return false;
-        }
-
-        else {
+        } else {
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
             return true;
         }
+    }
+
+    private function updateBannerSettingsV3($id, $partner, $data)
+    {
+        $banner_settings = PartnerWebstoreBanner::where('id', $id)->where('partner_id', $partner->id)->first();
+        if (!$banner_settings) {
+            return false;
+        } else {
+            /** @var WebstoreBannerSettings $webstoreBannerSettings */
+            $webstoreBannerSettings = app(WebstoreBannerSettings::class);
+            $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($data)->update();
+            return true;
+        }
+    }
+
+    protected function makeWebstoreBanner($file, $name): array
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        return [$file, $filename];
     }
 }
