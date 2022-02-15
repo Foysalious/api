@@ -2,6 +2,7 @@
 
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
+use App\Models\Member;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Announcement\Announcement;
@@ -33,7 +34,7 @@ class AnnouncementShowTransformer extends TransformerAbstract
                 'type_ids' => $this->targetTypeInfo($announcement),
                 'count' => $this->getCount($announcement),
             ],
-            'active_between' => 'Dec 02,2020-Dec 05,2020',
+            'active_between' => $this->getActiveBetween($announcement),
             'status' => $this->getStatus($announcement),
             'scheduled_info' => [
                 'scheduled_for' => $announcement->scheduled_for,
@@ -42,11 +43,45 @@ class AnnouncementShowTransformer extends TransformerAbstract
                 'end_date' => $announcement->end_date->toDateString(),
                 'end_time' => $announcement->end_time,
             ],
-            'created_by' => $announcement->created_by ?: 'N/S',
-            'created_at' => $announcement->created_at->toDateTimeString(),
-            'updated_by' => $announcement->updated_by ?: 'N/S',
-            'updated_at' => $announcement->updated_at->toDateTimeString(),
+            'created_by' => $this->getCreatedByNameAndId($announcement),
+            'created_at' => $announcement->created_at->format('h:i A d/m/Y'),
+            'updated_by' => $this->getUpdatedByNameAndId($announcement),
+            'updated_at' => $announcement->updated_at->format('h:i A d/m/Y'),
         ];
+    }
+
+    private function getCreatedByNameAndId($announcement)
+    {
+        $member = $this->getMember($announcement->created_by);
+        if (!$member) return "N/S";
+        if ($member) {
+            $profile = $member->profile;
+            $business_member = $member->activeBusinessMember()->first();
+            return $profile->name . ', ' . $business_member->employee_id;
+        }
+    }
+
+    private function getUpdatedByNameAndId($announcement)
+    {
+        $member = $this->getMember($announcement->updated_by);
+        if (!$member) return "N/S";
+        if ($member) {
+            $profile = $member->profile;
+            $business_member = $member->activeBusinessMember()->first();
+            return $profile->name . ', ' . $business_member->employee_id;
+        }
+    }
+
+    private function getMember($member_id)
+    {
+        return Member::find($member_id);
+    }
+
+    private function getActiveBetween($announcement)
+    {
+        $start_date = Carbon::parse($announcement->start_date)->format('M d,Y');
+        $end_date = Carbon::parse($announcement->start_date)->format('M d,Y');
+        return $start_date . ' - ' . $end_date;
     }
 
     private function targetTypeInfo($announcement)

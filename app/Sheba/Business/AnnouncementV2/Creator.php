@@ -57,7 +57,14 @@ class Creator
         /** @var Announcement $announcement */
         $announcement = $this->announcementRepo->create($this->data);
 
+        $this->sendNotification($announcement);
         return $announcement;
+    }
+
+    private function sendNotification($announcement)
+    {
+        $members_ids = $this->business->getActiveBusinessMember()->pluck('member_id')->toArray();
+        (new AnnouncementNotifications($members_ids, $announcement))->shoot();
     }
 
     private function makeData()
