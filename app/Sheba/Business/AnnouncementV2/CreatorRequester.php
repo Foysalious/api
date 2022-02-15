@@ -103,6 +103,7 @@ class CreatorRequester
     public function setStartDate($start_date)
     {
         $this->startDate = $start_date;
+        if ($this->schduledFor == "now") $this->startDate = Carbon::now()->toDateString();
         return $this;
     }
 
@@ -114,6 +115,7 @@ class CreatorRequester
     public function setStartTime($start_time)
     {
         $this->startTime = $start_time;
+        if ($this->schduledFor == "now") $this->startTime = Carbon::now()->format("h:i:s");
         return $this;
     }
 

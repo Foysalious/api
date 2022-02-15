@@ -20,11 +20,11 @@ class AnnouncementListTransformer extends TransformerAbstract
         return [
             'id' => $announcement->id,
             'title' => $announcement->title,
-            'type' => $announcement->type,
+            'type' => ucfirst($announcement->type),
             'target_type' => $this->targetType($announcement),
             'status' => $this->getStatus($announcement),
-            'end_date' => $announcement->end_date->format('M d,Y'),
-            'created_at' => $announcement->created_at->format('M d,Y')
+            'end_date' => $announcement->end_date->format('M d, Y'),
+            'created_at' => $announcement->created_at->format('M d, Y')
         ];
     }
 
