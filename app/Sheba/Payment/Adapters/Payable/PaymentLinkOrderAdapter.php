@@ -66,6 +66,8 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         $payable->emi_month       = $this->paymentLink->getEmiMonth();
         $payable->created_by      = $receiver ? $receiver->id : 0;
         $payable->created_by_name = $receiver ? class_basename($receiver) : "";
+        $payable->payee_id        = $receiver ? $receiver->id : 0;
+        $payable->payee_type      = $receiver ? strtolower(class_basename($receiver)) : "";
         $payable->save();
         return $payable;
     }
