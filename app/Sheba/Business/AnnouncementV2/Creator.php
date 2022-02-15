@@ -54,7 +54,6 @@ class Creator
     public function create()
     {
         $this->makeData();
-        dd($this->data);
         /** @var Announcement $announcement */
         $announcement = $this->announcementRepo->create($this->data);
 
