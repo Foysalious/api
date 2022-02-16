@@ -18,7 +18,8 @@ class AnnouncementTransformer extends TransformerAbstract
             'title' => $announcement->title,
             'type' => $announcement->type,
             'is_published_for_app' => $announcement->is_published,
-            'short_description' => $announcement->short_description,
+            #In new Design short description remove. it should change in app
+            'short_description' => $announcement->short_description ?: $announcement->long_description,
             'description' => $announcement->long_description ?: $announcement->short_description,
             'status' => $this->getStatus($announcement),
             'end_date' => $this->getEndDate($announcement),
