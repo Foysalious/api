@@ -152,8 +152,10 @@ class AnnouncementShowTransformer extends TransformerAbstract
 
     private function getStatus($announcement)
     {
-        $today_date = Carbon::now();
-        if ($announcement->end_date->greaterThanOrEqualTo($today_date)) return "Expired";
+        $today_date = Carbon::now()->toDateString();
+        $end_date = $announcement->end_date->toDateString();
+
+        if (($end_date < $today_date)) return "Expired";
         if ($announcement->status == self::PUBLISHED) return "Published";
         if ($announcement->status == self::SCHEDULED) return "Scheduled";
     }

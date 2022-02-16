@@ -16,6 +16,9 @@ use Sheba\Dal\Announcement\AnnouncementTypes;
 
 class AnnouncementController extends Controller
 {
+    const ONGOING = 'Ongoing';
+    const IS_PUBLISHED_FOR_APP = 1;
+
     use BusinessBasicInformation;
 
     public function show($announcement, Request $request, AnnouncementRepositoryInterface $announcement_repository)
@@ -46,9 +49,10 @@ class AnnouncementController extends Controller
         $announcements = new Collection($announcements, new AnnouncementTransformer());
         $announcements = collect($manager->createData($announcements)->toArray()['data']);
 
-        if ($request->filled('status')) {
-            $announcements = $announcements->filter(function ($announcement) use ($request) {
-                return $announcement['status'] == $request->status;
+        if ($request->has('status')) {
+            $status = $request->status == self::ONGOING ? 'Published' : null;
+            $announcements = $announcements->filter(function ($announcement) use ($request, $status) {
+                return $announcement['status'] == $status && $announcement['is_published_for_app'] == self::IS_PUBLISHED_FOR_APP;
             });
         }
 
