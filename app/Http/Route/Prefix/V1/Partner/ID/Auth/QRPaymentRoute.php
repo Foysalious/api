@@ -9,6 +9,7 @@ class QRPaymentRoute
         $api->group(['prefix' => 'partners', 'middleware' => ['paymentLink.auth']], function ($api) {
             $api->group(['prefix' => 'qr-payments'], function ($api) {
                 $api->get('/gateways', 'QRPayment\\GatewayController@index');
+                $api->post('/generate-qr', 'QRPayment\\QRGenerateController@generate');
             });
         });
     }
