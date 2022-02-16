@@ -4,6 +4,7 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Helper\AccountingHelper;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerService
 {
@@ -21,7 +22,7 @@ class DueTrackerService
     /**
      * @param mixed $partner
      */
-    public function setPartner($partner)
+    public function setPartner($partner): DueTrackerService
     {
         $this->partner = $partner;
         return $this;
@@ -30,7 +31,7 @@ class DueTrackerService
     /**
      * @param mixed $contactType
      */
-    public function setContactType($contactType)
+    public function setContactType($contactType): DueTrackerService
     {
         $this->contactType = $contactType;
         return $this;
@@ -48,12 +49,15 @@ class DueTrackerService
     /**
      * @param mixed $endDate
      */
-    public function setEndDate($endDate)
+    public function setEndDate($endDate): DueTrackerService
     {
         $this->endDate = $endDate;
         return $this;
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function getBalance(Request $request)
     {
         $startDate = AccountingHelper::convertStartDate($this->startDate);
