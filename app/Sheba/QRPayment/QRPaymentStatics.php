@@ -6,6 +6,6 @@ class QRPaymentStatics
 {
     public static function gatewayVisibleKeys(): array
     {
-        return ['name', 'name_bn', 'key', 'method_name', 'icon'];
+        return ['name', 'name_bn', 'asset', 'method_name', 'icon'];
     }
 }
