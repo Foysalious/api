@@ -82,7 +82,7 @@ class AnnouncementV2Controller extends Controller
 
         if ($request->has('sort_by_created_on')) $announcements = $this->sortByCreatedOn($announcements, $request->sort_by_created_on)->values();
         if ($request->has('sort_by_target_type')) $announcements = $this->sortByTargetType($announcements, $request->sort_by_target_type)->values();
-
+        if ($request->has('status') && $request->status != 'all') $announcements = $this->filterWithStatus($announcements, $request->status)->values();
 
         $total_announcements = $announcements->count();
         #$limit = $this->getLimit($request, $limit, $total_announcements);
@@ -92,6 +92,14 @@ class AnnouncementV2Controller extends Controller
             'announcements' => $announcements,
             'total_announcements' => $total_announcements
         ]);
+    }
+
+
+    private function filterWithStatus($announcements, $status)
+    {
+        return $announcements->filter(function ($announcement) use ($status) {
+            return $announcement['status'] == ucfirst($status);
+        });
     }
 
     public function show($business, $announcement, Request $request)
