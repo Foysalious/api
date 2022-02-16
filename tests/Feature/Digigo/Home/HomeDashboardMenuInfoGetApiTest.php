@@ -24,7 +24,6 @@ class HomeDashboardMenuInfoGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token",
         ]);
         $data = $response->json();
-        dd($data);
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
         $this->getUserDashboardMenuInfo($data);
