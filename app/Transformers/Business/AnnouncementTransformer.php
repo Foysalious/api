@@ -21,11 +21,15 @@ class AnnouncementTransformer extends TransformerAbstract
             'short_description' => $announcement->short_description,
             'description' => $announcement->long_description ?: $announcement->short_description,
             'status' => $this->getStatus($announcement),
-            'end_date' => $announcement->end_date->toDateTimeString(),
+            'end_date' => $this->getEndDate($announcement),
             'created_at' => $announcement->created_at->toDateTimeString()
         ];
     }
 
+    private function getEndDate($announcement)
+    {
+        return $announcement->end_date->toDateString() . ' ' . $announcement->end_time;
+    }
 
     private function getStatus($announcement)
     {
