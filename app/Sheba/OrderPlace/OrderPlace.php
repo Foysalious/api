@@ -354,6 +354,7 @@ class OrderPlace
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;
             $new_address->name = $this->deliveryName;
+            $new_address->is_saved = 0;
             $new_address = $this->customer->delivery_addresses()->save($new_address);
             $this->setCustomerDeliveryAddress($new_address);
         }
