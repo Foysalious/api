@@ -12,7 +12,7 @@ class ServiceGroup extends Model
 
     public function services()
     {
-        return $this->belongsToMany(Service::class, 'service_group_service');
+        return $this->belongsToMany(Service::class, 'service_group_service')->withPivot('order')->orderBy('pivot_order', 'asc');
     }
 
     public function locations()
