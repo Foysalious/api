@@ -77,7 +77,7 @@ class Ssl extends PaymentStore
         return [
             "gateway_type_id" => (int)$this->gateway_id,
             "user_id"         => $this->partner->id,
-            "user_type"       => end($user_types),
+            "user_type"       => strtolower(end($user_types)),
             "name"            => "dynamic_ssl",
             "configuration"   => $this->conn_data
         ];
