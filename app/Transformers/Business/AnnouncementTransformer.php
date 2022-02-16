@@ -28,7 +28,9 @@ class AnnouncementTransformer extends TransformerAbstract
 
     private function getEndDate($announcement)
     {
-        return $announcement->end_date->toDateString() . ' ' . $announcement->end_time;
+        #One day addition because In app one day subtract kora
+        #For new version it needed
+        return ($announcement->end_date->addDay())->toDateString() . ' ' . $announcement->end_time;
     }
 
     private function getStatus($announcement)
