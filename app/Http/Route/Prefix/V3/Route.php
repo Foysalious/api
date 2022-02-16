@@ -12,6 +12,7 @@ class Route
             (new PartnerRoute())->set($api);
             (new EmiRoute())->set($api);
             (new UserMigrationRoute())->set($api);
+            (new AccountingRoute())->set($api);
 
             $api->group(['middleware' => 'terminate'], function ($api) {
                 (new BusinessRoute())->set($api);
