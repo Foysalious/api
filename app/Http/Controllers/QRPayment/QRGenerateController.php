@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\QRPayment;
 
 use App\Http\Controllers\Controller;
-use App\Models\Payable;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\QRPayment\QRPayment;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\QRPayment\Exceptions\QRException;
 
 class QRGenerateController extends Controller
 {
@@ -15,6 +16,7 @@ class QRGenerateController extends Controller
      * @param Request $request
      * @param QRPayment $QRPayment
      * @return JsonResponse
+     * @throws QRException|PosOrderServiceServerError
      */
     public function generate(Request $request, QRPayment $QRPayment): JsonResponse
     {
