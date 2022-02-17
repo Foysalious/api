@@ -49,7 +49,7 @@ class RunAnnouncementNotifications extends Command
                 } else if ($target == AnnouncementTarget::EMPLOYEE_TYPE) {
                     $members_ids = $business->getActiveBusinessMember()->whereIn('employee_type', json_decode($announcement->target_id, 1))->pluck('member_id')->toArray();
                 } else continue;
-
+                $announcement->update(['status'=>'published']);
                 (new AnnouncementNotifications($members_ids, $announcement))->shoot();
             }
         } catch (Throwable $e) {
