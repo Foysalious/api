@@ -79,8 +79,8 @@ class AnnouncementShowTransformer extends TransformerAbstract
 
     private function getActiveBetween($announcement)
     {
-        $start_date = Carbon::parse($announcement->start_date)->format('M d,Y');
-        $end_date = Carbon::parse($announcement->start_date)->format('M d,Y');
+        $start_date = Carbon::parse($announcement->start_date . ' ' . $announcement->start_time)->format('M d,Y h:i A');
+        $end_date = Carbon::parse($announcement->end_date->toDateString() . ' ' . $announcement->end_time)->format('M d,Y h:i A');
         return $start_date . ' - ' . $end_date;
     }
 
