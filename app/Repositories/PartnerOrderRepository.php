@@ -40,6 +40,7 @@ class PartnerOrderRepository
         $partner_order['can_process'] = $partner_order->order->isProcessable();
         $partner_order['can_serve'] = $partner_order->order->isServeable();
         $partner_order['can_pay'] = $partner_order->order->isPayable();
+        $partner_order['is_withdraw_eligible'] = $partner_order->sheba_collection > 0 && $partner_order->order->is_credit_limit_adjustable;
         $jobs = $partner_order->jobs->filter(function (Job $job) {
             return $job->status !== JobStatuses::CANCELLED;
         })->each(function (Job $job) use ($partner_order) {
