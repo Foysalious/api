@@ -2,6 +2,7 @@
 
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
 use Sheba\Dal\Announcement\AnnouncementStatus;
+use Sheba\Dal\Announcement\ScheduledFor;
 use Sheba\ModificationFields;
 
 class Updater
@@ -50,6 +51,14 @@ class Updater
                 'start_time' => $this->creatorRequest->getStartTime()
             ];
         }
-        return $this->announcementRepo->update($announcement, $data);
+        $this->announcementRepo->update($announcement, $data);
+        if ($announcement->scheduled_for === ScheduledFor::NOW) $this->sendNotification($announcement);
+        return true;
+    }
+
+    private function sendNotification($announcement)
+    {
+        $members_ids = $announcement->business->getActiveBusinessMember()->pluck('member_id')->toArray();
+        (new AnnouncementNotifications($members_ids, $announcement))->shoot();
     }
 }

@@ -67,7 +67,7 @@ class AnnouncementList
     {
         $announcements = Announcement::where('business_id', $this->businessId);
         if ($this->type) $announcements = $announcements->where('type', $this->type);
-        $announcements = $announcements->where('status', '<>', 'scheduled')->orderBy('id', 'desc')
+        $announcements = $announcements->orderBy('id', 'desc')
             ->skip($this->offset)
             ->limit($this->limit)
             ->get();
