@@ -2,9 +2,10 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\ContactType;
-use App\Sheba\AccountingEntry\Helper\AccountingHelper;
+
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerControllerV2 extends Controller
 {
@@ -16,6 +17,9 @@ class DueTrackerControllerV2 extends Controller
         $this->dueTrackerService = $dueTrackerService;
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function getDueTrackerBalance(Request $request)
     {
         $request->contact_type = ContactType::CUSTOMER;
@@ -25,15 +29,8 @@ class DueTrackerControllerV2 extends Controller
             'contact_type' => 'required|string|in:' . implode(',', ContactType::get())
         ]);
         */
-        $startDate = AccountingHelper::convertStartDate($request->startDate);
-        $endDate = AccountingHelper::convertEndDate($request->endDate);
-        if ($endDate < $startDate) {
-            return http_response($request, null, 400, ['message' => 'End date can not be smaller than start date']);
-        }
         $response = $this->dueTrackerService->setPartner($request->partner)
             ->setContactType($request->contact_type)
-            ->setStartDate($startDate)
-            ->setEndDate($endDate)
             ->getBalance();
         return http_response($request, null, 200, ['data' => $response]);
 
