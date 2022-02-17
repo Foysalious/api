@@ -599,6 +599,7 @@ class AttendanceList
                     'is_on_leave' => 0,
                     'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                     'weekend_or_holiday' => $is_weekend_or_holiday ? $this->isWeekendOrHoliday() : null,
+                    'holiday_name' => $is_weekend_or_holiday ? $this->getHolidayName() : null,
                     'is_half_day_leave' => 0,
                     'which_half_day_leave' => null,
                     'date' => null
@@ -678,6 +679,7 @@ class AttendanceList
                     'is_absent' => 0,
                     'is_on_leave' => 1,
                     'is_holiday' => 0,
+                    'leave_type' => $leave->leaveType->title,
                     'weekend_or_holiday' => null,
                     'is_half_day_leave' => $leave->is_half_day ? 1 : 0,
                     'which_half_day_leave' => $leave->is_half_day ? $leave->half_day_configuration : null
@@ -768,8 +770,9 @@ class AttendanceList
      */
     private function getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave)
     {
+        if ($is_weekend_or_holiday) return null;
         if ($is_on_half_day_leave) return $action->status;
-        if ($is_weekend_or_holiday || $is_on_leave) return null;
+        if ($is_on_leave) return null;
 
         return $action->status;
     }

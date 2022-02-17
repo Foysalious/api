@@ -24,6 +24,7 @@ use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
+use Sheba\Dal\Survey\Model as Survey;
 use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
@@ -395,6 +396,24 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
             return $operation_resource->profile->nid_verified;
         if ($admin_resource = $this->admins()->first())
             return $admin_resource->profile->nid_verified;
+        return null;
+    }
+
+    public function getNidNo()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->nid_no;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->nid_no;
+        return null;
+    }
+
+    public function getDob()
+    {
+        if ($operation_resource = $this->operationResources()->first())
+            return $operation_resource->profile->dob;
+        if ($admin_resource = $this->admins()->first())
+            return $admin_resource->profile->dob;
         return null;
     }
 
@@ -1108,12 +1127,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function isMigrated($module_name): bool
     {
-        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
-        /** @var UserMigrationService $userMigrationService */
-        $userMigrationService = app(UserMigrationService::class);
-        $class = $userMigrationService->resolveClass($module_name);
-        $userStatus = $class->setUserId($this->id)->setModuleName($module_name)->getStatus();
-        if (in_array($userStatus, $arr)) return false;
         return true;
     }
 
@@ -1125,5 +1138,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function lastUpdatedPGWStore()
     {
         return $this->pgwStoreAccounts->max('updated_at') ?? null;
+    }
+
+    public function lastResourceUpdated()
+    {
+        return $this->getFirstAdminResource()->updated_at;
+    }
+
+    public function survey()
+    {
+        return $this->morphMany(Survey::class, 'user');
     }
 }

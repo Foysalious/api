@@ -6,6 +6,7 @@ use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Transformers\Business\PayRunListTransformer;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
@@ -19,6 +20,9 @@ use Sheba\Dal\Payslip\Status;
 
 class PayrunList
 {
+
+    const AUTO_GENERATED = 'auto';
+    const MANUALLY_GENERATED = 'manual';
 
     /*** @var Business */
     private $business;
@@ -130,7 +134,6 @@ class PayrunList
 
     private function runPayslipQuery()
     {
-        //$payslips = $this->payslipRepositoryInterface->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->orderBy('id', 'DESC');
         $payslips = $this->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->orderBy('id', 'DESC');
         if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
@@ -143,12 +146,12 @@ class PayrunList
      */
     private function getData()
     {
+        $payroll_components = $this->business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('name');
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $payrun_list_transformer = new PayRunListTransformer();
+        $payrun_list_transformer = new PayRunListTransformer($payroll_components);
         $payslip_list = new Collection($this->payslipList, $payrun_list_transformer);
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
-
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
         $this->isProratedFilterApplicable = $payrun_list_transformer->getIsProratedFilterApplicable();
@@ -182,11 +185,11 @@ class PayrunList
     {
         $final_data = [];
         foreach ($payroll_components as $payroll_component) {
-            array_push($final_data, [
+            $final_data[] = [
                 'key' => $payroll_component->name,
                 'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : ucwords(implode(" ", explode("_", $payroll_component->name))),
                 'type' => $payroll_component->type
-            ]);
+            ];
         }
         return $final_data;
     }
@@ -216,7 +219,11 @@ class PayrunList
      */
     private function filterByMonthYear($payslips)
     {
-        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%');
+        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->where(function ($query) {
+            return $query->where('generation_type', self::AUTO_GENERATED)->OrWhere(function ($query) {
+                $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
+            });
+        });
     }
 
     /**

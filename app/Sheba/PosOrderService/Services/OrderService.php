@@ -309,7 +309,7 @@ class OrderService
 
     public function storeDeliveryInformation($deliveryData)
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/delivery', $deliveryData);
     }
 
     public function update()

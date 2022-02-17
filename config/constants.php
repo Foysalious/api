@@ -150,32 +150,32 @@ return [
         'Accepted' => [
             'sheba' => 'Accepted',
             'partner' => 'Accepted',
-            'customer' => 'Order Confirmed'
+            'customer' => 'Confirmed'
         ],
         'Schedule Due' => [
             'sheba' => 'Schedule Due',
             'partner' => 'Schedule Due',
-            'customer' => 'Order Confirmed'
+            'customer' => 'Confirmed'
         ],
         'Process' => [
             'sheba' => 'Process',
             'partner' => 'Process',
-            'customer' => 'Service is in Process'
+            'customer' => 'In Process'
         ],
         'Serve Due' => [
             'sheba' => 'Process',
             'partner' => 'Process',
-            'customer' => 'Service is in Process'
+            'customer' => 'In Process'
         ],
         'Served' => [
             'sheba' => 'Served',
             'partner' => 'Served',
-            'customer' => 'Order Completed'
+            'customer' => 'Completed'
         ],
         'Cancelled' => [
             'sheba' => 'Cancelled',
             'partner' => 'Cancelled',
-            'customer' => 'Order Cancelled'
+            'customer' => 'Cancelled'
         ]
     ],
     'JOB_STATUSES_COLOR' => [

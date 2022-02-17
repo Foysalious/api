@@ -23,6 +23,7 @@ use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Redis;
 use Intervention\Image\Image;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -53,6 +54,7 @@ use App\Transformers\Business\EmployeeTransformer;
 use Illuminate\Http\Request;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Throwable;
+use Illuminate\Support\Facades\Cache;
 
 class EmployeeController extends Controller
 {
@@ -195,7 +197,7 @@ class EmployeeController extends Controller
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED]);
+            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED])->where('schedule_date', '<=', Carbon::now()->toDateString().' 22:59:59');
         $pending_visit_count = $pending_visit->count();
 
         $current_visit = $visit_repository->where('visitor_id', $business_member->id)
@@ -216,7 +218,6 @@ class EmployeeController extends Controller
 
         $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
         $is_manager = $manager ? 1 : 0;
-
         $data = [
             'id' => $member->id,
             'business_member_id' => $business_member->id,
@@ -243,9 +244,9 @@ class EmployeeController extends Controller
             'is_enable_employee_visit' => $business->is_enable_employee_visit,
             'pending_visit_count' => $pending_visit_count,
             'today_visit_count' => $today_visit_count,
-            'single_visit' => $today_visit_count === 1 ? [
-                'id' => $today_visit->first()->id,
-                'title' => $today_visit->first()->title
+            'single_visit' => $pending_visit_count === 1 ? [
+                'id' => $pending_visit->first()->id,
+                'title' => $pending_visit->first()->title
             ] : null,
             'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,
@@ -270,17 +271,28 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        $business_members = $this->accessibleBusinessMembers($business, $request);
-
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_members->get(), new BusinessEmployeesTransformer());
-        $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
-
+        $employees_with_dept_data = $this->lazyLoadingStrategy($business, $request);
         return api_response($request, null, 200, [
             'employees' => $employees_with_dept_data['employees'],
             'departments' => $employees_with_dept_data['departments']
         ]);
+    }
+
+    /**
+     * @param $business
+     * @param $request
+     * @return mixed
+     */
+    public function lazyLoadingStrategy($business, $request)
+    {
+        $cache_key = 'phonebook:' . (int)$business->id;
+        return Cache::store('redis')->remember($cache_key, 5, function () use ($business, $request) {
+            $business_members = $this->accessibleBusinessMembers($business, $request);
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($business_members->get(), new BusinessEmployeesTransformer());
+            return $manager->createData($resource)->toArray()['data'];
+        });
     }
 
     /**

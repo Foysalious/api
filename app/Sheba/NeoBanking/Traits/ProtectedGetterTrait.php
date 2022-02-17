@@ -9,7 +9,8 @@ trait ProtectedGetterTrait
     /**
      * @return array
      */
-    public function toArray(){
+    public function toArray(): array
+    {
         $reflection_class = new ReflectionClass($this);
         $data             = [];
         foreach ($reflection_class->getProperties() as $item) {

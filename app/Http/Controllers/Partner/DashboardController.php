@@ -236,6 +236,9 @@ class DashboardController extends Controller
             /** @var Resource $resource */
             $resource = $request->manager_resource;
             $resource_status = $resource->status;
+            if ($resource->profile->nid_verification_request_count >= 3 && in_array($resource_status, [Statuses::UNVERIFIED, Statuses::REJECTED])) {
+                $resource_status = Statuses::PENDING;
+            }
             $data = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
