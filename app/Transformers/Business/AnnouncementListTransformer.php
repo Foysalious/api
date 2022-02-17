@@ -38,10 +38,10 @@ class AnnouncementListTransformer extends TransformerAbstract
 
     private function getStatus($announcement)
     {
-        $today_date = Carbon::now()->toDateString();
-        $end_date = $announcement->end_date->toDateString();
+        $today_date = Carbon::now();
+        $end_date_format = Carbon::parse($announcement->end_date->toDateString() . ' ' . $announcement->end_time);
 
-        if (($end_date < $today_date)) return "Expired";
+        if ($end_date_format->lessThan($today_date)) return "Expired";
         if ($announcement->status == self::PUBLISHED) return "Published";
         if ($announcement->status == self::SCHEDULED) return "Scheduled";
     }
