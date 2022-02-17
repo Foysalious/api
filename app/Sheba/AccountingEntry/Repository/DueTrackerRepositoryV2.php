@@ -7,8 +7,6 @@ use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 class DueTrackerRepositoryV2 extends AccountingRepository
 {
 
-    const API_VERSION = 'api/v2/';
-
     public function __construct(AccountingEntryClient $client)
     {
         parent::__construct($client);
@@ -17,11 +15,11 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @throws AccountingEntryServerError
      */
-    public function getBalance($userId, $startDate, $endDate, $contact_type, $userType = UserType::PARTNER)
+    public function getBalance($userId, $contact_type, $userType = UserType::PARTNER)
     {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->get(self::API_VERSION . "due-tracker/balance?contact_type=$contact_type&start_date=$startDate&end_date=$endDate");
+                ->get("api/v2/due-tracker/balance?contact_type=$contact_type");
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
