@@ -1,9 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
-use App\Sheba\AccountingEntry\Constants\UserType;
-use App\Sheba\AccountingEntry\Helper\AccountingHelper;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
-use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerService
@@ -40,7 +37,7 @@ class DueTrackerService
     /**
      * @param mixed $startDate
      */
-    public function setStartDate($startDate)
+    public function setStartDate($startDate): DueTrackerService
     {
         $this->startDate = $startDate;
         return $this;
@@ -58,15 +55,9 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
-    public function getBalance(Request $request)
+    public function getBalance()
     {
-        $startDate = AccountingHelper::convertStartDate($this->startDate);
-        $endDate = AccountingHelper::convertEndDate($this->endDate);
-        $contact_type = $request->contact_type;
-        if ($endDate < $startDate) {
-            return http_response($request, null, 400, ['message' => 'End date can not be smaller than start date']);
-        }
-        return $this->dueTrackerRepo->getBalance($this->partner->id, $startDate, $endDate, $contact_type);
+        return $this->dueTrackerRepo->getBalance($this->partner->id, $this->startDate, $this->endDate, $this->contactType);
     }
 
 }
