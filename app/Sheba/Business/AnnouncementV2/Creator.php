@@ -2,6 +2,7 @@
 
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
 use Sheba\Dal\Announcement\Announcement;
+use Sheba\Dal\Announcement\ScheduledFor;
 use Sheba\PushNotificationHandler;
 use App\Models\BusinessMember;
 use Sheba\ModificationFields;
@@ -56,8 +57,7 @@ class Creator
         $this->makeData();
         /** @var Announcement $announcement */
         $announcement = $this->announcementRepo->create($this->data);
-
-        $this->sendNotification($announcement);
+        if ($announcement->scheduled_for === ScheduledFor::NOW) $this->sendNotification($announcement);
         return $announcement;
     }
 
