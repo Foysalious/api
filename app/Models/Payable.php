@@ -2,6 +2,7 @@
 
 use App\Sheba\PaymentLink\PaymentLinkOrder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;
 use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Complete\PaymentComplete;
@@ -245,5 +246,13 @@ class Payable extends Model
         }
 
         return $model;
+    }
+
+    public function payee()
+    {
+        Relation::morphMap([
+            'partner' => 'App\Models\Partner'
+        ]);
+        return $this->morphTo('payee', 'payee_type', 'payee_id');
     }
 }
