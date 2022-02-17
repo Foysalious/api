@@ -5,6 +5,7 @@ namespace App\Sheba\QRPayment;
 use App\Models\Partner;
 use App\Models\Payable;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
+use Sheba\Dal\QRPayable\Model as QRPayable;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\QRPayment\Exceptions\CustomerNotFoundException;
@@ -40,10 +41,17 @@ class QRPayment
         return $this;
     }
 
+    /**
+     * @return mixed
+     * @throws CustomerNotFoundException
+     * @throws InvalidQRPaymentMethodException
+     * @throws PosOrderServiceServerError
+     */
     public function generate()
     {
         $this->store_payable();
         $this->generate_qr();
+        $this->store_qr_payable();
         return $this->qr_string;
     }
 
@@ -68,7 +76,20 @@ class QRPayment
         $this->qr_string  = $qr_code_generate->qrCodeString();
     }
 
-//    private function
+    private function store_qr_payable()
+    {
+        $data = $this->make_qr_payment_data();
+        QRPayable::create($data);
+    }
+
+    private function make_qr_payment_data(): array
+    {
+        return [
+            "payable_id" => $this->payable->id,
+            "qr_string"  => $this->qr_string,
+            "qr_id"      => time(),
+        ];
+    }
 
     /**
      * @return array
