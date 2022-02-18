@@ -116,6 +116,7 @@ class BusinessWisePayslip
             'cycle_end_date' => $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d'),
             'status' => Status::PENDING,
         ];
+        $business_payslip = $this->createBusinessPayslip($business_payslip_data);
         foreach ($this->businessMembers as $business_member) {
             try {
                 if ($this->generatedBusinessMemberIds && in_array($business_member->id, $this->generatedBusinessMemberIds)) continue;
@@ -157,7 +158,10 @@ class BusinessWisePayslip
                 $payroll_component_calculation['payroll_component']['deduction']['tax'] = $monthly_tax_amount;
                 $tax_report_data = $this->taxCalculator->getBusinessMemberTaxHistoryData();
                 $payslip_data = [
+                    'business_payslip_id' => $business_payslip->id,
                     'business_member_id' => $business_member->id,
+                    'status' => Status::PENDING,
+                    'generation_type' => 'auto',
                     'salary_breakdown' => json_encode(array_merge(['gross_salary_breakdown' => $gross_salary_breakdown], $payroll_component_calculation))
                 ];
                 if ($this->className === self::MANUALLY_GENERATED_PAYSLIP) {
@@ -180,7 +184,6 @@ class BusinessWisePayslip
         $package_generate_information = $this->payrollComponentSchedulerCalculation->getPackageGenerateData();
         if ($package_generate_information) $this->updatePackageGenerateDate($package_generate_information);
         $this->updatePayDay($this->payrollSetting, $this->business);
-        $this->createBusinessPayslip($business_payslip_data);
     }
 
     private function updatePackageGenerateDate($package_generate_information)
@@ -203,7 +206,7 @@ class BusinessWisePayslip
 
     private function createBusinessPayslip(array $business_payslip_data)
     {
-        $this->businessPayslipRepo->create($business_payslip_data);
+        return $this->businessPayslipRepo->create($business_payslip_data);
     }
 
 }
