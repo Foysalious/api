@@ -15,8 +15,8 @@ class QRPaymentStatics
             "payable_type"   => 'required|in:pos_order,accounting_due',
             "type_id"        => "required",
             'amount'         => 'required|numeric',
-            'payee_id'       => 'required',
-            'payee_type'     => 'required|in:pos_customer,supplier',
+            'payer_id'       => 'required',
+            'payer_type'     => 'required|in:pos_customer,supplier',
             "payment_method" => 'required'
         ];
     }

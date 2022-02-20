@@ -105,14 +105,14 @@ class QRPayment
         if (($this->data->payable_type === "pos_order")) {
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = app(PosOrderResolver::class);
-            $pos_order = $posOrderResolver->setOrderId($this->data->target_id)->get();
+            $pos_order = $posOrderResolver->setOrderId($this->data->type_id)->get();
             $type_id   = $pos_order->id;
         }
 
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
-        if($this->data->payee_type === "pos_customer")
-            $customer = $posCustomerResolver->setCustomerId($this->data->payee_id)->setPartner($this->partner)->get();
+        if($this->data->payer_type === "pos_customer")
+            $customer = $posCustomerResolver->setCustomerId($this->data->payer_id)->setPartner($this->partner)->get();
 
         if(!isset($customer))
             throw new CustomerNotFoundException();
