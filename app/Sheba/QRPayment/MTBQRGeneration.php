@@ -9,9 +9,17 @@ class MTBQRGeneration extends QRGeneration
 
     protected $method_name = "mtb";
 
-    public function qrCodeString()
+    protected $qr_id;
+
+    public function generateQrId(): string
     {
-        return (new EmvQR())->setAmount($this->payable->amount)->setQrName($this->method_name)->generateQrString();
+        return sprintf('%08X', mt_rand(0, 4294967295));
+    }
+
+    public function qrCodeString(): string
+    {
+        return (new EmvQR())->setQrId($this->qr_id)->setAmount($this->payable->amount)
+            ->setQrName($this->method_name)->generateQrString();
     }
 
 }

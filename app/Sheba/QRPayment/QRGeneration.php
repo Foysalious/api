@@ -10,6 +10,8 @@ abstract class QRGeneration
 
     protected $payable;
 
+    protected $qr_id;
+
     /**
      * @param mixed $payable
      * @return QRGeneration
@@ -20,6 +22,18 @@ abstract class QRGeneration
         return $this;
     }
 
+    /**
+     * @param $qr_id
+     * @return $this
+     */
+    public function setQrId($qr_id): QRGeneration
+    {
+        $this->qr_id = $qr_id;
+        return $this;
+    }
+
     public abstract function qrCodeString();
+
+    public abstract function generateQRId();
 
 }
