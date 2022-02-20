@@ -6,12 +6,13 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Payment\Methods\Upay\Response\UpayApiResponse;
 use Sheba\Payment\Methods\Upay\Stores\UpayStore;
+use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
+use Sheba\TPProxy\TPRequest;
 
 class UpayClient
 {
-    /**
-     * @var Client
-     */
+    /** @var TPProxyClient $client */
     private $client;
     /**
      * @var string
@@ -26,29 +27,27 @@ class UpayClient
 
     public function __construct()
     {
-        $this->client  = new Client();
+        $this->client  = app(TPProxyClient::class);
         $this->baseUrl = config('payment.upay.base_url');
     }
 
-    public function call()
+    /**
+     * @return UpayApiResponse
+     */
+    public function call(): UpayApiResponse
     {
         try {
-            $res = $this->client->request($this->method, $this->getUrl(), [
-                'headers'         => $this->headers,
-                'form_params'     => $this->payload,
-                'timeout'         => self::TIMEOUT,
-                'read_timeout'    => self::TIMEOUT,
-                'connect_timeout' => self::TIMEOUT,
-                'http_errors'     => false
-            ])->getBody()->getContents();
+            $request=new TPRequest();
+            $request->setHeaders($this->headers)->setMethod($this->method)->setInput($this->payload)->setTimeout(self::TIMEOUT)->setUrl($this->getUrl());
+            $res = $this->client->call($request);
             return (new UpayApiResponse())->setServerResponse($res);
-        } catch (GuzzleException $e) {
+        } catch (TPProxyServerError $e) {
             $server_response = json_encode(['code' => $e->getCode(), 'message' => $e->getMessage()]);
             return (new UpayApiResponse())->setServerResponse($server_response);
         }
     }
 
-    public function getUrl()
+    public function getUrl(): string
     {
         return "$this->baseUrl/$this->url";
     }
@@ -57,7 +56,7 @@ class UpayClient
      * @param array $headers
      * @return UpayClient
      */
-    public function setHeaders($headers)
+    public function setHeaders(array $headers): UpayClient
     {
         $this->headers = $headers;
         return $this;
@@ -67,7 +66,7 @@ class UpayClient
      * @param string $url
      * @return UpayClient
      */
-    public function setUrl($url)
+    public function setUrl(string $url): UpayClient
     {
         $this->url = $url;
         return $this;
@@ -77,7 +76,7 @@ class UpayClient
      * @param string $method
      * @return UpayClient
      */
-    public function setMethod($method)
+    public function setMethod(string $method): UpayClient
     {
         $this->method = $method;
         return $this;
@@ -87,7 +86,7 @@ class UpayClient
      * @param array $payload
      * @return UpayClient
      */
-    public function setPayload($payload)
+    public function setPayload(array $payload): UpayClient
     {
         $this->payload = $payload;
         return $this;

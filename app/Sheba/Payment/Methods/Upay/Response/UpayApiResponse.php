@@ -16,16 +16,18 @@ class UpayApiResponse
     private $success_codes;
 
 
-    public function __construct() {
-        $this->success_codes=['MAS2001','MPIS2002','PS2005'];
+    public function __construct()
+    {
+        $this->success_codes = ['MAS2001', 'MPIS2002', 'PS2005'];
     }
+
     /**
      * @param mixed $server_response
      * @return UpayApiResponse
      */
     public function setServerResponse($server_response): UpayApiResponse
     {
-        $this->server_response = json_decode($server_response, 0);
+        $this->server_response = is_string($server_response) ? json_decode($server_response, 0) : (array)$server_response;
         foreach ($this->server_response as $key => $value) {
             $this->$key = $value;
         }
@@ -78,7 +80,7 @@ class UpayApiResponse
 
     public function hasError()
     {
-        return !in_array($this->code,$this->success_codes);
+        return !in_array($this->code, $this->success_codes);
     }
 
     /**
