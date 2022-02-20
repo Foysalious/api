@@ -1127,12 +1127,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function isMigrated($module_name): bool
     {
-        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
-        /** @var UserMigrationService $userMigrationService */
-        $userMigrationService = app(UserMigrationService::class);
-        $class = $userMigrationService->resolveClass($module_name);
-        $userStatus = $class->setUserId($this->id)->setModuleName($module_name)->getStatus();
-        if (in_array($userStatus, $arr)) return false;
         return true;
     }
 
