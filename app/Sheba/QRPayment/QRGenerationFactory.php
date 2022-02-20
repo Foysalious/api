@@ -9,8 +9,6 @@ class QRGenerationFactory
 {
     private $payment_method;
 
-    private $payable;
-
     /**
      * @param mixed $payment_method
      * @return QRGenerationFactory
@@ -22,24 +20,13 @@ class QRGenerationFactory
     }
 
     /**
-     * @param Payable $payable
-     * @return QRGenerationFactory
-     */
-    public function setPayable(Payable $payable): QRGenerationFactory
-    {
-        $this->payable = $payable;
-        return $this;
-    }
-
-    /**
      * @return QRGeneration
      * @throws InvalidQRPaymentMethodException
      */
-    public function getAndSetQRClass(): QRGeneration
+    public function get(): QRGeneration
     {
         /** @var QRGeneration $class */
-        $class = $this->getQRClass();
-        return $class->setPayable($this->payable);
+        return $this->getQRClass();
     }
 
     /**

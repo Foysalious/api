@@ -22,7 +22,7 @@ class QRGenerateController extends Controller
     {
         $this->validate($request, QRPaymentStatics::getValidationForQrGenerate());
         $partner   = $request->partner;
-        $data      = array_only($request->all(), ['payable_type', 'type_id', 'amount', 'customer_id', 'payment_method']);
+        $data      = array_only($request->all(), QRPaymentStatics::qrGeenerateKeys());
         $qr_string = $QRPayment->setPartner($partner)->setData((object)($data))->generate();
         return http_response($request, null, 200, ["qr_string" => $qr_string]);
     }

@@ -15,8 +15,14 @@ class QRPaymentStatics
             "payable_type"   => 'required|in:pos_order,accounting_due',
             "type_id"        => "required",
             'amount'         => 'required|numeric',
-            'customer_id'    => 'required',
+            'payee_id'       => 'required',
+            'payee_type'     => 'required|in:pos_customer,supplier',
             "payment_method" => 'required'
         ];
+    }
+
+    public static function qrGeenerateKeys(): array
+    {
+        return array_keys(self::getValidationForQrGenerate());
     }
 }

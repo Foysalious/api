@@ -5,6 +5,7 @@ namespace App\Sheba\QRPayment;
 use App\Models\Partner;
 use App\Models\Payable;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
+use Exception;
 use Sheba\Dal\QRPayable\Model as QRPayable;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
@@ -20,6 +21,7 @@ class QRPayment
     private $payable;
 
     private $qr_string;
+    private $qr_id;
 
     /**
      * @param mixed $partner
@@ -49,9 +51,9 @@ class QRPayment
      */
     public function generate()
     {
-        $this->store_payable();
-        $this->generate_qr();
-        $this->store_qr_payable();
+        $this->storePayable();
+        $this->generateQR();
+        $this->storeQRPayable();
         return $this->qr_string;
     }
 
@@ -60,9 +62,9 @@ class QRPayment
      * @throws CustomerNotFoundException
      * @throws PosOrderServiceServerError
      */
-    private function store_payable()
+    private function storePayable()
     {
-        $data = $this->make_data();
+        $data = $this->makePayableData();
         $this->payable = Payable::create($data);
     }
 
@@ -70,24 +72,25 @@ class QRPayment
      * @return void
      * @throws InvalidQRPaymentMethodException
      */
-    private function generate_qr()
+    private function generateQR()
     {
-        $qr_code_generate = (new QRGenerationFactory())->setPayable($this->payable)->setPaymentMethod($this->data->payment_method)->getAndSetQRClass();
-        $this->qr_string  = $qr_code_generate->qrCodeString();
+        $qr_code_generate = (new QRGenerationFactory())->setPaymentMethod($this->data->payment_method)->get();
+        $this->qr_id      = $qr_code_generate->generateQrId();
+        $this->qr_string  = $qr_code_generate->setQrId($this->qr_id)->setPayable($this->payable)->qrCodeString();
     }
 
-    private function store_qr_payable()
+    private function storeQRPayable()
     {
-        $data = $this->make_qr_payment_data();
+        $data = $this->makeQRPayableData();
         QRPayable::create($data);
     }
 
-    private function make_qr_payment_data(): array
+    private function makeQRPayableData(): array
     {
         return [
             "payable_id" => $this->payable->id,
             "qr_string"  => $this->qr_string,
-            "qr_id"      => time(),
+            "qr_id"      => $this->qr_id,
         ];
     }
 
@@ -95,8 +98,9 @@ class QRPayment
      * @return array
      * @throws CustomerNotFoundException
      * @throws PosOrderServiceServerError
+     * @throws Exception
      */
-    private function make_data(): array
+    private function makePayableData(): array
     {
         if (($this->data->payable_type === "pos_order")) {
             /** @var PosOrderResolver $posOrderResolver */
@@ -107,7 +111,8 @@ class QRPayment
 
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
-        $customer = $posCustomerResolver->setCustomerId($this->data->customer_id)->setPartner($this->partner)->get();
+        if($this->data->payee_type === "pos_customer")
+            $customer = $posCustomerResolver->setCustomerId($this->data->payee_id)->setPartner($this->partner)->get();
 
         if(!isset($customer))
             throw new CustomerNotFoundException();
