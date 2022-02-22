@@ -4,7 +4,12 @@ namespace App\Sheba\QRPayment;
 
 use Sheba\Dal\QRPayable\Contract as QRPayableRepo;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
+use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\Statuses;
+use Sheba\QRPayment\Exceptions\QRException;
 use Sheba\QRPayment\Exceptions\QRPayableNotFoundException;
+use Sheba\QRPayment\Exceptions\QRPaymentAlreadyCompleted;
+use Throwable;
 
 class QRValidator
 {
@@ -12,6 +17,7 @@ class QRValidator
 
     private $qr_payable;
     private $payable;
+    private $qr_payment;
 
     private $qr_payable_repo;
     private $payment_method;
@@ -54,17 +60,30 @@ class QRValidator
 
     /**
      * @return void
-     * @throws QRPayableNotFoundException
+     * @throws AlreadyCompletingPayment
+     * @throws QRException
+     * @throws Throwable
      */
     public function complete()
     {
         $this->storePayment();
-
+        $this->qrPaymentComplete();
     }
 
     /**
      * @return void
-     * @throws QRPayableNotFoundException
+     * @throws AlreadyCompletingPayment
+     * @throws Throwable
+     */
+    private function qrPaymentComplete()
+    {
+        (new QRPaymentManager())->setQrPayment($this->qr_payment)->setMethod($this->payment_method)
+            ->setPayable($this->payable)->complete();
+    }
+
+    /**
+     * @return void
+     * @throws QRException
      */
     public function setPayables()
     {
@@ -76,17 +95,30 @@ class QRValidator
 
     /**
      * @return void
-     * @throws QRPayableNotFoundException
+     * @throws QRException
      */
     private function storePayment()
     {
         $data = $this->makePaymentData();
-        QRPaymentModel::create($data);
+        $this->checkIsCompleted();
+        $this->qr_payment = QRPaymentModel::create($data);
+    }
+
+    /**
+     * @return void
+     * @throws QRException
+     */
+    private function checkIsCompleted()
+    {
+        $qr_payment = QRPaymentModel::query()->where("payable_id", $this->payable->id)
+            ->where("status", Statuses::COMPLETED)->first();
+        if(isset($qr_payment))
+            throw new QRPaymentAlreadyCompleted();
     }
 
     /**
      * @return array
-     * @throws QRPayableNotFoundException
+     * @throws QRException
      */
     private function makePaymentData(): array
     {
@@ -95,7 +127,7 @@ class QRValidator
             "payable_id" => $this->payable->id,
             "gateway_account_name" => $this->payment_method,
             "gateway_response" => $this->response,
-            "status" => "completed"
+            "status" => "validated"
         ];
     }
 }
