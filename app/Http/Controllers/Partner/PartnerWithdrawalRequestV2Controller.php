@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
+use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerBankInformation;
+use App\Models\PartnerOrder;
+use App\Models\Profile;
 use App\Models\WithdrawalRequest;
 use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
@@ -150,7 +153,64 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             $message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             return api_response($request, null, 403, ['message' => $message]);
         }
-        $data = array_merge((new UserRequestInformation($request))->getInformationArray(), [
+        $data = $this->prepareWithdrawRequestData($request, $partner);
+        /** @var PartnerWithdrawalService $partnerWithdrawalSvc */
+        $partnerWithdrawalSvc = app(PartnerWithdrawalService::class);
+        $new_withdrawal = $partnerWithdrawalSvc->store($partner, $data);
+
+        return api_response($request, $new_withdrawal, 200);
+    }
+
+    public function withdrawalRequestForOrder($partner, Request $request, PartnerWithdrawalService $partnerWithdrawalService)
+    {
+        $this->validate($request, [
+            'order_id'       => 'required|integer',
+            'amount'         => 'required|numeric',
+            'payment_method' => 'required|in:bkash,bank',
+            'bkash_number'   => 'required_if:payment_method,bkash|mobile:bd',
+            'code'           => 'required_if:payment_method,bkash|string'
+        ]);
+
+        /** @var Partner $partner */
+        $partner = $request->partner;
+        if ($this->isPartnerBlacklisted($partner))
+            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।']);
+
+        $order = Order::find($request->order_id);
+        if (is_null($order))
+            return api_response($request, null, 402, ['message' => 'You can not make withdrawal request against this order']);
+
+        /** @var PartnerOrder $partnerOrder */
+        $partnerOrder = $order->lastPartnerOrder();
+        if (!$order->is_credit_limit_adjustable || $order->isCancelled() || $partnerOrder->partner_id != $partner->id)
+            return api_response($request, null, 402, ['message' => 'You can not make withdrawal request against this order']);
+
+        if ($partnerWithdrawalService->doesExceedWithdrawalAmountForOrder((double)$request->amount, $order->id, $partnerOrder))
+            return api_response($request, null, 402, ['message' => 'Withdrawal amount can not be greater than sheba collection amount']);
+
+        if ($request->payment_method == 'bkash' && $partnerWithdrawalService->hasPendingBkashRequest($partner))
+            return api_response($request, null, 402, ['message' => 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।' ]);
+
+        $doesExceedWithdrawalLimit = $partnerWithdrawalService->doesExceedWithdrawalLimit((double)$request->amount, $request->payment_method);
+        if ($doesExceedWithdrawalLimit['status'])
+            return api_response($request, null, 400, ['message' => $doesExceedWithdrawalLimit['msg']]);
+
+        $data = $this->prepareWithdrawRequestData($request, $partner, $order->id);
+        $new_withdrawal = $partnerWithdrawalService->store($partner, $data);
+
+        return api_response($request, $new_withdrawal, 200);
+    }
+
+    private function isPartnerBlacklisted($partner) : bool
+    {
+        if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) return true;
+        return false;
+    }
+
+    private function prepareWithdrawRequestData($request, $partner, $orderId = null) : array
+    {
+        return array_merge((new UserRequestInformation($request))->getInformationArray(), [
+            'order_id'        => $orderId,
             'requester_id'    => $partner->id,
             'requester_type'  => RequesterTypes::PARTNER,
             'amount'          => $request->amount,
@@ -162,11 +222,6 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             'api_request_id' => $request->api_request ? $request->api_request->id : null,
             'wallet_balance' => $partner->wallet
         ]);
-        /** @var PartnerWithdrawalService $partnerWithdrawalSvc */
-        $partnerWithdrawalSvc = app(PartnerWithdrawalService::class);
-        $new_withdrawal = $partnerWithdrawalSvc->store($partner, $data);
-
-        return api_response($request, $new_withdrawal, 200);
     }
 
     public function update($partner, $withdrawals, Request $request)
