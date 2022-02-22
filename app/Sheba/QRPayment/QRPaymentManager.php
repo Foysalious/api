@@ -6,6 +6,7 @@ use App\Models\Payable;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\Statuses;
 use Throwable;
 
 class QRPaymentManager
@@ -59,6 +60,7 @@ class QRPaymentManager
                 $completion_class = $this->payable->getQRCompletionClass();
                 $completion_class->setQrPayment($this->qr_payment)->setMethod($this->method);
                 $payment = $completion_class->setPayable($this->payable)->complete();
+                $this->completePayment();
             }
             $this->unsetRunningCompletion();
             return $payment ? : $this->qr_payment;
@@ -89,5 +91,15 @@ class QRPaymentManager
     private function getKey()
     {
         return 'QR_Payment::Completing::' . $this->qr_payment->id;
+    }
+
+    private function completePayment()
+    {
+        $this->qr_payment->reload();
+
+        if($this->qr_payment->status !== Statuses::COMPLETED) {
+            $this->qr_payment->status = Statuses::COMPLETED;
+            $this->qr_payment->save();
+        }
     }
 }
