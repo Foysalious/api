@@ -28,9 +28,18 @@ class QRPaymentController extends Controller
         return http_response($request, null, 200, ["qr_string" => $qr_string]);
     }
 
-    public function validatePayment(Request $request, QRValidator $validator)
+    /**
+     * @param $payment_method
+     * @param Request $request
+     * @param QRValidator $validator
+     * @return JsonResponse
+     * @throws QRException
+     */
+    public function validatePayment($payment_method, Request $request, QRValidator $validator): JsonResponse
     {
         $this->validate($request, ["qr_id" => "required"]);
-        $validator->setQrId($request->qr_id)->validate();
+        $validator->setResponse(json_encode($request->all()))->setPaymentMethod($payment_method)
+            ->setQrId($request->qr_id)->complete();
+        return http_response($request, null, 200);
     }
 }
