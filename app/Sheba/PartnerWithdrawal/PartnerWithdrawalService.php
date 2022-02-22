@@ -5,6 +5,7 @@ namespace Sheba\PartnerWithdrawal;
 use App\Models\Partner;
 use App\Models\WithdrawalRequest;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PartnerWithdrawalService
 {
@@ -39,5 +40,36 @@ class PartnerWithdrawalService
     public function updateSetting(Partner $partner, $data)
     {
         $this->updater->setSetting($partner->walletSetting)->setData($data)->update();
+    }
+
+    public function hasPendingBkashRequest($partner)
+    {
+        return WithdrawalRequest::where('payment_method', 'bkash')->whereIn('status', ['pending', 'approval_pending'])->where('requester_id', $partner->id)->first();
+    }
+
+    public function doesExceedWithdrawalLimit($amount, $paymentMethod) : array
+    {
+        $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
+        if ($paymentMethod == 'bkash' && ($amount < $limitBkash['min'] || $amount > $limitBkash['max']))
+            return ['status' => true, 'msg' => 'Payment Limit mismatch for bkash minimum limit ' . $limitBkash['min'] . ' TK and maximum ' . $limitBkash['max'] . ' TK'];
+
+        $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
+        if ($paymentMethod == 'bank' && ($amount < $limitBank['min'] || (double)$amount > $limitBank['max']))
+            return ['status' => true, 'msg' => 'Payment Limit mismatch for bank minimum limit ' . $limitBank['min'] . ' TK and maximum ' . $limitBank['max'] . ' TK'];
+
+        return ['status' => false];
+    }
+
+    public function doesExceedWithdrawalAmountForOrder($amount, $orderid, $partnerOrder): bool
+    {
+        return $partnerOrder->sheba_collection == 0
+            || $amount > $partnerOrder->sheba_collection
+            || (($this->activeRequestAgainstOrderAmount($orderid) + $amount) > $partnerOrder->sheba_collection);
+    }
+
+    public function activeRequestAgainstOrderAmount($orderId)
+    {
+        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))->active()->where('order_id', $orderId)->get();
+        return $withdrawalRequest[0]->total_amount;
     }
 }
