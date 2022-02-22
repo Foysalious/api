@@ -31,10 +31,12 @@ class QRValidator
     /**
      * @param mixed $qr_id
      * @return QRValidator
+     * @throws QRException
      */
     public function setQrId($qr_id): QRValidator
     {
         $this->qr_id = $qr_id;
+        $this->setPayables();
         return $this;
     }
 
@@ -122,7 +124,6 @@ class QRValidator
      */
     private function makePaymentData(): array
     {
-        $this->setPayables();
         return [
             "payable_id" => $this->payable->id,
             "gateway_account_name" => $this->payment_method,

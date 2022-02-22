@@ -2,9 +2,9 @@
 
 namespace App\Sheba\QRPayment\Complete;
 
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\Pos\Repositories\PosClientRepository;
 use Sheba\Dal\QRGateway\Model as QRGateway;
-use Sheba\Payment\Statuses;
 
 class PosOrderComplete extends QRPaymentComplete
 {
@@ -14,7 +14,7 @@ class PosOrderComplete extends QRPaymentComplete
         if ($this->qr_payment->isComplete())
             return $this->qr_payment;
         $this->clearOrder();
-        $this->completePayment();
+        $this->storeAccountingEntry($this->payable->target_id, EntryTypes::POS);
         return $this->qr_payment;
     }
 
@@ -41,11 +41,5 @@ class PosOrderComplete extends QRPaymentComplete
             'payment_method_icon' => $payment_method_detail->icon,
             'interest'            => 0,
         ];
-    }
-
-    private function completePayment()
-    {
-        $this->qr_payment->status = Statuses::COMPLETED;
-        $this->qr_payment->save();
     }
 }
