@@ -69,7 +69,8 @@ class PartnerWithdrawalService
 
     public function activeRequestAgainstOrderAmount($orderId)
     {
-        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))->active()->where('order_id', $orderId)->get();
-        return $withdrawalRequest[0]->total_amount;
+        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))->active()->where('order_id', $orderId)->first();
+
+        return $withdrawalRequest->total_amount ?? 0;
     }
 }
