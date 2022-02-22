@@ -88,7 +88,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
      * @param AccessTokenRequest $access_token_request
      * @return JsonResponse
      */
-    public function store($partner, Request $request, ShebaAccountKit $sheba_account_kit, AccessTokenRequest $access_token_request)
+    public function store($partner, Request $request, ShebaAccountKit $sheba_account_kit, AccessTokenRequest $access_token_request, PartnerWithdrawalService $partnerWithdrawalService)
     {
         $this->validate($request, [
             'amount'         => 'required|numeric',
@@ -99,18 +99,12 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         /** @var Partner $partner */
         $partner = $request->partner;
-        if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
+        if($this->isPartnerBlacklisted($partner)) {
             return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।']);
         }
 
-        if ($request->payment_method == 'bkash')
-        {
-            $status_check = WithdrawalRequest::where('payment_method', 'bkash')->whereIn('status', ['pending', 'approval_pending'])->where('requester_id', $partner->id)->first();
-            if ($status_check) {
-                $message = 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।';
-                return api_response($request, null, 402, ['message' => $message ]);
-            }
-        }
+        if ($request->payment_method == 'bkash' && $partnerWithdrawalService->hasPendingBkashRequest($partner))
+            return api_response($request, null, 402, ['message' => 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।' ]);
 
         if ($request->payment_method != 'bank') {
             if (
@@ -138,23 +132,18 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         /**
          * Limit Validation
          */
-        $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
-        $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
+        $doesExceedWithdrawalLimit = $partnerWithdrawalService->doesExceedWithdrawalLimit((double)$request->amount, $request->payment_method);
+        if ($doesExceedWithdrawalLimit['status'])
+            return api_response($request, null, 400, ['message' => $doesExceedWithdrawalLimit['msg']]);
+
         $security_money = ($partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
-        if ($request->payment_method == 'bkash' && ((double)$request->amount < $limitBkash['min'] || (double)$request->amount > $limitBkash['max'])) {
-            return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bkash minimum limit ' . $limitBkash['min'] . ' TK and maximum ' . $limitBkash['max'] . ' TK']);
-        } else if ($request->payment_method == 'bank' && ((double)$request->amount < $limitBank['min'] || (double)$request->amount > $limitBank['max'])) {
-            return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bank minimum limit ' . $limitBank['min'] . ' TK and maximum ' . $limitBank['max'] . ' TK']);
-        }
         $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money- (double)$partner->withdrawalRequests()->active()->sum('amount');
         if (((double)$request->amount > $valid_maximum_requested_amount)) {
             $message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             return api_response($request, null, 403, ['message' => $message]);
         }
         $data = $this->prepareWithdrawRequestData($request, $partner);
-        /** @var PartnerWithdrawalService $partnerWithdrawalSvc */
-        $partnerWithdrawalSvc = app(PartnerWithdrawalService::class);
-        $new_withdrawal = $partnerWithdrawalSvc->store($partner, $data);
+        $new_withdrawal = $partnerWithdrawalService->store($partner, $data);
 
         return api_response($request, $new_withdrawal, 200);
     }
