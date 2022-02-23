@@ -35,4 +35,21 @@ class DueTrackerControllerV2 extends Controller
         return http_response($request, null, 200, ['data' => $response]);
 
     }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function searchDueList(Request $request)
+    {
+        $response = $this->dueTrackerService->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setOrder($request->order)
+            ->setOrderBy($request->order_by)
+            ->setBalanceType($request->balance_type)
+            ->setLimit($request->limit)
+            ->setOffset($request->offset)
+            ->setQuery($request->q)
+            ->searchDueList();
+        return http_response($request, null, 200, ['data' => $response]);
+    }
 }
