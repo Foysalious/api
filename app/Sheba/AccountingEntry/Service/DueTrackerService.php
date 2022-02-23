@@ -14,6 +14,7 @@ class DueTrackerService
     protected $limit;
     protected $offset;
     protected $query;
+    protected $filter_by_supplier;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -101,6 +102,15 @@ class DueTrackerService
     }
 
     /**
+     * @param mixed $filter_by_supplier
+     */
+    public function setFilterBySupplier($filter_by_supplier): DueTrackerService
+    {
+        $this->filter_by_supplier = $filter_by_supplier;
+        return $this;
+    }
+
+    /**
      * @throws AccountingEntryServerError
      */
     public function getBalance()
@@ -140,6 +150,10 @@ class DueTrackerService
 
         if (isset($this->contactType)) {
             $query_strings [] = "contact_type=" . strtolower($this->contactType);
+        }
+
+        if (isset($this->filter_by_supplier)) {
+            $query_strings [] = "filter_by_supplier=" . $this->filter_by_supplier;
         }
 
         return implode('&', $query_strings);

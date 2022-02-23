@@ -49,6 +49,7 @@ class DueTrackerControllerV2 extends Controller
             ->setLimit($request->limit)
             ->setOffset($request->offset)
             ->setQuery($request->q)
+            ->setFilterBySupplier($request->filter_by_supplier)
             ->searchDueList();
         return http_response($request, null, 200, ['data' => $response]);
     }
