@@ -11,12 +11,13 @@ class PayReportSummaryListTransformer extends TransformerAbstract
         return [
                 'id' =>   $payslip_summary->id,
                 'status' => $payslip_summary->status,
-                'disburse_date' => Carbon::parse($payslip_summary->disburse_at)->format('j F'),
+                'disburse_date' => Carbon::parse($payslip_summary->disbursed_at)->format('j F'),
                 'cycle' => Carbon::parse($payslip_summary->cycle_start_date)->format('M d').' - '.Carbon::parse($payslip_summary->cycle_end_date)->format('M d'),
                 'total_gross' => $this->getTotalGross($payslips),
                 'addition_total' => $this->getTotalAddition($payslips),
                 'deduction_total' => $this->getTotalDeduction($payslips),
-                'tax_total' => $this->getTaxTotal($payslips)
+                'tax_total' => $this->getTaxTotal($payslips),
+                'disbursed_at_raw' => $payslip_summary->disbursed_at
         ];
     }
 
