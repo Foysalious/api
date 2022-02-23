@@ -5,6 +5,7 @@ namespace App\Sheba\QRPayment;
 use App\Models\Partner;
 use App\Models\Payable;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
+use App\Sheba\QRPayment\DTO\QRGeneratePayload;
 use Exception;
 use Sheba\Dal\QRPayable\Model as QRPayable;
 use Sheba\Pos\Customer\PosCustomerResolver;
@@ -16,6 +17,7 @@ class QRPayment
 {
     private $partner;
 
+    /*** @var QRGeneratePayload */
     private $data;
 
     private $payable;
@@ -37,24 +39,51 @@ class QRPayment
      * @param mixed $data
      * @return QRPayment
      */
-    public function setData($data): QRPayment
+    public function setData(QRGeneratePayload $data): QRPayment
     {
         $this->data = $data;
         return $this;
     }
 
     /**
-     * @return mixed
+     * @param mixed $qr_id
+     * @return QRPayment
+     */
+    public function setQrId($qr_id): QRPayment
+    {
+        $this->qr_id = $qr_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $qr_string
+     * @return QRPayment
+     */
+    public function setQrString($qr_string): QRPayment
+    {
+        $this->qr_string = $qr_string;
+        return $this;
+    }
+
+    /**
+     * @param mixed $payable
+     */
+    public function setPayable($payable)
+    {
+        $this->payable = $payable;
+    }
+
+    /**
      * @throws CustomerNotFoundException
      * @throws InvalidQRPaymentMethodException
      * @throws PosOrderServiceServerError
      */
-    public function generate()
+    public function generate(): QRPayment
     {
         $this->storePayable();
         $this->generateQR();
         $this->storeQRPayable();
-        return $this->qr_string;
+        return $this;
     }
 
     /**
@@ -65,7 +94,8 @@ class QRPayment
     private function storePayable()
     {
         $data = $this->makePayableData();
-        $this->payable = Payable::create($data);
+        $payable = Payable::create($data);
+        $this->setPayable($payable);
     }
 
     /**
@@ -75,8 +105,10 @@ class QRPayment
     private function generateQR()
     {
         $qr_code_generate = (new QRGenerationFactory())->setPaymentMethod($this->data->payment_method)->get();
-        $this->qr_id      = $qr_code_generate->generateQrId();
-        $this->qr_string  = $qr_code_generate->setQrId($this->qr_id)->setPayable($this->payable)->qrCodeString();
+        $qr_id            = $qr_code_generate->generateQrId();
+        $this->setQrId($qr_id);
+        $qr_string        = $qr_code_generate->setQrId($this->qr_id)->setPayable($this->payable)->qrCodeString();
+        $this->setQrString($qr_string);
     }
 
     private function storeQRPayable()
@@ -131,5 +163,21 @@ class QRPayment
             "payee_id"        => $this->partner->id,
             "payee_type"      => strtolower(class_basename($this->partner)),
         ];
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getQrString()
+    {
+        return $this->qr_string;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getQrId()
+    {
+        return $this->qr_id;
     }
 }

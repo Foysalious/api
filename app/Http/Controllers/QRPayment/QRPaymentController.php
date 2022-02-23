@@ -4,6 +4,7 @@ namespace App\Http\Controllers\QRPayment;
 
 use App\Http\Controllers\Controller;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
+use App\Sheba\QRPayment\DTO\QRGeneratePayload;
 use App\Sheba\QRPayment\QRPayment;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\QRPayment\QRValidator;
@@ -24,10 +25,14 @@ class QRPaymentController extends Controller
     public function generateQR(Request $request, QRPayment $QRPayment): JsonResponse
     {
         $this->validate($request, QRPaymentStatics::getValidationForQrGenerate());
-        $partner   = $request->partner;
-        $data      = array_only($request->all(), QRPaymentStatics::qrGeenerateKeys());
-        $qr_string = $QRPayment->setPartner($partner)->setData((object)($data))->generate();
-        return http_response($request, null, 200, ["qr_string" => $qr_string]);
+        $partner    = $request->partner;
+        $data       = array_only($request->all(), QRPaymentStatics::qrGeenerateKeys());
+        $data       = new QRGeneratePayload($data);
+        $qr_payment = $QRPayment->setPartner($partner)->setData($data)->generate();
+        return http_response($request, null, 200, ["qr" => [
+            "qr_code" => $qr_payment->getQrString(),
+            "qr_id"   => $qr_payment->getQrId()
+        ]]);
     }
 
     /**
