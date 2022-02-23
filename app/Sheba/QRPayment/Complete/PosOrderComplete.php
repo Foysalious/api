@@ -35,7 +35,7 @@ class PosOrderComplete extends QRPaymentComplete
 
         return [
             'amount'              => $this->payable->amount,
-            'payment_method'      => $this->method,
+            'payment_method'      => "qr_payment",
             'payment_method_en'   => $payment_method_detail->name,
             'payment_method_bn'   => $payment_method_detail->name_bn,
             'payment_method_icon' => $payment_method_detail->icon,
