@@ -36,6 +36,9 @@ class DueTrackerControllerV2 extends Controller
 
     }
 
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function searchDueList(Request $request)
     {
         $response = $this->dueTrackerService->setPartner($request->partner)
@@ -47,6 +50,6 @@ class DueTrackerControllerV2 extends Controller
             ->setOffset($request->offset)
             ->setQuery($request->q)
             ->searchDueList();
-        dd($response);
+        return http_response($request, null, 200, ['data' => $response]);
     }
 }
