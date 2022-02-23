@@ -120,7 +120,6 @@ class QRValidator
 
     /**
      * @return array
-     * @throws QRException
      */
     private function makePaymentData(): array
     {

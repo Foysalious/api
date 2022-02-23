@@ -9,7 +9,9 @@ use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\QRPayment\QRValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
 use Sheba\QRPayment\Exceptions\QRException;
+use Throwable;
 
 class QRPaymentController extends Controller
 {
@@ -34,6 +36,8 @@ class QRPaymentController extends Controller
      * @param QRValidator $validator
      * @return JsonResponse
      * @throws QRException
+     * @throws AlreadyCompletingPayment
+     * @throws Throwable
      */
     public function validatePayment($payment_method, Request $request, QRValidator $validator): JsonResponse
     {
