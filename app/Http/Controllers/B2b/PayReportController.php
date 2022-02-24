@@ -40,7 +40,7 @@ class PayReportController extends Controller
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @return JsonResponse|BinaryFileResponse
      */
-    public function index(Request $request, PayReportList $pay_report_list, BusinessMemberRepositoryInterface $business_member_repo)
+    public function index( $business, $business_payslip_id ,Request $request, PayReportList $pay_report_list, PaySlipExcel $pay_slip_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -50,10 +50,11 @@ class PayReportController extends Controller
         $payroll_setting = $business->payrollSetting;
         list($offset, $limit) = calculatePagination($request);
         $payslip = $pay_report_list->setBusiness($business)
+            ->setBusinessPayslipId($business_payslip_id)
             ->setSearch($request->search)
             ->setSortKey($request->sort)
             ->setSortColumn($request->sort_column)
-            ->setMonthYear($request->month_year)
+            //->setMonthYear($request->month_year)
             ->setDepartmentID($request->department_id)
             ->setGrossSalaryProrated($request->gross_salary_prorated)
             ->get();

@@ -51,7 +51,7 @@ class PayRunController extends Controller
      * @param PayrunList $payrun_list
      * @return JsonResponse|BinaryFileResponse
      */
-    public function index(Request $request, PayrunList $payrun_list)
+    public function index($business, $business_payslip_id, Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel, PayRunBulkExcel $pay_run_bulk_excel)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 480);
@@ -63,7 +63,8 @@ class PayRunController extends Controller
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
         $payslip = $payrun_list->setBusiness($business)
-            ->setMonthYear($request->month_year)
+            ->setBusinessPayslipId($business_payslip_id)
+            //->setMonthYear($request->month_year)
             ->setDepartmentID($request->department_id)
             ->setSearch($request->search)
             ->setSortKey($request->sort)

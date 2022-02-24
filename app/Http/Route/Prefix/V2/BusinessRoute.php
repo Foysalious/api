@@ -375,14 +375,12 @@ class BusinessRoute
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
                 $api->group(['prefix' => 'pay-run'], function ($api) {
-                    $api->get('/', 'B2b\PayRunController@index');
                     $api->post('/update', 'B2b\PayRunController@bulkUpdate');
                     $api->post('/disburse', 'B2b\PayRunController@disburse');
                     $api->get('/pending-months','B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
                     $api->get('/bkash-salary-report','B2b\PayReportController@bkashSalaryReport');
-                    $api->get('/', 'B2b\PayReportController@index');
                     $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');
 
@@ -402,6 +400,8 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'pay-report-summary'], function ($api) {
                     $api->get('/', 'B2b\BusinessPayReportSummaryController@index');
+                    $api->get('pay-report/{business_payslip_id}', 'B2b\PayReportController@index');
+                    $api->get('pay-run/{business_payslip_id}', 'B2b\PayRunController@index');
                 });
                 $api->group(['prefix' => 'employee-visit'], function ($api) {
                     $api->post('settings', 'B2b\VisitSettingController@settings');
