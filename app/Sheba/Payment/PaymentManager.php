@@ -14,6 +14,7 @@ use Sheba\Payment\Policy\PaymentInitiate;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Methods\PaymentMethod;
 use Throwable;
+use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 
 class PaymentManager
 {
@@ -23,7 +24,6 @@ class PaymentManager
     private $payable;
     /** @var Payment */
     private $payment;
-
     /** @var PaymentMethod */
     private $method;
 
@@ -114,10 +114,10 @@ class PaymentManager
     }
 
     /**
-     * @return Payment
+     * @return Payment|QRPaymentModel
      * @throws InvalidPaymentMethod|AlreadyCompletingPayment|Throwable
      */
-    public function complete(): Payment
+    public function complete()
     {
         $this->runningCompletionCheckAndSet();
         try {

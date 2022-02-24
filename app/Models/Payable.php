@@ -1,7 +1,8 @@
 <?php namespace App\Models;
 
 use App\Sheba\PaymentLink\PaymentLinkOrder;
-use App\Sheba\QRPayment\Complete\QRPaymentComplete;
+use App\Sheba\QRPayment\Complete\AccountingDueComplete;
+use App\Sheba\QRPayment\Complete\PosOrderComplete;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;
@@ -126,20 +127,11 @@ class Payable extends Model
             $class_name .= 'ProcurementComplete';
         } else if ($this->completion_type == 'partner_bank_loan') {
             $class_name .= 'LoanRepaymentComplete';
-        }
-
-        return app($class_name);
-    }
-
-    public function getQRCompletionClass(): QRPaymentComplete
-    {
-        $class_name = "App\\Sheba\\QRPayment\\Complete\\";
-        if ($this->completion_type == 'pos_order') {
-            $class_name .= 'PosOrderComplete';
+        } else if ($this->completion_type == 'pos_order') {
+            return app(PosOrderComplete::class);
         } else if ($this->completion_type == 'accounting_due') {
-            $class_name .= 'AccountingDueComplete';
+            return app(AccountingDueComplete::class);
         }
-
         return app($class_name);
     }
 
