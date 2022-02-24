@@ -5,6 +5,7 @@ namespace App\Sheba\QRPayment;
 use Sheba\Dal\QRPayable\Contract as QRPayableRepo;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\PaymentManager;
 use Sheba\Payment\Statuses;
 use Sheba\QRPayment\Exceptions\QRException;
 use Sheba\QRPayment\Exceptions\QRPayableNotFoundException;
@@ -79,8 +80,7 @@ class QRValidator
      */
     private function qrPaymentComplete()
     {
-        (new QRPaymentManager())->setQrPayment($this->qr_payment)->setMethod($this->payment_method)
-            ->setPayable($this->payable)->complete();
+        (new QRPaymentManager())->setQrPayment($this->qr_payment)->complete();
     }
 
     /**
