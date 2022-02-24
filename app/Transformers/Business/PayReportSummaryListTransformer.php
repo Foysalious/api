@@ -8,15 +8,26 @@ class PayReportSummaryListTransformer extends TransformerAbstract
     public function transform($payslip_summary)
     {
         $payslips = $payslip_summary->payslip;
+        $cycle_start_date = $payslip_summary->cycle_start_date;
+        $disbursed_at = $payslip_summary->disbursed_at;
+        $status = $payslip_summary->status;
+        $total_gross = $this->getTotalGross($payslips);
+        $total_addition = $this->getTotalAddition($payslips);
+        $total_deduction = $this->getTotalDeduction($payslips);
+        $total_tax = $this->getTaxTotal($payslips);
         return [
-                'id' =>   $payslip_summary->id,
-                'status' => $payslip_summary->status,
-                'disburse_date' => Carbon::parse($payslip_summary->disburse_at)->format('j F'),
-                'cycle' => Carbon::parse($payslip_summary->cycle_start_date)->format('M d').' - '.Carbon::parse($payslip_summary->cycle_end_date)->format('M d'),
-                'total_gross' => $this->getTotalGross($payslips),
-                'addition_total' => $this->getTotalAddition($payslips),
-                'deduction_total' => $this->getTotalDeduction($payslips),
-                'tax_total' => $this->getTaxTotal($payslips)
+            'id' =>   $payslip_summary->id,
+            'month' => Carbon::parse($cycle_start_date)->format('F Y'),
+            'status' => $status,
+            'disburse_date' => $disbursed_at ? Carbon::parse($disbursed_at)->format('j F') : 'N/A',
+            'cycle' => Carbon::parse($cycle_start_date)->format('M d').' - '.Carbon::parse($payslip_summary->cycle_end_date)->format('M d'),
+            'total_gross' => $total_gross,
+            'addition_total' => $total_addition,
+            'deduction_total' => $total_deduction,
+            'tax_total' => $total_tax,
+            'net_pay' => ($total_gross + $total_addition) - ($total_deduction + $total_tax),
+            'disbursed_at_raw' => $disbursed_at,
+            'month_raw' => $cycle_start_date,
         ];
     }
 
