@@ -4,6 +4,7 @@ use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\CoWorker\Statuses;
+use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
@@ -36,6 +37,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function offices()
     {
         return $this->hasMany(BusinessOffice::class);
+    }
+
+    public function announcements()
+    {
+        return $this->hasMany(Announcement::class);
     }
 
     public function members()

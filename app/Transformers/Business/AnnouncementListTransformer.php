@@ -4,8 +4,12 @@ use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Announcement\Announcement;
 
-class AnnouncementTransformer extends TransformerAbstract
+class AnnouncementListTransformer extends TransformerAbstract
 {
+    const ALL = "all";
+    const DEPARTMENT = "department";
+    const EMPLOYEE = "employee";
+    const EMPLOYEE_TYPE = "employee_type";
 
     const PUBLISHED = 'published';
     const SCHEDULED = 'scheduled';
@@ -16,22 +20,20 @@ class AnnouncementTransformer extends TransformerAbstract
         return [
             'id' => $announcement->id,
             'title' => $announcement->title,
-            'type' => $announcement->type,
-            'is_published_for_app' => $announcement->is_published,
-            #In new Design short description remove. it should change in app
-            'short_description' => $announcement->short_description ?: $announcement->long_description,
-            'description' => $announcement->long_description ?: $announcement->short_description,
+            'type' => ucfirst($announcement->type),
+            'target_type' => $this->targetType($announcement),
             'status' => $this->getStatus($announcement),
-            'end_date' => $this->getEndDate($announcement),
-            'created_at' => $announcement->created_at->toDateTimeString()
+            'end_date' => Carbon::parse($announcement->end_date->toDateString() . ' ' . $announcement->end_time)->format('M d, Y h:i A'),
+            'created_at' => $announcement->created_at->format('M d, Y')
         ];
     }
 
-    private function getEndDate($announcement)
+    private function targetType($announcement)
     {
-        #One day addition because In app one day subtract kora
-        #For new version it needed
-        return ($announcement->end_date->addDay())->toDateString() . ' ' . $announcement->end_time;
+        if ($announcement->target_type == self::ALL) return 'All';
+        if ($announcement->target_type == self::EMPLOYEE) return 'Employee';
+        if ($announcement->target_type == self::DEPARTMENT) return 'Department';
+        if ($announcement->target_type == self::EMPLOYEE_TYPE) return 'Employee Type';
     }
 
     private function getStatus($announcement)
