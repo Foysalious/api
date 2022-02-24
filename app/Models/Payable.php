@@ -3,7 +3,6 @@
 use App\Sheba\PaymentLink\PaymentLinkOrder;
 use App\Sheba\QRPayment\Complete\AccountingDueComplete;
 use App\Sheba\QRPayment\Complete\PosOrderComplete;
-use App\Sheba\QRPayment\Complete\QRPaymentComplete;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;

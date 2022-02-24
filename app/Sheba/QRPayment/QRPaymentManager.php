@@ -24,7 +24,7 @@ class QRPaymentManager extends PaymentManager
     public function setQrPayment(QRPaymentModel $qr_payment): QRPaymentManager
     {
         $this->qrPayment = $qr_payment;
-        return $this;
+        return $this->setPayable($this->qrPayment->payable);
     }
 
     /**
@@ -57,7 +57,7 @@ class QRPaymentManager extends PaymentManager
         try {
             if (!$this->qrPayment->canComplete()) return $this->qrPayment;
             $completion_class = $this->payable->getCompletionClass();
-            $payment = $completion_class->setQrPayment($this->qrPayment)->setMethod($this->qrPayment->qrGatewayAccount->method_name)->complete();
+            $payment = $completion_class->setQrPayment($this->qrPayment)->setMethod($this->qrPayment->qrGateway->method_name)->complete();
             $this->completePayment();
             $this->unsetRunningCompletion();
             return $payment ?: $this->qrPayment;
