@@ -63,4 +63,9 @@ class Wallet extends PaymentMethod
     {
         return "credit";
     }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        return 0;
+    }
 }
