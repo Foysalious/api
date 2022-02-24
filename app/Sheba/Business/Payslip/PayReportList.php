@@ -26,7 +26,6 @@ class PayReportList
     private $search;
     private $sortColumn;
     private $sort;
-    private $businessMemberIds;
     private $monthYear;
     private $departmentID;
     private $payslip;
@@ -36,6 +35,7 @@ class PayReportList
      * @var \Illuminate\Foundation\Application|mixed
      */
     private $paysliprepo;
+    private $businessPayslipId;
 
     /**
      * PayReportList constructor.
@@ -52,7 +52,12 @@ class PayReportList
     public function setBusiness(Business $business)
     {
         $this->business = $business;
-        $this->businessMemberIds = $this->business->getActiveBusinessMember()->pluck('id')->toArray();
+        return $this;
+    }
+
+    public function setBusinessPayslipId($business_payslip_id)
+    {
+        $this->businessPayslipId = $business_payslip_id;
         return $this;
     }
 
@@ -122,17 +127,17 @@ class PayReportList
         return $this->payslip;
     }
 
-    public function getDisbursedMonth()
+    /*public function getDisbursedMonth()
     {
         $payslip = $this->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->select('schedule_date')->orderBy('schedule_date', 'DESC')->first();
         if (!$payslip) return null;
         return $payslip->schedule_date->format('Y-m');
-    }
+    }*/
 
     private function runPayslipQuery()
     {
-        $payslips = $this->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->orderBy('id', 'DESC');
-        if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
+        $payslips = $this->getPaySlipById()->orderBy('id', 'DESC');
+        //if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
         if ($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
         $this->payslipList = $payslips->get();
@@ -245,10 +250,9 @@ class PayReportList
         if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
     }
 
-    public function getPaySlipByStatus($business_member_ids, $status)
+    public function getPaySlipById()
     {
-        return $this->paysliprepo->where('status', $status)
-            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q) {
+        return $this->paysliprepo->where('business_payslip_id', $this->businessPayslipId)->with(['businessMember' => function ($q) {
                 $q->with(['member' => function ($q) {
                     $q->select('id', 'profile_id')
                         ->with([
