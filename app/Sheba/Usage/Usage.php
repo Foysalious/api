@@ -1,8 +1,5 @@
-<?php
+<?php namespace Sheba\Usage;
 
-namespace Sheba\Usage;
-
-use ReflectionClass;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use App\Sheba\Usage\PartnerUsageUpgradeJob;
@@ -52,15 +49,16 @@ class Usage
         dispatch((new PartnerUsageUpgradeJob( $this->user, $modifier, $this->type)));
     }
 
-    public static function isRefEnabled(){
+    public static function isRefEnabled()
+    {
         return !!config('partner.referral_enabled');
     }
+
     public function updateUserLevel()
     {
         $usage = PartnerUsageHistory::query()->where('partner_id',$this->user_id)->selectRaw('COUNT(DISTINCT(DATE(`partner_usages_history`.`created_at`))) as usages')->first();
         $usage = $usage ? $usage->usages : 0;
         $this->findAndUpgradeLevel($usage);
-
     }
 
     private function findAndUpgradeLevel($usage)
@@ -94,7 +92,8 @@ class Usage
         }
     }
 
-    private function storeJournal($typeId, $sourceType, $amount, $reference) {
+    private function storeJournal($typeId, $sourceType, $amount, $reference)
+    {
         return (new JournalCreateRepository())->setTypeId($typeId)->setSource($sourceType)
             ->setAmount($amount)
             ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)

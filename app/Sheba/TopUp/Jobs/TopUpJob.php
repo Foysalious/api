@@ -31,7 +31,7 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
     {
         $this->topUpOrder = $top_up_order;
         $this->agent = $this->topUpOrder->agent;
-        $this->connection = $this->getConnectionName();
+        $this->connection = QueueConnectionManager::getConnectionName($this->agent);
         $this->queue = $this->connection;
         parent::__construct();
     }
@@ -55,30 +55,6 @@ class TopUpJob extends MonitoredJob implements ShouldQueue
         } catch (Exception $e) {
             $this->handleException($e);
         }
-    }
-
-    /**
-     * @return string
-     */
-    private function getConnectionName(): string
-    {
-        $connections = config('topup_queues.agent_connections');
-        $agent_type = strtolower(class_basename($this->agent));
-        if (!array_key_exists($agent_type, $connections)) return $connections['default'];
-
-        $agent_connections = $connections[$agent_type];
-        if (array_key_exists($this->agent->id, $agent_connections)) return $agent_connections[$this->agent->id];
-
-        if (array_key_exists("chunk", $agent_connections)) {
-            $chunks = $agent_connections["chunk"];
-            foreach ($chunks as $chunk) {
-                if ($this->agent->id >= $chunk['from'] && $this->agent->id <= $chunk['to']) {
-                    return $chunk['connection_name'];
-                }
-            }
-        }
-
-        return $agent_connections['default'];
     }
 
     /**
