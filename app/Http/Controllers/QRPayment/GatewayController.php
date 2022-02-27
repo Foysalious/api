@@ -16,7 +16,7 @@ class GatewayController extends Controller
      */
     public function index(Request $request, GatewayAccounts $accounts): JsonResponse
     {
-        $partner = $request->partner;
+        $partner = $request->auth_user->getPartner();
         $gateway = $accounts->setPartner($partner)->getGateways();
         return http_response($request, null, 200, ["gateway_list" => $gateway]);
     }
