@@ -13,10 +13,8 @@ class QRPaymentRoute
             });
         });
 
-        $api->group(['prefix' => 'partners'], function ($api) {
-            $api->group(['prefix' => 'qr-payments'], function ($api) {
-                $api->post('/validate/{payment_method}', 'QRPayment\\QRPaymentController@validatePayment');
-            });
+        $api->group(['prefix' => 'qr-payments'], function ($api) {
+            $api->post('/validate/{payment_method}', 'QRPayment\\QRPaymentController@validatePayment');
         });
     }
 }
