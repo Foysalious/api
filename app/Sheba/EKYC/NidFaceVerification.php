@@ -120,12 +120,8 @@ class NidFaceVerification
      */
     public function formatToData($request, $userAgent, $photoLink): array
     {
-        $image = $request->person_photo;
-        $image=explode(",",$image);
-        $image=$image['1'];
-
         $data['nid'] = $request->nid;
-        $data['pro_pic'] = $image;
+        $data['pro_pic'] = $request->person_photo;
         $data['dob'] = $request->dob;
         $data['selfie_photo'] = $photoLink;
         $data['user_agent'] = $userAgent;
