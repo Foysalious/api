@@ -49,7 +49,7 @@ class AnnouncementController extends Controller
         $announcements = new Collection($announcements, new AnnouncementTransformer());
         $announcements = collect($manager->createData($announcements)->toArray()['data']);
 
-        if ($request->has('status')) {
+        if ($request->filled('status')) {
             $status = $request->status == self::ONGOING ? 'Published' : null;
             $announcements = $announcements->filter(function ($announcement) use ($request, $status) {
                 return $announcement['status'] == $status && $announcement['is_published_for_app'] == self::IS_PUBLISHED_FOR_APP;

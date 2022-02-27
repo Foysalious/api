@@ -406,11 +406,14 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function isRemoteAttendanceEnable($business_member_id = null)
     {
-        $sheba_tech = [1031, 574, 577, 578, 583, 585, 586, 587, 588, 592, 593, 596, 597, 611, 614, 615, 616, 634, 642, 648, 687, 692, 750, 841, 847, 907, 910, 911, 922, 1091, 1093, 1856, 1859, 1961, 2032, 2033, 2034, 2108, 2499, 2794, 2795, 3122, 3370, 3371, 3660, 3666, 3667, 3668, 3674, 3935, 3936, 4489, 4493, 5089, 6439, 6824, 6832, 6879, 6885, 6886, 7102, 7360, 7540, 7543, 7545, 7546, 8301, 8305, 8308, 8897, 8899, 9278, 9635, 1860, 3171];
+        return in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray());
+    }
 
-        if (in_array($business_member_id, $sheba_tech)) return true;
-        if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
-        return false;
+    public function isShebaTech($business_member_id)
+    {
+        $sheba_tech = [];
+
+        return in_array($business_member_id, $sheba_tech);
     }
 
     public function getBusinessHalfDayConfiguration()

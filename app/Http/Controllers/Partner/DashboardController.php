@@ -334,14 +334,9 @@ class DashboardController extends Controller
      */
     public function getHomeSettingV3(Request $request): JsonResponse
     {
-        try {
-            $this->setModifier($request->partner);
-            $home_page_setting = (new HomepageSettingsV3($request->partner))->get();
-            return api_response($request, null, 200, ['data' => $home_page_setting]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->setModifier($request->partner);
+        $home_page_setting = (new HomepageSettingsV3($request->partner))->get();
+        return api_response($request, null, 200, ['data' => $home_page_setting]);
     }
 
     /**
@@ -393,13 +388,13 @@ class DashboardController extends Controller
         ]);
         /** @var Partner $partner */
         $partner = $request->partner;
-        $is_updated = 1;
+        $is_updated   = 1;
         $last_updated = (new PartnerSubscriptionPackageRepository($partner->package_id))->getHomepageSettingsUpdatedDate($partner->billing_start_date);
 
         if ($request->filled('last_updated'))
             $is_updated = Carbon::parse($last_updated)->toDateString() > Carbon::parse($request->last_updated)->toDateString() ? 1 : 0;
         $data = [
-            'is_updated' => $is_updated,
+            'is_updated'   => $is_updated,
             'last_updated' => Carbon::parse($last_updated)->toDateString()
         ];
 
