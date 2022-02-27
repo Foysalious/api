@@ -50,7 +50,7 @@ class Upay extends PaymentMethod
      * @return void
      * @throws UpayApiCallException
      */
-    private function login(): void
+    private function login()
     {
         $payload = ['merchant_id' => $this->config->merchant_id, 'merchant_key' => $this->config->merchant_key];
         $res     = (new UpayClient())->setUrl(self::LOGIN_URL)->setPayload($payload)->call();
