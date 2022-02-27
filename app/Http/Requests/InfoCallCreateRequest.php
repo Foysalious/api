@@ -20,11 +20,17 @@ class InfoCallCreateRequest extends ApiRequest
      */
     public function rules()
     {
+//        return [
+//            'mobile' => 'required|string|mobile:bd',
+//            'service_name' => 'required_without:service_id|string',
+//            'service_id' => 'required_without:service_name|integer|exists:services,id',
+//            'location_id' => 'required|exists:locations,id'
+//        ];
         return [
             'mobile' => 'required|string|mobile:bd',
-            'service_name' => 'required_without:service_id|string',
-            'service_id' => 'required_without:service_name|integer|exists:services,id',
-            'location_id' => 'required|exists:locations,id'
+            'service_name' => 'string',
+            'service_id' => 'integer|exists:services,id',
+            'location_id' => 'exists:locations,id'
         ];
     }
 }

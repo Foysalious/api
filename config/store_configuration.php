@@ -7,7 +7,7 @@ return [
         "ssl" => [
             [
                 "id"   => "storeId",
-                "label" => "মার্চেন্ট ID",
+                "label" => "Store ID",
                 "hint" => "Input Text",
                 "message" => "SSL গেটওয়েতে ব্যবহৃত ID লিখুন",
                 "error" => "মার্চেন্ট ID পূরণ আবশ্যক",
