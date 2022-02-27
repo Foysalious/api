@@ -8,7 +8,7 @@ class QRGeneratePayload
 {
     use BasicGetter;
 
-    private $payable_type;
+    private $type;
     private $type_id;
     private $amount;
     private $payer_id;
@@ -17,7 +17,7 @@ class QRGeneratePayload
 
     public function __construct(array $payload)
     {
-        $this->payable_type = $payload['payable_type'];
+        $this->type = $payload['type'];
         $this->type_id = $payload['type_id'];
         $this->amount = $payload['amount'];
         $this->payer_id = $payload['payer_id'];

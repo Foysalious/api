@@ -25,13 +25,13 @@ class QRPaymentController extends Controller
     public function generateQR(Request $request, QRPayment $QRPayment): JsonResponse
     {
         $this->validate($request, QRPaymentStatics::getValidationForQrGenerate());
-        $partner    = $request->partner;
-        $data       = array_only($request->all(), QRPaymentStatics::qrGeenerateKeys());
-        $data       = new QRGeneratePayload($data);
+        $partner = $request->auth_user->getPartner();
+        $data = array_only($request->all(), QRPaymentStatics::qrGenerateKeys());
+        $data = new QRGeneratePayload($data);
         $qr_payment = $QRPayment->setPartner($partner)->setData($data)->generate();
         return http_response($request, null, 200, ["qr" => [
             "qr_code" => $qr_payment->getQrString(),
-            "qr_id"   => $qr_payment->getQrId()
+            "qr_id" => $qr_payment->getQrId()
         ]]);
     }
 
@@ -46,9 +46,9 @@ class QRPaymentController extends Controller
      */
     public function validatePayment($payment_method, Request $request, QRValidator $validator): JsonResponse
     {
-        $this->validate($request, ["qr_id" => "required"]);
+        $this->validate($request, QRPaymentStatics::getValidationForValidatePayment());
         $validator->setResponse($request->all())->setGateway($payment_method)
-            ->setQrId($request->qr_id)->complete();
+            ->setQrId($request->qr_id)->setAmount($request->amount)->setMerchantId($request->merchant_id)->complete();
         return http_response($request, null, 200);
     }
 }

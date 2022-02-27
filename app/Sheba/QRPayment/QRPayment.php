@@ -134,7 +134,7 @@ class QRPayment
      */
     private function makePayableData(): array
     {
-        if (($this->data->payable_type === "pos_order")) {
+        if (($this->data->type === "pos_order")) {
             /** @var PosOrderResolver $posOrderResolver */
             $posOrderResolver = app(PosOrderResolver::class);
             $pos_order = $posOrderResolver->setOrderId($this->data->type_id)->get();
@@ -149,17 +149,17 @@ class QRPayment
         if(!isset($customer))
             throw new CustomerNotFoundException();
 
-        if (($this->data->payable_type === "accounting_due"))
+        if (($this->data->type === "accounting_due"))
             $type_id = (int)$customer->id;
 
 
         return [
-            "type"            => $this->data->payable_type,
+            "type"            => $this->data->type,
             "type_id"         => $type_id,
             "user_type"       => "pos_customer",
             "user_id"         => $customer->id,
             "amount"          => $this->data->amount,
-            "completion_type" => $this->data->payable_type,
+            "completion_type" => $this->data->type,
             "payee_id"        => $this->partner->id,
             "payee_type"      => strtolower(class_basename($this->partner)),
         ];

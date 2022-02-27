@@ -6,7 +6,7 @@ class QRPaymentRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'partners', 'middleware' => ['paymentLink.auth']], function ($api) {
+        $api->group(['prefix' => 'partners', 'middleware' => ['accessToken']], function ($api) {
             $api->group(['prefix' => 'qr-payments'], function ($api) {
                 $api->get('/gateways', 'QRPayment\\GatewayController@index');
                 $api->post('/generate-qr', 'QRPayment\\QRPaymentController@generateQR');
