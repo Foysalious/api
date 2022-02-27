@@ -55,7 +55,6 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
-        // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
     }
 
     /**
@@ -247,10 +246,11 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data['note'] = $request->note ?? null;
         $data['debit_account_key'] = $type === EntryTypes::DUE ? $request->customer_id : $request->account_key;
         $data['credit_account_key'] = $type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $request->customer_id;
-        $data['customer_id'] = $request->customer_id;
-        $data['customer_name'] = $request->customer_name;
-        $data['customer_mobile'] = $request->customer_mobile;
-        $data['customer_pro_pic'] = $request->pro_pic;
+        $data['customer_id'] = $request->customer_id ?? null;
+        $data['customer_name'] = $request->customer_name ?? null;
+        $data['customer_mobile'] = $request->customer_mobile ?? null;
+        $data['customer_pro_pic'] = $request->customer_pro_pic ?? null;
+        $data['customer_is_supplier'] = $request->customer_is_supplier ?? null;
         $data['source_id'] = $request->source_id;
         $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] =$withUpdate?$this->updateAttachments($request): $this->uploadAttachments($request);

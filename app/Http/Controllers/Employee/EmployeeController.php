@@ -197,7 +197,7 @@ class EmployeeController extends Controller
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED]);
+            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED])->where('schedule_date', '<=', Carbon::now()->toDateString().' 22:59:59');
         $pending_visit_count = $pending_visit->count();
 
         $current_visit = $visit_repository->where('visitor_id', $business_member->id)
@@ -218,7 +218,6 @@ class EmployeeController extends Controller
 
         $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
         $is_manager = $manager ? 1 : 0;
-
         $data = [
             'id' => $member->id,
             'business_member_id' => $business_member->id,
@@ -245,9 +244,9 @@ class EmployeeController extends Controller
             'is_enable_employee_visit' => $business->is_enable_employee_visit,
             'pending_visit_count' => $pending_visit_count,
             'today_visit_count' => $today_visit_count,
-            'single_visit' => $today_visit_count === 1 ? [
-                'id' => $today_visit->first()->id,
-                'title' => $today_visit->first()->title
+            'single_visit' => $pending_visit_count === 1 ? [
+                'id' => $pending_visit->first()->id,
+                'title' => $pending_visit->first()->title
             ] : null,
             'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,

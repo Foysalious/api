@@ -54,27 +54,27 @@ class ShebaController extends Controller
     public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
     {
         $this->serviceRepository = $service_repo;
-        $this->reviewRepository  = $review_repo;
-        $this->paymentLinkRepo   = $paymentLinkRepository;
+        $this->reviewRepository = $review_repo;
+        $this->paymentLinkRepo = $paymentLinkRepository;
     }
 
     public function getInfo()
     {
-        $job_count      = Job::all()->count() + 16000;
-        $service_count  = Service::where('publication_status', 1)->get()->count();
+        $job_count = Job::all()->count() + 16000;
+        $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
         return response()->json([
-            'service'  => $service_count, 'job' => $job_count,
+            'service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
-            'msg'      => 'successful', 'code' => 200
+            'msg' => 'successful', 'code' => 200
         ]);
     }
 
     public function sendFaq(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'    => 'required|string',
-            'email'   => 'required|email',
+            'name' => 'required|string',
+            'email' => 'required|email',
             'subject' => 'required|string',
             'message' => 'required|string'
         ]);
@@ -89,13 +89,13 @@ class ShebaController extends Controller
     {
         if ($request->filled('is_business') && (int)$request->is_business) {
             $portal_name = 'manager-app';
-            $screen      = 'eshop';
+            $screen = 'eshop';
 
             if (!$request->filled('location')) $location = 4;
             else $location = $request->location;
         } else if ($request->filled('is_ddn') && (int)$request->is_ddn) {
             $portal_name = 'bondhu-app';
-            $screen      = 'eshop';
+            $screen = 'eshop';
 
             if (!$request->filled('location')) $location = 4;
             else $location = $request->location;
@@ -110,7 +110,7 @@ class ShebaController extends Controller
             }
 
             $portal_name = $request->portal;
-            $screen      = $request->screen;
+            $screen = $request->screen;
         }
 
         $slider = $this->getSliderWithSlides($location, $portal_name, $screen);
@@ -182,7 +182,7 @@ class ShebaController extends Controller
 
     public function sendCarRentalInfo(Request $request)
     {
-        $ids        = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        $ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
         return api_response($request, $categories, 200, ['info' => $categories]);
     }
@@ -192,13 +192,13 @@ class ShebaController extends Controller
         $butcher_service = Service::find((int)env('BUTCHER_SERVICE_ID'));
         if (!$butcher_service) return api_response($request, null, 404);
         $butcher_info = [
-            'id'           => $butcher_service->id,
-            'category_id'  => $butcher_service->category_id,
-            'name'         => $butcher_service->name,
-            'unit'         => $butcher_service->unit,
+            'id' => $butcher_service->id,
+            'category_id' => $butcher_service->category_id,
+            'name' => $butcher_service->name,
+            'unit' => $butcher_service->unit,
             'min_quantity' => (double)$butcher_service->min_quantity,
-            'price_info'   => json_decode($butcher_service->variables),
-            'date'         => "2018-08-21"
+            'price_info' => json_decode($butcher_service->variables),
+            'date' => "2018-08-21"
         ];
         return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
     }
@@ -238,15 +238,15 @@ class ShebaController extends Controller
 
         /** @var Payable $payable */
         $payable = $payment->payable;
-        $info    = [
-            'amount'                           => $payable->amount,
-            'method'                           => $payment->paymentDetails->last()->readable_method,
-            'description'                      => $payable->description,
-            'created_at'                       => $payment->created_at->format('jS M, Y, h:i A'),
-            'invoice_link'                     => $payment->invoice_link,
-            'transaction_id'                   => $payment->transaction_id,
+        $info = [
+            'amount' => $payable->amount,
+            'method' => $payment->paymentDetails->last()->readable_method,
+            'description' => $payable->description,
+            'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
+            'invoice_link' => $payment->invoice_link,
+            'transaction_id' => $payment->transaction_id,
             'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null,
-            'store'                            => $payment->gateway_account_name
+            'store' => $payment->gateway_account_name
         ];
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
 
@@ -256,9 +256,9 @@ class ShebaController extends Controller
     private function mergePaymentLinkInfo(&$info, Payable $payable)
     {
         $payment_link = $this->paymentLinkRepo->find($payable->type_id);
-        $receiver     = $payment_link->getPaymentReceiver();
-        $payer        = $payable->user->profile;
-        $info         = array_merge($info, $this->getInfoForPaymentLink($payer, $receiver));
+        $receiver = $payment_link->getPaymentReceiver();
+        $payer = $payable->user->profile;
+        $info = array_merge($info, $this->getInfoForPaymentLink($payer, $receiver));
     }
 
     private function getInfoForPaymentLink(Profile $payer, HasWalletTransaction $receiver)
@@ -266,14 +266,14 @@ class ShebaController extends Controller
         return [
             'payment_receiver' => [
                 'receiver' => $receiver->id,
-                'name'     => $receiver->name,
-                'image'    => $receiver->logo,
-                'mobile'   => $receiver->getMobile(),
-                'address'  => $receiver->address
+                'name' => $receiver->name,
+                'image' => $receiver->logo,
+                'mobile' => $receiver->getMobile(),
+                'address' => $receiver->address
             ],
-            'payer'            => [
-                'id'     => $payer->id,
-                'name'   => $payer->name,
+            'payer' => [
+                'id' => $payer->id,
+                'name' => $payer->name,
                 'mobile' => $payer->mobile
             ]
         ];
@@ -287,7 +287,7 @@ class ShebaController extends Controller
      */
     public function getPayments(Request $request, PaymentGatewayRepository $paymentGateWayRepository)
     {
-        $version_code  = (int)$request->header('Version-Code');
+        $version_code = (int)$request->header('Version-Code');
         $platform_name = $request->header('Platform-Name');
         $user_type = $request->type;
         $payable_type = $request->payable_type;
@@ -295,13 +295,13 @@ class ShebaController extends Controller
         if (!$user_type) $user_type = "customer";
 
         $serviceType = 'App\\Models\\' . ucfirst($user_type);
-        $dbGateways  = $paymentGateWayRepository->builder()
+        $dbGateways = $paymentGateWayRepository->builder()
             ->where('service_type', $serviceType)
             ->whereNull('payment_method')
             ->where('status', 'Published')
             ->get();
 
-        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type, $payable_type){
+        $payments = array_map(function (PaymentMethodDetails $details) use ($dbGateways, $user_type, $payable_type) {
             return (new PresentableDTOPresenter($details, $dbGateways))->mergeWithDbGateways($user_type, $payable_type);
         }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
 
@@ -313,7 +313,7 @@ class ShebaController extends Controller
         }
 
         return api_response($request, $payments, 200, [
-            'payments'         => $payments,
+            'payments' => $payments,
             'discount_message' => 'Pay online and stay relaxed!!!'
         ]);
     }
@@ -331,7 +331,7 @@ class ShebaController extends Controller
         }
 
         $emi_data = [
-            "emi"   => $emi_calculator->getCharges($amount),
+            "emi" => $emi_calculator->getCharges($amount),
             "banks" => (new Banks())->setAmount($amount)->get()
         ];
 
@@ -349,11 +349,11 @@ class ShebaController extends Controller
             return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
         }
         $emi_data = [
-            "emi"            => $emi_calculator->getCharges($amount),
-            "banks"          => (new Banks())->setAmount($amount)->get(),
+            "emi" => $emi_calculator->getCharges($amount),
+            "banks" => (new Banks())->setAmount($amount)->get(),
             "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
-            "static_info"    => [
-                "how_emi_works"        => [
+            "static_info" => [
+                "how_emi_works" => [
                     "EMI (Equated Monthly Installment) is one of the payment methods of online purchasing, only for the customers using any of the accepted Credit Cards on Sheba.xyz.* It allows customers to pay for their ordered services  in easy equal monthly installments.*",
                     "Sheba.xyz has introduced a convenient option of choosing up to 12 months EMI facility for customers who use Credit Cards for buying services worth BDT 5,000 or more. The duration and extent of the EMI options available will be visible on the payment page after order placement. EMI plans are also viewable on the checkout page in the EMI Banner below the bill section.",
                     "Customers wanting to avail EMI facility must have a Credit Card from any one of the banks in the list shown in the payment page.",
@@ -382,14 +382,14 @@ class ShebaController extends Controller
     {
         try {
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
-            $amount       = $request->amount;
+            $amount = $request->amount;
             $icons_folder = getEmiBankIconsFolder(true);
-            $emi_data     = [
-                "emi"   => $emi_calculator->getCharges($amount),
+            $emi_data = [
+                "emi" => $emi_calculator->getCharges($amount),
                 "banks" => (new Banks())->setAmount($amount)->get(),
                 "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
-                "static_info"    => [
-                    "how_emi_works"        => [
+                "static_info" => [
+                    "how_emi_works" => [
                         "EMI (Equated Monthly Installment) is one of the payment methods of online purchasing, only for the customers using any of the accepted Credit Cards on Sheba.xyz.* It allows customers to pay for their ordered services  in easy equal monthly installments.*",
                         "Sheba.xyz has introduced a convenient option of choosing up to 12 months EMI facility for customers who use Credit Cards for buying services worth BDT 5,000 or more. The duration and extent of the EMI options available will be visible on the payment page after order placement. EMI plans are also viewable on the checkout page in the EMI Banner below the bill section.",
                         "Customers wanting to avail EMI facility must have a Credit Card from any one of the banks in the list shown in the payment page.",
@@ -443,7 +443,7 @@ class ShebaController extends Controller
             return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
+            $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -459,12 +459,12 @@ class ShebaController extends Controller
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
         else $model = 'category';
-        $meta_tag       = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
+        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
         $sluggable_type = [
-            'type'     => $type->sluggable_type,
-            'id'       => $type->sluggable_id,
+            'type' => $type->sluggable_type,
+            'id' => $type->sluggable_id,
             'meta_tag' => $meta_tag && $meta_tag->meta_tag ? json_decode($meta_tag->meta_tag) : null,
-            'og_tag'   => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
+            'og_tag' => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
         ];
         return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
     }
@@ -486,7 +486,7 @@ class ShebaController extends Controller
     public function getHourLogs(Request $request, AttendanceRepoInterface $attendance_repo)
     {
         $this->validate($request, ['start_date' => 'required|date_format:Y-m-d', 'end_date' => 'required|date_format:Y-m-d']);
-        $ids         = json_decode($request->id);
+        $ids = json_decode($request->id);
         $attendances = $attendance_repo->builder()
             ->whereIn('business_member_id', $ids)->where([['date', ">=", $request->start_date], ['date', '<=', $request->end_date]])
             ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
@@ -497,8 +497,13 @@ class ShebaController extends Controller
     public function getEmiBankList(Request $request, EmiBankContract $emiBankContract)
     {
         $bank_lists = $emiBankContract->builder()->get();
-
-        return api_response($request, null, 200, ['data' => $bank_lists]);
+        $updated_bank_lists = [];
+        for ($i = 0; $i < count($bank_lists); $i++) {
+            if (!in_array($bank_lists[$i]->name, config('excluded_bank.excluded_bank'))) {
+                $updated_bank_lists[] = $bank_lists[$i];
+            }
+        }
+        return api_response($request, null, 200, ['data' => $updated_bank_lists]);
     }
 
     public function paymentInitiatedInfo(Request $request, $transaction_id)
@@ -507,14 +512,14 @@ class ShebaController extends Controller
         $payment = Payment::where('transaction_id', $transaction_id)->first();
         if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
         if ($payment->status != Statuses::INITIATED) return api_response($request, null, 400, ['message' => 'Payment already processed please contact with the the seller or call sheba platform limited']);
-        $info                           = $this->getPaymentInfo($payment);
+        $info = $this->getPaymentInfo($payment);
         $info['gateway_transaction_id'] = $payment->gateway_transaction_id;
-        $info['gateway_account_name']   = $payment->gateway_account_name;
-        $info['payment_purpose']        = $payment->payable->description;
+        $info['gateway_account_name'] = $payment->gateway_account_name;
+        $info['payment_purpose'] = $payment->payable->description;
         if (!isset($info['payer'])) {
             /** @var Payable $payer */
             $payer = $payment->payable;
-            $info  = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile()]]);
+            $info = array_merge($info, ['payer' => ['name' => $payer->getName(), 'id' => $payer->user->id, 'mobile' => $payer->getMobile()]]);
         }
         return api_response($request, $info, 200, ['data' => $info]);
     }
