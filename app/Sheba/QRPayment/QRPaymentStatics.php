@@ -31,7 +31,8 @@ class QRPaymentStatics
         return [
             "qr_id" => "sometimes",
             "merchant_id" => "required",
-            "amount" => "required"
+            "amount" => "required",
+            "status" => "sometimes"
         ];
     }
 }
