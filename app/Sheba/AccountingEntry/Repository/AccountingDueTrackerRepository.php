@@ -113,32 +113,29 @@ class AccountingDueTrackerRepository extends BaseRepository
         $url = "api/due-list/" . $customerId . "?";
         $url = $this->updateRequestParam($request, $url);
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        $due_list = collect($result['list']);
-
-        $list = $due_list->map(
-            function ($item) {
-                if ($item["attachments"]) {
-                    $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
-                }
-                $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
-                $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = $item['source_id'] && $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
-                $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
-                if ($pos_order) {
-                    $item['source_type'] = 'PosOrder';
-                    $item['head'] = 'POS sales';
-                    $item['head_bn'] = 'সেলস';
-                    if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
-                        $item['source_type'] = 'Webstore Order';
-                        $item['head'] = 'Webstore sales';
-                        $item['head_bn'] = 'ওয়েবস্টোর সেলস';
-                    }
-                }
-                return $item;
+        $due_list = $result['list'];
+        $pos_orders = [];
+        $orders = [];
+        foreach ($due_list as $item) {
+            if ($item["attachments"]) {
+                $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
             }
-        );
+            $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS) {
+                $pos_orders[] =  $item['source_id'];
+            }
+        }
+        if (count($pos_orders) > 0) {
+            $orders = $this->posOrderByOrderId($pos_orders);
+        }
+        foreach ($due_list as $item) {
+            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && count($orders) > 0) {
+                $item['partner_wise_order_id'] = $orders[$item['source_id']]['partner_wise_order_id'];
+            }
+        }
         return [
-            'list' => $list
+            'list' => $due_list
         ];
     }
 
