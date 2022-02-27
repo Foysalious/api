@@ -2,11 +2,12 @@
 
 namespace App\Sheba\QRPayment;
 
+use App\Models\Partner;
+use App\Sheba\QRPayment\DTO\QRGeneratePayload;
 use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\QRPayable\Contract as QRPayableRepo;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
-use Sheba\Payment\PaymentManager;
 use Sheba\Payment\Statuses;
 use Sheba\QRPayment\Exceptions\QRException;
 use Sheba\QRPayment\Exceptions\QRPayableNotFoundException;
@@ -38,7 +39,8 @@ class QRValidator
     public function setQrId($qr_id): QRValidator
     {
         $this->qr_id = $qr_id;
-        $this->setPayable();
+        if($this->qr_id)
+            $this->setPayable();
         return $this;
     }
 
@@ -70,6 +72,15 @@ class QRValidator
      */
     public function complete()
     {
+        if(!isset($this->qr_id)) {
+            $partner = Partner::find(38015);
+            $data = new QRGeneratePayload([
+                "amount" => $this->amount,
+                "payment_method" => $this->gateway->method_name
+            ]);
+            $qrPayment = (new QRPayment())->setPartner($partner)->setData($data)->generate();
+            $this->payable = $qrPayment->getPayable();
+        }
         $this->storePayment();
         $this->qrPaymentComplete();
     }

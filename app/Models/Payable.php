@@ -24,7 +24,8 @@ class Payable extends Model
      */
     public function setTypeAttribute($type)
     {
-        if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
+        if($type !== null)
+            if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
 
         $this->attributes['type'] = $type;
     }

@@ -143,23 +143,24 @@ class QRPayment
 
         /** @var PosCustomerResolver $posCustomerResolver */
         $posCustomerResolver = app(PosCustomerResolver::class);
-        if($this->data->payer_type === "pos_customer")
+        if($this->data->payer_type === "pos_customer") {
             $customer = $posCustomerResolver->setCustomerId($this->data->payer_id)->setPartner($this->partner)->get();
 
-        if(!isset($customer))
-            throw new CustomerNotFoundException();
+            if (!isset($customer))
+                throw new CustomerNotFoundException();
+        }
 
         if (($this->data->type === "accounting_due"))
-            $type_id = (int)$customer->id;
+            $type_id = isset($customer) ? (int)$customer->id : null;
 
 
         return [
-            "type"            => $this->data->type,
-            "type_id"         => $type_id,
+            "type"            => $this->data->type ?? null,
+            "type_id"         => $type_id ?? null,
             "user_type"       => "pos_customer",
-            "user_id"         => $customer->id,
+            "user_id"         => isset($customer) ? $customer->id : null,
             "amount"          => $this->data->amount,
-            "completion_type" => $this->data->type,
+            "completion_type" => $this->data->type ?? null,
             "payee_id"        => $this->partner->id,
             "payee_type"      => strtolower(class_basename($this->partner)),
         ];
@@ -179,5 +180,13 @@ class QRPayment
     public function getQrId()
     {
         return $this->qr_id;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPayable()
+    {
+        return $this->payable;
     }
 }

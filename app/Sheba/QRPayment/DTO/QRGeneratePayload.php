@@ -17,11 +17,11 @@ class QRGeneratePayload
 
     public function __construct(array $payload)
     {
-        $this->type = $payload['type'];
-        $this->type_id = $payload['type_id'];
-        $this->amount = $payload['amount'];
-        $this->payer_id = $payload['payer_id'];
-        $this->payer_type = $payload['payer_type'];
-        $this->payment_method = $payload['payment_method'];
+        $this->type = $payload['type'] ?? null;
+        $this->type_id = $payload['type_id'] ?? null;
+        $this->amount = $payload['amount'] ?? null;
+        $this->payer_id = $payload['payer_id'] ?? null;
+        $this->payer_type = $payload['payer_type'] ?? null;
+        $this->payment_method = $payload['payment_method'] ?? null;
     }
 }
