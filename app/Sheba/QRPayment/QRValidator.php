@@ -16,6 +16,8 @@ use Throwable;
 class QRValidator
 {
     private $qr_id;
+    private $amount;
+    private $merchant_id;
     private $payable;
     private $qr_payment;
 
@@ -128,5 +130,25 @@ class QRValidator
             "gateway_response" => $this->response,
             "status" => "validated"
         ];
+    }
+
+    /**
+     * @param mixed $amount
+     * @return QRValidator
+     */
+    public function setAmount($amount): QRValidator
+    {
+        $this->amount = $amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $merchant_id
+     * @return QRValidator
+     */
+    public function setMerchantId($merchant_id): QRValidator
+    {
+        $this->merchant_id = $merchant_id;
+        return $this;
     }
 }
