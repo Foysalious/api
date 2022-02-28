@@ -77,7 +77,7 @@ class CustomerWise extends PosReport
         $customer_sales = $customer_sales->values();
         $data = $paginate ? new Paginator($customer_sales, $this->limit) : $customer_sales;
         if ($paginate) {
-            $this->data['data'] = $data->items();
+            $this->data['data'] = array_values($data->items());
             $this->data['total_order_count'] = $total_order_count;
             $this->data['total_sales_count'] = $total_sales_count;
             $this->data['total'] = $total;
