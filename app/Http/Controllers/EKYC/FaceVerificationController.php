@@ -144,7 +144,7 @@ class FaceVerificationController extends Controller
     {
         $verification_req_count = $profile->nid_verification_request_count;
         if($verification_req_count > Statics::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
-            throw new EKycException(Statics::PENDING_MESSAGE, 400);
+            throw new EKycException(Statics::PENDING_MESSAGE, 403);
         }
     }
 }

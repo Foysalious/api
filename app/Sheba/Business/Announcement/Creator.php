@@ -4,6 +4,7 @@ use App\Jobs\Business\SendAnnouncementNotificationToEmployee;
 use App\Jobs\Business\SendAnnouncementPushNotificationToEmployee;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\AnnouncementV2\AnnouncementNotifications;
 use Carbon\Carbon;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Announcement\Announcement;
@@ -114,11 +115,7 @@ class Creator
         $announcement = $this->announcementRepository->create($this->data);
 
         $members_ids = $this->business->getActiveBusinessMember()->pluck('member_id')->toArray();
-        dispatch(new SendAnnouncementNotificationToEmployee($members_ids, $announcement));
-        foreach ($members_ids as $member) {
-            dispatch(new SendAnnouncementPushNotificationToEmployee($member, $announcement));
-        }
-
+        (new AnnouncementNotifications($members_ids, $announcement))->shoot();
         return $announcement;
     }
 
