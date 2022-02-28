@@ -86,6 +86,16 @@ class StatusChanger
         $this->changeStatus($job, $request, JobStatuses::PENDING);
     }
 
+    public function getAvailableResource(Request $request)
+    {
+        $job = $request->job;
+        $available_resources = scheduler($request->partner)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)->get('available_resources');
+        if (count($available_resources) > 0) {
+            return reset($available_resources);
+        }
+        return null;
+    }
+
     private function assignResource(Job $job, $resource_id, Resource $manager_resource)
     {
         $old_resource = $job->resource_id;
