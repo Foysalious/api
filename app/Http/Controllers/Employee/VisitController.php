@@ -377,7 +377,10 @@ class VisitController extends Controller
      */
     public function deletePhoto($visit, $visit_photo, Request $request, VisitPhotoRepository $visit_photo_repository)
     {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
         $visit_photo = $visit_photo_repository->find($visit_photo);
+        if (!$visit_photo) return api_response($request, null, 404);
         $visit_photo->delete();
         return api_response($request, null, 200);
     }
