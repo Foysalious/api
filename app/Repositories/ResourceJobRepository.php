@@ -162,6 +162,20 @@ class ResourceJobRepository
         }
     }
 
+    public function createNewJobWithExistingPartnerOrder($currentJobId, $existingPartnerOrderId, $resourceId, $request)
+    {
+        $client = new Client();
+        $res = $client->request('POST', config('sheba.admin_url') . "/api/new-job/existing-partner-order", [
+            'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
+                'current_job_id' => $currentJobId,
+                'existing_partner_order_id' => $existingPartnerOrderId,
+                'resource_id' => $resourceId,
+                'created_by_type' => 'App\Models\Partner'
+            ])
+        ]);
+        return json_decode($res->getBody());
+    }
+
     public function reschedule($job, $request)
     {
         try {
