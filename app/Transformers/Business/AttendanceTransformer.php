@@ -39,7 +39,6 @@ class AttendanceTransformer extends TransformerAbstract
         $data = [];
         $check_weekend = new CheckWeekend();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray();
-
         foreach ($this->businessHoliday as $holiday) {
             $start_date = Carbon::parse($holiday->start_date);
             $end_date = Carbon::parse($holiday->end_date);
@@ -70,8 +69,11 @@ class AttendanceTransformer extends TransformerAbstract
             $is_on_leave = $this->isLeave($date, $leaves);
 
             $breakdown_data['weekend_or_holiday_tag'] = null;
+            $breakdown_data['is_holiday'] = null;
             if ($is_weekend_or_holiday || $is_on_leave ) {
-                $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
+                $weekend_holiday = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);;
+                $breakdown_data['weekend_or_holiday_tag'] = $weekend_holiday;
+                $breakdown_data['is_holiday'] = $weekend_holiday == 'weekend' ? 1 : 0;
             }
             if ($is_weekend_or_holiday) {
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
@@ -267,7 +269,12 @@ class AttendanceTransformer extends TransformerAbstract
     {
         if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) return 'full_day';
         if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) return $this->whichHalfDayLeave($date, $leaves_date_with_half_and_full_day);
-        if ($this->isHoliday($date, $dates_of_holidays_formatted)) return 'holiday';
+        if ($this->isHoliday($date, $dates_of_holidays_formatted)) {
+            $day = $this->businessHoliday->filter(function($item) use ($date){
+                if ($date->between($item->start_date, $item->end_date)) return $item;
+            })->first();
+            return $day->title;
+        }
         return 'weekend';
     }
 
