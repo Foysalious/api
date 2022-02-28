@@ -148,7 +148,7 @@ class NidFaceVerification
         $submitted_by = get_class($request->auth_user->getResource());
         $faceVerify = null;
         $verificationStatus = "rejected";
-        $rejectReasons = null;
+        $rejectReasons = "Invalid Data";
         if($faceVerificationData) {
             $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
             $faceVerify = json_encode($faceVerify);
