@@ -150,8 +150,16 @@ class NidFaceVerification
     {
         $profile_id = $request->auth_user->getProfile()->id;
         $submitted_by = get_class($request->auth_user->getResource());
-        $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
-        $faceVerify = json_encode($faceVerify);
+        $faceVerify = null;
+        $verificationStatus = "rejected";
+        $rejectReasons = null;
+        if($faceVerificationData) {
+            $faceVerify = array_except($faceVerificationData['data'], ['message', 'verification_percentage', 'reject_reason']);
+            $faceVerify = json_encode($faceVerify);
+            $verificationStatus = ($faceVerificationData['data']['status'] === "verified"
+                || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected";
+            $rejectReasons = $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null;
+        }
 
         $requestedData = [
             'nid' => $request->nid,
@@ -168,8 +176,34 @@ class NidFaceVerification
             $porichoyNIDSubmission->update([
                 'porichoy_request'    => $requestedData,
                 'porichy_data'        => $faceVerify,
-                "verification_status" => ($faceVerificationData['data']['status'] === "verified" || $faceVerificationData['data']['status'] === "already_verified") ? "approved" : "rejected",
-                "rejection_reasons"   => $faceVerificationData['data']['reject_reason'] ? json_encode($faceVerificationData['data']['reject_reason']) : null,
+                "verification_status" => $verificationStatus,
+                "rejection_reasons"   => $rejectReasons,
+                'created_at'          => Carbon::now()->toDateTimeString()
+            ]);
+        }
+    }
+
+    public function storePendingData($request, $profileNIDSubmissionRepo)
+    {
+        $profile_id = $request->auth_user->getProfile()->id;
+        $submitted_by = get_class($request->auth_user->getResource());
+
+        $requestedData = [
+            'nid' => $request->nid,
+            'dob' => $request->dob,
+        ];
+        $requestedData = json_encode($requestedData);
+
+        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
+            ->where('submitted_by', $submitted_by)
+            ->where('nid_no', $request->nid)
+            ->orderBy('id', 'desc')->first();
+
+        if ($porichoyNIDSubmission) {
+            $porichoyNIDSubmission->update([
+                'porichoy_request'    => $requestedData,
+                "verification_status" => "rejected",
+                "rejection_reasons"   => null,
                 'created_at'          => Carbon::now()->toDateTimeString()
             ]);
         }
