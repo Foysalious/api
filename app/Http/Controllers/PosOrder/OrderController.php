@@ -7,6 +7,7 @@ use App\Http\Controllers\PaymentLink\PaymentLinkController;
 use App\Http\Controllers\VoucherController;
 use App\Models\Partner;
 use App\Models\PosOrder;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
 use App\Sheba\Voucher\VoucherService;
@@ -292,6 +293,21 @@ class OrderController extends Controller
     public function getFilteringOptions(Request $request)
     {
         $data = $this->orderService->getFilteringOptions();
+        return http_response($request, null, 200, $data);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws PosOrderServiceServerError
+     */
+    public function getPartnerWiseOrderIds(Request $request): JsonResponse
+    {
+        if ($request->header('api-key') != config('pos.api_key')) {
+            return http_response($request, null, 401, ["message" => "Unauthorized"]);
+        }
+        list($offset, $limit) = calculatePagination($request);
+        $data = $this->orderService->getPartnerWiseOrderIds($request->order_ids, $offset, $limit);
         return http_response($request, null, 200, $data);
     }
 
