@@ -5,8 +5,6 @@ class NewFeatures
 {
     public static function get()
     {
-        return [
-            'online_sheba'
-        ];
+        return [];
     }
 }
