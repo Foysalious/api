@@ -196,7 +196,7 @@ class InfoCallCreateTest extends FeatureTestCase
 
         $data = $response->decodeResponseJson();
 
-        $this->assertEquals("405 Method Not Allowed", $data["message"]);
+        $this->assertEquals("The GET method is not supported for this route. Supported methods: POST.", $data["message"]);
     }
 
     /**

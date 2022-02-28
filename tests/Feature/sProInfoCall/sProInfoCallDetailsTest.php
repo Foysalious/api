@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\UserProfileUpdate;
+namespace Tests\Feature\sProInfoCall;
 
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Job;
@@ -281,9 +281,9 @@ class SProInfoCallDetailsTest extends FeatureTestCase
             'preferred_time_end'    => "20:48:04",
         ]);
 
-        $this->resource_Transaction = Model::factory()->create([
-            'job_id' => $this->job->id,
-        ]);
+//        $this->resource_Transaction = Model::factory()->create([
+//            'job_id' => $this->job->id,
+//        ]);
 
         $response = $this->get('/v2/resources/info-call', [
             'Authorization' => "Bearer $this->token",
@@ -388,9 +388,9 @@ class SProInfoCallDetailsTest extends FeatureTestCase
             'preferred_time_end'    => "20:48:04",
         ]);
 
-        $this->resource_Transaction = Model::factory()->create([
-            'job_id' => $this->job->id,
-        ]);
+//        $this->resource_Transaction = Model::factory()->create([
+//            'job_id' => $this->job->id,
+//        ]);
 
         $response = $this->get('/v2/resources/info-call', [
             'Authorization' => "Bearer $this->token",
@@ -416,7 +416,7 @@ class SProInfoCallDetailsTest extends FeatureTestCase
         $this->assertEquals($this->order->id, $data_main["info_call_details"]["order_id"]);
         $this->assertEquals("Completed", $data_main["info_call_details"]["order_status"]);
         $this->assertEquals("শেষ", $data_main["info_call_details"]["bn_order_status"]);
-        $this->assertEquals("1000", $data_main["info_call_details"]["reward"]);
+//        $this->assertEquals("1000", $data_main["info_call_details"]["reward"]);
         $this->assertEquals("Ac service", $data_main["info_call_details"]["service_name"]);
     }
 
@@ -495,10 +495,10 @@ class SProInfoCallDetailsTest extends FeatureTestCase
             'preferred_time_start'  => "19:48:04",
             'preferred_time_end'    => "20:48:04",
         ]);
-
-        $this->resource_Transaction = Model::factory()->create([
-            'job_id' => $this->job->id,
-        ]);
+//
+//        $this->resource_Transaction = Model::factory()->create([
+//            'job_id' => $this->job->id,
+//        ]);
 
 
         $response = $this->get('/v2/resources/info-call', [
@@ -528,3 +528,4 @@ class SProInfoCallDetailsTest extends FeatureTestCase
         $this->assertEquals("Ac service", $data_main["info_call_details"]["service_name"]);
     }
 }
+
