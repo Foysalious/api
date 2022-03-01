@@ -2,8 +2,9 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
+use App\Sheba\LocationService\StartPriceCalculation;
 use Sheba\Dal\LocationService\LocationService;
-use Sheba\Dal\Service\PriceCalculation\PriceCalculation;
+use Sheba\LocationService\PriceCalculation;
 use Sheba\Dal\Service\Service;
 use App\Transformers\Service\ServiceTransformer;
 use Illuminate\Http\JsonResponse;
@@ -41,7 +42,7 @@ class ServiceController extends Controller
 
         $resource = new Item($service, $service_transformer);
         $data = $fractal->createData($resource)->toArray()['data'];
-        $data['start_price'] = $priceCalculation->calculateStartPrice($service);
+        $data['start_price'] = app()->make(StartPriceCalculation::class)->getStartPrice($service);
 
         return api_response($request, $data, 200, ['service' => $data]);
     }
