@@ -22,6 +22,8 @@ class DueTrackerService
     protected $date;
     protected $partner_wise_order_id;
     protected $attachments;
+    protected $start_date;
+    protected $end_date;
 
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
@@ -191,9 +193,10 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
-    public function getBalance()
+    public function getDueListBalance()
     {
-        return $this->dueTrackerRepo->getBalance($this->partner->id, $this->contactType);
+        $query_string = $this->generateDueListSearchQueryString();
+        return $this->dueTrackerRepo->getDueListBalance($this->partner->id, $query_string);
     }
 
     /**
@@ -235,6 +238,18 @@ class DueTrackerService
         }
 
         return implode('&', $query_strings);
+    }
+
+    public function setStartDate($start_date)
+    {
+        $this->start_date = $start_date;
+        return $this;
+    }
+
+    public function setEndDate($end_date)
+    {
+        $this->end_date = $end_date;
+        return $this;
     }
 
 
