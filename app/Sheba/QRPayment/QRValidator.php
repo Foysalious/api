@@ -4,11 +4,13 @@ namespace App\Sheba\QRPayment;
 
 use App\Models\Partner;
 use App\Sheba\QRPayment\DTO\QRGeneratePayload;
+use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
 use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\QRPayable\Contract as QRPayableRepo;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
 use Sheba\Payment\Statuses;
+use Sheba\QRPayment\Exceptions\FinancialInformationNotFoundException;
 use Sheba\QRPayment\Exceptions\QRException;
 use Sheba\QRPayment\Exceptions\QRPayableNotFoundException;
 use Sheba\QRPayment\Exceptions\QRPaymentAlreadyCompleted;
@@ -73,7 +75,7 @@ class QRValidator
     public function complete()
     {
         if(!isset($this->qr_id)) {
-            $partner = Partner::find(38015);
+            $partner = $this->getPartnerFromMerchantId();
             $data = new QRGeneratePayload([
                 "amount" => $this->amount,
                 "payment_method" => $this->gateway->method_name
@@ -161,5 +163,15 @@ class QRValidator
     {
         $this->merchant_id = $merchant_id;
         return $this;
+    }
+
+    /**
+     * @throws QRException
+     */
+    private function getPartnerFromMerchantId()
+    {
+        $finance_information = PartnerFinancialInformation::query()->where("mtb_merchant_id", $this->merchant_id)->first();
+        if(!$finance_information) throw new FinancialInformationNotFoundException();
+        return $finance_information->partner;
     }
 }

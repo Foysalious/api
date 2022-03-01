@@ -11,7 +11,9 @@ use Sheba\Dal\QRPayable\Model as QRPayable;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\QRPayment\Exceptions\CustomerNotFoundException;
+use Sheba\QRPayment\Exceptions\FinancialInformationNotFoundException;
 use Sheba\QRPayment\Exceptions\InvalidQRPaymentMethodException;
+use Sheba\QRPayment\Exceptions\QRException;
 
 class QRPayment
 {
@@ -76,7 +78,7 @@ class QRPayment
     /**
      * @throws CustomerNotFoundException
      * @throws InvalidQRPaymentMethodException
-     * @throws PosOrderServiceServerError
+     * @throws PosOrderServiceServerError|QRException
      */
     public function generate(): QRPayment
     {
@@ -100,14 +102,17 @@ class QRPayment
 
     /**
      * @return void
-     * @throws InvalidQRPaymentMethodException
+     * @throws QRException
      */
     private function generateQR()
     {
         $qr_code_generate = (new QRGenerationFactory())->setPaymentMethod($this->data->payment_method)->get();
         $qr_id            = $qr_code_generate->generateQrId();
         $this->setQrId($qr_id);
-        $qr_string        = $qr_code_generate->setQrId($this->qr_id)->setPayable($this->payable)->qrCodeString();
+        $partner_finance_information = $this->partner->financialInformations;
+        if(!isset($partner_finance_information)) throw new FinancialInformationNotFoundException();
+        $qr_string        = $qr_code_generate->setQrId($this->qr_id)
+            ->setFinancialInformation($partner_finance_information)->setPayable($this->payable)->qrCodeString();
         $this->setQrString($qr_string);
     }
 
@@ -157,7 +162,7 @@ class QRPayment
         return [
             "type"            => $this->data->type ?? null,
             "type_id"         => $type_id ?? null,
-            "user_type"       => "pos_customer",
+            "user_type"       => $this->data->payer_type,
             "user_id"         => isset($customer) ? $customer->id : null,
             "amount"          => $this->data->amount,
             "completion_type" => $this->data->type ?? null,

@@ -23,6 +23,7 @@ use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
+use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -1166,6 +1167,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     protected static function newFactory(): PartnerFactory
     {
         return new PartnerFactory();
+    }
+
+    public function financialInformations()
+    {
+        return $this->hasOne(PartnerFinancialInformation::class);
     }
 
 }

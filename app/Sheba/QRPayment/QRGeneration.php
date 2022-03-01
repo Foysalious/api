@@ -12,6 +12,8 @@ abstract class QRGeneration
 
     protected $qr_id;
 
+    protected $financial_information;
+
     /**
      * @param mixed $payable
      * @return QRGeneration
@@ -29,6 +31,17 @@ abstract class QRGeneration
     public function setQrId($qr_id): QRGeneration
     {
         $this->qr_id = $qr_id;
+        return $this;
+    }
+
+
+    /**
+     * @param mixed $financial_information
+     * @return QRGeneration
+     */
+    public function setFinancialInformation($financial_information): QRGeneration
+    {
+        $this->financial_information = $financial_information;
         return $this;
     }
 
