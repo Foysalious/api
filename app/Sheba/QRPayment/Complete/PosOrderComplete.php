@@ -19,7 +19,6 @@ class PosOrderComplete extends PaymentComplete
 {
     /**
      * @return Payment|QRPayment
-     * @throws AccountingEntryServerError
      * @throws PosClientException
      */
     public function complete()
@@ -27,7 +26,7 @@ class PosOrderComplete extends PaymentComplete
         if ($this->isComplete()) return $this->getPayment();
         $payable = $this->getPayable();
         $this->clearOrder($payable);
-        $this->storeAccountingEntry($payable->target_id, EntryTypes::POS);
+//        $this->storeAccountingEntry($payable->target_id, EntryTypes::POS);
         return $this->qrPayment;
     }
 
@@ -63,36 +62,5 @@ class PosOrderComplete extends PaymentComplete
     protected function saveInvoice()
     {
         // TODO: Implement saveInvoice() method.
-    }
-
-    /**
-     * @param $source_id
-     * @param $source_type
-     * @return bool|mixed
-     * @throws AccountingEntryServerError
-     */
-    protected function storeAccountingEntry($source_id, $source_type)
-    {
-        $payload = $this->makeAccountingEntryData($source_id, $source_type);
-        /** @var AccountingRepository $accounting_repo */
-        $accounting_repo = app()->make(AccountingRepository::class);
-        return $accounting_repo->storeEntry((object)$payload, EntryTypes::PAYMENT_LINK);
-    }
-
-    private function makeAccountingEntryData($source_id, $source_type): array
-    {
-        $data['customer_id'] = $this->qrPayment->payable->user_id;
-        $data['amount'] = $this->qrPayment->payable->amount;
-        $data['amount_cleared'] = $this->qrPayment->payable->amount;
-        $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
-        $data['interest'] = 0;
-        $data['source_id'] = $source_id;
-        $data['source_type'] = $source_type;
-        $data['to_account_key'] = (new Accounts())->asset->cash::SSL;
-        $data['from_account_key'] = (new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_PAYMENT_LINK;
-        $data['payment_type'] = "qr";
-        $data["payment_id"] = $this->qrPayment->id;
-        $data['partner'] = $this->qrPayment->payable->payee_id;
-        return $data;
     }
 }
