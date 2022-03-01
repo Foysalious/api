@@ -15,19 +15,22 @@ class AttendanceTransformer extends TransformerAbstract
     private $businessHoliday;
     private $businessWeekendSettings;
     private $businessMemberLeave;
+    private $isNewJoiner;
 
     /**
      * @param TimeFrame $time_frame
+     * @param $is_new_joiner
      * @param $business_holiday
      * @param $weekend_settings
      * @param $business_member_leave
      */
-    public function __construct(TimeFrame $time_frame, $business_holiday, $weekend_settings, $business_member_leave)
+    public function __construct(TimeFrame $time_frame, $is_new_joiner, $business_holiday, $weekend_settings, $business_member_leave)
     {
         $this->timeFrame = $time_frame;
         $this->businessHoliday = $business_holiday;
         $this->businessWeekendSettings = $weekend_settings;
         $this->businessMemberLeave = $business_member_leave;
+        $this->isNewJoiner = $is_new_joiner;
     }
 
     /**
@@ -49,6 +52,15 @@ class AttendanceTransformer extends TransformerAbstract
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $remaining_days = (($this->timeFrame->start)->diffInDays($this->timeFrame->end)) + 1;
+        if ($this->timeFrame->start->format('Y-m') === Carbon::now()->format('Y-m')) {
+           if ($this->isNewJoiner) {
+               $start_date = $this->timeFrame->start;
+               $end_date = Carbon::now()->endOfMonth();
+               $remaining_days = (($start_date)->diffInDays($end_date)) + 1;
+           } else {
+               $remaining_days = $this->timeFrame->start->daysInMonth;
+           }
+        }
         $statistics = [
             'working_days' => $remaining_days,
             'present' => 0,
