@@ -386,7 +386,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function isShebaTech($business_member_id)
     {
-        $sheba_tech = [574, 1031];
+        $sheba_tech = [574, 1031, 6885];
         return in_array($business_member_id, $sheba_tech);
     }
 
