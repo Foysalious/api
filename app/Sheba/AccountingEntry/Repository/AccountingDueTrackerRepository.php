@@ -16,6 +16,8 @@ use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\RequestIdentification;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
+use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
+
 
 class AccountingDueTrackerRepository extends BaseRepository
 {
@@ -116,7 +118,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $due_list = $result['list'];
         $pos_orders = [];
         $orders = [];
-        foreach ($due_list as $item) {
+        foreach ($due_list as $key => $item) {
             if ($item["attachments"]) {
                 $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
             }
@@ -125,13 +127,17 @@ class AccountingDueTrackerRepository extends BaseRepository
             if ($item['source_id'] && $item['source_type'] == EntryTypes::POS) {
                 $pos_orders[] =  $item['source_id'];
             }
+            $due_list[$key]['partner_wise_order_id']= null;
         }
+
         if (count($pos_orders) > 0) {
-            $orders = $this->posOrderByOrderId($pos_orders);
+            $orders = $this->getPartnerWise($pos_orders)['orders'];
         }
-        foreach ($due_list as $item) {
-            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && count($orders) > 0) {
-                $item['partner_wise_order_id'] = $orders[$item['source_id']]['partner_wise_order_id'];
+
+        foreach ($due_list as $key => $val) {
+            if ($val['source_id'] && $val['source_type'] == EntryTypes::POS && count($orders) > 0) {
+
+                $due_list[$key]['partner_wise_order_id'] = $orders[$val['source_id']]['partner_wise_order_id'];
             }
         }
         return [
@@ -309,5 +315,13 @@ class AccountingDueTrackerRepository extends BaseRepository
     {
         $url = "api/due-list/due-date-wise-customer-list";
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
+    private function getPartnerWise($pos_orders)
+    {
+        /** @var OrderServiceAlias $orderService */
+        $orderService= app(OrderServiceAlias::class);
+        return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
+
     }
 }
