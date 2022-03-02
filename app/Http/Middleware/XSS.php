@@ -45,6 +45,7 @@ class XSS
         'v2/businesses/*/expense/filter-month',
         'v2/businesses/*/supports',
         'v2/businesses/*/supports/*',
+        'v3/businesses/*/announcements',
         'v3/businesses/*/announcements/*'
     ];
 
