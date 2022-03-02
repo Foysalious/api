@@ -286,11 +286,8 @@ class PaymentService
             }
             $pgwData[] = $this->makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status);
         }
-        $qrGateways = QRGateway::query()->select('id', 'name', 'method_name', 'name_bn', 'icon')->get();
-        $qrData = array();
-        foreach ($qrGateways as $qrGateway) {
-            $qrData[] = ($this->makeQRGatewayData($qrGateway, $completion));
-        }
+
+        $qrData = $this->getQRGateways($completion);
         $allData = array_merge($pgwData, $qrData);
         return $banner ?
             array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
@@ -309,6 +306,17 @@ class PaymentService
             'icon' => $qrGateway->icon,
             'status' => "pending"
         ];
+    }
+
+    private function getQRGateways($completion): array
+    {
+        $qrData = array();
+        $qrGateways = QRGateway::query()->select('id', 'name', 'method_name', 'name_bn', 'icon')->get();
+        foreach ($qrGateways as $qrGateway) {
+            $qrData[] = $this->makeQRGatewayData($qrGateway, $completion);
+        }
+
+        return $qrData;
     }
 
     private function makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status): array
