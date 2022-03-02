@@ -237,5 +237,7 @@ class DueTrackerService
         return implode('&', $query_strings);
     }
 
-
+    public function downloadPDF($request){
+        $this->dueTrackerRepo->getDatatodownloadPdf($request);
+    }
 }

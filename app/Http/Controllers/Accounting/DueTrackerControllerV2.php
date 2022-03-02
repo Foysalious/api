@@ -70,4 +70,9 @@ class DueTrackerControllerV2 extends Controller
             ->searchDueList();
         return http_response($request, null, 200, ['data' => $response]);
     }
+    public function downloadPdf(Request $request){
+
+        $this->dueTrackerService->downloadPDF($request);
+
+    }
 }

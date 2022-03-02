@@ -3,6 +3,8 @@
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+
 
 class DueTrackerRepositoryV2 extends AccountingRepository
 {
@@ -37,5 +39,8 @@ class DueTrackerRepositoryV2 extends AccountingRepository
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
     }
+    public function getDatatodownloadPdf($request){
 
+        dd("asd");
+    }
 }
