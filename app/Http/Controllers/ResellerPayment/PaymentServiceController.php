@@ -12,8 +12,8 @@ use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
+use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
 use Sheba\ResellerPayment\Statics\ResellerPaymentGeneralStatic;
 use Throwable;
 

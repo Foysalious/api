@@ -6,6 +6,7 @@ use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\Dal\GatewayAccount\Model as GatewayAccount;
+use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\EMI\Banks;
 use Sheba\EMI\CalculatorForManager;
@@ -283,19 +284,46 @@ class PaymentService
             } else if ($partner_account->status == 0) {
                 $status = PaymentLinkStatus::INACTIVE;
             }
-            $pgwData[] = [
-                'id' => $pgwStore->id,
-                'name' => $pgwStore->name,
-                'key' => $pgwStore->key,
-                'name_bn' => $pgwStore->name_bn,
-                'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                'icon' => $pgwStore->icon,
-                'status' => $status
-            ];
+            $pgwData[] = $this->makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status);
         }
+        $qrGateways = QRGateway::query()->select('id', 'name', 'method_name', 'name_bn', 'icon')->get();
+        $qrData = array();
+        foreach ($qrGateways as $qrGateway) {
+            $qrData[] = ($this->makeQRGatewayData($qrGateway, $completion));
+        }
+        $allData = array_merge($pgwData, $qrData);
         return $banner ?
-            array_merge(["payment_gateway_list" => $pgwData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $pgwData;
+            array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
+    }
+
+    private function makeQRGatewayData($qrGateway, $completion): array
+    {
+        return [
+            'id' => $qrGateway->id,
+            'name' => $qrGateway->name,
+            'key' => $qrGateway->method_name,
+            'name_bn' => $qrGateway->name_bn,
+            'header' => null,
+            'type'   => "qr",
+            'completion' => $completion == 1 ? 98 : null,
+            'icon' => $qrGateway->icon,
+            'status' => "pending"
+        ];
+    }
+
+    private function makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status): array
+    {
+        return [
+            'id' => $pgwStore->id,
+            'name' => $pgwStore->name,
+            'key' => $pgwStore->key,
+            'name_bn' => $pgwStore->name_bn,
+            'header' => $pgwStore->key === 'ssl' ? $header_message : null,
+            'type' => 'pgw',
+            'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
+            'icon' => $pgwStore->icon,
+            'status' => $status
+        ];
     }
 
     /**
