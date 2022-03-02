@@ -47,11 +47,19 @@ class DueTrackerControllerV2 extends Controller
             'contact_type' => 'required|string|in:' . implode(',', ContactType::get())
         ]);
         */
-        $response = $this->dueTrackerService->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->setStartDate($request->start_date)
-            ->setEndDate($request->start_date)
-            ->getDueListBalance();
+//        $response = $this->dueTrackerService->setPartner($request->partner)
+//            ->setContactType($request->contact_type)
+//            ->setStartDate($request->start_date)
+//            ->setEndDate($request->start_date)
+//            ->getDueListBalance();
+        $response = [
+            "total_transactions" => rand(1,50),
+            "total" => rand(1,50),
+            "stats" => [
+                "deposit"=> rand(20,100),
+                "due" => rand(200,1500)
+            ]
+        ];
         $response['partner'] = [
             'name' => $request->partner->name,
             'avatar' => $request->partner->logo,
