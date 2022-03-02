@@ -133,7 +133,7 @@ class PayRunController extends Controller
         $this->setModifier($manager_member);
 
         $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setPurpose(Purpose::PAYSLIP_DISBURSE)->verify();
-        $this->payrunUpdater->setScheduleDate($request->schedule_date)->setBusiness($business)->disburse();
+        $this->payrunUpdater->setSummaryId($request->summary_id)->setBusiness($business)->disburse();
 
         return api_response($request, null, 200);
     }
