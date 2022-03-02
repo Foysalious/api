@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Sheba\LocationService\StartPriceCalculation;
+use Sheba\LocationService\StartPriceCalculation;
 use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroupCategory;
 use Sheba\Dal\CategoryPartner\CategoryPartner;

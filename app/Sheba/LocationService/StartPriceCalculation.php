@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Sheba\LocationService;
+namespace Sheba\LocationService;
 
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
@@ -23,9 +23,15 @@ class StartPriceCalculation
 
     public function getStartPrice(Service $service)
     {
-        /** @var LocationService $location_service */
-        $location_service = $service->locationServices->first();
-        $prices = json_decode($location_service->prices);
+        try {
+            /** @var LocationService $location_service */
+            $location_service = $service->locationServices->first();
+            $prices = json_decode($location_service->prices);
+        }catch (\Exception $e){
+            dd($service, $location_service);
+            throw $e;
+        }
+
         $this->priceCalculation->setService($service)->setLocationService($location_service)->setQuantity($service->min_quantity);
         $this->upsellCalculation->setService($service)->setLocationService($location_service)->setQuantity($service->min_quantity);
 

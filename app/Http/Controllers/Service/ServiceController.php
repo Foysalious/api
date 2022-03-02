@@ -2,7 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
-use App\Sheba\LocationService\StartPriceCalculation;
+use Sheba\LocationService\StartPriceCalculation;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Dal\Service\Service;
