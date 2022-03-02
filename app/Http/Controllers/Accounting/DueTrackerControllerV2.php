@@ -3,9 +3,11 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\ContactType;
 
+use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Usage\Usage;
 
 class DueTrackerControllerV2 extends Controller
 {
@@ -17,10 +19,26 @@ class DueTrackerControllerV2 extends Controller
         $this->dueTrackerService = $dueTrackerService;
     }
 
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'amount'                => 'required',
+            'entry_type'            => 'required|in:due,deposit',
+            'account_key'           => 'sometimes|string',
+            'customer_id'           => 'required',
+            'date'                  => 'required|date_format:Y-m-d H:i:s',
+            'partner_wise_order_id' => 'sometimes|numeric',
+            'attachments'           => 'sometimes|array',
+            'attachments.*'         => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
+        ]);
+        $response = $this->dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
+    }
+
     /**
      * @throws AccountingEntryServerError
      */
-    public function getDueTrackerBalance(Request $request)
+    public function getDueListBalance(Request $request)
     {
         $request->contact_type = ContactType::CUSTOMER;
         /*
@@ -29,9 +47,25 @@ class DueTrackerControllerV2 extends Controller
             'contact_type' => 'required|string|in:' . implode(',', ContactType::get())
         ]);
         */
-        $response = $this->dueTrackerService->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->getBalance();
+//        $response = $this->dueTrackerService->setPartner($request->partner)
+//            ->setContactType($request->contact_type)
+//            ->setStartDate($request->start_date)
+//            ->setEndDate($request->start_date)
+//            ->getDueListBalance();
+        $response = [
+            "total_transactions" => rand(1,50),
+            "total" => rand(1,50),
+            "stats" => [
+                "deposit"=> rand(20,100),
+                "due" => rand(200,1500)
+            ]
+        ];
+        $response['partner'] = [
+            'name' => $request->partner->name,
+            'avatar' => $request->partner->logo,
+            'mobile' => $request->partner->mobile,
+        ];
+
         return http_response($request, null, 200, ['data' => $response]);
 
     }

@@ -15,11 +15,11 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @throws AccountingEntryServerError
      */
-    public function getBalance($userId, $contact_type, $userType = UserType::PARTNER)
+    public function getDueListBalance($userId, $query_params, $userType = UserType::PARTNER)
     {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)
-                ->get("api/v2/due-tracker/balance?contact_type=$contact_type");
+                ->get("api/v2/due-tracker/due-list-balance?" . $query_params);
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
