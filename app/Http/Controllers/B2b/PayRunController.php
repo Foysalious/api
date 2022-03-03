@@ -119,7 +119,7 @@ class PayRunController extends Controller
      * @throws WrongPinError
      * @throws PinMismatchException
      */
-    public function disburse(Request $request, VerifyPin $verifyPin)
+    public function disburse($business, $summary_id, Request $request, VerifyPin $verifyPin)
     {
         $this->validate($request, [
             'schedule_date' => 'required|date|date_format:Y-m'
@@ -133,7 +133,7 @@ class PayRunController extends Controller
         $this->setModifier($manager_member);
 
         $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setPurpose(Purpose::PAYSLIP_DISBURSE)->verify();
-        $this->payrunUpdater->setSummaryId($request->summary_id)->setBusiness($business)->disburse();
+        $this->payrunUpdater->setSummaryId($summary_id)->setBusiness($business)->disburse();
 
         return api_response($request, null, 200);
     }
