@@ -10,14 +10,17 @@ use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\EMI\Banks;
 use Sheba\EMI\CalculatorForManager;
+use Sheba\MerchantEnrollment\Exceptions\InvalidQRKeyException;
 use Sheba\MerchantEnrollment\MerchantEnrollment;
 use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
+use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkStatus;
 use Sheba\PushNotificationHandler;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
+use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;
@@ -33,6 +36,7 @@ class PaymentService
     private $rejectReason;
     private $pgwMerchantId;
     private $newStatus;
+    private $type;
 
     /**
      * @param mixed $partner
@@ -69,24 +73,63 @@ class PaymentService
 
     /**
      * @return array
+     * @throws InvalidQRKeyException
+     */
+    private function getQRGatewayDetails(): array
+    {
+        $qr_gateway = QRGateway::where('method_name',$this->key)->first();
+        if(!$qr_gateway) throw new InvalidQRKeyException();
+        return [
+            'banner' => PaymentMethodStatics::getSslBannerURL(),
+            'faq' => PaymentMethodStatics::detailsFAQ(),
+            'status' => $this->status ?? null,
+            'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
+            'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
+            'details' => [
+                'id' => $qr_gateway->id,
+                'key' => $qr_gateway->key,
+                'name_bn' => $qr_gateway->name_bn,
+                'icon' => $qr_gateway->icon
+            ]
+        ];
+
+    }
+
+    /**
+     * @return array
+     * @throws Exceptions\MORServiceServerError
+     * @throws ResellerPaymentException
+     * @throws NotFoundAndDoNotReportException
+     */
+    public function getDetails(): array
+    {
+        if($this->type === PaymentLinkStatics::TYPE_QR) {
+            return $this->getQRGatewayDetails();
+        } else {
+            return $this->getPGWDetails();
+        }
+    }
+
+    /**
+     * @return array
+     * @throws Exceptions\MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     * @throws ResellerPaymentException
      */
     public function getPGWDetails(): array
     {
         $this->getResellerPaymentStatus();
         $this->getPgwStatus();
         $pgw_store = PgwStore::where('key',$this->key)->first();
+        if(!$pgw_store) throw new InvalidQRKeyException();
         $status_wise_message = in_array($this->status,['pending','processing','verified']) ? config('reseller_payment.mor_status_wise_text')[$this->key][$this->status] : null;
         if($this->status === "rejected") {
             $status_wise_message = config('reseller_payment.mor_status_wise_text')[$this->key]["rejected_start"] .
                 $this->rejectReason . config('reseller_payment.mor_status_wise_text')[$this->key]["rejected_end"];
         }
         return [
-            'banner' =>'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/ssl_banner.png',
-            'faq' => [
-                'আপনার ব্যবসার প্রোফাইল সম্পন্ন করুন',
-                'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
-                'পেমেন্ট সার্ভিস কনফিগার করুন'
-            ],
+            'banner' => PaymentMethodStatics::getSslBannerURL(),
+            'faq' => PaymentMethodStatics::detailsFAQ(),
             'status' => $this->status ?? null,
             'mor_status_wise_disclaimer' => $status_wise_message,
             'pgw_status' =>  $this->pgwStatus ?? null,
@@ -461,6 +504,16 @@ class PaymentService
     public function getPgwStatusForStatusCheck()
     {
         return $this->pgwStatus;
+    }
+
+    /**
+     * @param mixed $type
+     * @return PaymentService
+     */
+    public function setType($type): PaymentService
+    {
+        $this->type = $type;
+        return $this;
     }
 
 

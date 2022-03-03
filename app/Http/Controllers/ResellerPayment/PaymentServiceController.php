@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
+use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
 use Sheba\ResellerPayment\Statics\ResellerPaymentGeneralStatic;
 use Throwable;
 
@@ -112,13 +113,22 @@ class PaymentServiceController extends Controller
         return api_response($request, null, 200, ['data' => $data]);
     }
 
-    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService)
+    /**
+     * @param Request $request
+     * @param PaymentService $paymentService
+     * @return JsonResponse
+     * @throws MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     * @throws ResellerPaymentException
+     */
+    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService): JsonResponse
     {
         $this->validate($request, [
-            'key' => 'required|in:'.implode(',', config('reseller_payment.available_payment_gateway_keys'))
+            'key' => 'required',
+            'payment_type' => 'sometimes|in:pgw,qr'
         ]);
         $partner = $request->partner;
-        $detail = $paymentService->setPartner($partner)->setKey($request->key)->getPGWDetails();
+        $detail = $paymentService->setPartner($partner)->setKey($request->key)->setType($request->payment_type)->getDetails();
         return api_response($request, null, 200, ['data' => $detail]);
     }
 
