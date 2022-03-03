@@ -23,14 +23,11 @@ class StartPriceCalculation
 
     public function getStartPrice(Service $service)
     {
-        try {
-            /** @var LocationService $location_service */
-            $location_service = $service->locationServices->first();
-            $prices = json_decode($location_service->prices);
-        }catch (\Exception $e){
-            dd($service, $location_service);
-            throw $e;
-        }
+        /** @var LocationService $location_service */
+        $location_service = $service->locationServices->first();
+        if (is_null($location_service)) return false;
+
+        $prices = json_decode($location_service->prices);
 
         $this->priceCalculation->setService($service)->setLocationService($location_service)->setQuantity($service->min_quantity);
         $this->upsellCalculation->setService($service)->setLocationService($location_service)->setQuantity($service->min_quantity);
