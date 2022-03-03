@@ -6,17 +6,21 @@ use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\Dal\GatewayAccount\Model as GatewayAccount;
+use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\EMI\Banks;
 use Sheba\EMI\CalculatorForManager;
+use Sheba\MerchantEnrollment\Exceptions\InvalidQRKeyException;
 use Sheba\MerchantEnrollment\MerchantEnrollment;
 use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
+use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkStatus;
 use Sheba\PushNotificationHandler;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
+use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;
@@ -32,6 +36,7 @@ class PaymentService
     private $rejectReason;
     private $pgwMerchantId;
     private $newStatus;
+    private $type;
 
     /**
      * @param mixed $partner
@@ -68,24 +73,63 @@ class PaymentService
 
     /**
      * @return array
+     * @throws InvalidQRKeyException
+     */
+    private function getQRGatewayDetails(): array
+    {
+        $qr_gateway = QRGateway::where('method_name',$this->key)->first();
+        if(!$qr_gateway) throw new InvalidQRKeyException();
+        return [
+            'banner' => PaymentMethodStatics::getSslBannerURL(),
+            'faq' => PaymentMethodStatics::detailsFAQ(),
+            'status' => $this->status ?? null,
+            'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
+            'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
+            'details' => [
+                'id' => $qr_gateway->id,
+                'key' => $qr_gateway->key,
+                'name_bn' => $qr_gateway->name_bn,
+                'icon' => $qr_gateway->icon
+            ]
+        ];
+
+    }
+
+    /**
+     * @return array
+     * @throws Exceptions\MORServiceServerError
+     * @throws ResellerPaymentException
+     * @throws NotFoundAndDoNotReportException
+     */
+    public function getDetails(): array
+    {
+        if($this->type === PaymentLinkStatics::TYPE_QR) {
+            return $this->getQRGatewayDetails();
+        } else {
+            return $this->getPGWDetails();
+        }
+    }
+
+    /**
+     * @return array
+     * @throws Exceptions\MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     * @throws ResellerPaymentException
      */
     public function getPGWDetails(): array
     {
         $this->getResellerPaymentStatus();
         $this->getPgwStatus();
         $pgw_store = PgwStore::where('key',$this->key)->first();
+        if(!$pgw_store) throw new InvalidQRKeyException();
         $status_wise_message = in_array($this->status,['pending','processing','verified']) ? config('reseller_payment.mor_status_wise_text')[$this->key][$this->status] : null;
         if($this->status === "rejected") {
             $status_wise_message = config('reseller_payment.mor_status_wise_text')[$this->key]["rejected_start"] .
                 $this->rejectReason . config('reseller_payment.mor_status_wise_text')[$this->key]["rejected_end"];
         }
         return [
-            'banner' =>'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/ssl_banner.png',
-            'faq' => [
-                'আপনার ব্যবসার প্রোফাইল সম্পন্ন করুন',
-                'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
-                'পেমেন্ট সার্ভিস কনফিগার করুন'
-            ],
+            'banner' => PaymentMethodStatics::getSslBannerURL(),
+            'faq' => PaymentMethodStatics::detailsFAQ(),
             'status' => $this->status ?? null,
             'mor_status_wise_disclaimer' => $status_wise_message,
             'pgw_status' =>  $this->pgwStatus ?? null,
@@ -283,19 +327,54 @@ class PaymentService
             } else if ($partner_account->status == 0) {
                 $status = PaymentLinkStatus::INACTIVE;
             }
-            $pgwData[] = [
-                'id' => $pgwStore->id,
-                'name' => $pgwStore->name,
-                'key' => $pgwStore->key,
-                'name_bn' => $pgwStore->name_bn,
-                'header' => $pgwStore->key === 'ssl' ? $header_message : null,
-                'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
-                'icon' => $pgwStore->icon,
-                'status' => $status
-            ];
+            $pgwData[] = $this->makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status);
         }
+
+        $qrData = $this->getQRGateways($completion);
+        $allData = array_merge($pgwData, $qrData);
         return $banner ?
-            array_merge(["payment_gateway_list" => $pgwData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $pgwData;
+            array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
+    }
+
+    private function makeQRGatewayData($qrGateway, $completion): array
+    {
+        return [
+            'id' => $qrGateway->id,
+            'name' => $qrGateway->name,
+            'key' => $qrGateway->method_name,
+            'name_bn' => $qrGateway->name_bn,
+            'header' => null,
+            'type'   => "qr",
+            'completion' => $completion == 1 ? 98 : null,
+            'icon' => $qrGateway->icon,
+            'status' => "pending"
+        ];
+    }
+
+    private function getQRGateways($completion): array
+    {
+        $qrData = array();
+        $qrGateways = QRGateway::query()->select('id', 'name', 'method_name', 'name_bn', 'icon')->get();
+        foreach ($qrGateways as $qrGateway) {
+            $qrData[] = $this->makeQRGatewayData($qrGateway, $completion);
+        }
+
+        return $qrData;
+    }
+
+    private function makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status): array
+    {
+        return [
+            'id' => $pgwStore->id,
+            'name' => $pgwStore->name,
+            'key' => $pgwStore->key,
+            'name_bn' => $pgwStore->name_bn,
+            'header' => $pgwStore->key === 'ssl' ? $header_message : null,
+            'type' => 'pgw',
+            'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
+            'icon' => $pgwStore->icon,
+            'status' => $status
+        ];
     }
 
     /**
@@ -425,6 +504,16 @@ class PaymentService
     public function getPgwStatusForStatusCheck()
     {
         return $this->pgwStatus;
+    }
+
+    /**
+     * @param mixed $type
+     * @return PaymentService
+     */
+    public function setType($type): PaymentService
+    {
+        $this->type = $type;
+        return $this;
     }
 
 
