@@ -270,7 +270,6 @@ class BusinessesController extends Controller
         }
     }
 
-
     /**
      * @param $business
      * @param TimeFrameReportRequest $request
@@ -466,5 +465,10 @@ class BusinessesController extends Controller
     public function fetchJWTToken(Member $member)
     {
         return $this->accountServer->getTokenByIdAndRememberToken($member->id, $member->remember_token, 'member');
+    }
+
+    public function getSignUpPage(Request $request)
+    {
+        return api_response($request, null, 200, ['sign_up_page' => "https://business.sheba.xyz/auth/sign-up"]);
     }
 }

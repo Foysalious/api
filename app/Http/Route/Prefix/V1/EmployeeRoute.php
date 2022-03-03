@@ -4,6 +4,7 @@ class EmployeeRoute
 {
     public function set($api)
     {
+        $api->get('employee/business-sign-up', 'B2b\BusinessesController@getSignUpPage');
         $api->post('employee/login', 'Employee\EmployeeController@login');
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
 
