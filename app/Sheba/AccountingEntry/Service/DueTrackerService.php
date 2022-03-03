@@ -2,6 +2,7 @@
 
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Reports\PdfHandler;
 
 class DueTrackerService
 {
@@ -238,6 +239,17 @@ class DueTrackerService
     }
 
     public function downloadPDF($request){
-        $this->dueTrackerRepo->getDatatodownloadPdf($request);
+
+        if($request->customerID == null){
+            $duelistPdfLink = $this->dueTrackerRepo->getDuelistData($request);
+            return $duelistPdfLink;
+        }
+        else if($request->customerID != null){
+            $duelistDataByCustomerId = $this->dueTrackerRepo->getDuelistDataByCustomerId($request);
+
+
+            return $duelistDataByCustomerId;
+        }
+
     }
 }

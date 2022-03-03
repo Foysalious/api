@@ -72,7 +72,8 @@ class DueTrackerControllerV2 extends Controller
     }
     public function downloadPdf(Request $request){
 
-        $this->dueTrackerService->downloadPDF($request);
+        $data=$this->dueTrackerService->downloadPDF($request);
+        return api_response($request, null, 200, ['pdf_link' => $data]);
 
     }
 }
