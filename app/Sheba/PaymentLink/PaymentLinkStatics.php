@@ -4,6 +4,9 @@ class  PaymentLinkStatics
 {
     const SERVICE_CHARGE = 2.0;
 
+    const TYPE_PGW = "pgw";
+    const TYPE_QR = "qr";
+
     const PAYMENT_LINK_TYPE_EMI = "emi";
     const PAYMENT_LINK_TYPE_DIGITAL_COLLECTION = "digital_collection";
 

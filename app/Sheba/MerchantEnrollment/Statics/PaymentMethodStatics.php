@@ -6,6 +6,8 @@ use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class PaymentMethodStatics
 {
+    const SSL_BANNER_URL = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/ssl_banner.png";
+
     const APPLY_SUCCESS_MESSAGE = [
         "body" => "আবেদন যাচাই করতে ১০ কার্যদিবস সময় লাগতে পারে অনুগ্রহ করে অপেক্ষা করুন।",
         "title" => "আবেদন সফল হয়েছে!"
@@ -56,5 +58,19 @@ class PaymentMethodStatics
             "incomplete_message" => "SSL পেমেন্ট সার্ভিস সচল করতে প্রয়োজনীয় তথ্য প্রদান করুন।",
             "completed_message"  => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, SSL পেমেন্ট সার্ভিস সচল করতে আবেদন করুন।"
         ];
+    }
+
+    public static function detailsFAQ(): array
+    {
+        return [
+            'আপনার ব্যবসার প্রোফাইল সম্পন্ন করুন',
+            'পেমেন্ট সার্ভিসের জন্য আবেদন করুন',
+            'পেমেন্ট সার্ভিস কনফিগার করুন'
+        ];
+    }
+
+    public static function getSslBannerURL(): string
+    {
+        return self::SSL_BANNER_URL;
     }
 }
