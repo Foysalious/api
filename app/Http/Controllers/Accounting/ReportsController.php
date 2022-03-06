@@ -134,52 +134,44 @@ class ReportsController extends Controller
         $response = '{
               "code":200,
               "message" :"Successful",
-              "data": {
-                    "26-01-2021": [
+              "data": [
                     {
-                    "name":"Foysal",
-                    "mobile":"01855570841",
-                    "amount":"15000",
-                    "transaction_id": "SSL-2412256",
-                    "transaction_gateway":"ssl",
-                    "is_reconciled":0
-                  },
-                  {
-                    "name":"Suniv",
-                    "mobile":"01833309495",
-                    "amount":"20000",
-                    "transaction_id": "SSL-2412250",
-                    "transaction_gateway":"nagad",
-                     "is_reconciled":1
-                  },
-                  {
-                    "name":"Suniv",
-                    "mobile":"01833309495",
-                    "amount":"20000",
-                    "transaction_id": "SSL-2412250",
-                    "transaction_gateway":"nagad",
-                     "is_reconciled":0
-                  }
-                  ],
-                  "27-01-2021": [{
-                    "name":"Foysal",
-                    "mobile":"01855570841",
-                    "amount":"15000",
-                    "transaction_id": "SSL-2412256",
-                    "transaction_gateway":"ssl",
-                     "is_reconciled":1
-                  },
-                  {
-                    "name":"Suniv",
-                    "mobile":"01833309495",
-                    "amount":"20000",
-                    "transaction_id": "SSL-2412250",
-                    "transaction_gateway":"nagad",
-                     "is_reconciled":1
-                  }
+                      "name": "Foysal",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2412256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    },
+                    {
+                      "name": "Suniv",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    }
                   ]
-                    
-                  }
             }';
 //        return api_response($request, $response, 200, ['data' => $response]);
         return response()->json($response);
