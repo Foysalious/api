@@ -127,7 +127,7 @@ class CreatorRequester
     public function setStartTime($start_time)
     {
         $this->startTime = $start_time;
-        if ($this->schduledFor == "now") $this->startTime = Carbon::now()->format("h:i:s");
+        if ($this->schduledFor == "now") $this->startTime = Carbon::now()->format("G:i:s");
         return $this;
     }
 
