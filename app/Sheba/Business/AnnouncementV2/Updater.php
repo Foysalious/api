@@ -43,6 +43,7 @@ class Updater
             $data = [
                 'type' => $this->creatorRequest->getType(),
                 'title' => $this->creatorRequest->getTitle(),
+                'short_description' => $this->creatorRequest->getShortDescription(),
                 'long_description' => $this->creatorRequest->getDescription(),
                 'target_type' => $this->creatorRequest->getTargetType(),
                 'target_id' => $this->creatorRequest->getTargetIds(),
