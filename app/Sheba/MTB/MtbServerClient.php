@@ -99,7 +99,7 @@ class MtbServerClient
      * @param $data
      * @param bool $multipart
      * @return array|object|string|null
-     * @throws MtbServiceServerError
+     * @throws MtbServiceServerError|NotFoundAndDoNotReportException
      */
     public function put($uri, $data, $multipart = false)
     {
@@ -109,7 +109,7 @@ class MtbServerClient
     /**
      * @param $uri
      * @return array|object|string|null
-     * @throws MtbServiceServerError
+     * @throws MtbServiceServerError|NotFoundAndDoNotReportException
      */
     public function delete($uri)
     {
