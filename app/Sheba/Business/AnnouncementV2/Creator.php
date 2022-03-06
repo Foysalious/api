@@ -73,6 +73,7 @@ class Creator
             'business_id' => $this->business->id,
             'type' => $this->creatorRequest->getType(),
             'title' => $this->creatorRequest->getTitle(),
+            'short_description' => $this->creatorRequest->getShortDescription(),
             'long_description' => $this->creatorRequest->getDescription(),
             'is_published' => $this->creatorRequest->getIsPublished(),
             'target_type' => $this->creatorRequest->getTargetType(),
