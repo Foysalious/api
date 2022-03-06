@@ -5,6 +5,7 @@ use App\Sheba\MTB\Exceptions\MtbServiceServerError;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Support\Facades\Redis;
 use Sheba\ModificationFields;
 
 class MtbServerClient
@@ -61,12 +62,30 @@ class MtbServerClient
         return $this->baseUrl . "/" . $uri;
     }
 
+    private function generateMtbBearerToken()
+    {
+        return $this->post('api/token', ['username' => config('mtb.mtb_username'),
+            'password' => config('mtb.mtb_password'), 'grant_type' => config('mtb.mtb_grant_type')]);
+    }
+
+    private function getMtbBearerToken()
+    {
+        $mtbJwt = Redis::get('mtb_jwt');
+        if ($mtbJwt)
+            return $mtbJwt;
+        else {
+            $mtbJwt = $this->generateMtbBearerToken();
+            Redis::set('mtb_jwt', $mtbJwt);
+            Redis::expire('mtb_jwt', 250);
+            return $mtbJwt;
+        }
+    }
+
     private function getOptions($data = null, $multipart = false)
     {
         $options['headers'] = [
             'Accept' => 'application/json',
-            'Authorization' => 'Bearer '."dfafasf",
-
+            'Authorization' => 'Bearer ' . $this->getMtbBearerToken(),
         ];
         if (!$data) return $options;
         if ($multipart) {
