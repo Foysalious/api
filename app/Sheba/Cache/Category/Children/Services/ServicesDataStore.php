@@ -48,7 +48,7 @@ class ServicesDataStore implements DataStoreObject
         } catch (Throwable $e) {
             throw new CacheGenerationException();
         }
-        $data = json_decode($response->getBody());
+        $data = json_decode($response->getContent());
         if (!$data || $data->code != 200) return null;
         return ['category' => $data->category];
     }
