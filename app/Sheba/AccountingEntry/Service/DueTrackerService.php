@@ -253,18 +253,32 @@ class DueTrackerService
         return $this;
     }
 
+    /**
+     * @param $request
+     * @return string|void
+     * @throws AccountingEntryServerError
+     * @throws \Mpdf\MpdfException
+     * @throws \Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer
+     * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
+     * @throws \Throwable
+     */
     public function downloadPDF($request){
 
         if($request->customerID == null){
-            $duelistPdfLink = $this->dueTrackerRepo->getDuelistData($request);
-            return $duelistPdfLink;
+            return $this->dueTrackerRepo->getDuelistPdf($request);
         }
-        else if($request->customerID != null){
-            $duelistDataByCustomerId = $this->dueTrackerRepo->getDuelistDataByCustomerId($request);
+        else return $this->dueTrackerRepo->getDuelistPdfByCustomerId($request);
 
+    }
 
-            return $duelistDataByCustomerId;
+    /**
+     * @param $request
+     * @return array|void
+     */
+    public function dueList($request){
+        if($request->customerID == null){
+            return $this->dueTrackerRepo->getDuelist($request);
         }
-
+        else return $this->dueTrackerRepo->getDuelistByCustomerId($request);
     }
 }

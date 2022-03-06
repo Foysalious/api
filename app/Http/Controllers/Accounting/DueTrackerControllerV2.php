@@ -87,10 +87,20 @@ class DueTrackerControllerV2 extends Controller
             ->searchDueList();
         return http_response($request, null, 200, ['data' => $response]);
     }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function downloadPdf(Request $request){
 
         $data=$this->dueTrackerService->downloadPDF($request);
-        return api_response($request, null, 200, ['pdf_link' => $data]);
+        return api_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
+
+    }
+    public function dueList(Request $request){
+         $data=$this->dueTrackerService->duelist($request);
+         return api_response($request, null, 200, ['data' => $data]);
 
     }
 }
