@@ -254,6 +254,11 @@ class OrderService
         return $this->client->get('api/v1/partners/' . $this->partnerId);
     }
 
+    public function storeOrGet($data)
+    {
+        return $this->client->post('api/v1/partners/store-or-get', $data, false);
+    }
+
     public function updatePartnerDetails()
     {
         return $this->client->put('api/v1/partners/' . $this->partnerId, $this->makePartnerUpdateData(),false);
@@ -304,7 +309,7 @@ class OrderService
 
     public function storeDeliveryInformation($deliveryData)
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/delivery', $deliveryData);
     }
 
     public function update()

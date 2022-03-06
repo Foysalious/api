@@ -21,7 +21,7 @@
             @else
                 <td style="text-align: center; width: 50%">{{$item['head']}}</td>
             @endif
-            @if($item['type'] === 'deposit')
+            @if($item['type'] === 'due')
                 <td style="text-align: center;color: #219653;width: 13%">0</td>
                 <td style="text-align: center;color: #DC1E1E;width: 13%">{{$item['amount'] }}</td>
             @else

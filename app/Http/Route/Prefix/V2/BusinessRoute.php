@@ -69,6 +69,7 @@ class BusinessRoute
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
                     $api->post('reconciliation', 'B2b\AttendanceReconciliationController@create');
+                    $api->post('bulk-reconciliation', 'B2b\AttendanceReconciliationController@bulkReconciliation');
                 });
                 $api->group(['prefix' => 'office-time'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getOfficeTime');
@@ -357,6 +358,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'expense'], function ($api) {
                     $api->get('/', 'B2b\ExpenseController@index');
                     $api->get('/download-pdf', 'B2b\ExpenseController@downloadPdf');
+                    $api->get('/download-expense-report', 'B2b\ExpenseController@downloadExpenseReport');
                     $api->get('/filter-month/{business_member_id}', 'B2b\ExpenseController@filterMonth');
                     $api->group(['prefix' => '{expense}'], function ($api) {
                         $api->get('/', 'B2b\ExpenseController@show');

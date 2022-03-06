@@ -56,7 +56,7 @@ class CustomerDeliveryAddressController extends Controller
             $q->select('id', 'name', 'mobile');
         }]);
         $location = null;
-        $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no')->get();
+        $customer_delivery_addresses = $customer->delivery_addresses()->isSaved()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no', 'house_no', 'road_no', 'area', 'landmark')->get();
         if ($request->has('lat') && $request->has('lng')) {
             $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
             if ($hyper_location) $location = $hyper_location->location;
@@ -186,7 +186,9 @@ class CustomerDeliveryAddressController extends Controller
     {
         $mobile = trim(str_replace(' ', '', $request->mobile));
         $request->merge(['address' => trim($request->address), 'mobile' => $mobile ?: $request->customer->profile->mobile]);
-        $this->validate($request, ['address' => 'required|string']);
+        $this->validate($request, [
+            'address' => 'required|string'
+        ]);
         $customer = $request->customer;
         $delivery_address = $this->_create($request, $customer);
         try {
@@ -211,6 +213,9 @@ class CustomerDeliveryAddressController extends Controller
         if ($request->has('street_address')) $delivery_address->street_address = trim($request->street_address);
         if ($request->has('landmark')) $delivery_address->landmark = trim($request->landmark);
         if ($request->has('lat') && $request->has('lng')) $delivery_address->geo_informations = json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]);
+        if ($request->has('house_no')) $delivery_address->house_no = trim($request->house_no);
+        if ($request->has('road_no')) $delivery_address->road_no = trim($request->road_no);
+        if ($request->has('area')) $delivery_address->area = trim($request->area);
         if ($request->has('is_save') && !$request->is_save) $delivery_address->deleted_at = Carbon::now();
         return $delivery_address;
     }

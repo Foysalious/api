@@ -19,10 +19,12 @@ use App\Repositories\ServiceRepository;
 use App\Sheba\Partner\KYC\Statuses;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
+use App\Sheba\Repositories\PartnerSubscriptionPackageRepository;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
@@ -35,6 +37,7 @@ use Sheba\ModificationFields;
 use Sheba\Partner\HomePageSetting\CacheManager;
 use Sheba\Partner\HomePageSetting\Setting;
 use Sheba\Partner\HomePageSettingV3\DefaultSettingV3;
+use Sheba\Partner\HomePageSettingV3\HomepageSettingsV3;
 use Sheba\Partner\HomePageSettingV3\NewFeatures;
 use Sheba\Partner\HomePageSettingV3\SettingV3;
 use Sheba\Partner\LeaveStatus;
@@ -233,6 +236,9 @@ class DashboardController extends Controller
             /** @var Resource $resource */
             $resource = $request->manager_resource;
             $resource_status = $resource->status;
+            if ($resource->profile->nid_verification_request_count >= 3 && in_array($resource_status, [Statuses::UNVERIFIED, Statuses::REJECTED])) {
+                $resource_status = Statuses::PENDING;
+            }
             $data = [
                 'name' => $partner->name,
                 'logo' => $partner->logo,
@@ -342,38 +348,14 @@ class DashboardController extends Controller
 
     /**
      * @param Request $request
-     * @param SettingV3 $setting
      * @return JsonResponse
      */
-    public function getHomeSettingV3(Request $request, SettingV3 $setting)
+    public function getHomeSettingV3(Request $request): JsonResponse
     {
         try {
             $this->setModifier($request->partner);
-            $home_page_setting = $setting->setPartner($request->partner)->get();
-            foreach ($home_page_setting as &$setting) {
-                if (is_object($setting)) {
-                    in_array($setting->key, NewFeatures::get()) ? $setting->is_new = 1 : $setting->is_new = 0;
-                } else {
-                    in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
-                }
-            }
-            $updated_setting = [];
-            if (!AccessManager::canAccess(AccessManager::Rules()->DIGITAL_COLLECTION, $request->partner->subscription->getAccessRules())) {
-                if (is_array($home_page_setting)) {
-                    $updated_setting = array_values(array_filter($home_page_setting, function ($item) {
-                        $key = is_object($item) ? $item->key : $item['key'];
-                        return !in_array($key, ['payment_link', 'emi']);
-                    }, ARRAY_FILTER_USE_BOTH));
-                } elseif ($home_page_setting instanceof Collection) {
-                    $updated_setting = $home_page_setting->filter(function ($item) {
-                        $key = is_object($item) ? $item->key : $item['key'];
-                        return !in_array($key, ['payment_link', 'emi']);
-                    })->values();
-                }
-            } else {
-                $updated_setting = $home_page_setting;
-            }
-            return api_response($request, null, 200, ['data' => $updated_setting]);
+            $home_page_setting = (new HomepageSettingsV3($request->partner))->get();
+            return api_response($request, null, 200, ['data' => $home_page_setting]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -408,18 +390,17 @@ class DashboardController extends Controller
      * @param PartnerRepositoryInterface $partner_repo
      * @return JsonResponse
      */
-    public function updateHomeSettingV3(Request $request, PartnerRepositoryInterface $partner_repo)
+    public function updateHomeSettingV3(Request $request, PartnerRepositoryInterface $partner_repo): JsonResponse
     {
         try {
             $home_page_setting = $request->home_page_setting;
-            $data['home_page_setting_new'] = $home_page_setting;
-            $partner_repo->update($request->partner, $data);
+            $home_page_setting = (new HomepageSettingsV3($request->partner))->update($home_page_setting, $partner_repo);
             return api_response($request, null, 200, [
                 'message' => 'Dashboard Setting updated successfully',
                 'data' => json_decode($home_page_setting)
             ]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -428,20 +409,22 @@ class DashboardController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function isUpdatedHomeSetting(Request $request)
+    public function isUpdatedHomeSetting(Request $request): JsonResponse
     {
         try {
             $this->validate($request, [
                 'last_updated' => 'sometimes|date|date_format:Y-m-d',
             ]);
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $is_updated   = 1;
+            $last_updated = (new PartnerSubscriptionPackageRepository($partner->package_id))->getHomepageSettingsUpdatedDate($partner->billing_start_date);
 
-            $is_updated = 1;
-            $last_updated = DefaultSettingV3::getLastUpdatedAt();
             if ($request->has('last_updated'))
-                $is_updated = Carbon::parse($last_updated) > Carbon::parse($request->last_updated) ? 1 : 0;
+                $is_updated = Carbon::parse($last_updated)->toDateString() > Carbon::parse($request->last_updated)->toDateString() ? 1 : 0;
             $data = [
-                'is_updated' => $is_updated,
-                'last_updated' => $last_updated
+                'is_updated'   => $is_updated,
+                'last_updated' => Carbon::parse($last_updated)->toDateString()
             ];
 
             return api_response($request, null, 200, ['data' => $data]);

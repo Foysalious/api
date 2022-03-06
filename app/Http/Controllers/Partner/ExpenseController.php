@@ -193,7 +193,7 @@ class ExpenseController extends Controller
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($expense, new ExpenseTransformer());
             $expense_formatted = $manager->createData($resource)->toArray()['data'];
-
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::EXPENSE_ENTRY_UPDATE)->create($request->manager_resource);
             return api_response($request, null, 200, ['expense' => $expense_formatted]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

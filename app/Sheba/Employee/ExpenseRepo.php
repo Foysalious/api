@@ -101,7 +101,7 @@ class ExpenseRepo
             $expense['date'] = $expense->created_at ? $expense->created_at->format('M d') : null;
             $expense['time'] = $expense->created_at ? $expense->created_at->format('h:i A') : null;
             $expense['can_edit'] = $expense->is_updated_by_super_admin ? 0 : $this->canEdit($expense);
-            $expense['reason'] = $expense->is_updated_by_super_admin ? "Expense already updated by admin at " .$expense->updated_at->format('d-M-Y h:i A') : null;
+            $expense['reason'] = $expense->is_updated_by_super_admin ? "Expense already updated by admin at " . $expense->updated_at->format('d-M-Y h:i A') : null;
 
             if ($this->getAttachments($expense, $request)) $expense['attachment'] = $this->getAttachments($expense, $request);
 
@@ -187,30 +187,45 @@ class ExpenseRepo
         }
     }
 
-    public function getExpenseByMember($members_ids)
+    public function getExpenseByBusinessMember($business_members_ids)
     {
-        return Expense::whereIn('member_id', $members_ids)->with([
-            'member' => function ($query) {
-                $query->select('members.id', 'members.profile_id')->with([
-                    'profile' => function ($query) {
-                        $query->select('profiles.id', 'profiles.name', 'profiles.email', 'profiles.mobile');
+        return Expense::whereIn('business_member_id', $business_members_ids)->with([
+            'businessMember' => function ($query) {
+                $query->select('business_member.id', 'business_member.member_id', 'business_id', 'employee_id', 'business_role_id')->with([
+                    'member' => function ($query) {
+                        $query->select('members.id', 'members.profile_id')->with(['profile' => function ($query) {
+                            $query->select('profiles.id', 'profiles.name');
+                        }]);
                     },
-                    'businessMember' => function ($q) {
-                        $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
-                            'role' => function ($q) {
-                                $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                                    'businessDepartment' => function ($q) {
-                                        $q->select('business_departments.id', 'business_id', 'name');
-                                    }
-                                ]);
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
                             }
                         ]);
                     }
                 ]);
-            }
-        ])->select('id', 'member_id', 'business_member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
-            ->groupby('year', 'month', 'member_id', 'type')
-            ->orderBy('created_at', 'desc');
+            }])->select('id', 'member_id', 'business_member_id', 'amount', 'type', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'), DB::raw('YEAR(created_at) year, MONTH(created_at) month'))->groupby(['business_member_id', 'type']);
     }
 
+    public function getDetailExpenseByBusinessMember($business_members_ids)
+    {
+        return Expense::whereIn('business_member_id', $business_members_ids)->with([
+            'businessMember' => function ($query) {
+                $query->select('business_member.id', 'business_member.member_id', 'business_id', 'business_member.employee_id', 'business_role_id')->with([
+                    'member' => function ($query) {
+                        $query->select('members.id', 'members.profile_id')->with(['profile' => function ($query) {
+                            $query->select('profiles.id', 'profiles.name');
+                        }]);
+                    },
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }]);
+    }
 }

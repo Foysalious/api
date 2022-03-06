@@ -66,7 +66,7 @@ class BaseRepository
     }
     private function uploadFiles($request){
         $attachments=[];
-        if (isset($request->attachments) && $request->hasFile('attachments')) {
+        if (isset($request->attachments) && !empty($request->attachments) && $request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
                 if (!empty($file)) {
                     list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
@@ -118,11 +118,12 @@ class BaseRepository
      */
     public function isMigratedToAccounting($userId): bool
     {
-        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
-        /** @var UserMigrationRepository $userMigrationRepo */
-        $userMigrationRepo = app(UserMigrationRepository::class);
-        $userStatus = $userMigrationRepo->userStatus($userId);
-        if (in_array($userStatus, $arr)) return false;
         return true;
+//        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+//        /** @var UserMigrationRepository $userMigrationRepo */
+//        $userMigrationRepo = app(UserMigrationRepository::class);
+//        $userStatus = $userMigrationRepo->userStatus($userId);
+//        if (in_array($userStatus, $arr)) return false;
+//        return true;
     }
 }

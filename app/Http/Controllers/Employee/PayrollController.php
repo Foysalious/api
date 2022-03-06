@@ -5,6 +5,7 @@ use App\Jobs\Business\SendPayslipEmailToBusinessMember;
 use App\Sheba\Business\Payslip\PayReport\PayReportPdfHandler;
 use Illuminate\Http\Request;
 use App\Sheba\Business\BusinessBasicInformation;
+use Illuminate\Support\Facades\Storage;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Payslip\Status;
@@ -37,8 +38,10 @@ class PayrollController extends Controller
             dispatch(new SendPayslipEmailToBusinessMember($business_member->business, $employee_email, $employee_name, $time_period, $pdf_link));
             return api_response($request, null, 200, ['employee_email' => $employee_email]);
         }
+        $filename = 'Payslip_' . $request->month.'_' .$request->year.'_business_'.$business_member->business->id.'_business_member_'. $business_member->id. '.pdf';
+        if (Storage::disk('s3')->exists('payslips/'.$filename)) return api_response($request, null, 200, ['payslip_pdf_link' => env('S3_URL').'payslips/'.$filename]);
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->get();
-        $pay_report_pdf = $pay_report_pdf_handler->setBusinessMember($business_member)->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->generate();
+        $pay_report_pdf = $pay_report_pdf_handler->setBusinessMember($business_member)->setPayReportDetails($pay_report_detail)->setTimePeriod($time_period)->setFileName($filename)->generate();
         return api_response($request, null, 200, ['payslip_pdf_link' => $pay_report_pdf]);
     }
 

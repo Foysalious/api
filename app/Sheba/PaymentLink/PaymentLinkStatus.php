@@ -11,4 +11,9 @@ class PaymentLinkStatus
 
     const ACTIVE = 'active';
     const INACTIVE = 'inactive';
+    const UNREGISTERED = 'unregistered';
+    const PENDING = 'pending';
+    const PROCESSING = 'processing';
+    const VERIFIED = 'verified';
+    const REJECTED = 'rejected';
 }

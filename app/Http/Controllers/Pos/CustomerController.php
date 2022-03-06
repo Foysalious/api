@@ -29,6 +29,7 @@ use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class CustomerController extends Controller
@@ -131,7 +132,7 @@ class CustomerController extends Controller
             /**
              * USAGE LOG
              */
-//            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -164,6 +165,7 @@ class CustomerController extends Controller
         $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
         $partnerPosCustomer = PartnerPosCustomer::where('customer_id', $customer->id)->first();
         if ($partnerPosCustomer) event(new PartnerPosCustomerUpdatedEvent($partnerPosCustomer));
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::UPDATE_CUSTOMER)->create($request->manager_resource);
         return api_response($request, $customer, 200, ['customer' => $customerDetails]);
     }
 
@@ -269,6 +271,7 @@ class CustomerController extends Controller
         }
         $this->deletePosOrder($request->partner->id, $customer->id);
         $partner_pos_customer->delete();
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DELETE_CUSTOMER)->create($request->manager_resource);
         return api_response($request, true, 200);
     }
 

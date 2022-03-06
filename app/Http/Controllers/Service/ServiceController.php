@@ -9,6 +9,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Carbon\Carbon;
+use Sheba\Dal\JobService\JobService;
+use Sheba\Jobs\JobStatuses;
+use DB;
 
 class ServiceController extends Controller
 {
@@ -29,12 +33,20 @@ class ServiceController extends Controller
         $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
 
         $location_service = $hyper_location ? LocationService::where('location_id', $hyper_location->location_id)->where('service_id', $service->id)->first() : null;
+        $date_start = Carbon::now()->subMonth(6);
+
+        $service_orders = JobService::join('jobs as j1','j1.id', '=', 'job_id')
+            ->where('job_service.service_id',$service->id)
+            ->where('job_service.created_at','>=',$date_start)
+            ->where('j1.status', JobStatuses::SERVED)
+            ->selectRaw("count(*) as count")->first()->count;
 
         $fractal = new Manager();
         if($location_service) $service_transformer->setLocationService($location_service);
         else return api_response($request, null, 404);
         $resource = new Item($service, $service_transformer);
         $data = $fractal->createData($resource)->toArray()['data'];
+        $data['order_count'] = $service_orders;
 
         return api_response($request, $data, 200, ['service' => $data]);
     }
