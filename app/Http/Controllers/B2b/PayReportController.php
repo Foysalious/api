@@ -6,16 +6,20 @@ use App\Models\BusinessMember;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use App\Sheba\Business\Payslip\PayReport\BkashSalaryReportExcel;
 use App\Sheba\Business\Payslip\PayReportList;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\Payslip\PayslipRepository;
 
 class PayReportController extends Controller
 {
     /** @var PayslipRepository */
     private $payslipRepo;
+    /*** @var BusinessPayslipRepository $businessPayslipRepo*/
+    private $businessPayslipRepo;
 
     /**
      * PayReportController constructor.
@@ -24,6 +28,7 @@ class PayReportController extends Controller
     public function __construct(PayslipRepository $payslip_repo)
     {
         $this->payslipRepo = $payslip_repo;
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     /**
@@ -75,7 +80,14 @@ class PayReportController extends Controller
     {
         $pay_slip = $this->payslipRepo->find($payslip);
         if (!$pay_slip) return api_response($request, null, 404);
-        $pay_report_detail = $pay_report_details->setPayslip($pay_slip)->setMonthYear($request->month_year)->get();
+        $business_member = $pay_slip->businessMember;
+        if ($request->has('month_year')) {
+            $business_pay_slip = $this->businessPayslipRepo->where('business_id', $business_member->business->id)->where('schedule_date', 'LIKE', '%'.$request->month_year.'%')->first();
+            if (!$business_pay_slip) return api_response($request, null, 404);
+            $pay_slip = $this->payslipRepo->where('business_payslip_id', $business_pay_slip->id)->where('business_member_id', $business_member->id)->first();
+            if (!$pay_slip) return api_response($request, null, 404);
+        }
+        $pay_report_detail = $pay_report_details->setPayslip($pay_slip)->get();
 
         if ($request->file == 'pdf') return App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->download("payroll_details.pdf");
 
