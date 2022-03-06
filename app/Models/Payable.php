@@ -11,6 +11,7 @@ use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\PayableType;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Utility\UtilityOrder;
+use Sheba\Dal\QRPayable\Model as QRPayable;
 
 class Payable extends Model
 {
@@ -24,7 +25,7 @@ class Payable extends Model
      */
     public function setTypeAttribute($type)
     {
-        if($type !== null)
+        if ($type !== null)
             if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
 
         $this->attributes['type'] = $type;
@@ -179,6 +180,11 @@ class Payable extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function qrPayable()
+    {
+        return $this->hasOne(QRPayable::class);
     }
 
     public function getPaymentAttribute()
