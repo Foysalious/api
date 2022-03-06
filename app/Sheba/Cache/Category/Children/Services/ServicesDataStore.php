@@ -9,6 +9,7 @@ use Sheba\Cache\Exceptions\CacheGenerationException;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\LocationService\StartPriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\Service\MinMaxPrice;
 use Sheba\Services\ServiceSubscriptionDiscount;
@@ -34,13 +35,6 @@ class ServicesDataStore implements DataStoreObject
     public function generate()
     {
         try {
-            /*
-            $client = new Client();
-            $url = config('sheba.api_url') . '/v2/categories/' . $this->servicesCacheRequest->getCategoryId();
-            $url .= '/services?location=' . $this->servicesCacheRequest->getLocationId();
-            $response = $client->get($url);
-            */
-
             $request = new Request();
             $request->replace(['location' => $this->servicesCacheRequest->getLocationId()]);
 
@@ -48,9 +42,9 @@ class ServicesDataStore implements DataStoreObject
             $controller = app(CategoryController::class);
             $response = $controller->getServices($this->servicesCacheRequest->getCategoryId(), $request, app(PriceCalculation::class),
                 app(DeliveryCharge::class), app(JobDiscountHandler::class), app(UpsellCalculation::class),
-                app(MinMaxPrice::class), app(ApproximatePriceCalculator::class), app(ServiceSubscriptionDiscount::class)
+                app(MinMaxPrice::class), app(ApproximatePriceCalculator::class), app(ServiceSubscriptionDiscount::class),
+                app(StartPriceCalculation::class)
             );
-
         } catch (Throwable $e) {
             throw new CacheGenerationException();
         }
