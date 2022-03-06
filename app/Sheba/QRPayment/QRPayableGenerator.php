@@ -154,6 +154,13 @@ class QRPayableGenerator implements QrPayableAdapter
         ];
     }
 
+    /**
+     * @return QRPayable
+     * @throws CustomerNotFoundException
+     * @throws PosOrderServiceServerError
+     * @throws QRException
+     * @throws Exception
+     */
     public function getQrPayable(): QRPayable
     {
         $this->storePayable();

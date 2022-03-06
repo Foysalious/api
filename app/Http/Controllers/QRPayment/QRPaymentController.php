@@ -47,7 +47,7 @@ class QRPaymentController extends Controller
     public function validatePayment($payment_method, Request $request, QRValidator $validator): JsonResponse
     {
         $this->validate($request, QRPaymentStatics::getValidationForValidatePayment());
-        $validator->setResponse($request->all())->setGateway($payment_method)
+        $validator->setRequest($request->all())->setGateway($payment_method)
             ->setQrId($request->qr_id)->setAmount($request->amount)->setMerchantId($request->merchant_id)->complete();
         return http_response($request, null, 200);
     }

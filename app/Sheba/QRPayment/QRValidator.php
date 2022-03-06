@@ -24,9 +24,11 @@ class QRValidator
     private $merchantId;
     /** @var Payable */
     private $payable;
+    /*** @var QRPaymentModel */
     private $qrPayment;
+    /*** @var QRPayableRepo */
     private $qrPayableRepo;
-    private $response;
+    private $request;
     private $gateway;
 
     public function __construct(QRPayableRepo $qr_payable_repo)
@@ -61,12 +63,12 @@ class QRValidator
     }
 
     /**
-     * @param mixed $response
+     * @param mixed $request
      * @return QRValidator
      */
-    public function setResponse($response): QRValidator
+    public function setRequest($request): QRValidator
     {
-        $this->response = json_encode($response);
+        $this->request = json_encode($request);
         return $this;
     }
 
@@ -103,7 +105,6 @@ class QRValidator
 
     /**
      * @return void
-     * @throws QRException
      */
     public function setPayable(Payable $payable)
     {
@@ -141,7 +142,7 @@ class QRValidator
         return [
             "payable_id" => $this->payable->id,
             "qr_gateway_id" => $this->gateway->id,
-            "gateway_response" => $this->response,
+            "gateway_response" => $this->request,
             "status" => "validated"
         ];
     }
@@ -169,7 +170,7 @@ class QRValidator
     /**
      * @throws QRException
      */
-    private function getPartnerFromMerchantId()
+    private function getPartnerFromMerchantId(): Partner
     {
         $finance_information = PartnerFinancialInformation::query()->where("mtb_merchant_id", $this->merchantId)->first();
         if (!$finance_information) throw new FinancialInformationNotFoundException();
