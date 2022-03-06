@@ -276,7 +276,7 @@ class DueTrackerService
      * @return array|void
      */
     public function dueList($request){
-        if($request->customerID == null){
+        if($request->customerId == null){
             return $this->dueTrackerRepo->getDuelist($request);
         }
         else return $this->dueTrackerRepo->getDuelistByCustomerId($request);

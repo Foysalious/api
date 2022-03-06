@@ -9,6 +9,17 @@ use Sheba\Reports\PdfHandler;
 
 class DueTrackerRepositoryV2 extends AccountingRepository
 {
+    private $partner;
+
+    /**
+     * @param $partner
+     * @return $this
+     */
+    public function setPartner($partner): DueTrackerRepositoryV2
+    {
+        $this->partner = $partner;
+        return $this;
+    }
 
     public function __construct(AccountingEntryClient $client)
     {
@@ -97,10 +108,63 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         $accountingDuetrackerRepository = new AccountingDueTrackerRepository($this->client);
         return $accountingDuetrackerRepository->setPartner($request->partner)->getDueList($request);
     }
+
+    /**
+     * @param $request
+     * @return \Illuminate\Support\Collection
+     * @throws AccountingEntryServerError
+     */
     public function getDuelistByCustomerId($request){
-        $accountingDuetrackerRepository = new AccountingDueTrackerRepository($this->client);
-        $data = $accountingDuetrackerRepository->setPartner($request->partner)->getDueListByCustomer($request, $request->customerID);
-        $data['total_entry'] = count($data['list']);
-        return $data;
+
+        $url = "api/due-list/" . $request->customerId . "?";
+        $url = $this->updateRequestParam($request, $url);
+
+        $result = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
+        $due_list = collect($result['list']);
+        return $due_list;
+
+//        $accountingDuetrackerRepository = new AccountingDueTrackerRepository($this->client);
+//        $data = $accountingDuetrackerRepository->setPartner($request->partner)->getDueListByCustomer($request, $request->customerId);
+//        $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+//        $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
+//        $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->dueListBalanceByCustomer($request->customerId,$request);
+
+
+
+    }
+
+    private function updateRequestParam($request, string $url)
+    {
+        $order_by = $request->order_by;
+        if (!empty($order_by)) {
+            $order = !empty($request->order) ? strtolower($request->order) : 'desc';
+            $url .= "&order_by=$order_by&order=$order";
+        }
+
+        if ($request->has('balance_type')) {
+            $url .= "&balance_type=$request->balance_type";
+        }
+
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $url .= "&start_date=$request->start_date&end_date=$request->end_date";
+        }
+
+        if (($request->has('download_pdf')) && ($request->download_pdf == 1) ||
+            ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
+            return $url;
+        }
+
+        if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
+            $url .= "&filter_by_supplier=$request->filter_by_supplier";
+        }
+
+        if ($request->has('q')) {
+            $url .= "&q=$request->q";
+        }
+
+        if ($request->has('limit') && $request->has('offset')) {
+            $url .= "&limit=$request->limit&offset=$request->offset";
+        }
+        return $url;
     }
 }
