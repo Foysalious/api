@@ -78,14 +78,12 @@ class ReportsController extends Controller
                 $template = 'pos_product_wise_sales';
                 $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->saveExcel($name, $template);
                 return api_response($request, $link, 200, ['link' => $link]);
-            }
-            elseif ($request->has('save_pdf')) {
+            } elseif ($request->has('save_pdf')) {
                 $name = 'Product Wise Sales Report';
                 $template = 'pos_product_wise_sales';
                 $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->savePdf($name, $template);
                 return api_response($request, $link, 200, ['link' => $link]);
-            }
-            else {
+            } else {
                 $data = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData()->getData();
                 return api_response($request, $data, 200, ['result' => $data]);
             }
@@ -129,5 +127,61 @@ class ReportsController extends Controller
         $response = $this->accountingReportRepository->getAccountingReportsList();
         return api_response($request, $response, 200, ['data' => $response]);
 
+    }
+
+    public function getTransactionList(Request $request): JsonResponse
+    {
+        $response = '{
+              "code":200,
+              "message" :"Successful",
+              "data": {
+                    "26-01-2021": [
+                    {
+                    "name":"Foysal",
+                    "mobile":"01855570841",
+                    "amount":"15000",
+                    "transaction_id": "SSL-2412256",
+                    "transaction_gateway":"ssl",
+                    "is_reconciled":0
+                  },
+                  {
+                    "name":"Suniv",
+                    "mobile":"01833309495",
+                    "amount":"20000",
+                    "transaction_id": "SSL-2412250",
+                    "transaction_gateway":"nagad",
+                     "is_reconciled":1
+                  },
+                  {
+                    "name":"Suniv",
+                    "mobile":"01833309495",
+                    "amount":"20000",
+                    "transaction_id": "SSL-2412250",
+                    "transaction_gateway":"nagad",
+                     "is_reconciled":0
+                  }
+                  ],
+                  "27-01-2021": [{
+                    "name":"Foysal",
+                    "mobile":"01855570841",
+                    "amount":"15000",
+                    "transaction_id": "SSL-2412256",
+                    "transaction_gateway":"ssl",
+                     "is_reconciled":1
+                  },
+                  {
+                    "name":"Suniv",
+                    "mobile":"01833309495",
+                    "amount":"20000",
+                    "transaction_id": "SSL-2412250",
+                    "transaction_gateway":"nagad",
+                     "is_reconciled":1
+                  }
+                  ]
+                    
+                  }
+            }';
+//        return api_response($request, $response, 200, ['data' => $response]);
+        return response()->json($response);
     }
 }
