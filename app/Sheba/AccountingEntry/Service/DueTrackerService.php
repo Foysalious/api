@@ -344,7 +344,11 @@ class DueTrackerService
             $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueList($url_param,$request->partner->id);
             $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
             $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
-            $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->getDuelistBalance($request);
+
+            $query_string = $this->generateDueListSearchQueryString();
+            dd($query_string);
+            //////////////////////////////
+            $balanceData        = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistBalance($$request->partner->id, $query_string);
             $data               = array_merge($data, $balanceData);
             $pdf_link           = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile(
                 'due_tracker_due_list'
