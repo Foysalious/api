@@ -8,8 +8,6 @@ use App\Models\Member;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use App\Sheba\Business\Payslip\PayrunList;
-use App\Sheba\Business\Payslip\PendingMonths;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
@@ -92,7 +90,7 @@ class PayRunController extends Controller
         if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setScheduleDate($payslip->businessPayslip->scedule_date)->setPayrollComponent($payroll_components)->get();
         
         $payslip = collect($payslip)->splice($offset, $limit);
-        
+
         return api_response($request, null, 200, [
             'payslip' => $payslip,
             'payroll_components' => $payrun_list->getComponents($payroll_components),
@@ -101,23 +99,6 @@ class PayRunController extends Controller
             'total_calculation' => $payrun_list->getTotal(),
             'salary_month' => $payrun_list->getSalaryMonth()
         ]);
-    }
-
-    /**
-     * @param Request $request
-     * @param PendingMonths $pending_months
-     * @return JsonResponse
-     */
-    public function pendingMonths(Request $request, PendingMonths $pending_months)
-    {
-        /** @var Business $business */
-        $business = $request->business;
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        if (!$business_member) return api_response($request, null, 401);
-        $payroll_setting = $business->payrollSetting;
-        $get_pending_months = $pending_months->setBusiness($business)->get();
-        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'pending_months' => $get_pending_months, 'last_tax_report_generated_at' => $pending_months->getLastGeneratedTaxReport()]);
     }
 
     /**
