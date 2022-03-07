@@ -45,6 +45,7 @@ class AnnouncementV2Controller extends Controller
 
         $creator_requester->setType($request->type)
             ->setTitle($request->title)
+            ->setShortDescription($request->short_description)
             ->setDescription($request->description)
             ->setIsPublished($request->is_published)
             ->setTargetType($request->target_type)
@@ -130,6 +131,7 @@ class AnnouncementV2Controller extends Controller
         if (!$announcement) return api_response($request, null, 404);
         $creator_requester->setType($request->type)
             ->setTitle($request->title)
+            ->setShortDescription($request->short_description)
             ->setDescription($request->description)
             ->setIsPublished($request->is_published)
             ->setTargetType($request->target_type)

@@ -19,6 +19,7 @@ class CreatorRequester
     private $endTime;
     private $status;
     private $announcement;
+    private $shortDescription;
 
 
     public function setType($type)
@@ -42,6 +43,17 @@ class CreatorRequester
     public function getTitle()
     {
         return $this->title;
+    }
+
+    public function setShortDescription($short_description)
+    {
+        $this->shortDescription = $short_description;
+        return $this;
+    }
+
+    public function getShortDescription()
+    {
+        return $this->shortDescription;
     }
 
     public function setDescription($long_description)
@@ -115,7 +127,7 @@ class CreatorRequester
     public function setStartTime($start_time)
     {
         $this->startTime = $start_time;
-        if ($this->schduledFor == "now") $this->startTime = Carbon::now()->format("h:i:s");
+        if ($this->schduledFor == "now") $this->startTime = Carbon::now()->format("G:i:s");
         return $this;
     }
 
