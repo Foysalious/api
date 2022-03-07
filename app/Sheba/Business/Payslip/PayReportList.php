@@ -215,8 +215,8 @@ class PayReportList
         if (!$business_payslip) return null;
         $schedule_date = $business_payslip->schedule_date;
         return [
-            'value' => $schedule_date,
-            'viewValue' => Carbon::parse($schedule_date)->format('Y F')
+            'value' => Carbon::parse($schedule_date)->format('Y-m'),
+            'viewValue' => Carbon::parse($schedule_date)->format('F Y')
         ];
     }
 
