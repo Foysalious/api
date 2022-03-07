@@ -104,64 +104,37 @@ class DueTrackerRepositoryV2 extends AccountingRepository
 
     }
 
-    public function getDuelist($request){
-        $url = "api/due-list/?";
-        $url = $this->updateRequestParam($request, $url);
-        return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
+    /**
+     * @param $url_pram
+     * @param $partner_id
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function getDuelist($url_param, $partner_id){
+        $url = "api/due-list/?".$url_param;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
     }
 
+
     /**
-     * @param $request
+     * @param $url_param
+     * @param $customer_id
+     * @param $partner_id
      * @return \Illuminate\Support\Collection
      * @throws AccountingEntryServerError
      */
-    public function getDuelistByCustomerId($request){
+    public function getDuelistByCustomerId($url_param, $customer_id, $partner_id){
 
-        $url = "api/due-list/" . $request->customerId . "?";
-        $url = $this->updateRequestParam($request, $url);
+        $url = "api/due-list/" . $customer_id . "?".$url_param;
+        $result = $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
+        return collect($result['list']);
 
-        $result = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
-        $due_list = collect($result['list']);
-        return $due_list;
+    }
+    public function dueListBalanceByCustomer($url_param, $customerId, $partner_id){
+        $url = "api/due-list/" . $customerId . "/balance?";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
+
     }
 
-    /**
-     * @param $request
-     * @param string $url
-     * @return string
-     */
-    private function updateRequestParam($request, string $url): string
-    {
-        $order_by = $request->order_by;
-        if (!empty($order_by)) {
-            $order = !empty($request->order) ? strtolower($request->order) : 'desc';
-            $url .= "&order_by=$order_by&order=$order";
-        }
 
-        if ($request->has('balance_type')) {
-            $url .= "&balance_type=$request->balance_type";
-        }
-
-        if ($request->has('start_date') && $request->has('end_date')) {
-            $url .= "&start_date=$request->start_date&end_date=$request->end_date";
-        }
-
-        if (($request->has('download_pdf')) && ($request->download_pdf == 1) ||
-            ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
-            return $url;
-        }
-
-        if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
-            $url .= "&filter_by_supplier=$request->filter_by_supplier";
-        }
-
-        if ($request->has('q')) {
-            $url .= "&q=$request->q";
-        }
-
-        if ($request->has('limit') && $request->has('offset')) {
-            $url .= "&limit=$request->limit&offset=$request->offset";
-        }
-        return $url;
-    }
 }

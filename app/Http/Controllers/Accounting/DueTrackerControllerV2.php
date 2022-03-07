@@ -103,4 +103,8 @@ class DueTrackerControllerV2 extends Controller
          return api_response($request, null, 200, ['data' => $data]);
 
     }
+    public function dueListBalanceByCustomer(Request $request){
+        $data = $this->dueTrackerService->dueListBalanceByCustomer($request);
+        return api_response($request, null, 200, ['data' => $data]);
+    }
 }
