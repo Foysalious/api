@@ -92,7 +92,7 @@ class Updater
                 $previous_salary = $business_member->salary ? $business_member->salary->gross_salary : 0;
                 if ($previous_salary != $data['amount']) $grossBreakdown = $this->createGrossBreakdown($business_member, $data['amount']);
                 $this->salaryRequester->setBusinessMember($business_member)->setGrossSalary($data['amount'])->setBreakdownPercentage($grossBreakdown)->setManagerMember($this->managerMember)->createOrUpdate();
-                $this->payslipUpdater->setBusinessMember($business_member)->setGrossSalary($data['amount'])->setScheduleDate($data['schedule_date'])->setAddition($data['addition'])->setDeduction($data['deduction'])->update();
+                $this->payslipUpdater->setBusinessMember($business_member)->setSummaryId($this->summaryId)->setGrossSalary($data['amount'])->setScheduleDate($data['schedule_date'])->setAddition($data['addition'])->setDeduction($data['deduction'])->update();
             }
         });
         return true;

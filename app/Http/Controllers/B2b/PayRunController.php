@@ -9,12 +9,15 @@ use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepository;
+use Sheba\Dal\Payslip\Status;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
@@ -30,6 +33,8 @@ class PayRunController extends Controller
     private $payslipRepo;
     private $businessMemberRepository;
     private $payrunUpdater;
+    /*** @var BusinessPayslipRepository $businessPayslipRepo*/
+    private $businessPayslipRepo;
 
     /**
      * PayRunController constructor.
@@ -42,6 +47,7 @@ class PayRunController extends Controller
         $this->payslipRepo = $payslip_repo;
         $this->businessMemberRepository = $business_member_repository;
         $this->payrunUpdater = $payrun_updater;
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     /**
@@ -62,9 +68,13 @@ class PayRunController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
+        if ($request->has('month_year')) {
+            $business_pay_slip = $this->businessPayslipRepo->where('business_id', $business->id)->where('schedule_date', 'LIKE', '%'.$request->month_year.'%')->where('status', Status::PENDING)->first();
+            if (!$business_pay_slip) return api_response($request, null, 404);
+            $business_payslip_id = $business_pay_slip->id;
+        }
         $payslip = $payrun_list->setBusiness($business)
             ->setBusinessPayslipId($business_payslip_id)
-            //->setMonthYear($request->month_year)
             ->setDepartmentID($request->department_id)
             ->setSearch($request->search)
             ->setSortKey($request->sort)
@@ -79,16 +89,18 @@ class PayRunController extends Controller
         $addition_payroll_components = $business->payrollSetting->components->where('type', Type::ADDITION)->sortBy('name');
         $deduction_payroll_components = $business->payrollSetting->components->where('type', Type::DEDUCTION)->sortBy('name');
         $payroll_components = $addition_payroll_components->merge($deduction_payroll_components);
-        if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
+        if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setScheduleDate($payslip->businessPayslip->scedule_date)->setPayrollComponent($payroll_components)->get();
         
         $payslip = collect($payslip)->splice($offset, $limit);
 
+        $salary_month = $business_pay_slip->schedule_date;
         return api_response($request, null, 200, [
             'payslip' => $payslip,
             'payroll_components' => $payrun_list->getComponents($payroll_components),
             'total' => $count,
             'is_prorated_filter_applicable' => $payrun_list->getIsProratedFilterApplicable(),
             'total_calculation' => $payrun_list->getTotal(),
+            'salary_month' => $payrun_list->getSalaryMonth()
         ]);
     }
 
@@ -153,7 +165,7 @@ class PayRunController extends Controller
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
-        $this->payrunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
+        $this->payrunUpdater->setSummaryId($request->business_payslip_id)->setData($request->data)->setManagerMember($manager_member)->update();
 
         return api_response($request, null, 200);
     }
