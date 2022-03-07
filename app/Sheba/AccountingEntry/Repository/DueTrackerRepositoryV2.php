@@ -61,23 +61,23 @@ class DueTrackerRepositoryV2 extends AccountingRepository
      * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
      * @throws \Throwable
      */
-    public function getDuelistPdf($request)
-    {
-
-        $accountingDuetrackerRepository= new AccountingDueTrackerRepository($this->client);
-        $data = $accountingDuetrackerRepository->setPartner($request->partner)->getDueList($request);
-
-        $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-        $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
-        $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->getDuelistBalance($request);
-        $data               = array_merge($data, $balanceData);
-        $pdf_link           = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile(
-            'due_tracker_due_list'
-        )->save(true);
-
-        return $pdf_link;
-
-    }
+//    public function getDuelistPdf($request)
+//    {
+//
+//        $accountingDuetrackerRepository= new AccountingDueTrackerRepository($this->client);
+//        $data = $accountingDuetrackerRepository->setPartner($request->partner)->getDueList($request);
+//
+//        $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+//        $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
+//        $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->getDuelistBalance($request);
+//        $data               = array_merge($data, $balanceData);
+//        $pdf_link           = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile(
+//            'due_tracker_due_list'
+//        )->save(true);
+//
+//        return $pdf_link;
+//
+//    }
 
     /**
      * @param $request

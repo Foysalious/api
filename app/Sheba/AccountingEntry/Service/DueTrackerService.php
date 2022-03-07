@@ -301,6 +301,10 @@ class DueTrackerService
         $this->end_date = $end_date;
         return $this;
     }
+    /**
+     * @param $partner
+     * @return array
+     */
     private function getPartnerInfo($partner): array
     {
         return [
@@ -336,7 +340,18 @@ class DueTrackerService
     public function downloadPDF($request){
 
         if($request->customerID == null){
-            return $this->dueTrackerRepo->getDuelistPdf($request);
+            $url_param = $this->updateRequestParam($request);
+            $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueList($url_param,$request->partner->id);
+            $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+            $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
+            $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->getDuelistBalance($request);
+            $data               = array_merge($data, $balanceData);
+            $pdf_link           = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile(
+                'due_tracker_due_list'
+            )->save(true);
+
+            return $pdf_link;
+            //return $this->dueTrackerRepo->getDuelistPdf($request);
         }
         else return $this->dueTrackerRepo->getDuelistPdfByCustomerId($request);
 
@@ -421,9 +436,6 @@ class DueTrackerService
             'balance' => $result['balance']
         ];
     }
-    /**
-     * @param $partner
-     * @return array
-     */
+
 
 }
