@@ -18,6 +18,7 @@ class Creator
     private $pushNotification;
     /** @var CreatorRequester $creatorRequest */
     private $creatorRequest;
+    /** @var Business $business */
     private $business;
     private $businessMember;
     private $data = [];
@@ -57,14 +58,11 @@ class Creator
         $this->makeData();
         /** @var Announcement $announcement */
         $announcement = $this->announcementRepo->create($this->data);
-        if ($announcement->scheduled_for === ScheduledFor::NOW) $this->sendNotification($announcement);
-        return $announcement;
-    }
 
-    private function sendNotification($announcement)
-    {
-        $members_ids = $this->business->getActiveBusinessMember()->pluck('member_id')->toArray();
-        (new AnnouncementNotifications($members_ids, $announcement))->shoot();
+        if ($announcement->scheduled_for === ScheduledFor::NOW) {
+            (new TargetedNotification($this->business))->sendTargetedNotification($announcement);
+        }
+        return $announcement;
     }
 
     private function makeData()
