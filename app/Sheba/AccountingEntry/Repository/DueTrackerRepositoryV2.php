@@ -105,8 +105,9 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     }
 
     public function getDuelist($request){
-        $accountingDuetrackerRepository = new AccountingDueTrackerRepository($this->client);
-        return $accountingDuetrackerRepository->setPartner($request->partner)->getDueList($request);
+        $url = "api/due-list/?";
+        $url = $this->updateRequestParam($request, $url);
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
     }
 
     /**
@@ -122,18 +123,14 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->get($url);
         $due_list = collect($result['list']);
         return $due_list;
-
-//        $accountingDuetrackerRepository = new AccountingDueTrackerRepository($this->client);
-//        $data = $accountingDuetrackerRepository->setPartner($request->partner)->getDueListByCustomer($request, $request->customerId);
-//        $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-//        $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
-//        $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->dueListBalanceByCustomer($request->customerId,$request);
-
-
-
     }
 
-    private function updateRequestParam($request, string $url)
+    /**
+     * @param $request
+     * @param string $url
+     * @return string
+     */
+    private function updateRequestParam($request, string $url): string
     {
         $order_by = $request->order_by;
         if (!empty($order_by)) {

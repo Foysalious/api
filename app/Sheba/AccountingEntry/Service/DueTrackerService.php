@@ -1,8 +1,15 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
+use App\Sheba\Pos\Order\PosOrderObject;
+use Carbon\Carbon;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Dal\POSOrder\SalesChannels;
+use Sheba\Pos\Order\PosOrderResolver;
 use Sheba\Reports\PdfHandler;
+use Exception;
+
 
 class DueTrackerService
 {
@@ -252,6 +259,20 @@ class DueTrackerService
         $this->end_date = $end_date;
         return $this;
     }
+    /**
+     * @param null $orderId
+     * @return PosOrderObject
+     */
+    private function posOrderByOrderId($orderId)
+    {
+        try {
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            return $posOrderResolver->setOrderId($orderId)->get();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
 
     /**
      * @param $request
@@ -279,6 +300,34 @@ class DueTrackerService
         if($request->customerId == null){
             return $this->dueTrackerRepo->getDuelist($request);
         }
-        else return $this->dueTrackerRepo->getDuelistByCustomerId($request);
+        else{
+            $due_list = $this->dueTrackerRepo->getDuelistByCustomerId($request);
+            $list = $due_list->map(
+                function ($item) {
+                    if ($item["attachments"]) {
+                        $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
+                    }
+                    $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+                    $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+                    $pos_order = $item['source_id'] && $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
+                    $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
+                    if ($pos_order) {
+                        $item['source_type'] = 'PosOrder';
+                        $item['head'] = 'POS sales';
+                        $item['head_bn'] = 'সেলস';
+                        if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
+                            $item['source_type'] = 'Webstore Order';
+                            $item['head'] = 'Webstore sales';
+                            $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+                        }
+                    }
+                    return $item;
+                }
+            );
+            return [
+                'list' => $list
+            ];
+
+        }
     }
 }
