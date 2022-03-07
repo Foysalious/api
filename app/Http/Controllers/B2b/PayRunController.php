@@ -8,14 +8,15 @@ use App\Models\Member;
 use Sheba\Business\Payslip\PayslipExcel;
 use Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use App\Sheba\Business\Payslip\PayrunList;
-use App\Sheba\Business\Payslip\PendingMonths;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepository;
+use Sheba\Dal\Payslip\Status;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
@@ -31,7 +32,9 @@ class PayRunController extends Controller
 
     private $payslipRepo;
     private $businessMemberRepository;
-    private $payRunUpdater;
+    private $payrunUpdater;
+    /*** @var BusinessPayslipRepository $businessPayslipRepo*/
+    private $businessPayslipRepo;
 
     /**
      * PayRunController constructor.
@@ -43,7 +46,8 @@ class PayRunController extends Controller
     {
         $this->payslipRepo = $payslip_repo;
         $this->businessMemberRepository = $business_member_repository;
-        $this->payRunUpdater = $payrun_updater;
+        $this->payrunUpdater = $payrun_updater;
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     /**
@@ -62,9 +66,13 @@ class PayRunController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
         list($offset, $limit) = calculatePagination($request);
+        if ($request->has('month_year')) {
+            $business_pay_slip = $this->businessPayslipRepo->where('business_id', $business->id)->where('schedule_date', 'LIKE', '%'.$request->month_year.'%')->where('status', Status::PENDING)->first();
+            if (!$business_pay_slip) return api_response($request, null, 404);
+            $business_payslip_id = $business_pay_slip->id;
+        }
         $payslip = $payrun_list->setBusiness($business)
             ->setBusinessPayslipId($business_payslip_id)
-            //->setMonthYear($request->month_year)
             ->setDepartmentID($request->department_id)
             ->setSearch($request->search)
             ->setSortKey($request->sort)
@@ -95,24 +103,8 @@ class PayRunController extends Controller
             'total' => $count,
             'is_prorated_filter_applicable' => $payrun_list->getIsProratedFilterApplicable(),
             'total_calculation' => $payrun_list->getTotal(),
+            'salary_month' => $payrun_list->getSalaryMonth()
         ]);
-    }
-
-    /**
-     * @param Request $request
-     * @param PendingMonths $pending_months
-     * @return JsonResponse
-     */
-    public function pendingMonths(Request $request, PendingMonths $pending_months)
-    {
-        /** @var Business $business */
-        $business = $request->business;
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        if (!$business_member) return api_response($request, null, 401);
-        $payroll_setting = $business->payrollSetting;
-        $get_pending_months = $pending_months->setBusiness($business)->get();
-        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'pending_months' => $get_pending_months, 'last_tax_report_generated_at' => $pending_months->getLastGeneratedTaxReport()]);
     }
 
     /**
@@ -125,7 +117,7 @@ class PayRunController extends Controller
      * @throws WrongPinError
      * @throws PinMismatchException
      */
-    public function disburse(Request $request, VerifyPin $verifyPin)
+    public function disburse($business, $summary_id, Request $request, VerifyPin $verifyPin)
     {
         $this->validate($request, [
             'schedule_date' => 'required|date|date_format:Y-m'
@@ -139,7 +131,7 @@ class PayRunController extends Controller
         $this->setModifier($manager_member);
 
         $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setPurpose(Purpose::PAYSLIP_DISBURSE)->verify();
-        $this->payRunUpdater->setScheduleDate($request->schedule_date)->setBusiness($business)->disburse();
+        $this->payrunUpdater->setSummaryId($summary_id)->setBusiness($business)->disburse();
 
         return api_response($request, null, 200);
     }
@@ -159,7 +151,7 @@ class PayRunController extends Controller
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
-        $this->payRunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
+        $this->payrunUpdater->setSummaryId($request->business_payslip_id)->setData($request->data)->setManagerMember($manager_member)->update();
 
         return api_response($request, null, 200);
     }

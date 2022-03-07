@@ -6,6 +6,7 @@ use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate
 use App\Sheba\Business\Salary\Requester as SalaryRequester;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollComponent\TargetType;
@@ -24,14 +25,15 @@ class Updater
     private $managerMember;
     private $payslipUpdater;
     private $payslipRepository;
-    private $scheduleDate;
     private $business;
     private $businessMemberIds;
     private $payrollComponentRepository;
     /** @var GrossSalaryBreakdownCalculate $grossSalaryBreakdownCalculate */
     private $grossSalaryBreakdownCalculate;
     private $businessMemberRepository;
-    private $payslips;
+    private $summaryId;
+    /*** @var BusinessPayslipRepository*/
+    private $businessPayslipRepo;
 
 
     /**
@@ -50,6 +52,7 @@ class Updater
         $this->payrollComponentRepository = app(PayrollComponentRepository::class);
         $this->grossSalaryBreakdownCalculate = app(GrossSalaryBreakdownCalculate::class);
         $this->businessMemberRepository = app(BusinessMemberRepositoryInterface::class);
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     public function setData($data)
@@ -65,9 +68,9 @@ class Updater
         return $this;
     }
 
-    public function setScheduleDate($schedule_date)
+    public function setSummaryId($summary_id)
     {
-        $this->scheduleDate = $schedule_date;
+        $this->summaryId = $summary_id;
         return $this;
     }
 
@@ -89,7 +92,7 @@ class Updater
                 $previous_salary = $business_member->salary ? $business_member->salary->gross_salary : 0;
                 if ($previous_salary != $data['amount']) $grossBreakdown = $this->createGrossBreakdown($business_member, $data['amount']);
                 $this->salaryRequester->setBusinessMember($business_member)->setGrossSalary($data['amount'])->setBreakdownPercentage($grossBreakdown)->setManagerMember($this->managerMember)->createOrUpdate();
-                $this->payslipUpdater->setBusinessMember($business_member)->setGrossSalary($data['amount'])->setScheduleDate($data['schedule_date'])->setAddition($data['addition'])->setDeduction($data['deduction'])->update();
+                $this->payslipUpdater->setBusinessMember($business_member)->setSummaryId($this->summaryId)->setGrossSalary($data['amount'])->setScheduleDate($data['schedule_date'])->setAddition($data['addition'])->setDeduction($data['deduction'])->update();
             }
         });
         return true;
@@ -97,15 +100,8 @@ class Updater
 
     public function disburse()
     {
-        DB::transaction(function () {
-            $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)
-                ->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')
-                ->update([
-                    'status' => Status::DISBURSED,
-                    'disbursed_at' => Carbon::now()
-                ]);
-        });
-
+        $this->updateStatusOfBusinessPayslipSummary();
+        $this->updateStatusOfEmployeePayslip();
         $this->sendNotifications();
         return true;
     }
@@ -128,24 +124,43 @@ class Updater
             })->first();
 
             $percentage = floatval(json_decode($component->setting, 1)['percentage']);
-            array_push($data, [
+            $data[] = [
                 'id' => $component->id,
                 'name' => $component_name,
                 'title' => $component->is_default ? Components::getComponents($component_name)['value'] : $component->value,
                 "value" => $percentage,
                 "amount" => ((floatval($gross_salary) * $percentage) / 100),
-            ]);
+            ];
         }
         return json_encode($data);
     }
 
     public function sendNotifications()
     {
-        $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->where('schedule_date', 'like', '%' . $this->scheduleDate . '%')->get();
+        $payslips = $this->payslipRepository->where('business_payslip_id', $this->summaryId)->get();
         foreach ($payslips as $payslip) {
             $business_member = $this->businessMemberRepository->find($payslip->business_member_id);
             dispatch(new SendPayslipDisburseNotificationToEmployee($business_member, $payslip));
             dispatch(new SendPayslipDisbursePushNotificationToEmployee($business_member, $payslip));
         }
+    }
+
+    private function updateStatusOfEmployeePayslip()
+    {
+        DB::transaction(function () {
+            $this->payslipRepository->where('business_payslip_id', $this->summaryId)
+                ->update([
+                    'status' => Status::DISBURSED,
+                    'disbursed_at' => Carbon::now()
+                ]);
+        });
+    }
+
+    private function updateStatusOfBusinessPayslipSummary()
+    {
+        $this->businessPayslipRepo->find($this->summaryId)->update([
+            'status' => Status::DISBURSED,
+            'disbursed_at' => Carbon::now()
+        ]);
     }
 }

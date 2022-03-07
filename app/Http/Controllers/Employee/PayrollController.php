@@ -11,6 +11,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Illuminate\Support\Facades\Storage;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Payslip\Status;
@@ -22,18 +23,24 @@ class PayrollController extends Controller
 
     /*** @var PayslipRepository */
     private $payslipRepository;
+    /*** @var BusinessPayslipRepository $businessPayslipRepo*/
+    private $businessPayslipRepo;
 
     public function __construct(PayslipRepository $payslip_repository)
     {
         $this->payslipRepository = $payslip_repository;
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     public function downloadPayslip(Request $request, PayReportDetails $pay_report_details, TimeFrame $time_frame, PayReportPdfHandler $pay_report_pdf_handler)
     {
+        $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $time_period = $time_frame->forAMonth($request->month, $request->year);
-        $payslip = $this->payslipRepository->where('business_member_id', $business_member->id)->where('status', Status::DISBURSED)->whereBetween('schedule_date', [$time_period->start, $time_period->end])->first();
+        $business_payslip = $this->businessPayslipRepo->where('business_id', $business->id)->where('status', Status::DISBURSED)->whereBetween('schedule_date', [$time_period->start->toDateString(), $time_period->end->toDateString()])->first();
+        if (!$business_payslip) return api_response($request, null, 404);
+        $payslip = $this->payslipRepository->where('business_payslip_id', $business_payslip->id)->where('business_member_id', $business_member->id)->first();
         if (!$payslip) return api_response($request, null, 404);
         if ($request->send_email) {
             $pdf_link = $request->pdf_link;

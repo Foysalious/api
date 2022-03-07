@@ -38,7 +38,7 @@ class PayRunListTransformer extends TransformerAbstract
             'employee_id' => $business_member->employee_id ?: 'N/A',
             'employee_name' => $business_member->member->profile->name,
             'department' => $business_member_department,
-            'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
+            'schedule_date' => Carbon::parse($payslip->businessPayslip->schedule_date)->format('Y-m-d'),
             'schedule_type' => $payslip->generation_type,
             'gross_salary' => $this->grossSalary,
             'addition' => $this->getTotal($salary_breakdown, Type::ADDITION),
