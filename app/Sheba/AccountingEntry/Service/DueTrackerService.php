@@ -301,6 +301,14 @@ class DueTrackerService
         $this->end_date = $end_date;
         return $this;
     }
+    private function getPartnerInfo($partner): array
+    {
+        return [
+            'name' => $partner->name,
+            'avatar' => $partner->logo,
+            'mobile' => $partner->mobile,
+        ];
+    }
     /**
      * @param null $orderId
      * @return PosOrderObject
@@ -417,12 +425,5 @@ class DueTrackerService
      * @param $partner
      * @return array
      */
-    private function getPartnerInfo($partner): array
-    {
-        return [
-            'name' => $partner->name,
-            'avatar' => $partner->logo,
-            'mobile' => $partner->mobile,
-        ];
-    }
+
 }
