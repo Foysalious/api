@@ -92,8 +92,7 @@ class PayRunController extends Controller
         if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setScheduleDate($payslip->businessPayslip->scedule_date)->setPayrollComponent($payroll_components)->get();
         
         $payslip = collect($payslip)->splice($offset, $limit);
-
-        $salary_month = $business_pay_slip->schedule_date;
+        
         return api_response($request, null, 200, [
             'payslip' => $payslip,
             'payroll_components' => $payrun_list->getComponents($payroll_components),
