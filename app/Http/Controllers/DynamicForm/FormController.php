@@ -19,9 +19,27 @@ class FormController extends Controller
         $this->dynamicForm = $form;
     }
 
-    public function get(Request $request, $form_id): JsonResponse
+    /**
+     * @param Request $request
+     * @param $form_id
+     * @return JsonResponse
+     */
+    public function getSections(Request $request, $form_id): JsonResponse
     {
-        $data = $this->dynamicForm->setFormId($form_id)->getFormCategory();
+        $data = $this->dynamicForm->setForm($form_id)->getFormSections();
+        return http_response($request, null, 200, ['data' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $form_id
+     * @param $section_id
+     * @return JsonResponse
+     */
+    public function getSectionWiseFields(Request $request, $form_id, $section_id): JsonResponse
+    {
+        $partner = $request->auth_user->getPartner();
+        $data = $this->dynamicForm->setForm($form_id)->setPartner($partner)->setSection($section_id)->getSectionDetails();
         return http_response($request, null, 200, ['data' => $data]);
     }
 }

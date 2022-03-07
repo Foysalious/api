@@ -62,4 +62,12 @@ class CategoryDetails
         $this->categoryId = $categoryId;
         return $this;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
 }

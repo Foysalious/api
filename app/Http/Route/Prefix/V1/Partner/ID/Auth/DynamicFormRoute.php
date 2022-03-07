@@ -8,8 +8,8 @@ class DynamicFormRoute
     {
         $api->group(['prefix' => 'partners', 'middleware' => ['accessToken']], function ($api) {
             $api->group(['prefix' => 'dynamic-form'], function ($api) {
-                $api->get('/{form_id}', 'DynamicForm\\FormController@get');
-//                $api->post('/generate-qr', 'QRPayment\\QRPaymentController@generateQR');
+                $api->get('/{form_id}', 'DynamicForm\\FormController@getSections');
+                $api->get('/{form_id}/section/{section}', 'DynamicForm\\FormController@getSectionWiseFields');
             });
         });
     }

@@ -3,33 +3,21 @@
 namespace App\Sheba\DynamicForm;
 
 use Sheba\Dal\MefForm\Model as MefForm;
+use Sheba\Dal\MefSections\Model as MefSection;
 
 class DynamicForm
 {
-    private $form_id;
     private $form;
+    private $section;
+    private $partner;
 
-    /**
-     * @param mixed $form_id
-     * @return DynamicForm
-     */
-    public function setFormId($form_id): DynamicForm
+    public function setForm($form_id): DynamicForm
     {
-        $this->form_id = $form_id;
-        $form = MefForm::find($form_id);
-        $this->setForm($form);
+        $this->form = MefForm::find($form_id);
         return $this;
     }
 
-    /**
-     * @param mixed $form
-     */
-    public function setForm($form)
-    {
-        $this->form = $form;
-    }
-
-    public function getFormCategory(): array
+    public function getFormSections(): array
     {
         $categories = array();
         foreach ($this->form->sections as $section) {
@@ -38,5 +26,48 @@ class DynamicForm
                 ->setName($section->name, $section->bn_name)->toArray();
         }
         return ["category_list" => $categories];
+    }
+
+    public function getSectionDetails(): array
+    {
+        return [
+            "name"   => $this->getSectionNames(),
+            "fields" => $this->getSectionFields(),
+        ];
+    }
+
+    private function getSectionNames()
+    {
+        return (new CategoryDetails())->setName($this->section->name, $this->section->bn_name)->getName();
+    }
+
+    public function getSectionFields(): array
+    {
+        $fields = array();
+        $form_builder = (new FormFieldBuilder())->setPartner($this->partner);
+        foreach ($this->section->fields as $field)
+            $fields[] = $form_builder->setField($field)->build()->toArray();
+
+        return $fields;
+    }
+
+    /**
+     * @param mixed $partner
+     * @return DynamicForm
+     */
+    public function setPartner($partner): DynamicForm
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param mixed $section_id
+     * @return DynamicForm
+     */
+    public function setSection($section_id): DynamicForm
+    {
+        $this->section = MefSection::find($section_id);
+        return $this;
     }
 }
