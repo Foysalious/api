@@ -2,6 +2,7 @@
 
 namespace Sheba\EKYC;
 
+use App\Models\Partner;
 use App\Models\Resource;
 use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
@@ -142,10 +143,10 @@ class NidFaceVerification
 
     }
 
-    public function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
+    public function storeData($request, $avatar, $faceVerificationData, $profileNIDSubmissionRepo)
     {
         $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
+        $submitted_by = $avatar instanceof Partner ? get_class($request->auth_user->getResource()) : get_class($request->auth_user->getAffiliate());
         $faceVerify = null;
         $verificationStatus = "rejected";
         $rejectReasons = "Invalid Data";
@@ -207,12 +208,13 @@ class NidFaceVerification
 
     /**
      * @param $request
+     * @param $avatar
      * @param $profileNIDSubmissionRepo
      */
-    public function updateLivelinessCount($request, $profileNIDSubmissionRepo)
+    public function updateLivelinessCount($request, $avatar, $profileNIDSubmissionRepo)
     {
         $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
+        $submitted_by = $avatar instanceof Partner ? get_class($request->auth_user->getResource()) : get_class($request->auth_user->getAffiliate());
 
         $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
             ->where('submitted_by', $submitted_by)
