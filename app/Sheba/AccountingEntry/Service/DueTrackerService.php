@@ -13,6 +13,7 @@ use Sheba\Reports\PdfHandler;
 use Exception;
 
 
+
 class DueTrackerService
 {
     protected $partner;
@@ -50,6 +51,7 @@ class DueTrackerService
         $this->amount = $amount;
         return $this;
     }
+
 
     /**
      * @param mixed $entry_type
@@ -205,8 +207,8 @@ class DueTrackerService
      */
     public function getDueListBalance($request)
     {
-        //$query_string = $this->generateDueListSearchQueryString();
-        $result = $this->dueTrackerRepo->getDueListBalance($request->partner->id);
+        $query_string = $this->updateRequestParam($request);
+        $result = $this->dueTrackerRepo->getDueListBalance($request->partner->id,$query_string);
         return [
             'total_transactions' => $result['total_transactions'],
             'total' => $result['total'],
@@ -345,25 +347,38 @@ class DueTrackerService
      */
     public function downloadPDF($request){
 
-        if($request->customerID == null){
+        if($request->contact_type == "customer" && $request->contact_id == null){
             $url_param = $this->updateRequestParam($request);
             $data = $this->dueTrackerRepo->setPartner($request->partner)->getDueList($url_param,$request->partner->id);
+
             $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
             $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
 
-            $query_string = $this->generateDueListSearchQueryString();
-            dd($query_string);
-            //////////////////////////////
-            $balanceData        = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistBalance($$request->partner->id, $query_string);
+            $balanceData        = $this->getDueListBalance($request);
             $data               = array_merge($data, $balanceData);
+
             $pdf_link           = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile(
                 'due_tracker_due_list'
             )->save(true);
-
             return $pdf_link;
-            //return $this->dueTrackerRepo->getDuelistPdf($request);
         }
-        else return $this->dueTrackerRepo->getDuelistPdfByCustomerId($request);
+        else if ($request->contact_type == "customer" && $request->contact_id != null){
+                $url_param = $this->updateRequestParam($request);
+                $data = $this->dueTrackerRepo->setPartner($request->partner)->getDuelistByCustomerId($url_param,$request->contact_id, $request->partner->id);
+
+                $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+                $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
+                //$balanceData        = $this->dueTrackerRepo->setPartner($request->partner)->dueListBalanceByCustomer($url_param,$request->contact_id, $request->partner->id);
+
+                $balanceData        = $this->setCustomerId($request->contact_id)->dueListBalanceByCustomer($request);
+
+                $data               = array_merge($data, $balanceData);
+                $pdf_link           = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
+
+                return $pdf_link;
+
+//            return $this->dueTrackerRepo->getDuelistPdfByCustomerId($request);
+        }
 
     }
 
@@ -409,7 +424,7 @@ class DueTrackerService
     }
     public function dueListBalanceByCustomer($request){
         $url_param = $this->updateRequestParam($request);
-        $result = $this->dueTrackerRepo->dueListBalanceByCustomer($url_param,$request->customerId,$request->partner->id);
+        $result = $this->dueTrackerRepo->dueListBalanceByCustomer($url_param,$this->customer_id,$request->partner->id);
 
         $customer = [];
 

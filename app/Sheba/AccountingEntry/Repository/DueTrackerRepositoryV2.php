@@ -43,9 +43,9 @@ class DueTrackerRepositoryV2 extends AccountingRepository
      * @return array
      * @throws AccountingEntryServerError
      */
-    public function getDuelistBalance($partner_id): array
+    public function getDuelistBalance($partner_id,$query_string): array
     {
-        $url = "api/due-list/balance?";
+        $url = "api/due-list/balance?".$query_string;
         //$url=$this->updateRequestParam($request, $url);
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
 
@@ -102,21 +102,21 @@ class DueTrackerRepositoryV2 extends AccountingRepository
      * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
      * @throws \Throwable
      */
-    public function getDuelistPdfByCustomerId($request)
-    {
-
-        $accountingDuetrackerRepository = new AccountingDueTrackerRepository($this->client);
-        $data = $accountingDuetrackerRepository->setPartner($request->partner)->getDueListByCustomer($request, $request->customerID);
-
-        $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
-        $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
-        $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->dueListBalanceByCustomer($request->customerID,$request);
-        $data               = array_merge($data, $balanceData);
-        $pdf_link           = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
-
-       return $pdf_link;
-
-    }
+//    public function getDuelistPdfByCustomerId($request)
+//    {
+//
+//        $accountingDuetrackerRepository = new AccountingDueTrackerRepository($this->client);
+//        $data = $accountingDuetrackerRepository->setPartner($request->partner)->getDueListByCustomer($request, $request->customerID);
+//
+//        $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
+//        $data['end_date']   = $request->has("end_date") ? $request->end_date : null;
+//        $balanceData        = $accountingDuetrackerRepository->setPartner($request->partner)->dueListBalanceByCustomer($request->customerID,$request);
+//        $data               = array_merge($data, $balanceData);
+//        $pdf_link           = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
+//
+//       return $pdf_link;
+//
+//    }
 
     /**
      * @param $url_pram
@@ -140,12 +140,11 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     public function getDuelistByCustomerId($url_param, $customer_id, $partner_id){
 
         $url = "api/due-list/" . $customer_id . "?".$url_param;
-        $result = $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
-        return collect($result['list']);
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
 
     }
     public function dueListBalanceByCustomer($url_param, $customerId, $partner_id){
-        $url = "api/due-list/" . $customerId . "/balance?";
+        $url = "api/due-list/" . $customerId . "/balance?".$url_param;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
 
     }

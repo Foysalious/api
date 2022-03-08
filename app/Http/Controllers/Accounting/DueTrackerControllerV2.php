@@ -104,7 +104,7 @@ class DueTrackerControllerV2 extends Controller
 
     }
     public function dueListBalanceByCustomer(Request $request){
-        $data = $this->dueTrackerService->dueListBalanceByCustomer($request);
+        $data = $this->dueTrackerService->setCustomerId($request->customerId)->dueListBalanceByCustomer($request);
         return api_response($request, null, 200, ['data' => $data]);
     }
 }
