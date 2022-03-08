@@ -205,7 +205,7 @@ class DueTrackerService
      */
     public function getDueListBalance($request)
     {
-
+        //$query_string = $this->generateDueListSearchQueryString();
         $result = $this->dueTrackerRepo->getDueListBalance($request->partner->id);
         return [
             'total_transactions' => $result['total_transactions'],
