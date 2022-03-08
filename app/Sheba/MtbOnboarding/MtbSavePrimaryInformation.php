@@ -16,10 +16,15 @@ class MtbSavePrimaryInformation
      * @var MtbServerClient
      */
     private $client;
+    /**
+     * @var MtbAccountStatus
+     */
+    private $mtbAccountStatus;
 
-    public function __construct(MtbServerClient $client)
+    public function __construct(MtbServerClient $client,MtbAccountStatus $mtbAccountStatus)
     {
         $this->client = $client;
+        $this->mtbAccountStatus = $mtbAccountStatus;
     }
 
     public function setPartner(Partner $partner)
@@ -28,9 +33,8 @@ class MtbSavePrimaryInformation
         return $this;
     }
 
-    public function makePrimaryInformation()
-    {
-//        dd($this->partner->getFirstAdminResource()->profile);
+    private function makePrimaryInformation()
+    {dd($this->partner->getFirstAdminResource()->profile->nominee->name);
         return [
             'name' => $this->partner->getFirstAdminResource()->profile->name,
             'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
@@ -51,7 +55,6 @@ class MtbSavePrimaryInformation
             'addressLine1' => 'Mohakhali',
             'division' => 'Dhaka',
             'district' => 'Dhaka',
-
         ];
     }
 
@@ -59,10 +62,10 @@ class MtbSavePrimaryInformation
     {
         $data = $this->makePrimaryInformation();
         $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data);
-        $ticket_id = $response['ticketId'];
         $partnerMefInformation = PartnerMefInformation::where('partner_id', $this->partner->id)->first();
-        $partnerMefInformation->ticket_id = $ticket_id;
+        $partnerMefInformation->ticket_id = $response['ticketId'];
         $partnerMefInformation->save();
+        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
         return $response;
     }
 }

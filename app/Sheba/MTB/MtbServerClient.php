@@ -2,7 +2,6 @@
 
 use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
-use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
@@ -44,7 +43,8 @@ class MtbServerClient
     private function call($method, $uri, $data = null, $multipart = false)
     {
         try {
-            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
+            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri),
+                $this->getOptions($data, $multipart))->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
@@ -52,8 +52,8 @@ class MtbServerClient
             if ($http_code == 404) {
                 throw new NotFoundAndDoNotReportException($message, $http_code);
             }
-            if ($http_code > 399 && $http_code < 500) throw new PosOrderServiceServerError($message, $http_code);
-            throw new PosOrderServiceServerError($e->getMessage(), $http_code);
+            if ($http_code > 399 && $http_code < 500) throw new MtbServiceServerError($message, $http_code);
+            throw new MtbServiceServerError($e->getMessage(), $http_code);
         }
     }
 
