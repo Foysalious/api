@@ -173,11 +173,11 @@ class OrderRequestController extends Controller
             ini_set('memory_limit', '4096M');
             ini_set('max_execution_time', 660);
             $this->validate($request, ['resource_id' => 'int']);
-            $this->statusChanger->setPartnerOrderRequest($partner_order_request)->accept($request);
+            $partnerOrderId = $this->statusChanger->setPartnerOrderRequest($partner_order_request)->accept($request);
             if ($this->statusChanger->hasError()) return api_response($request, null, $this->statusChanger->getErrorCode(), [
                 'message' => $this->statusChanger->getErrorMessage()
             ]);
-            return api_response($request, null, 200);
+            return api_response($request, null, 200, ['partner_order_id' => $partnerOrderId]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

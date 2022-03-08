@@ -20,9 +20,10 @@ class ManagerSubordinateEmployeeList
     /**
      * @param $business_member
      * @param null $department
+     * @param null $is_employee_active
      * @return array
      */
-    public function get($business_member, $department = null)
+    public function get($business_member, $department = null, $is_employee_active = null)
     {
         $managers_data = [];
         $manager = new Manager();
@@ -44,7 +45,7 @@ class ManagerSubordinateEmployeeList
                     }
             }
         $managers_data = $this->uniqueManagerData($managers_data);
-        if ($department) return $this->filterEmployeeByDepartment($business_member, $managers_data);
+        if ($department) return $this->filterEmployeeByDepartment($business_member, $managers_data, $is_employee_active);
         return $managers_data;
     }
 
@@ -60,14 +61,16 @@ class ManagerSubordinateEmployeeList
     /**
      * @param $business_member
      * @param $managers_data
+     * @param $is_employee_active
      * @return array
      */
-    private function filterEmployeeByDepartment($business_member, $managers_data)
+    private function filterEmployeeByDepartment($business_member, $managers_data, $is_employee_active)
     {
         $filtered_unique_managers_data = $this->removeSpecificBusinessMemberIdFormUniqueManagersData($business_member, $managers_data);
 
         $data = [];
         foreach ($filtered_unique_managers_data as $manager) {
+            if ($is_employee_active && $manager['is_active'] == 0) continue;
             $data[$manager['department']][] = $manager;
         }
         return $data;
