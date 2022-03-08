@@ -22,12 +22,14 @@ class MtbServerClient
 
     /**
      * @param $uri
+     * @param $auth_type
      * @return mixed
      * @throws MtbServiceServerError
+     * @throws NotFoundAndDoNotReportException
      */
-    public function get($uri)
+    public function get($uri, $auth_type)
     {
-        return $this->call('get', $uri);
+        return $this->call('get', $uri, $auth_type);
     }
 
 
@@ -36,15 +38,17 @@ class MtbServerClient
      * @param $uri
      * @param null $data
      * @param bool $multipart
+     * @param $auth_type
      * @return mixed
      * @throws MtbServiceServerError
      * @throws NotFoundAndDoNotReportException
      */
-    private function call($method, $uri, $data = null, $multipart = false)
+    private function call($method, $uri, $auth_type, $data = null, $multipart = false)
     {
         try {
-            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri),
-                $this->getOptions($data, $multipart))->getBody()->getContents(), true);
+            $response = $this->client->request(strtoupper($method), $this->makeUrl($uri),
+                $this->getOptions($auth_type, $data, $multipart))->getBody()->getContents();
+            return json_decode($response, true);
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
@@ -81,12 +85,27 @@ class MtbServerClient
         }
     }
 
-    private function getOptions($data = null, $multipart = false)
+    /**
+     * @param $data
+     * @param bool $multipart
+     * @param $auth_type
+     * @return array
+     */
+    private function getOptions($auth_type, $data = null, $multipart = false): array
     {
         $options['headers'] = [
             'Accept' => 'application/json',
-            'Authorization' => 'Bearer ' . $this->getMtbBearerToken(),
         ];
+        if ($auth_type === AuthTypes::BARER_TOKEN) {
+            $options['headers'] = (array_merge($options['headers'], ['Authorization' => 'Bearer '. $this->getMtbBearerToken() ]));
+        } elseif ($auth_type === AuthTypes::BASIC_AUTH_TYPE) {
+            $orgId = config('mtb.sheba_organization_id');
+            $username = config('mtb.sheba_username');
+            $password = config('mtb.sheba_password');
+            $options['headers'] = (array_merge($options['headers'], ['OrgId' => $orgId]));
+            $options['auth'] = [$username, $password];
+        }
+
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;
