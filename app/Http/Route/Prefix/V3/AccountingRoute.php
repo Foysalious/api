@@ -9,6 +9,9 @@ class AccountingRoute
                 $api->get('/due-list-balance', 'Accounting\\DueTrackerControllerV2@getDueListBalance');
                 $api->get('/search-due-list', 'Accounting\\DueTrackerControllerV2@searchDueList');
                 $api->get('/download-pdf', 'Accounting\\DueTrackerControllerV2@downloadPdf');
+                $api->get('/due-list', 'Accounting\\DueTrackerControllerV2@dueList');
+                $api->get('/due-list/{customerId}', 'Accounting\\DueTrackerControllerV2@dueList');
+                $api->get('/due-list/{customerId}/balance', 'Accounting\\DueTrackerControllerV2@dueListBalanceByCustomer');
 
             });
         });
