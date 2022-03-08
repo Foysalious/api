@@ -10,6 +10,7 @@ class DynamicFormRoute
             $api->group(['prefix' => 'dynamic-form'], function ($api) {
                 $api->get('/{form_id}', 'DynamicForm\\FormController@getSections');
                 $api->get('/{form_id}/section/{section}', 'DynamicForm\\FormController@getSectionWiseFields');
+                $api->post('/{form_id}/section/{section}', 'DynamicForm\\FormController@postSectionWiseFields');
             });
         });
     }
