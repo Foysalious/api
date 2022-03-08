@@ -180,32 +180,6 @@ class NidFaceVerification
         }
     }
 
-    public function storePendingData($request, $profileNIDSubmissionRepo)
-    {
-        $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
-
-        $requestedData = [
-            'nid' => $request->nid,
-            'dob' => $request->dob,
-        ];
-        $requestedData = json_encode($requestedData);
-
-        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
-            ->where('submitted_by', $submitted_by)
-            ->where('nid_no', $request->nid)
-            ->orderBy('id', 'desc')->first();
-
-        if ($porichoyNIDSubmission) {
-            $porichoyNIDSubmission->update([
-                'porichoy_request'    => $requestedData,
-                "verification_status" => "rejected",
-                "rejection_reasons"   => null,
-                'created_at'          => Carbon::now()->toDateTimeString()
-            ]);
-        }
-    }
-
     /**
      * @param $request
      * @param $avatar
