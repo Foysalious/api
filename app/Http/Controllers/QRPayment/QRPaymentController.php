@@ -5,7 +5,7 @@ namespace App\Http\Controllers\QRPayment;
 use App\Http\Controllers\Controller;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\QRPayment\DTO\QRGeneratePayload;
-use App\Sheba\QRPayment\QRPayment;
+use App\Sheba\QRPayment\QRPayableGenerator;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\QRPayment\QRValidator;
 use Illuminate\Http\JsonResponse;
@@ -18,20 +18,20 @@ class QRPaymentController extends Controller
 {
     /**
      * @param Request $request
-     * @param QRPayment $QRPayment
+     * @param QRPayableGenerator $QRPayableAdapter
      * @return JsonResponse
      * @throws QRException|PosOrderServiceServerError
      */
-    public function generateQR(Request $request, QRPayment $QRPayment): JsonResponse
+    public function generateQR(Request $request, QRPayableGenerator $QRPayableAdapter): JsonResponse
     {
         $this->validate($request, QRPaymentStatics::getValidationForQrGenerate());
         $partner = $request->auth_user->getPartner();
         $data = array_only($request->all(), QRPaymentStatics::qrGenerateKeys());
         $data = new QRGeneratePayload($data);
-        $qr_payment = $QRPayment->setPartner($partner)->setData($data)->generate();
+        $qr_payble = $QRPayableAdapter->setPartner($partner)->setData($data)->getQrPayable();
         return http_response($request, null, 200, ["qr" => [
-            "qr_code" => $qr_payment->getQrString(),
-            "qr_id" => $qr_payment->getQrId()
+            "qr_code" => $qr_payble->qr_string,
+            "qr_id" => $qr_payble->qr_id
         ]]);
     }
 
@@ -47,7 +47,7 @@ class QRPaymentController extends Controller
     public function validatePayment($payment_method, Request $request, QRValidator $validator): JsonResponse
     {
         $this->validate($request, QRPaymentStatics::getValidationForValidatePayment());
-        $validator->setResponse($request->all())->setGateway($payment_method)
+        $validator->setRequest($request->all())->setGateway($payment_method)
             ->setQrId($request->qr_id)->setAmount($request->amount)->setMerchantId($request->merchant_id)->complete();
         return http_response($request, null, 200);
     }

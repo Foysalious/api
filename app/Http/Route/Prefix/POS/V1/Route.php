@@ -40,6 +40,14 @@ class Route
              */
 
             /**
+             * App Secret Authentication
+             */
+            $api->get('partner-wise-order-ids', 'PosOrder\OrderController@getPartnerWiseOrderIds');
+            /**
+             * End of App Secret Authentication
+             */
+
+            /**
              * IP Whitelist Middleware
              */
             $api->group(['middleware' => ['ip.whitelist']], function ($api) {
@@ -202,7 +210,7 @@ class Route
                 $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformationV2');
             });
             /**
-             * End jwtAccessToken Middleware
+             * End sdelivery route
              */
         });
     }
