@@ -26,17 +26,31 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         parent::__construct($client);
     }
 
+//    /**
+//     * @throws AccountingEntryServerError
+//     */
+//    public function getDueListBalance($userId, $query_params, $userType = UserType::PARTNER)
+//    {
+//        try {
+//            return $this->client->setUserType($userType)->setUserId($userId)
+//                ->get("api/v2/due-tracker/due-list-balance?" . $query_params);
+//        } catch (AccountingEntryServerError $e) {
+//            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
+//        }
+//    }
     /**
+     * @param $request
+     * @return array
      * @throws AccountingEntryServerError
      */
-    public function getDueListBalance($userId, $query_params, $userType = UserType::PARTNER)
+    public function getDuelistBalance($partner_id): array
     {
-        try {
-            return $this->client->setUserType($userType)->setUserId($userId)
-                ->get("api/v2/due-tracker/due-list-balance?" . $query_params);
-        } catch (AccountingEntryServerError $e) {
-            throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
-        }
+        $url = "api/due-list/balance?";
+        //$url=$this->updateRequestParam($request, $url);
+        $result = $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
+
+        return $result;
+
     }
 
     /**

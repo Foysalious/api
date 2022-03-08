@@ -203,10 +203,16 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
-    public function getDueListBalance()
+    public function getDueListBalance($request)
     {
-        $query_string = $this->generateDueListSearchQueryString();
-        return $this->dueTrackerRepo->getDueListBalance($this->partner->id, $query_string);
+
+        $result = $this->dueTrackerRepo->getDueListBalance($request->partner->id);
+        return [
+            'total_transactions' => $result['total_transactions'],
+            'total' => $result['total'],
+            'stats' => $result['stats'],
+            'partner' => $this->getPartnerInfo($request->partner),
+        ];
     }
 
     /**
