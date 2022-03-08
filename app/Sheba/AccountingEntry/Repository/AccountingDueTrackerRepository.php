@@ -317,6 +317,11 @@ class AccountingDueTrackerRepository extends BaseRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
+    /**
+     * @param $pos_orders
+     * @return mixed
+     * @throws \App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError
+     */
     private function getPartnerWise($pos_orders)
     {
         /** @var OrderServiceAlias $orderService */
