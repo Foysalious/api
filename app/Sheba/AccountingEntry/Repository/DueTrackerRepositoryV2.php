@@ -40,7 +40,7 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @throws AccountingEntryServerError
      */
-    public function searchDueList($query_params, $userType = UserType::PARTNER)
+    public function getDueListFromAcc($query_params, $userType = UserType::PARTNER)
     {
          $uri = "api/v2/due-tracker/due-list?" . $query_params;
          try {
@@ -48,17 +48,6 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         } catch (AccountingEntryServerError $e) {
             throw new AccountingEntryServerError($e->getMessage(), $e->getCode());
         }
-    }
-
-
-    /**
-     * @param $url_param
-     * @return mixed
-     * @throws AccountingEntryServerError
-     */
-    public function getDuelist($url_param, $userType = UserType::PARTNER){
-        $url = "api/due-list/?".$url_param;
-        return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
     }
 
 

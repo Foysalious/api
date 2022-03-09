@@ -245,10 +245,11 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
-    public function searchDueList()
+    public function getDueList()
     {
         $queryString = $this->generateQueryString();
-        return $this->dueTrackerRepo->setPartner($this->partner)->searchDueList($this->partner->id, $queryString);
+        return $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
+
     }
 
     /**
