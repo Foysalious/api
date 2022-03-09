@@ -1,7 +1,7 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
 use App\Models\Partner;
-use App\Models\PartnerMefInformation;
+use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use App\Sheba\MTB\MtbServerClient;
 
 class MtbSaveNomineeInformation
