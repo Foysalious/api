@@ -56,7 +56,7 @@ class FaceVerificationController extends Controller
             $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
             $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
-            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->nidFaceVerification->beforePorichoyCallChanges($profile, $avatar);
             $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
             $data = $this->getFaceVerificationDataFromEkyc($request, $avatar, $requestedData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, $data);

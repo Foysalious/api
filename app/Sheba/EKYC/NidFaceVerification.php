@@ -74,11 +74,14 @@ class NidFaceVerification
         }
     }
 
-    public function beforePorichoyCallChanges($profile)
+    public function beforePorichoyCallChanges($profile, $avatar)
     {
         $this->profileRepo->increase_verification_request_count($profile);
-        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->setToPendingStatus();
-        elseif(isset($profile->affiliate)) (new AffiliateRepository())->updateVerificationStatusToPending($profile->affiliate);
+        if($avatar instanceof Partner) {
+            (new ResourceRepository($profile->resource))->setToPendingStatus();
+        } else {
+            (new AffiliateRepository())->updateVerificationStatusToPending($profile->affiliate);
+        }
     }
 
     /**
