@@ -152,14 +152,18 @@ class CoWorkerController extends Controller
             return api_response($request, $department_info, 200, ['department_info' => $department_info]);
         }
 
-        if ($request->filled('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
-        if ($request->filled('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+        $business_members = $business_members->with('salary');
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $employees = new Collection($business_members->get(), new CoWorkerListTransformer());
-        $employees = collect($manager->createData($employees)->toArray()['data']);
-
+        $employees_array = $manager->createData($employees)->toArray()['data'];
+        usort($employees_array, function ($item1, $item2) {
+            return $item1['sort_order'] <=> $item2['sort_order'];
+        });
+        $employees = collect($employees_array);
         $employees = $this->coWorkerInfoSort->sortCoworkerInList($employees, $request);
         $employees = $this->coWorkerInfoFilter->filterCoworkerInList($employees, $request);
 
