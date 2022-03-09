@@ -129,15 +129,22 @@ class AccountingDueTrackerRepository extends BaseRepository
             }
             $due_list[$key]['partner_wise_order_id']= null;
         }
-
         if (count($pos_orders) > 0) {
             $orders = $this->getPartnerWise($pos_orders)['orders'];
         }
 
         foreach ($due_list as $key => $val) {
             if ($val['source_id'] && $val['source_type'] == EntryTypes::POS && count($orders) > 0) {
-
-                $due_list[$key]['partner_wise_order_id'] = $orders[$val['source_id']]['partner_wise_order_id'];
+                $order = $orders[$val['source_id']];
+                $due_list[$key]['partner_wise_order_id'] = $order['partner_wise_order_id'];
+                $due_list[$key]['source_type'] = 'PosOrder';
+                $due_list[$key]['head'] = 'POS sales';
+                $due_list[$key]['head_bn'] = 'সেলস';
+                if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
+                    $due_list[$key]['source_type'] = 'Webstore Order';
+                    $due_list[$key]['head'] = 'Webstore sales';
+                    $due_list[$key]['head_bn'] = 'ওয়েবস্টোর সেলস';
+                }
             }
         }
         return [
