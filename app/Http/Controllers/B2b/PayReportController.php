@@ -101,6 +101,18 @@ class PayReportController extends Controller
         return api_response($request, null, 200, ['pay_report_detail' => $pay_report_detail]);
     }
 
+    public function lastDisbursedMonth(Request $request, PayReportList $pay_report_list)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $last_disbursed_month = $pay_report_list->setBusiness($business)->getDisbursedMonth();
+
+        return api_response($request, null, 200, ['last_disbursed_month' => $last_disbursed_month]);
+    }
+
     /**
      * @param Request $request
      * @param PayReportList $pay_report_list
