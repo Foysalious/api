@@ -122,14 +122,16 @@ class PayRunController extends Controller
     }
 
     /**
+     * @param $business
+     * @param $summary_id
      * @param Request $request
      * @param VerifyPin $verifyPin
      * @return JsonResponse
-     * @throws DoNotReportException
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
-     * @throws WrongPinError
+     * @throws DoNotReportException
      * @throws PinMismatchException
+     * @throws WrongPinError
      */
     public function disburse($business, $summary_id, Request $request, VerifyPin $verifyPin)
     {
