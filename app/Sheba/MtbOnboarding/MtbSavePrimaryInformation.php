@@ -39,7 +39,7 @@ class MtbSavePrimaryInformation
     }
 
     private function makePrimaryInformation()
-    {dd(base64_encode(file_get_contents('https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/pro_pic_1582012687_pro_pic_image_109855.jpeg')));
+    {
         return [
             'name' => $this->partner->getFirstAdminResource()->profile->name,
             'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
