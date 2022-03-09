@@ -4,7 +4,7 @@ namespace App\Sheba\QRPayment;
 
 class QRPaymentStatics
 {
-    const MTB_VALIDATE_URL = "retailfin/wqr/api/gettxndata?";
+    const MTB_VALIDATE_URL = "retailfinqr/wqr/api/gettxndata?";
 
     public static function gatewayVisibleKeys(): array
     {
