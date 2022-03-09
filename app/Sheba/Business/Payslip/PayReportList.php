@@ -124,6 +124,13 @@ class PayReportList
         return $this;
     }
 
+    public function getDisbursedMonth()
+    {
+        $payslip = $this->businessPayslipRepo->where('business_id', $this->business->id)->where('status', Status::DISBURSED)->select('schedule_date')->orderBy('schedule_date', 'DESC')->first();
+        if (!$payslip) return null;
+        return Carbon::parse($payslip->schedule_date)->format('Y-m');
+    }
+
     /**
      * @return \Illuminate\Support\Collection
      */
