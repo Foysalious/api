@@ -15,4 +15,5 @@ class EntryTypes
     const INVENTORY = "inventory";
     const PAYMENT_LINK = "payment_link";
     const POS = "pos";
+    const QR_PAYMENT = "qr_payment";
 }

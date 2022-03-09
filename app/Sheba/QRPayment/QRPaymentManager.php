@@ -120,41 +120,38 @@ class QRPaymentManager extends PaymentManager
      */
     public function accountingEntry()
     {
-        $this->storeAccountingEntry($this->payable->target_id, EntryTypes::PAYMENT_LINK);
+        $this->storeAccountingEntry($this->payable->type_id);
     }
 
     /**
-     * @param $source_id
-     * @param $source_type
+     * @param $target_id
      * @return bool|mixed
      * @throws AccountingEntryServerError
      */
-    protected function storeAccountingEntry($source_id, $source_type)
+    protected function storeAccountingEntry($target_id)
     {
-        $payload = $this->makeAccountingData($source_id, $source_type);
+        $payload = $this->makeAccountingData($target_id);
         /** @var AccountingRepository $accounting_repo */
         $accounting_repo = app()->make(AccountingRepository::class);
-        return $accounting_repo->storeEntry((object)$payload, EntryTypes::PAYMENT_LINK);
+        return $accounting_repo->storeEntry((object)$payload, EntryTypes::QR_PAYMENT);
     }
 
     /**
-     * @param $source_id
-     * @param $source_type
+     * @param $target_id
      * @return array
      */
-    private function makeAccountingData($source_id, $source_type): array
+    private function makeAccountingData($target_id): array
     {
         $data['customer_id'] = $this->payable->user_id;
         $data['amount'] = $this->payable->amount;
         $data['amount_cleared'] = $this->payable->amount;
         $data['entry_at'] = Carbon::now()->format('Y-m-d H:i:s');
         $data['interest'] = 0;
-        $data['source_id'] = $source_id;
-        $data['source_type'] = $source_type;
-        $data['to_account_key'] = (new Accounts())->asset->cash::SSL;
-        $data['from_account_key'] = (new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_PAYMENT_LINK;
-        $data['payment_type'] = "qr";
-        $data["payment_id"] = $this->qrPayment->id;
+        $data['target_id'] = $target_id;
+        $data['source_id'] = $this->qrPayment->id;
+        $data['source_type'] = EntryTypes::QR_PAYMENT;
+        $data['to_account_key'] = $this->qrPayment->qrGateway->method_name;
+        $data['from_account_key'] = (new Accounts())->income->incomeFromPaymentLink::INCOME_FROM_QR;
         $data['partner'] = $this->payable->payee_id;
         return $data;
     }
