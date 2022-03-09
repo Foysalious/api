@@ -5,12 +5,15 @@ namespace App\Sheba\QRPayment;
 use App\Models\Payable;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\AccountingRepository;
+use App\Sheba\QRPayment\Methods\QRPaymentMethod;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\PaymentManager;
 use Sheba\Payment\Statuses;
 use Throwable;
@@ -21,6 +24,7 @@ class QRPaymentManager extends PaymentManager
     private $payable;
     /*** @var QRPaymentModel */
     private $qrPayment;
+    private $method;
 
     /**
      * @param mixed $qr_payment
@@ -43,13 +47,15 @@ class QRPaymentManager extends PaymentManager
     }
 
     /**
-     * @param mixed $method
-     * @return QRPaymentManager
+     * @param $method_name
+     * @return QRPaymentMethod|void
+     * @throws InvalidPaymentMethod
      */
-    public function setMethod($method): QRPaymentManager
+    public function getQRMethod($method_name)
     {
-        $this->method = $method;
-        return $this;
+        if ($this->method) return $this->method;
+        $this->method = PaymentStrategy::getQRMethod($method_name);
+        return $this->method;
     }
 
     /**
