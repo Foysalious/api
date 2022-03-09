@@ -8,7 +8,7 @@ class AccountingRoute
             $api->group(['prefix' => 'due-tracker'], function ($api) {
                 $api->get('/due-list-balance', 'Accounting\\DueTrackerControllerV2@getDueListBalance');
                 $api->get('/due-list', 'Accounting\\DueTrackerControllerV2@dueList');
-                $api->get('/due-list/{contactId}/balance', 'Accounting\\DueTrackerControllerV2@dueListBalanceByCustomer');
+                $api->get('/due-list/{contactId}/balance', 'Accounting\\DueTrackerControllerV2@dueListBalanceByContact');
                 $api->get('/due-list/{contactId}', 'Accounting\\DueTrackerControllerV2@dueListByContact');
                 $api->get('/download-pdf', 'Accounting\\DueTrackerControllerV2@downloadPdf');
             });

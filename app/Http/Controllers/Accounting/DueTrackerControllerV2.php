@@ -74,18 +74,37 @@ class DueTrackerControllerV2 extends Controller
             ->getDueList();
         return api_response($request, null, 200, ['data' => $data]);
     }
+    public function dueListByContact(Request $request){
+        $data=$this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contactId)
+            ->setOrder($request->order)
+            ->setOrderBy($request->order_by)
+            ->setBalanceType($request->balance_type)
+            ->setQuery($request->q)
+            ->setOffset($request->offset)
+            ->setLimit($request->limit)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->dueListByContact();
+        return api_response($request, null, 200, ['data' => $data]);
 
+
+    }
     /**
      * @param Request $request
      * @return JsonResponse
      */
-    public function dueListBalanceByCustomer(Request $request): JsonResponse
+    public function dueListBalanceByContact(Request $request): JsonResponse
     {
         $data = $this->dueTrackerService
-            ->setCustomerId($request->customerId)
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contactId)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->dueListBalanceByCustomer($request);
+            ->dueListBalanceByContact();
         return api_response($request, null, 200, ['data' => $data]);
     }
 

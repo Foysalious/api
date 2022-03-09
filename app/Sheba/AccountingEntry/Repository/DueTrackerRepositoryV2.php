@@ -2,6 +2,7 @@
 
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 use Sheba\Reports\PdfHandler;
@@ -54,7 +55,7 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @param $contact_id
      * @param $url_param
-     * @return \Illuminate\Support\Collection
+     * @return Collection
      * @throws AccountingEntryServerError
      */
     public function getDuelistByContactId($contact_id, $url_param, $userType = UserType::PARTNER){
@@ -70,7 +71,7 @@ class DueTrackerRepositoryV2 extends AccountingRepository
      * @throws AccountingEntryServerError
      */
     public function dueListBalanceByContact($contact_id, $url_param,  $userType = UserType::PARTNER){
-        $url = "api/due-list/" . $contact_id . "/balance?".$url_param;
+        $url = "api/v2/due-tracker/due-list/" . $contact_id . "/balance?".$url_param;
         return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
     }
 
