@@ -160,7 +160,6 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         $customer = [];
-
         if (is_null($result['customer'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
@@ -178,8 +177,8 @@ class AccountingDueTrackerRepository extends BaseRepository
             $customer['id'] = $result['customer']['id'];
             $customer['name'] = $result['customer']['name'];
             $customer['mobile'] = $result['customer']['mobile'];
-            $customer['avatar'] = $result['customer']['pro_pic'];
-            $customer['due_date_reminder'] = $result['customer']['due_date_reminder'];
+            $customer['avatar'] = $result['customer']['proPic'];
+            $customer['due_date_reminder'] = $result['customer']['dueDateReminder'];
             $customer['is_supplier'] = isset($result['customer']['is_supplier']) ?? 0;
         }
 
