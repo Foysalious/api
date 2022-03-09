@@ -2,6 +2,7 @@
 
 namespace Sheba\EKYC;
 
+use App\Models\Partner;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use Illuminate\Http\Request;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
@@ -34,10 +35,19 @@ class NidOcr
         return $data;
     }
 
-    public function storeData($request, $nid_ocr_data, $nid_no, $user_agent, $profile, $business_name = "sManager", $feature_name = "NID Verification")
+    /**
+     * @param $request
+     * @param $nid_ocr_data
+     * @param $nid_no
+     * @param $user_agent
+     * @param $avatar
+     * @param string $business_name
+     * @param string $feature_name
+     */
+    public function storeData($request, $nid_ocr_data, $nid_no, $user_agent, $avatar, $business_name = "sManager", $feature_name = "NID Verification")
     {
         $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = $profile->resource ? get_class($request->auth_user->getResource()) : get_class($request->auth_user->getAffiliate());
+        $submitted_by = $avatar instanceof Partner ? get_class($request->auth_user->getResource()) : get_class($request->auth_user->getAffiliate());
         $ocrData = $nid_ocr_data['data'];
         $ocrData = json_encode(array_except($ocrData, ['id_front_name', 'id_back_name']));
         $log = "NID submitted by the user";
