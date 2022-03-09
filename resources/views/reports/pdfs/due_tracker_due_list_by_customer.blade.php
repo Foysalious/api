@@ -34,7 +34,7 @@
     @endif
     <table style="width: 100%;line-height: 1">
         <tr>
-            <td style="width: 65%"> Customer name: {{ $customer["name"]}}</td>
+            <td style="width: 65%"> Customer name: {{ $contact_details["name"]}}</td>
             <td style="width: 35%">Number of Transactions: {{$other_info["total_transactions"]}}</td>
         </tr>
     </table>
