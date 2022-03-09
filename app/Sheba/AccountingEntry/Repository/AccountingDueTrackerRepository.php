@@ -179,7 +179,7 @@ class AccountingDueTrackerRepository extends BaseRepository
             $customer['mobile'] = $result['customer']['mobile'];
             $customer['avatar'] = $result['customer']['proPic'];
             $customer['due_date_reminder'] = $result['customer']['dueDateReminder'];
-            $customer['is_supplier'] = isset($result['customer']['is_supplier']) ?? 0;
+            $customer['is_supplier'] = 0;
         }
 
         $total_debit = $result['other_info']['total_debit'];
