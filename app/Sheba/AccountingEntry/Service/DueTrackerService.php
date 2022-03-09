@@ -259,11 +259,10 @@ class DueTrackerService
     public function dueListBalanceByContact(): array
     {
         $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->customer_id, $queryString);
-
+        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contactId, $queryString);
         $customer = [];
 
-        if (is_null($result['customer'])) {
+        if (is_null($result['contact_details'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
             $posCustomer = $posCustomerResolver->setCustomerId($this->customer_id)->setPartner($this->partner)->get();
@@ -275,21 +274,19 @@ class DueTrackerService
             $customer['mobile'] = $posCustomer->mobile;
             $customer['avatar'] = $posCustomer->pro_pic;
             $customer['due_date_reminder'] = null;
-            $customer['is_supplier'] = $posCustomer->is_supplier;
         } else {
-            $customer['id'] = $result['customer']['id'];
-            $customer['name'] = $result['customer']['name'];
-            $customer['mobile'] = $result['customer']['mobile'];
-            $customer['avatar'] = $result['customer']['proPic'];
-            $customer['due_date_reminder'] = $result['customer']['dueDateReminder'];
-            $customer['is_supplier'] = $result['customer']['isSupplier'] ? 1 : 0;
+            $customer['id'] = $result['contact_details']['id'];
+            $customer['name'] = $result['contact_details']['name'];
+            $customer['mobile'] = $result['contact_details']['mobile'];
+            $customer['avatar'] = $result['contact_details']['pro_pic'];
+            $customer['due_date_reminder'] = $result['contact_details']['due_date_reminder'];
         }
 
         $total_debit = $result['other_info']['total_debit'];
         $total_credit = $result['other_info']['total_credit'];
         $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
         return [
-            'customer' => $customer,
+            'contact_details' => $customer,
             'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
@@ -352,7 +349,7 @@ class DueTrackerService
         $data['start_date'] = $this->start_date ?? null;
         $data['end_date']   = $this->end_date ?? null;
         if($this->contactId == null){
-            $list = $this->dueTrackerRepo->setPartner($this->partner)->searchDueList($queryString);
+            $list = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
             $data = array_merge($data, $list);
             $balanceData = $this->getDueListBalance();
             $data = array_merge($data, $balanceData);
