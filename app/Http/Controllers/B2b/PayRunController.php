@@ -25,6 +25,8 @@ use Sheba\OAuth2\WrongPinError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\TopUp\Exception\PinMismatchException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Sheba\Business\Payslip\PendingMonths;
+use Carbon\Carbon;
 
 class PayRunController extends Controller
 {
@@ -107,15 +109,35 @@ class PayRunController extends Controller
         ]);
     }
 
+
     /**
+     * @param Request $request
+     * @param PendingMonths $pending_months
+     * @return JsonResponse
+     */
+    public function pendingMonths(Request $request, PendingMonths $pending_months)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $payroll_setting = $business->payrollSetting;
+        $get_pending_months = $pending_months->setBusiness($business)->get();
+        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'pending_months' => $get_pending_months, 'last_tax_report_generated_at' => $pending_months->getLastGeneratedTaxReport()]);
+    }
+
+    /**
+     * @param $business
+     * @param $summary_id
      * @param Request $request
      * @param VerifyPin $verifyPin
      * @return JsonResponse
-     * @throws DoNotReportException
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
-     * @throws WrongPinError
+     * @throws DoNotReportException
      * @throws PinMismatchException
+     * @throws WrongPinError
      */
     public function disburse($business, $summary_id, Request $request, VerifyPin $verifyPin)
     {
