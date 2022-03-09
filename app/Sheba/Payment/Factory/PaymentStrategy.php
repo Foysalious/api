@@ -4,6 +4,8 @@ use App\Models\Customer;
 use App\Models\Partner;
 use App\Models\Payable;
 use App\Sheba\Payment\Methods\Nagad\NagadBuilder;
+use App\Sheba\QRPayment\Methods\MTB\MtbQr;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Log;
 use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
@@ -39,6 +41,7 @@ class PaymentStrategy
     const NAGAD          = 'nagad';
     const EBL            = 'ebl';
     const UPAY           = 'upay';
+    const MTB            = 'mtb';
 
     public static function getDefaultOnlineMethod()
     {
@@ -82,6 +85,19 @@ class PaymentStrategy
                 return EblBuilder::get($payable);
             case self::UPAY:
                 return UpayBuilder::get($payable);
+        }
+    }
+
+    /**
+     * @param $method
+     * @return Application|mixed|void
+     * @throws InvalidPaymentMethod
+     */
+    public static function getQRMethod($method)
+    {
+        if (!self::isValid($method)) throw new InvalidPaymentMethod();
+        if ($method == self::MTB) {
+            return app(MtbQr::class);
         }
     }
 
