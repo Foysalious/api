@@ -1,12 +1,13 @@
 <?php namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
-use App\Sheba\AccountingEntry\Constants\ContactType;
-
-use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Usage\Usage;
 
 class DueTrackerControllerV2 extends Controller
@@ -32,7 +33,7 @@ class DueTrackerControllerV2 extends Controller
             'attachments'           => 'sometimes|array',
             'attachments.*'         => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
         ]);
-        $response = $this->dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type);
+        $response = $this->dueTrackerService->setPartner($request->partner)->storeEntry($request, $request->entry_type);
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
         return $response;
     }
@@ -40,7 +41,7 @@ class DueTrackerControllerV2 extends Controller
     /**
      * @throws AccountingEntryServerError
      */
-    public function getDueListBalance(Request $request)
+    public function getDueListBalance(Request $request): JsonResponse
     {
         $response = $this->dueTrackerService
             ->setPartner($request->partner)
@@ -53,35 +54,52 @@ class DueTrackerControllerV2 extends Controller
     }
 
     /**
+     * @param Request $request
+     * @return JsonResponse
      * @throws AccountingEntryServerError
      */
-    public function searchDueList(Request $request)
+    public function dueList(Request $request): JsonResponse
     {
-        $response = $this->dueTrackerService
+        $data=$this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
             ->setOrder($request->order)
             ->setOrderBy($request->order_by)
             ->setBalanceType($request->balance_type)
-            ->setLimit($request->limit)
-            ->setOffset($request->offset)
             ->setQuery($request->q)
-            ->setFilterBySupplier($request->filter_by_supplier)
-            ->searchDueList();
-        return http_response($request, null, 200, ['data' => $response]);
+            ->setOffset($request->offset)
+            ->setLimit($request->limit)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->getDueList();
+        return api_response($request, null, 200, ['data' => $data]);
     }
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
+     */
+    public function dueListBalanceByCustomer(Request $request): JsonResponse
+    {
+        $data = $this->dueTrackerService
+            ->setCustomerId($request->customerId)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->dueListBalanceByCustomer($request);
+        return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
      * @throws AccountingEntryServerError
-     * @throws \Mpdf\MpdfException
-     * @throws \Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer
-     * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
+     * @throws MpdfException
+     * @throws InvalidPartnerPosCustomer
+     * @throws NotAssociativeArray
      * @throws \Throwable
      */
-    public function downloadPdf(Request $request){
-
+    public function downloadPdf(Request $request): JsonResponse
+    {
         $data=$this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
@@ -90,28 +108,5 @@ class DueTrackerControllerV2 extends Controller
             ->setEndDate($request->end_date)
             ->downloadPDF($request);
         return api_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
-
-    }
-
-    public function dueList(Request $request){
-         $data=$this->dueTrackerService
-             ->setContactType($request->contact_type)
-             ->setContactId($request->contact_id)
-             ->setPartner($request->partner)
-             ->setOrder($request->order)
-             ->setOrderBy($request->order_by)
-             ->setBalanceType($request->balance_type)
-             ->setQuery($request->q)
-             ->setOffset($request->offset)
-             ->setLimit($request->limit)
-             ->setStartDate($request->start_date)
-             ->setEndDate($request->end_date)
-             ->duelist($request);
-         return api_response($request, null, 200, ['data' => $data]);
-
-    }
-    public function dueListBalanceByCustomer(Request $request){
-        $data = $this->dueTrackerService->setCustomerId($request->customerId)->dueListBalanceByCustomer($request);
-        return api_response($request, null, 200, ['data' => $data]);
     }
 }
