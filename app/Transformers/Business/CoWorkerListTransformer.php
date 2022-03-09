@@ -16,7 +16,6 @@ class CoWorkerListTransformer extends TransformerAbstract
         $profile = $member->profile;
         /** @var BusinessRole $role */
         $role = $business_member->role;
-        $business_member_salary = $business_member->salary;
         return [
             'id' => $member->id,
             'employee_id' => $business_member->employee_id,
@@ -33,8 +32,7 @@ class CoWorkerListTransformer extends TransformerAbstract
             'department_id' => $role ? $role->businessDepartment->id : null,
             'department' => $role ? $role->businessDepartment->name : null,
             'designation' => $role ? $role->name : null,
-            'salary_configured' => $business_member_salary ? 1 : 0,
-            'sort_order' => $business_member_salary ? 999 : 1
+            'is_salary_configured' => $business_member->salary ? 1 : 0
         ];
     }
 }

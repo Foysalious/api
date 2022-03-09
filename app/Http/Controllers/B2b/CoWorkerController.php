@@ -161,7 +161,7 @@ class CoWorkerController extends Controller
         $employees = new Collection($business_members->get(), new CoWorkerListTransformer());
         $employees_array = $manager->createData($employees)->toArray()['data'];
         usort($employees_array, function ($item1, $item2) {
-            return $item1['sort_order'] <=> $item2['sort_order'];
+            return $item1['is_salary_configured'] <=> $item2['is_salary_configured'];
         });
         $employees = collect($employees_array);
         $employees = $this->coWorkerInfoSort->sortCoworkerInList($employees, $request);
