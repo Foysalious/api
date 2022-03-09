@@ -20,11 +20,16 @@ class MtbSavePrimaryInformation
      * @var MtbAccountStatus
      */
     private $mtbAccountStatus;
+    /**
+     * @var MtbSaveNomineeInformation
+     */
+    private $mtbSaveNomineeInformation;
 
-    public function __construct(MtbServerClient $client,MtbAccountStatus $mtbAccountStatus)
+    public function __construct(MtbServerClient $client, MtbAccountStatus $mtbAccountStatus, MtbSaveNomineeInformation $mtbSaveNomineeInformation)
     {
         $this->client = $client;
         $this->mtbAccountStatus = $mtbAccountStatus;
+        $this->mtbSaveNomineeInformation = $mtbSaveNomineeInformation;
     }
 
     public function setPartner(Partner $partner)
@@ -34,7 +39,7 @@ class MtbSavePrimaryInformation
     }
 
     private function makePrimaryInformation()
-    {dd($this->partner->getFirstAdminResource()->profile->nominee->name);
+    {dd(base64_encode(file_get_contents('https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/profiles/pro_pic_1582012687_pro_pic_image_109855.jpeg')));
         return [
             'name' => $this->partner->getFirstAdminResource()->profile->name,
             'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
@@ -65,7 +70,8 @@ class MtbSavePrimaryInformation
         $partnerMefInformation = PartnerMefInformation::where('partner_id', $this->partner->id)->first();
         $partnerMefInformation->ticket_id = $response['ticketId'];
         $partnerMefInformation->save();
-        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
+//        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
+        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
         return $response;
     }
 }

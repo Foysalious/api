@@ -43,7 +43,7 @@ class MtbSaveNomineeInformation
     public function storeNomineeInformation()
     {
         $data = $this->makeData();
-        $accountInformation = $this->client->post('api/acctOpen/savePrimaryInformation', $data);
+        return $this->client->post('api/acctOpen/addNominee', $data);
     }
 
 }
