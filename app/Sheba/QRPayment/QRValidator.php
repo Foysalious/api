@@ -87,7 +87,7 @@ class QRValidator
     public function complete()
     {
         if(config('app.env') == 'production' && !$this->validated())
-            throw new QRException("MTB Validation failed for this transaction", 400);
+            throw new QRException("MTB validation failed for this transaction", 400);
 
         if (!isset($this->qrId)) {
             $partner = $this->getPartnerFromMerchantId();
