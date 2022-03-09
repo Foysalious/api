@@ -137,14 +137,14 @@ class AccountingDueTrackerRepository extends BaseRepository
         foreach ($due_list as $key => $val) {
             if ($val['source_id'] && $val['source_type'] == EntryTypes::POS && count($orders) > 0) {
                 $order = $orders[$val['source_id']];
-                $val['partner_wise_order_id'] = $order['partner_wise_order_id'];
-                $val['source_type'] = 'PosOrder';
-                $val['head'] = 'POS sales';
-                $val['head_bn'] = 'সেলস';
+                $due_list[$key]['partner_wise_order_id'] = $order['partner_wise_order_id'];
+                $due_list[$key]['source_type'] = 'PosOrder';
+                $due_list[$key]['head'] = 'POS sales';
+                $due_list[$key]['head_bn'] = 'সেলস';
                 if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
-                    $val['source_type'] = 'Webstore Order';
-                    $val['head'] = 'Webstore sales';
-                    $val['head_bn'] = 'ওয়েবস্টোর সেলস';
+                    $due_list[$key]['source_type'] = 'Webstore Order';
+                    $due_list[$key]['head'] = 'Webstore sales';
+                    $due_list[$key]['head_bn'] = 'ওয়েবস্টোর সেলস';
                 }
             }
         }
