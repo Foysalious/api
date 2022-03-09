@@ -286,7 +286,8 @@ class PaymentLinkTransaction
             ->setAmountCleared(0)
             ->setPaidBy($this->paidBy)
             ->setIsDueTrackerPaymentLink($this->is_due_tracker_payment_link)
-            ->setRealAmount($this->real_amount);
+            ->setRealAmount($this->real_amount)
+            ->setSourceId($this->payment->id);
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
                     ->setCustomerName($customer->name)
@@ -295,7 +296,7 @@ class PaymentLinkTransaction
                     ->setCustomerIsSupplier($customer->is_supplier);
         }
         if ($this->target instanceof PosOrderObject) {
-            $transaction = $transaction->setSourceId($this->target->id)->setSourceType(EntryTypes::POS);
+            $transaction = $transaction->setTargetId($this->target->id);
         }
         $transaction->store($this->receiver->id);
     }
