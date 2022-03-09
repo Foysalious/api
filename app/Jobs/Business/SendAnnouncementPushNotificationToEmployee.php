@@ -3,6 +3,7 @@
 use App\Models\Member;
 use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\Announcement\Announcement;
+use Sheba\Dal\AnnouncementNotificationInfo\AnnouncementNotificationInfoRepositoryInterface;
 use Sheba\PushNotificationHandler;
 
 class SendAnnouncementPushNotificationToEmployee extends BusinessQueue
@@ -12,12 +13,15 @@ class SendAnnouncementPushNotificationToEmployee extends BusinessQueue
     /** @var Announcement */
     private $announcement;
     private $pushNotification;
+    /*** @var AnnouncementNotificationInfoRepositoryInterface $announcementNotificationInfoRepo*/
+    private $announcementNotificationInfoRepo;
 
     public function __construct($member, Announcement $announcement)
     {
         $this->member = $member;
         $this->announcement = $announcement;
         $this->pushNotification = new PushNotificationHandler();
+        $this->announcementNotificationInfoRepo = app(AnnouncementNotificationInfoRepositoryInterface::class);
         parent::__construct();
     }
 
@@ -36,6 +40,9 @@ class SendAnnouncementPushNotificationToEmployee extends BusinessQueue
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
+            $announcement_notification = $this->announcementNotificationInfoRepo->where('announcement_id', $this->announcement->id)->where('member_id', $this->member)->first();
+            $this->announcementNotificationInfoRepo->update($announcement_notification, ['queue_out' => 1]);
         }
+
     }
 }

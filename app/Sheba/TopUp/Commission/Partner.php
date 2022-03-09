@@ -1,11 +1,14 @@
 <?php namespace Sheba\TopUp\Commission;
 
+use App\Sheba\UserMigration\UserMigrationRepository;
+use Exception;
 use ReflectionException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys;
@@ -18,6 +21,7 @@ class Partner extends TopUpCommission
      * @throws InvalidSourceException
      * @throws ReflectionException
      * @throws KeyNotFoundException
+     * @throws ExpenseTrackingServerError
      */
     public function disburse()
     {
@@ -51,14 +55,23 @@ class Partner extends TopUpCommission
             ->store();
     }
 
+    /**
+     * @throws ExpenseTrackingServerError
+     * @throws Exception
+     */
     private function storeExpenseIncome()
     {
-        $income = $this->amount;
-        $cost = $this->amount - $this->topUpOrder->agent_commission;
         /** @var \App\Models\Partner $partner */
         $partner = $this->agent;
+        if ($partner->isMigrated("expense")){
+            return ;
+        }
+        $income = $this->amount;
+        $cost = $this->amount - $this->topUpOrder->agent_commission;
+
         /** @var AutomaticEntryRepository $entryRepo */
         $entryRepo = app(AutomaticEntryRepository::class);
+
         $entryRepo = $entryRepo->setPartner($partner)->setSourceType(class_basename($this->topUpOrder))->setSourceId($this->topUpOrder->id);
         $entryRepo->setAmount($income)->setHead(AutomaticIncomes::TOP_UP)->store();
         $entryRepo->setAmount($cost)->setHead(AutomaticExpense::TOP_UP)->store();

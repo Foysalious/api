@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\PosOrderService\Services;
 
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use App\Sheba\PosCustomerService\SmanagerUserServerClient;
 
@@ -309,7 +310,7 @@ class OrderService
 
     public function storeDeliveryInformation($deliveryData)
     {
-        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId, $deliveryData);
+        return $this->client->put('api/v1/partners/' . $this->partnerId. '/orders/' . $this->orderId . '/delivery', $deliveryData);
     }
 
     public function update()
@@ -418,6 +419,14 @@ class OrderService
         if (isset($this->deliveryAddress)) $data['delivery_address']                    = $this->deliveryAddress;
         if (isset($this->deliveryCharge)) $data['delivery_charge']                      = $this->deliveryCharge;
         return $data;
+    }
+
+    /**
+     * @throws PosOrderServiceServerError
+     */
+    public function getPartnerWiseOrderIds($orderIds, $offset, $limit)
+    {
+        return $this->client->get('api/v1/partner-wise-order-ids?order_ids=' . $orderIds . '&offset=' . $offset . '&limit=' . $limit);
     }
 
 
