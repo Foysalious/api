@@ -13,6 +13,9 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
 use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
+use Sheba\Business\BusinessTransaction\TransactionExcel;
+use Sheba\Dal\Salary\Salary;
+use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
@@ -470,5 +473,17 @@ class BusinessesController extends Controller
     public function getSignUpPage(Request $request)
     {
         return api_response($request, null, 200, ['sign_up_page' => "https://business.sheba.xyz/auth/sign-up"]);
+    }
+
+    public function salaryAlert(Request $request, SalaryRepository $salary_repository)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        $active_business_member = $business->getActiveBusinessMember()->pluck('id');
+        $active_business_member_count = $active_business_member->count();
+        $given_salary_count = $salary_repository->whereIn('business_member_id', $active_business_member->toArray())->count();
+        $is_salary_configured = 1;
+        if ($active_business_member_count > $given_salary_count) $is_salary_configured = 0;
+        return api_response($request, null, 200, ['is_salary_configured' => $is_salary_configured]);
     }
 }

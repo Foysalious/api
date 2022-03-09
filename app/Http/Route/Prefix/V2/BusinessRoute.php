@@ -43,6 +43,7 @@ class BusinessRoute
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
+                $api->get('/salary-alert', 'B2b\BusinessesController@salaryAlert');
 
 
                 $api->group(['prefix' => 'departments'], function ($api) {
