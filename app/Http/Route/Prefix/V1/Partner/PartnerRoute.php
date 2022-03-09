@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V1\Partner;
 
+use App\Http\Route\Prefix\V1\Partner\ID\Auth\DynamicFormRoute;
 use App\Http\Route\Prefix\V1\Partner\ID\Auth\IndexRoute as IDAuthRoute;
 use App\Http\Route\Prefix\V1\Partner\ID\Auth\ExternalPaymentLinkRoute;
 use App\Http\Route\Prefix\V1\Partner\ID\Auth\QRPaymentRoute;
@@ -19,5 +20,6 @@ class PartnerRoute
         (new ExternalPaymentLinkRoute())->set($api);
         (new ResellerPaymentRoute())->set($api);
         (new QRPaymentRoute())->set($api);
+        (new DynamicFormRoute())->set($api);
     }
 }

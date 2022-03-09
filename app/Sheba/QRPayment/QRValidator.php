@@ -2,9 +2,14 @@
 
 namespace App\Sheba\QRPayment;
 
+use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Models\Partner;
 use App\Models\Payable;
+use App\Sheba\MTB\AuthTypes;
+use App\Sheba\MTB\Exceptions\MtbServiceServerError;
+use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\QRPayment\DTO\QRGeneratePayload;
+use Carbon\Carbon;
 use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
 use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\QRPayable\Contract as QRPayableRepo;
@@ -80,6 +85,9 @@ class QRValidator
      */
     public function complete()
     {
+        if(config('app.env') == 'production')
+            if(!$this->mtbValidated()) throw new QRException("MTB Validation failed for this transaction", 400);
+
         if (!isset($this->qrId)) {
             $partner = $this->getPartnerFromMerchantId();
             $data = new QRGeneratePayload([
@@ -91,6 +99,7 @@ class QRValidator
         }
         $this->storePayment();
         $this->qrPaymentComplete();
+
     }
 
     /**
@@ -172,9 +181,40 @@ class QRValidator
      */
     private function getPartnerFromMerchantId(): Partner
     {
-        return Partner::find(38015);
+        if(config('app.env') !== 'production')
+            return Partner::find(38015);
         $finance_information = PartnerFinancialInformation::query()->where("mtb_merchant_id", $this->merchantId)->first();
         if (!$finance_information) throw new FinancialInformationNotFoundException();
         return $finance_information->partner;
+    }
+
+    /**
+     * @throws NotFoundAndDoNotReportException
+     * @throws MtbServiceServerError
+     */
+    public function mtbValidated(): bool
+    {
+        /** @var MtbServerClient $mtb_client */
+        $mtb_client = app()->make(MtbServerClient::class);
+        $data = $this->makeApiData();
+
+        $url = QRPaymentStatics::MTB_VALIDATE_URL . http_build_query($data);
+
+        $response = $mtb_client->get($url, AuthTypes::BASIC_AUTH_TYPE);
+
+        if(isset($response["transactions"])) {
+            $transaction = $response["transactions"];
+            if(count($transaction) > 0) return true;
+        }
+        return false;
+    }
+
+    private function makeApiData(): array
+    {
+        return array(
+            'mid' => $this->merchantId,
+            'amt' => $this->amount,
+            'txndt' => (config('app.env') == 'production') ? Carbon::now()->format("Y-m-d") : "2022-03-03"/*Carbon::now()->format("Y-m-d")*/
+        );
     }
 }
