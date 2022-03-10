@@ -34,11 +34,14 @@ class DueTrackerRepositoryV2 extends AccountingRepository
      */
     public function getDuelistBalance($query_string): array
     {
-        $url = "api/due-list/balance?".$query_string;
+        $url = "api/v2/due-tracker/due-list-balance?".$query_string;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
     /**
+     * @param $query_params
+     * @param string $userType
+     * @return mixed
      * @throws AccountingEntryServerError
      */
     public function getDueListFromAcc($query_params, $userType = UserType::PARTNER)
@@ -55,11 +58,11 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @param $contact_id
      * @param $url_param
-     * @return Collection
+     * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function getDuelistByContactId($contact_id, $url_param, $userType = UserType::PARTNER){
-
+    public function getDuelistByContactId($contact_id, $url_param, $userType = UserType::PARTNER)
+    {
         $url = "api/due-list/" . $contact_id . "?".$url_param;
         return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
     }
