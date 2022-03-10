@@ -21,7 +21,7 @@ class MtbController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $this->mtbSavePrimaryInformation->setPartner($partner)->storePrimaryInformationToMtb();
-        return http_response($request, null, 200, ['message' => 'Successful']);
+        $data = $this->mtbSavePrimaryInformation->setPartner($partner)->storePrimaryInformationToMtb();
+        return http_response($request, null, 200, ['message' => 'Successful','data'=>$data]);
     }
 }

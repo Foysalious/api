@@ -62,7 +62,7 @@ class Route
              */
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
-                $api->get('/mtb-apply', 'Mtb\MtbController@index');
+                $api->post('/mtb-apply', 'Mtb\MtbController@index');
                 $api->get('/webstore-banner-list', 'Pos\PartnerController@getBanner');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/settings', 'WebstoreSettingController@index');

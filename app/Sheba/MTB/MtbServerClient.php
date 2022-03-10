@@ -69,7 +69,7 @@ class MtbServerClient
     private function generateMtbBearerToken()
     {
         return $this->post('api/token', ['username' => config('mtb.mtb_username'),
-            'password' => config('mtb.mtb_password'), 'grant_type' => config('mtb.mtb_grant_type')]);
+            'password' => config('mtb.mtb_password'), 'grant_type' => config('mtb.mtb_grant_type')], AuthTypes::NO_AUTH);
     }
 
     private function getMtbBearerToken()
@@ -77,8 +77,9 @@ class MtbServerClient
         $mtbJwt = Redis::get('mtb_jwt');
         if ($mtbJwt)
             return $mtbJwt;
+
         else {
-            $mtbJwt = $this->generateMtbBearerToken();
+            $mtbJwt = $this->generateMtbBearerToken()['access_token'];
             Redis::set('mtb_jwt', $mtbJwt);
             Redis::expire('mtb_jwt', 250);
             return $mtbJwt;
@@ -97,7 +98,7 @@ class MtbServerClient
             'Accept' => 'application/json',
         ];
         if ($auth_type === AuthTypes::BARER_TOKEN) {
-            $options['headers'] = (array_merge($options['headers'], ['Authorization' => 'Bearer '. $this->getMtbBearerToken() ]));
+            $options['headers'] = (array_merge($options['headers'], ['Authorization' => 'Bearer ' . $this->getMtbBearerToken()]));
         } elseif ($auth_type === AuthTypes::BASIC_AUTH_TYPE) {
             $orgId = config('mtb.sheba_organization_id');
             $username = config('mtb.sheba_username');
@@ -116,9 +117,9 @@ class MtbServerClient
         return $options;
     }
 
-    public function post($uri, $data, $multipart = false)
+    public function post($uri, $data, $auth_type, $multipart = false)
     {
-        return $this->call('post', $uri, $data, $multipart);
+        return $this->call('post', $uri, $auth_type, $data, $multipart);
     }
 
     /**
