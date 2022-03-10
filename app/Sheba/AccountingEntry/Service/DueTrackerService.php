@@ -372,7 +372,7 @@ class DueTrackerService
      * @throws NotAssociativeArray
      * @throws \Throwable
      */
-    public function downloadPDF($request): string
+    public function downloadPDF($request)
     {
         $queryString = $this->generateQueryString();
         $data = [];
@@ -383,7 +383,9 @@ class DueTrackerService
             $data = array_merge($data, $list);
             $balanceData = $this->getDueListBalance();
             $data = array_merge($data, $balanceData);
-            return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
+            //TODO: Will Change the Pdf Generation
+            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf" ;
+            //return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
         }
 
         $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
