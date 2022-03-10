@@ -15,7 +15,7 @@ class GeoLocationUpdater
     private $name;
     private $radius;
     private $lat;
-    private $long;
+    private $lng;
     /*** @var GeoLocationDeleter */
     private $geoLocationDeleter;
     private $businessOffice;
@@ -48,9 +48,9 @@ class GeoLocationUpdater
         return $this;
     }
 
-    public function setLong($long)
+    public function setLng($lng)
     {
-        $this->long = $long;
+        $this->lng = $lng;
         return $this;
     }
 
@@ -72,7 +72,7 @@ class GeoLocationUpdater
     {
         $data = [
             'name' => $this->name,
-            'location' => json_encode(['lat' => $this->lat, 'long' => $this->long, 'radius' => $this->radius])
+            'location' => json_encode(['lat' => $this->lat, 'lng' => $this->lng, 'radius' => $this->radius])
         ];
         $this->businessOfficeRepo->update($this->businessOffice, $this->withUpdateModificationField($data));
     }

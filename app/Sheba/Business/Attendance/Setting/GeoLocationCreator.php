@@ -18,7 +18,7 @@ class GeoLocationCreator
     private $radius;
     private $isNeedToRestoreOffice;
     private $lat;
-    private $long;
+    private $lng;
 
     public function __construct(BusinessOfficeRepositoryInterface $business_office_repo)
     {
@@ -47,9 +47,9 @@ class GeoLocationCreator
         return $this;
     }
 
-    public function setLong($long)
+    public function setLng($lng)
     {
-        $this->long = $long;
+        $this->lng = $lng;
         return $this;
     }
 
@@ -64,7 +64,7 @@ class GeoLocationCreator
         $data = [
             'business_id' => $this->business->id,
             'name' => $this->name,
-            'location' => json_encode(['lat' => $this->lat, 'long' => $this->long, 'radius' => $this->radius]),
+            'location' => json_encode(['lat' => $this->lat, 'lng' => $this->lng, 'radius' => $this->radius]),
             'is_location' => 1
         ];
         return $this->businessOfficeRepo->create($this->withCreateModificationField($data));

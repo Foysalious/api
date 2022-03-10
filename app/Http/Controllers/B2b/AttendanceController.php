@@ -613,7 +613,8 @@ class AttendanceController extends Controller
             'weekends' => $weekend_days,
             'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
             'business_attendance_types' => $attendance_setting_data["attendance_types"],
-            'business_offices' => $attendance_setting_data["business_offices"]
+            'business_offices' => $attendance_setting_data["business_offices"],
+            'business_office_locations' => $attendance_setting_data["business_geo_locations"]
         ];
 
         return api_response($request, null, 200, ['office_settings_operational' => $data]);
@@ -706,7 +707,7 @@ class AttendanceController extends Controller
             $added_geo_offices = $geo_offices->where('action', ActionType::ADD);
             $added_geo_offices->each(function ($added_geo_office) use ($geo_location_creator, $business, &$errors) {
                 //$this->officeSettingChangesLogsRequester->setOfficeName($added_office->office_name)->setOfficeIp($added_office->ip);
-                $geo_location_creator->setBusiness($business)->setName($added_geo_office->office_name)->setLat($added_geo_office->lat)->setLong($added_geo_office->long)->setRadius($added_geo_office->radius);
+                $geo_location_creator->setBusiness($business)->setName($added_geo_office->office_name)->setLat($added_geo_office->lat)->setLng($added_geo_office->lng)->setRadius($added_geo_office->radius);
                 $geo_location_creator->create();
                 //$this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createCreatedOfficeIpLogs();
             });
@@ -716,7 +717,7 @@ class AttendanceController extends Controller
 
                 //$previous_office_ip = $this->businessOfficeRepo->builder()->withTrashed()->find($edited_office->id);
                 //$this->officeSettingChangesLogsRequester->setPreviousOfficeIp($previous_office_ip)->setOfficeName($edited_office->office_name)->setOfficeIp($edited_office->ip);
-                $geo_location_updater->setBusinessOfficeId($edited_geo_office->id)->setName($edited_geo_office->office_name)->setLat($edited_geo_office->lat)->setLong($edited_geo_office->long)->setRadius($edited_geo_office->radius);
+                $geo_location_updater->setBusinessOfficeId($edited_geo_office->id)->setName($edited_geo_office->office_name)->setLat($edited_geo_office->lat)->setLng($edited_geo_office->lng)->setRadius($edited_geo_office->radius);
                 $geo_location_updater->update();
                 //$this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createEditedOfficeIpLogs();
             });
