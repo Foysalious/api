@@ -122,7 +122,7 @@ class PartnerTransactionController extends Controller
     private function reconcile(Request $request)
     {
         try {
-            $expires_at = Carbon::now()->addMinutes(2);
+            $expires_at = now()->addMinutes(2);
             $cache_name = "partner_" . $request->partner->id . "_payment_reconcile_token";
             \Cache::store('redis')->put($cache_name, $payment_token = Str::random(32), $expires_at);
             $client = new Client();

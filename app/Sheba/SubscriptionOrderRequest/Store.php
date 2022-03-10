@@ -10,7 +10,6 @@ class Store
     /** @var array*/
     private $partners;
 
-
     /**
      * @param $subscriptionOrderId
      * @return Store
@@ -35,7 +34,7 @@ class Store
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
-        $store->put($this->getCacheName(), json_encode($this->partners), $this->getExpirationTimeInSeconds() / 60);
+        $store->put($this->getCacheName(), json_encode($this->partners), now()->addHour());
     }
 
     /**
@@ -52,10 +51,5 @@ class Store
     private function getCacheName()
     {
         return sprintf("%s::%d", "subscription_order_requests", $this->subscriptionOrderId);
-    }
-
-    private function getExpirationTimeInSeconds()
-    {
-        return 60 * 60;
     }
 }

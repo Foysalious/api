@@ -35,7 +35,7 @@ class Store
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
-        $store->put($this->getCacheName(), json_encode($this->partnerIds), $this->getExpirationTimeInMinutes());
+        $store->put($this->getCacheName(), json_encode($this->partnerIds), now()->addHour());
     }
 
     /**
@@ -54,10 +54,4 @@ class Store
     {
         return sprintf("%s::%d", "order_requests", $this->partnerOrderId);
     }
-
-    private function getExpirationTimeInMinutes()
-    {
-        return 60;
-    }
-
 }

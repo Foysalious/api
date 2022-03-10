@@ -98,6 +98,11 @@ class TimeFrame
         return $this;
     }
 
+    public function forSixMonthFromNow()
+    {
+        return $this->forSixMonth(now());
+    }
+
     public function forCurrentWeek($week_start = null)
     {
         $this->start = Carbon::now()->startOfWeek($week_start ?: Carbon::SUNDAY);
