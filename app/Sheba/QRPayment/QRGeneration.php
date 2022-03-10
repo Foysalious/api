@@ -3,6 +3,7 @@
 namespace App\Sheba\QRPayment;
 
 use App\Models\Payable;
+use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
 
 abstract class QRGeneration
 {
@@ -39,7 +40,7 @@ abstract class QRGeneration
      * @param mixed $financial_information
      * @return QRGeneration
      */
-    public function setFinancialInformation($financial_information): QRGeneration
+    public function setFinancialInformation(PartnerFinancialInformation $financial_information): QRGeneration
     {
         $this->financial_information = $financial_information;
         return $this;
