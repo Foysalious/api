@@ -25,7 +25,7 @@ class MTBQRGeneration extends QRGeneration
     {
         return (new EmvQR())->setQrId($this->qr_id)->setAmount($this->payable->amount)->setMerchantId($this->financial_information->mtb_merchant_id)
             ->setMasterCard($this->financial_information->master_card_number)->setUnionPayCard($this->financial_information->union_pay)
-            ->setVisaCard($this->financial_information->master_card_number)->setQrName($this->method_name)
+            ->setVisaCard($this->financial_information->visa_card_number)->setMerchantCategory(5814)->setQrName($this->method_name)
             ->generateQrString();
     }
 
