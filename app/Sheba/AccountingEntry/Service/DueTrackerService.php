@@ -3,16 +3,20 @@
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\Pos\Order\PosOrderObject;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
+use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Exception;
-
+use Throwable;
 
 
 class DueTrackerService
@@ -53,7 +57,8 @@ class DueTrackerService
         return $this;
     }
 
-    public function setContactId($contactId): DueTrackerService {
+    public function setContactId($contactId): DueTrackerService
+    {
         $this->contactId = $contactId;
         return $this;
     }
@@ -296,44 +301,41 @@ class DueTrackerService
     }
 
 //    TODO: Add contact type
+
     /**
      * @return array
      * @throws AccountingEntryServerError
-     * @throws \App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError
+     * @throws PosOrderServiceServerError
      */
     public function dueListByContact(): array
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contactId, $queryString);
-        $pos_orders = [];
+
         $due_list = $result['list'];
-        foreach ($due_list as $key => $item) {
-            if ($item["attachments"]) {
-                $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
+        $pos_orders = [];
+        collect($due_list)->each(function($each) use (&$pos_orders) {
+            if (!is_null($each['source_id']) && $each['source_type'] == EntryTypes::POS) {
+                $pos_orders [] = $each['source_id'];
             }
-            $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
-            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS) {
-                $pos_orders[] =  $item['source_id'];
-            }
-            $due_list[$key]['partner_wise_order_id']= null;
-        }
-
+        });
         if (count($pos_orders) > 0) {
-            $orders = $this->getPartnerWise($pos_orders)['orders'];
+            $orders = $this->getPartnerWisePosOrders($pos_orders)['orders'];
         }
-
-        foreach ($due_list as $key => $val) {
-            if ($val['source_id'] && $val['source_type'] == EntryTypes::POS && count($orders) > 0) {
-                $order = $orders[$val['source_id']];
-                $due_list[$key]['partner_wise_order_id'] = $order['partner_wise_order_id'];
-                $due_list[$key]['source_type'] = 'PosOrder';
-                $due_list[$key]['head'] = 'POS sales';
-                $due_list[$key]['head_bn'] = 'সেলস';
+        foreach ($due_list as $key => &$item) {
+            $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
+            $item['created_at'] = $this->formatDate($item['created_at']);
+            $item['entry_at'] = $this->formatDate($item['entry_at']);
+            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && isset($orders[$item['source_id']])) {
+                $order = $orders[$item['source_id']];
+                $item['partner_wise_order_id'] = $order['partner_wise_order_id'];
+                $item['source_type'] = 'PosOrder';
+                $item['head'] = 'POS sales';
+                $item['head_bn'] = 'সেলস';
                 if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
-                    $due_list[$key]['source_type'] = 'Webstore Order';
-                    $due_list[$key]['head'] = 'Webstore sales';
-                    $due_list[$key]['head_bn'] = 'ওয়েবস্টোর সেলস';
+                    $item['source_type'] = 'Webstore Order';
+                    $item['head'] = 'Webstore sales';
+                    $item['head_bn'] = 'ওয়েবস্টোর সেলস';
                 }
             }
         }
@@ -346,18 +348,17 @@ class DueTrackerService
      * @param $request
      * @return string|void
      * @throws AccountingEntryServerError
-     * @throws \Mpdf\MpdfException
-     * @throws \Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer
-     * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
-     * @throws \Throwable
+     * @throws MpdfException
+     * @throws InvalidPartnerPosCustomer
+     * @throws Throwable
      */
     public function downloadPDF($request)
     {
         $queryString = $this->generateQueryString();
         $data = [];
         $data['start_date'] = $this->start_date ?? null;
-        $data['end_date']   = $this->end_date ?? null;
-        if($this->contactId == null){
+        $data['end_date'] = $this->end_date ?? null;
+        if ($this->contactId == null) {
             $list = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
             $data = array_merge($data, $list);
             $balanceData = $this->getDueListBalance();
@@ -428,13 +429,17 @@ class DueTrackerService
     /**
      * @param $pos_orders
      * @return mixed
-     * @throws \App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError
+     * @throws PosOrderServiceServerError
      */
-    private function getPartnerWise($pos_orders)
+    private function getPartnerWisePosOrders($pos_orders)
     {
         /** @var OrderServiceAlias $orderService */
-        $orderService= app(OrderServiceAlias::class);
-        return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
+        $orderService = app(OrderServiceAlias::class);
+        return $orderService->getPartnerWiseOrderIds('[' . implode(",", $pos_orders) . ']', 0, count($pos_orders));
+    }
 
+    private function formatDate($date, $format='Y-m-d H:i:s')
+    {
+        return Carbon::parse($date)->format($format);
     }
 }
