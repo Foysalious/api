@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mpdf\MpdfException;
@@ -64,7 +65,7 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->getDueListBalance();
-        return api_response($request, null, 200, ['data' => $response]);
+        return http_response($request, null, 200, ['data' => $response]);
 
     }
 
@@ -87,9 +88,17 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->getDueList();
-        return api_response($request, null, 200, ['data' => $data]);
+        return http_response($request, null, 200, ['data' => $data]);
     }
-    public function dueListByContact(Request $request){
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws AccountingEntryServerError
+     * @throws PosOrderServiceServerError
+     */
+    public function dueListByContact(Request $request): JsonResponse
+    {
         $data=$this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
@@ -103,7 +112,7 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->dueListByContact();
-        return api_response($request, null, 200, ['data' => $data]);
+        return http_response($request, null, 200, ['data' => $data]);
 
 
     }
@@ -120,7 +129,7 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->dueListBalanceByContact();
-        return api_response($request, null, 200, ['data' => $data]);
+        return http_response($request, null, 200, ['data' => $data]);
     }
 
     /**
@@ -141,6 +150,6 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->downloadPDF($request);
-        return api_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
+        return http_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
     }
 }
