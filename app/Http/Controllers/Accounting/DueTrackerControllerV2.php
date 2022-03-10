@@ -23,6 +23,7 @@ class DueTrackerControllerV2 extends Controller
     //TODO: FIX ENTRY CREATE FOR DUE TRACKER
     public function store(Request $request)
     {
+
         $this->validate($request, [
             'amount'                => 'required',
             'entry_type'            => 'required|in:due,deposit',

@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\UserType;
-use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -34,7 +33,7 @@ class DueTrackerRepositoryV2 extends AccountingRepository
      */
     public function getDuelistBalance($query_string): array
     {
-        $url = "api/due-list/balance?".$query_string;
+        $url = "api/v2/due-tracker/due-list-balance?".$query_string;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 

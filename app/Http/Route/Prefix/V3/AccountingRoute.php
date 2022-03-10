@@ -11,6 +11,7 @@ class AccountingRoute
                 $api->get('/due-list/{contactId}/balance', 'Accounting\\DueTrackerControllerV2@dueListBalanceByContact');
                 $api->get('/due-list/{contactId}', 'Accounting\\DueTrackerControllerV2@dueListByContact');
                 $api->get('/download-pdf', 'Accounting\\DueTrackerControllerV2@downloadPdf');
+                $api->get('/', 'Accounting\\DueTrackerControllerV2@store');
             });
         });
     }

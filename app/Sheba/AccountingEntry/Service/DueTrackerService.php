@@ -36,7 +36,7 @@ class DueTrackerService
     protected $attachments;
     protected $start_date;
     protected $end_date;
-    protected $contactId;
+    protected $contactId; //TODO: FIX this
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -226,7 +226,9 @@ class DueTrackerService
         $this->end_date = $end_date;
         return $this;
     }
+    public function store(){
 
+    }
     /**
      * @throws AccountingEntryServerError
      */
@@ -235,7 +237,6 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
         return [
-            'total_transactions' => $result['total_transactions'],
             'total' => $result['total'],
             'stats' => $result['stats'],
             'partner' => $this->getPartnerInfo($this->partner),
@@ -265,7 +266,7 @@ class DueTrackerService
         if (is_null($result['contact_details'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($this->customer_id)->setPartner($this->partner)->get();
+            $posCustomer = $posCustomerResolver->setCustomerId($this->contactId)->setPartner($this->partner)->get();
             if (empty($posCustomer)) {
                 throw new InvalidPartnerPosCustomer();
             }
