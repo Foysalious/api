@@ -6,6 +6,7 @@ use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
 use Carbon\Carbon;
+use Sheba\AccountingEntry\Accounts\Accounts;
 use Illuminate\Support\Collection;
 use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -23,7 +24,7 @@ class DueTrackerService
 {
     protected $partner;
     protected $dueTrackerRepo;
-    protected $contactType;
+    protected $contact_type;
     protected $order;
     protected $order_by;
     protected $balance_type;
@@ -40,7 +41,8 @@ class DueTrackerService
     protected $attachments;
     protected $start_date;
     protected $end_date;
-    protected $contactId; //TODO: FIX this
+    protected $contact_id;
+    protected $note;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -57,9 +59,9 @@ class DueTrackerService
         return $this;
     }
 
-    public function setContactId($contactId): DueTrackerService
+    public function setContactId($contact_id): DueTrackerService
     {
-        $this->contactId = $contactId;
+        $this->contact_id = $contact_id;
         return $this;
     }
 
@@ -134,12 +136,12 @@ class DueTrackerService
     }
 
     /**
-     * @param mixed $contactType
+     * @param mixed $contact_type
      * @return DueTrackerService
      */
-    public function setContactType($contactType): DueTrackerService
+    public function setContactType($contact_type): DueTrackerService
     {
-        $this->contactType = $contactType;
+        $this->contact_type = $contact_type;
         return $this;
     }
 
@@ -231,9 +233,26 @@ class DueTrackerService
         $this->end_date = $end_date;
         return $this;
     }
-    public function store(){
 
+    /**
+     * @param $note
+     * @return $this
+     */
+    public function setNote($note): DueTrackerService
+    {
+        $this->note = $note;
+        return $this;
     }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function storeEntry()
+    {
+        $data = $this->makeDataForEntry();
+        return $this->dueTrackerRepo->createEntry($data);
+    }
+
     /**
      * @throws AccountingEntryServerError
      */
@@ -265,13 +284,13 @@ class DueTrackerService
     public function dueListBalanceByContact(): array
     {
         $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contactId, $queryString);
+        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
         $customer = [];
 
         if (is_null($result['contact_details'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($this->contactId)->setPartner($this->partner)->get();
+            $posCustomer = $posCustomerResolver->setCustomerId($this->contact_id)->setPartner($this->partner)->get();
             if (empty($posCustomer)) {
                 throw new InvalidPartnerPosCustomer();
             }
@@ -310,7 +329,7 @@ class DueTrackerService
     public function dueListByContact(): array
     {
         $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contactId, $queryString);
+        $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
 
         $due_list = $result['list'];
         $pos_orders = [];
@@ -324,8 +343,8 @@ class DueTrackerService
         }
         foreach ($due_list as $key => &$item) {
             $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
-            $item['created_at'] = $this->formatDate($item['created_at']);
-            $item['entry_at'] = $this->formatDate($item['entry_at']);
+            $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
             if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && isset($orders[$item['source_id']])) {
                 $order = $orders[$item['source_id']];
                 $item['partner_wise_order_id'] = $order['partner_wise_order_id'];
@@ -346,19 +365,20 @@ class DueTrackerService
 
     /**
      * @param $request
-     * @return string|void
+     * @return string
      * @throws AccountingEntryServerError
-     * @throws MpdfException
+     * @throws \Mpdf\MpdfException
      * @throws InvalidPartnerPosCustomer
-     * @throws Throwable
+     * @throws NotAssociativeArray
+     * @throws \Throwable
      */
-    public function downloadPDF($request)
+    public function downloadPDF($request): string
     {
         $queryString = $this->generateQueryString();
         $data = [];
         $data['start_date'] = $this->start_date ?? null;
         $data['end_date'] = $this->end_date ?? null;
-        if ($this->contactId == null) {
+        if ($this->contact_id == null) {
             $list = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
             $data = array_merge($data, $list);
             $balanceData = $this->getDueListBalance();
@@ -366,7 +386,7 @@ class DueTrackerService
             return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
         }
 
-        $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contactId, $queryString);
+        $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
         $data = array_merge($data, $list);
         $balanceData = $this->setCustomerId($request->contact_id)->dueListBalanceByContact();
         $data = array_merge($data, $balanceData);
@@ -402,8 +422,8 @@ class DueTrackerService
             $query_strings [] = "offset=$this->offset";
         }
 
-        if (isset($this->contactType)) {
-            $query_strings [] = "contact_type=" . strtolower($this->contactType);
+        if (isset($this->contact_type)) {
+            $query_strings [] = "contact_type=" . strtolower($this->contact_type);
         }
 
         if (isset($this->filter_by_supplier)) {
@@ -434,12 +454,46 @@ class DueTrackerService
     private function getPartnerWisePosOrders($pos_orders)
     {
         /** @var OrderServiceAlias $orderService */
-        $orderService = app(OrderServiceAlias::class);
-        return $orderService->getPartnerWiseOrderIds('[' . implode(",", $pos_orders) . ']', 0, count($pos_orders));
+        $orderService= app(OrderServiceAlias::class);
+        return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
     }
 
-    private function formatDate($date, $format='Y-m-d H:i:s')
+    /**
+     * @param $partner
+     * @param $partnerWiseOrderId
+     * @return PosOrderObject
+     */
+    private function posOrderByPartnerWiseOrderId($partner, $partnerWiseOrderId)
     {
-        return Carbon::parse($date)->format($format);
+        try {
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            return $posOrderResolver->setPartnerWiseOrderId($partner->id, $partnerWiseOrderId)->get();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    private function makeDataForEntry(): array
+    {
+        $posOrder = ($this->entry_type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($this->partner, $this->partner_wise_order_id) : null;
+
+        $data['contact_id'] = $this->contact_id;
+        $data['customer_id'] = $this->contact_id; //TODO: Should remove when customer resolver fix from POS SIDE
+        $data['contact_type'] = $this->contact_type;
+        $data['amount'] = $this->amount;
+        $data['entry_at'] = $this->date;
+        $data['source_type'] = $this->entry_type;
+        $data['to_account_key'] = $this->entry_type === EntryTypes::DUE ? $this->contact_id : $this->account_key;
+        $data['from_account_key'] = $this->entry_type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $this->contact_id;
+        $data['note'] = $this->note;
+        $data['partner'] = $this->partner;
+        $data['attachments'] = $this->attachments;
+        $data['source_id'] = $posOrder ? $posOrder->id : null;
+
+        return $data;
     }
 }

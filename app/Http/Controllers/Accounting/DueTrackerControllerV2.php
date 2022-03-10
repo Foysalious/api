@@ -21,23 +21,37 @@ class DueTrackerControllerV2 extends Controller
         $this->dueTrackerService = $dueTrackerService;
     }
 
-    //TODO: FIX ENTRY CREATE FOR DUE TRACKER
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function store(Request $request)
     {
-
         $this->validate($request, [
-            'amount'                => 'required',
-            'entry_type'            => 'required|in:due,deposit',
-            'account_key'           => 'sometimes|string',
-            'customer_id'           => 'required',
-            'date'                  => 'required|date_format:Y-m-d H:i:s',
+            'amount' => 'required',
+            'source_type' => 'required|in:due,deposit',
+            'account_key' => 'sometimes|string',
+            'contact_type' => 'required|string',
+            'contact_id' => 'required',
+            'note' => 'sometimes',
+            'entry_at' => 'required|date_format:Y-m-d H:i:s',
             'partner_wise_order_id' => 'sometimes|numeric',
-            'attachments'           => 'sometimes|array',
-            'attachments.*'         => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
+            'attachments' => 'sometimes|array',
+            'attachments.*' => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
         ]);
-        $response = $this->dueTrackerService->setPartner($request->partner)->storeEntry($request, $request->entry_type);
+        $response = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setAmount($request->amount)
+            ->setEntryType($request->source_type)
+            ->setAccountKey($request->account_key)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setDate($request->entry_at)
+            ->setPartnerWiseOrderId($request->partner_wise_order_id)
+            ->setAttachments($request->attachments)
+            ->setNote($request->note)
+            ->storeEntry();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
-        return $response;
+        return api_response($request, null, 200, ['data' => $response]);
     }
 
     /**
