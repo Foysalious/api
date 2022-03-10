@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\UserType;
-use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;

@@ -40,7 +40,7 @@ class DueTrackerService
     protected $attachments;
     protected $start_date;
     protected $end_date;
-    protected $contactId;
+    protected $contactId; //TODO: FIX this
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -231,7 +231,9 @@ class DueTrackerService
         $this->end_date = $end_date;
         return $this;
     }
+    public function store(){
 
+    }
     /**
      * @throws AccountingEntryServerError
      */
@@ -269,7 +271,7 @@ class DueTrackerService
         if (is_null($result['contact_details'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($this->customer_id)->setPartner($this->partner)->get();
+            $posCustomer = $posCustomerResolver->setCustomerId($this->contactId)->setPartner($this->partner)->get();
             if (empty($posCustomer)) {
                 throw new InvalidPartnerPosCustomer();
             }
@@ -324,10 +326,18 @@ class DueTrackerService
             $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
             $item['created_at'] = $this->formatDate($item['created_at']);
             $item['entry_at'] = $this->formatDate($item['entry_at']);
-            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS) {
-               $item['partner_wise_order_id'] = $orders[$item['source_id']]['partner_wise_order_id'] ?? null;
+            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && isset($orders[$item['source_id']])) {
+                $order = $orders[$item['source_id']];
+                $item['partner_wise_order_id'] = $order['partner_wise_order_id'];
+                $item['source_type'] = 'PosOrder';
+                $item['head'] = 'POS sales';
+                $item['head_bn'] = 'সেলস';
+                if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
+                    $item['source_type'] = 'Webstore Order';
+                    $item['head'] = 'Webstore sales';
+                    $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+                }
             }
-
         }
         return [
             'list' => $due_list
@@ -340,7 +350,6 @@ class DueTrackerService
      * @throws AccountingEntryServerError
      * @throws MpdfException
      * @throws InvalidPartnerPosCustomer
-     * @throws NotAssociativeArray
      * @throws Throwable
      */
     public function downloadPDF($request)
