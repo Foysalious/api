@@ -37,6 +37,7 @@ class Statics
      * @param $status
      * @param $nid_verification_request_count
      * @param $message
+     * @param null $user
      * @return array
      */
     public static function faceVerificationResponse($status, $nid_verification_request_count, $message = null, $user = null): array
