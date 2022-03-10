@@ -10,6 +10,7 @@ class DynamicForm
     private $form;
     private $section;
     private $partner;
+    private $requestData;
 
     public function setForm($form_id): DynamicForm
     {
@@ -34,6 +35,11 @@ class DynamicForm
             "name"   => $this->getSectionNames(),
             "fields" => $this->getSectionFields(),
         ];
+    }
+
+    public function postSectionFields()
+    {
+        dd($this->requestData);
     }
 
     private function getSectionNames()
@@ -68,6 +74,16 @@ class DynamicForm
     public function setSection($section_id): DynamicForm
     {
         $this->section = MefSection::find($section_id);
+        return $this;
+    }
+
+    /**
+     * @param mixed $requestData
+     * @return DynamicForm
+     */
+    public function setRequestData($requestData): DynamicForm
+    {
+        $this->requestData = $requestData;
         return $this;
     }
 }
