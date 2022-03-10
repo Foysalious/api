@@ -3,12 +3,15 @@
 namespace App\Sheba\DynamicForm;
 
 use App\Models\Partner;
+use Sheba\Dal\PartnerMefInformation\Contract as PartnerMefInformationRepo;
 
 class FormFieldBuilder
 {
     private $field;
 
     private $partner;
+
+    private $partnerMefInformation;
 
     /**
      * @param mixed $field
@@ -30,17 +33,36 @@ class FormFieldBuilder
         return $this;
     }
 
+    /**
+     * @return FormFieldBuilder
+     */
+    public function setPartnerMefInformation(): FormFieldBuilder
+    {
+        if(!isset($this->partner->partnerMefInformation)) {
+            $mefRepo = app(PartnerMefInformationRepo::class);
+            $this->partner->partnerMefInformation = $mefRepo->create(["partner_id" => $this->partner->id]);
+        }
+        $this->partnerMefInformation = json_decode($this->partner->partnerMefInformation->partner_information);
+        return $this;
+    }
+
     public function build(): FormField
     {
         $field_data = json_decode($this->field->data);
-        $data_source = ($field_data->data_source);
-        $data_source_id = ($field_data->data_source_id);
-        if(!isset($this->$data_source)) {
-            $function_name = "set".$data_source;
-            $this->$function_name();
+        $form_field = (new FormField())->setFormInput($field_data);
+        if(isset($field_data->data_source)) {
+            $data_source = ($field_data->data_source);
+            $data_source_id = ($field_data->data_source_id);
+            if (!isset($this->$data_source)) {
+                $function_name = "set" . ucfirst($data_source);
+                $this->$function_name();
+            }
+            if(isset($this->$data_source)) {
+                $data = $this->$data_source->$data_source_id ?? "";
+                $form_field->setData($data);
+            }
         }
-        $data = $this->$data_source->$data_source_id;
-        return (new FormField())->setFormInput($field_data)->setData($data);
+        return $form_field;
     }
 
 }

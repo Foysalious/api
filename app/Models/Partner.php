@@ -21,6 +21,7 @@ use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
+use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -155,6 +156,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->hasOne(PartnerBasicInformation::class);
     }
+
+    public function partnerMefInformation()
+    {
+        return $this->hasOne(PartnerMefInformation::class);
+    }
+
 
     public function financeResources()
     {
