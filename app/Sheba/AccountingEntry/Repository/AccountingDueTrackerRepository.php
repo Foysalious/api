@@ -16,6 +16,8 @@ use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\RequestIdentification;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
+use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
+
 
 class AccountingDueTrackerRepository extends BaseRepository
 {
@@ -113,32 +115,40 @@ class AccountingDueTrackerRepository extends BaseRepository
         $url = "api/due-list/" . $customerId . "?";
         $url = $this->updateRequestParam($request, $url);
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        $due_list = collect($result['list']);
-
-        $list = $due_list->map(
-            function ($item) {
-                if ($item["attachments"]) {
-                    $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
-                }
-                $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
-                $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = $item['source_id'] && $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
-                $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
-                if ($pos_order) {
-                    $item['source_type'] = 'PosOrder';
-                    $item['head'] = 'POS sales';
-                    $item['head_bn'] = 'সেলস';
-                    if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
-                        $item['source_type'] = 'Webstore Order';
-                        $item['head'] = 'Webstore sales';
-                        $item['head_bn'] = 'ওয়েবস্টোর সেলস';
-                    }
-                }
-                return $item;
+        $due_list = $result['list'];
+        $pos_orders = [];
+        $orders = [];
+        foreach ($due_list as $key => $item) {
+            if ($item["attachments"]) {
+                $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
             }
-        );
+            $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS) {
+                $pos_orders[] =  $item['source_id'];
+            }
+            $due_list[$key]['partner_wise_order_id']= null;
+        }
+        if (count($pos_orders) > 0) {
+            $orders = $this->getPartnerWise($pos_orders)['orders'];
+        }
+
+        foreach ($due_list as $key => $val) {
+            if ($val['source_id'] && $val['source_type'] == EntryTypes::POS && count($orders) > 0) {
+                $order = $orders[$val['source_id']];
+                $due_list[$key]['partner_wise_order_id'] = $order['partner_wise_order_id'];
+                $due_list[$key]['source_type'] = 'PosOrder';
+                $due_list[$key]['head'] = 'POS sales';
+                $due_list[$key]['head_bn'] = 'সেলস';
+                if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
+                    $due_list[$key]['source_type'] = 'Webstore Order';
+                    $due_list[$key]['head'] = 'Webstore sales';
+                    $due_list[$key]['head_bn'] = 'ওয়েবস্টোর সেলস';
+                }
+            }
+        }
         return [
-            'list' => $list
+            'list' => $due_list
         ];
     }
 
@@ -312,5 +322,13 @@ class AccountingDueTrackerRepository extends BaseRepository
     {
         $url = "api/due-list/due-date-wise-customer-list";
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
+    private function getPartnerWise($pos_orders)
+    {
+        /** @var OrderServiceAlias $orderService */
+        $orderService= app(OrderServiceAlias::class);
+        return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
+
     }
 }
