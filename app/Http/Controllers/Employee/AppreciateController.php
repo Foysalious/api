@@ -137,7 +137,7 @@ class AppreciateController extends Controller
     public function lazyLoadingStrategy($request)
     {
         $cache_key = 'appreciation_stickers';
-        return Cache::store('redis')->remember($cache_key, 60, function () use ($request) {
+        return Cache::store('redis')->remember($cache_key, now()->addHour(), function () use ($request) {
             $sticker_categories = StickerCategory::all(['id', 'name', 'title']);
             $fractal = new Manager();
             $resource = new Collection($sticker_categories, new StickerCategoryList());
