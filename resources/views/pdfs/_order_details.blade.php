@@ -23,7 +23,7 @@
         <td style="width:200px;">: {{ $partner_order->id }}</td>
         <td> </td>
         <td style="width:140px; text-align:left;">Customer Address</td>
-        <td class="bangla-font-invoice" style="width:200px;">:  {{ $partner_order->order->delivery_address }}</td>
+        <td class="bangla-font-invoice" style="width:200px;">:  {{ empty($partner_order->order->deliveryAddress) ? 'N/A': ($partner_order->order->deliveryAddress->address ?: 'N/S') }}</td>
     </tr>
     <tr>
         <td> Statement Date</td>
