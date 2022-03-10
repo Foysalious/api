@@ -7,6 +7,7 @@ use App\Sheba\Business\Attendance\MonthlyStat;
 use App\Sheba\Business\Attendance\Setting\GeoLocationCreator;
 use App\Sheba\Business\Attendance\Setting\GeoLocationDeleter;
 use App\Sheba\Business\Attendance\Setting\GeoLocationUpdater;
+use App\Sheba\Business\Attendance\Setting\OfficeLocationFormatter;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\OfficeSetting\PolicyRuleRequester;
 use App\Sheba\Business\OfficeSetting\PolicyRuleUpdater;
@@ -927,6 +928,19 @@ class AttendanceController extends Controller
         $resource = new Collection($operational_changes_logs, new ChangesLogsTransformer());
         $operational_changes_logs = $manager->createData($resource)->toArray()['data'];
         return api_response($request, $operational_changes_logs, 200, ['office_setting_changes_logs' => $operational_changes_logs]);
+    }
+
+    public function getOfficeLocations(Request $request, BusinessOfficeRepoInterface $business_office_repo)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        $office_id = $request->office_id;
+        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $office_locations = (new OfficeLocationFormatter($business_offices))->get($office_id);
+        return api_response($request, $office_locations, 200, ['office_locations' => $office_locations]);
     }
 
     private function attendanceSortOnDate($attendances, $sort = 'asc')
