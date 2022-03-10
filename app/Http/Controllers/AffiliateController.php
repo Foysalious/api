@@ -137,17 +137,19 @@ class AffiliateController extends Controller
 
     /**
      * @param $affiliate
-     * @return array
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function getDashboardMessage($affiliate)
+    public function getDashboardMessage($affiliate, Request $request)
     {
         /** @var Affiliate $affiliate */
         $profile = Affiliate::find($affiliate)->profile;
 
         $status = $profile->nid_verified ==  1 ? "verified" : "unverified";
         $count = $profile->nid_verification_request_count;
+        $data = Statics::faceVerificationResponse($status, $count);
 
-        return ['data' => Statics::faceVerificationResponse($status, $count)];
+        return api_response($request, $data, 200, ['data' => $data]);
     }
 
     public function updateProfilePic(Request $request)
