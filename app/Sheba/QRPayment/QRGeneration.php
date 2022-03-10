@@ -13,6 +13,7 @@ abstract class QRGeneration
 
     protected $qr_id;
 
+    /*** @var PartnerFinancialInformation */
     protected $financial_information;
 
     /**
