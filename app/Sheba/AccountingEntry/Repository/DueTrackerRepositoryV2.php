@@ -4,12 +4,15 @@ use App\Sheba\AccountingEntry\Constants\UserType;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
-use Sheba\Reports\PdfHandler;
-
 
 class DueTrackerRepositoryV2 extends AccountingRepository
 {
     private $partner;
+
+    public function __construct(AccountingEntryClient $client)
+    {
+        parent::__construct($client);
+    }
 
     /**
      * @param $partner
@@ -21,9 +24,12 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this;
     }
 
-    public function __construct(AccountingEntryClient $client)
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function createEntry(array $data)
     {
-        parent::__construct($client);
+        return $this->storeEntry((object) $data, $data['source_type']);
     }
 
     /**
@@ -54,10 +60,12 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @param $contact_id
      * @param $url_param
-     * @return Collection
+     * @param string $userType
+     * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function getDuelistByContactId($contact_id, $url_param, $userType = UserType::PARTNER){
+    public function getDuelistByContactId($contact_id, $url_param, string $userType = UserType::PARTNER)
+    {
 
         $url = "api/due-list/" . $contact_id . "?".$url_param;
         return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
@@ -66,10 +74,12 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @param $contact_id
      * @param $url_param
+     * @param string $userType
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function dueListBalanceByContact($contact_id, $url_param,  $userType = UserType::PARTNER){
+    public function dueListBalanceByContact($contact_id, $url_param,  string $userType = UserType::PARTNER)
+    {
         $url = "api/v2/due-tracker/due-list/" . $contact_id . "/balance?".$url_param;
         return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
     }
