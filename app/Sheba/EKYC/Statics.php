@@ -38,7 +38,7 @@ class Statics
      * @param $message
      * @return array
      */
-    public static function faceVerificationResponse($status, $nid_verification_request_count, $message): array
+    public static function faceVerificationResponse($status, $nid_verification_request_count, $message = null): array
     {
         if($status === self::UNVERIFIED) $status = self::REJECTED;
         $remaining_attempt = self::MAX_PORICHOY_VERIFICATION_ATTEMPT - $nid_verification_request_count;
