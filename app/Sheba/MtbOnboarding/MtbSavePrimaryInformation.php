@@ -83,8 +83,9 @@ class MtbSavePrimaryInformation
         $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
-//        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
         $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
-        return $response;
+        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
+
+//        return $response;
     }
 }

@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
 use App\Models\Partner;
+use App\Sheba\MTB\AuthTypes;
 use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use App\Sheba\MTB\MtbServerClient;
 
@@ -28,22 +29,35 @@ class MtbSaveNomineeInformation
 
     private function makeData()
     {
-        $partnerMefInformation = PartnerMefInformation::where('partner_id', $this->partner->id)->first();
+//        return [
+//            'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
+//            'nomNm' => $this->partner->getFirstAdminResource()->profile->nominee->name,
+//            'nomFatherNm' => $this->partner->getFirstAdminResource()->profile->nominee->father_name,
+//            'nomMotherNm' => $this->partner->getFirstAdminResource()->profile->nominee->mother_name,
+//            'nomDob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->nominee->dob)),
+//            'nomMobileNum' => $this->partner->getFirstAdminResource()->profile->nominee->mobile,
+//            'nomRelation' => $this->partner->getFirstAdminResource()->profile->nominee_relation
+//        ];
+
         return [
-            'ticketId' => $partnerMefInformation['ticket_id'],
-            'nomNm' => $this->partner->getFirstAdminResource()->profile->nominee->name,
-            'nomFatherNm' => $this->partner->getFirstAdminResource()->profile->nominee->father_name,
-            'nomMotherNm' => $this->partner->getFirstAdminResource()->profile->nominee->mother_name,
-            'nomDob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->nominee->dob)),
-            'nomMobileNum' => $this->partner->getFirstAdminResource()->profile->nominee->mobile,
-            'nomRelation' => $this->partner->getFirstAdminResource()->profile->nominee_relation
+            'RequestData' => [
+                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
+                'nomNm' => $this->partner->getFirstAdminResource()->profile->nominee->name,
+                'nomFatherNm' => $this->partner->getFirstAdminResource()->profile->nominee->father_name,
+                'nomMotherNm' => $this->partner->getFirstAdminResource()->profile->nominee->mother_name,
+                'nomDob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->nominee->dob)),
+                'nomMobileNum' => $this->partner->getFirstAdminResource()->profile->nominee->mobile,
+                'nomRelation' => $this->partner->getFirstAdminResource()->profile->nominee_relation
+            ],
+            'requestId' => strval($this->partner->id),
+            'channelId' => "Sheba_XYZ"
         ];
     }
 
     public function storeNomineeInformation()
     {
         $data = $this->makeData();
-        return $this->client->post('api/acctOpen/addNominee', $data);
+        return $this->client->post('api/acctOpen/saveNomineeInfo', $data, AuthTypes::BARER_TOKEN);
     }
 
 }

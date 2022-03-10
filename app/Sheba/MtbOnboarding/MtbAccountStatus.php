@@ -3,6 +3,7 @@
 namespace App\Sheba\MtbOnboarding;
 
 use App\Models\Partner;
+use App\Sheba\MTB\AuthTypes;
 use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use App\Sheba\MTB\MtbServerClient;
 
@@ -26,15 +27,14 @@ class MtbAccountStatus
 
     private function getMerchantTicketId()
     {
-        $partnerMefInformation = PartnerMefInformation::where('partner_id', $this->partner->id)->first();
         return [
-            'ticketId' => $partnerMefInformation['ticket_id']
+            'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id
         ];
     }
 
     public function checkAccountStatus()
     {
         $data = $this->getMerchantTicketId();
-        $accountInformation = $this->client->post('api/acctOpen/savePrimaryInformation', $data);
+        return $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
     }
 }

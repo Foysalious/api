@@ -77,7 +77,6 @@ class MtbServerClient
         $mtbJwt = Redis::get('mtb_jwt');
         if ($mtbJwt)
             return $mtbJwt;
-
         else {
             $mtbJwt = $this->generateMtbBearerToken()['access_token'];
             Redis::set('mtb_jwt', $mtbJwt);
