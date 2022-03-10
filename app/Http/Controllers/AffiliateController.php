@@ -147,7 +147,7 @@ class AffiliateController extends Controller
 
         $status = $profile->nid_verified ==  1 ? "verified" : "unverified";
         $count = $profile->nid_verification_request_count;
-        $data = Statics::faceVerificationResponse($status, $count);
+        $data = Statics::faceVerificationResponse($status, $count, null, null, $user = "affiliate");
 
         return api_response($request, $data, 200, ['data' => $data]);
     }

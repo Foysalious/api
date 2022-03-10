@@ -245,7 +245,8 @@ class CoWorkerController extends Controller
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setGender($request->gender)
-            ->setJoinDate($request->join_date);
+            ->setJoinDate($request->join_date)
+            ->setGrossSalary($request->gross_salary);
 
         $this->coWorkerCreator->setBasicRequest($this->basicRequest)
             ->setBusiness($business)
