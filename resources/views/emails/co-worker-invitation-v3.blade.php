@@ -10,7 +10,7 @@
             <td><h2><strong>Dear Sir/Mam,</strong></h2></td>
         </tr>
         <tr>
-            <td><p>You have been invited/added to join as a co-worker. Start using <a target="_blank" href="https://business.sheba.xyz/">sBusiness.xyz</a> & digiGO by following these 2 steps:</p></td>
+            <td><p>You have been invited/added to join as a co-worker. Start using sBusiness.xyz & digiGO by following these 2 steps:</p></td>
         </tr>
         <tr>
             <td>
