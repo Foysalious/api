@@ -9,7 +9,7 @@ use Sheba\ModificationFields;
 class Creator
 {
     use ModificationFields;
-    
+
     /** @var PayrollComponentRequester */
     private $payrollComponentRequester;
     /** * @var PayrollComponentRepository */
@@ -41,6 +41,8 @@ class Creator
         $gross_component_add = $this->payrollComponentRequester->getGrossComponentAdd();
         if ($gross_component_add)
             foreach ($gross_component_add as $component) {
+                $component_value = 0;
+                if (!$this->isNull($component['value'])) $component_value = $component['value'];
                 $this->grossComponentData = [
                     'payroll_setting_id' => $payroll_settings->id,
                     'name' => $component['key'],
@@ -50,8 +52,16 @@ class Creator
                     'is_default' => 0,
                     'is_active' => $component['is_active'],
                     'is_taxable' => $component['taxable'],
-                    'setting' => json_encode(['percentage' => $component['value']]),
+                    'setting' => json_encode(['percentage' => $component_value]),
                 ];
             }
+    }
+
+    private function isNull($data)
+    {
+        if ($data == " ") return true;
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }
