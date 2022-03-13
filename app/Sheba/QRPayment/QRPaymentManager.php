@@ -71,7 +71,7 @@ class QRPaymentManager extends PaymentManager
                 $completion_class = $this->payable->getCompletionClass();
                 $payment = $completion_class->setQrPayment($this->qrPayment)->setMethod($this->qrPayment->qrGateway->method_name)->complete();
             }
-            $this->accountingEntry();
+//            $this->accountingEntry();
             $this->completePayment();
             $this->unsetRunningCompletion();
             return $payment ?? $this->qrPayment;
