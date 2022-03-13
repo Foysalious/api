@@ -19,6 +19,7 @@ class Updater
     private $payslip;
     private $addition;
     private $deduction;
+    private $summaryId;
 
     /**
      * Updater constructor.
@@ -46,6 +47,12 @@ class Updater
     {
         $this->businessMember = $business_member;
         $this->business = $this->businessMember->business;
+        return $this;
+    }
+
+    public function setSummaryId($summary_id)
+    {
+        $this->summaryId = $summary_id;
         return $this;
     }
 
@@ -85,7 +92,7 @@ class Updater
     public function update()
     {
         $this->payslip = $this->payslipRepository->where('business_member_id', $this->businessMember->id)
-            ->where('schedule_date', 'LIKE', '%' . $this->scheduleDate . '%')
+            ->where('business_payslip_id', $this->summaryId)
             ->first();
         $this->payslipRepository->update($this->payslip, $this->formatPaySlipData());
     }
