@@ -25,16 +25,11 @@ class MtbAccountStatus
         return $this;
     }
 
-    private function getMerchantTicketId()
-    {
-        return [
-            'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id
-        ];
-    }
-
     public function checkAccountStatus()
     {
-        $data = $this->getMerchantTicketId();
-        return $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
+        $response = $this->client->get('api/Enquiry/getAccountOpenStatus/' . $this->partner->partnerMefInformation->mtb_ticket_id, AuthTypes::BARER_TOKEN);
+        $this->partner->partnerMefInformation->mtb_account_status = json_encode($response);
+        $this->partner->partnerMefInformation->save();
+        dd(json_encode($response));
     }
 }

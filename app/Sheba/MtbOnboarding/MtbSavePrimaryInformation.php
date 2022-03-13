@@ -23,12 +23,18 @@ class MtbSavePrimaryInformation
      * @var MtbSaveNomineeInformation
      */
     private $mtbSaveNomineeInformation;
+    /**
+     * @var MtbDocumentUpload
+     */
+    private $mtbDocumentUpload;
 
-    public function __construct(MtbServerClient $client, MtbAccountStatus $mtbAccountStatus, MtbSaveNomineeInformation $mtbSaveNomineeInformation)
+    public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
+                                MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload)
     {
         $this->client = $client;
         $this->mtbAccountStatus = $mtbAccountStatus;
         $this->mtbSaveNomineeInformation = $mtbSaveNomineeInformation;
+        $this->mtbDocumentUpload = $mtbDocumentUpload;
     }
 
     public function setPartner(Partner $partner)
@@ -53,20 +59,20 @@ class MtbSavePrimaryInformation
                 "contactAddress" => 'present',
                 'custGrade' => 'Moderate',
                 'presentAddress' => [
-                    'addressLine1' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->presentAddressLine1,
-                    'postCode' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->presentPostCode,
-                    'division' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->presentDivision,
-                    'district' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->presentDistrict,
+                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->presentAddressLine1,
+                    'postCode' => json_decode($this->partner->partnerMefInformation->partner_information)->presentPostCode,
+                    'division' => json_decode($this->partner->partnerMefInformation->partner_information)->presentDivision,
+                    'district' => json_decode($this->partner->partnerMefInformation->partner_information)->presentDistrict,
                     'country' => 'Bangladesh'
                 ],
                 'permanentAddress' => [
-                    'addressLine1' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->permanentAddressLine1,
-                    'postCode' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->permanentpostCode,
+                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentAddressLine1,
+                    'postCode' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentpostCode,
                     'country' => 'Bangladesh',
-                    'contactAddress' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->permanentcontactAddress
+                    'contactAddress' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentcontactAddress
                 ],
                 'shopInfo' => [
-                    'businessStartDt' => json_decode($this->partner->partnerMefInformation->mtb_account_status)->permanentcontactAddress,//need to clarify
+                    'businessStartDt' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentcontactAddress,//need to clarify
                     'tradeLicenseExists' => 'y',
                     'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
                 ]
@@ -79,13 +85,14 @@ class MtbSavePrimaryInformation
 
     public function storePrimaryInformationToMtb()
     {
-        $data = $this->makePrimaryInformation();
-        $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
-        $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
-        $this->partner->partnerMefInformation->save();
-        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
+//        $data = $this->makePrimaryInformation();
+//        $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
+//        $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
+//        $this->partner->partnerMefInformation->save();
+//        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
+//        $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
         $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
 
-//        return $response;
+        return;
     }
 }
