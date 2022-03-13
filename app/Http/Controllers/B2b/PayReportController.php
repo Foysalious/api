@@ -120,6 +120,9 @@ class PayReportController extends Controller
      */
     public function bkashSalaryReport($business, $id, Request $request, PayReportList $pay_report_list)
     {
+        ini_set('memory_limit', '3072M');
+        ini_set('max_execution_time', 480);
+
         /** @var Business $business */
         $business = $request->business;
 
