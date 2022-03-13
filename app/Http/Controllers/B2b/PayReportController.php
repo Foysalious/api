@@ -123,11 +123,15 @@ class PayReportController extends Controller
         /** @var Business $business */
         $business = $request->business;
 
+        $url = storage_path('sample_files/bkash_payable_file.xls');
+        $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
+        file_put_contents($file_path, file_get_contents($url));
+
         $payslip = $pay_report_list->setBusiness($business)
             ->setMonthYear($request->month_year)
             ->getBkashSalaryData();
-
-        $bkash_salary_report =  (new BkashSalaryReportExcel)->setEmployeeData($payslip->toArray())->download();
+        $bkash_salary_report =  (new BkashSalaryReportExcel)->setFile($file_path)->setEmployeeData($payslip->toArray())->makeData();
+        $bkash_salary_report->takeCompletedAction();
 
         return api_response($request, null, 200, ['bkash_salary_report' => $bkash_salary_report]);
     }
