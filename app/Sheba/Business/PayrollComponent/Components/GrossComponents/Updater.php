@@ -43,8 +43,11 @@ class Updater
     {
         $payroll_settings = $this->payrollComponentRequester->getSetting();
         $gross_component_update = $this->payrollComponentRequester->getGrossComponentUpdate();
+
         if ($gross_component_update)
             foreach ($gross_component_update as $component) {
+                $component_value = 0;
+                if (!$this->isNull($component['value'])) $component_value = $component['value'];
                 $data = [
                     'payroll_setting_id' => $payroll_settings->id,
                     'name' => $component['key'],
@@ -52,7 +55,7 @@ class Updater
                     'type' => 'gross',
                     'is_active' => $component['is_active'],
                     'is_taxable' => $component['taxable'],
-                    'setting' => json_encode(['percentage' => $component['value']]),
+                    'setting' => json_encode(['percentage' => $component_value]),
                 ];
                 $existing_component = $this->payrollComponentRepository->find($component['id']);
                 $this->payrollComponentRepository->update($existing_component, $this->withUpdateModificationField($data));
@@ -69,5 +72,13 @@ class Updater
                 $existing_component->delete();
             }
         }
+    }
+
+    private function isNull($data)
+    {
+        if ($data == " ") return true;
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }
