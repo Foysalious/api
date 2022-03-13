@@ -20,6 +20,7 @@ class BasicRequest
     private $employeeType;
     private $employeeId;
     private $status;
+    private $grossSalary;
 
     /**
      * @param $business_member
@@ -199,6 +200,17 @@ class BasicRequest
     public function getJoinDate()
     {
         return $this->joinDate;
+    }
+
+    public function setGrossSalary($gross_salary)
+    {
+        $this->grossSalary = $gross_salary;
+        return $this;
+    }
+
+    public function getGrossSalary()
+    {
+        return $this->grossSalary;
     }
 
     /**
