@@ -4,5 +4,8 @@ use App\Http\Controllers\Controller;
 
 class ShurjoPayPGWController extends Controller
 {
+    public function validatePayment()
+    {
 
+    }
 }
