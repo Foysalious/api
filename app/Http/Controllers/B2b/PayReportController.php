@@ -118,7 +118,7 @@ class PayReportController extends Controller
      * @param PayReportList $pay_report_list
      * @return JsonResponse
      */
-    public function bkashSalaryReport(Request $request, PayReportList $pay_report_list)
+    public function bkashSalaryReport($business, $id, Request $request, PayReportList $pay_report_list)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -128,7 +128,7 @@ class PayReportController extends Controller
         file_put_contents($file_path, file_get_contents($url));
 
         $payslip = $pay_report_list->setBusiness($business)
-            ->setMonthYear($request->month_year)
+            ->setBusinessPayslipId($id)
             ->getBkashSalaryData();
         $bkash_salary_report =  (new BkashSalaryReportExcel)->setFile($file_path)->setEmployeeData($payslip->toArray())->makeData();
         $bkash_salary_report->takeCompletedAction();
