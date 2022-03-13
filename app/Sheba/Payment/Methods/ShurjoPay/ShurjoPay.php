@@ -6,7 +6,7 @@ use GuzzleHttp\Client;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Methods\DynamicStore;
 use Sheba\Payment\Methods\PaymentMethod;
-use Sheba\Payment\Methods\Ssl\Response\InitResponse;
+use Sheba\Payment\Methods\ShurjoPay\Response\InitResponse;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\Payment\Statuses;
 use Sheba\Pos\Customer\PosCustomerResolver;
@@ -48,7 +48,7 @@ class ShurjoPay extends PaymentMethod
         if ($init_response->hasSuccess()) {
             $success = $init_response->getSuccess();
             $payment->transaction_details = json_encode($response);
-            $payment->redirect_url = $success->checkout_url;
+            $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
             $this->paymentLogRepo->setPayment($payment);
