@@ -103,7 +103,7 @@ class PayReportController extends Controller
         /** @var Business $business */
         $business = $request->business;
 
-        $url = storage_path('sample_files/bkash_payable_file.xls');
+        $url = public_path('uploads/bKash_sample/bkash_payable_file.xls');
         $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
         file_put_contents($file_path, file_get_contents($url));
 
