@@ -163,7 +163,7 @@ class FaceVerificationController extends Controller
             $this->nidFaceVerification->unverifiedChanges($profile);
             $this->nidFaceVerification->storeData($request, $avatar, null, $profileNIDSubmissionRepo);
             return ['data' => Statics::faceVerificationResponse(Statics::PENDING, $request->auth_user
-                ->getProfile()->nid_verification_request_count, $e->getMessage())];
+                ->getProfile()->nid_verification_request_count, $e->getMessage(), $avatar)];
         } catch (\Throwable $e) {
             logError($e);
             return ['message' => $e->getMessage()];
