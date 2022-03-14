@@ -364,6 +364,22 @@ class DueTrackerService
     }
 
     /**
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function report()
+    {
+        $queryString = $this->generateQueryString();
+        $dueListData = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
+        $dueListBalance = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
+        $dueListBalance = [
+            'total' => $dueListBalance['total'],
+            'stats' => $dueListBalance['stats'],
+            'partner' => $this->getPartnerInfo($this->partner),
+        ];
+        return array_merge($dueListData,$dueListBalance);
+    }
+    /**
      * @param $request
      * @return string
      * @throws AccountingEntryServerError

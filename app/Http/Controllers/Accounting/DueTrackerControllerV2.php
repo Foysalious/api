@@ -135,6 +135,26 @@ class DueTrackerControllerV2 extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     */
+    public function getReport(Request $request): JsonResponse
+    {
+        $data = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setOrder($request->order)
+            ->setOrderBy($request->order_by)
+            ->setBalanceType($request->balance_type)
+            ->setQuery($request->q)
+            ->setOffset($request->offset)
+            ->setLimit($request->limit)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->report();
+        return http_response($request, null, 200, ['data' => $data]);
+    }
+    /**
+     * @param Request $request
+     * @return JsonResponse
      * @throws AccountingEntryServerError
      * @throws MpdfException
      * @throws InvalidPartnerPosCustomer
