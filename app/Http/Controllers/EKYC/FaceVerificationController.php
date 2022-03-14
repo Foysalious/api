@@ -112,6 +112,8 @@ class FaceVerificationController extends Controller
         try {
             $profileNIDSubmissionLog = ProfileNIDSubmissionLog::find($id);
             $profile = Profile::find($profileNIDSubmissionLog->profile_id);
+            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
             $photoLink = $profile->pro_pic;
             $this->resubmit_url .= "/".$profileNIDSubmissionLog->nid_no;
             $faceVerificationData = $this->client->post($this->resubmit_url, null);
