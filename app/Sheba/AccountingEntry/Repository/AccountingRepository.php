@@ -151,6 +151,7 @@ class AccountingRepository extends BaseRepository
      */
     private function createEntryData($request, $type, $type_id = null): array
     {
+        $request->date = $request->date ?? $request->entry_at;
         $data['created_from'] = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount'] = (double)$request->amount;
         $data['source_type'] = $type;
