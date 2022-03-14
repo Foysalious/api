@@ -135,9 +135,6 @@ class PayRunController extends Controller
      */
     public function disburse($business, $summary_id, Request $request, VerifyPin $verifyPin)
     {
-        $this->validate($request, [
-            'schedule_date' => 'required|date|date_format:Y-m'
-        ]);
         /** @var Business $business */
         $business = $request->business;
         /** @var BusinessMember $business_member */

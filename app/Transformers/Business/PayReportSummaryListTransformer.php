@@ -17,7 +17,7 @@ class PayReportSummaryListTransformer extends TransformerAbstract
         $total_tax = $this->getTaxTotal($payslips);
         return [
             'id' =>   $payslip_summary->id,
-            'month' => Carbon::parse($cycle_start_date)->format('F Y'),
+            'month' => Carbon::parse($payslip_summary->schedule_date)->format('F Y'),
             'status' => $status,
             'disburse_date' => $disbursed_at ? Carbon::parse($disbursed_at)->format('j F') : 'N/A',
             'cycle' => Carbon::parse($cycle_start_date)->format('M d').' - '.Carbon::parse($payslip_summary->cycle_end_date)->format('M d'),
