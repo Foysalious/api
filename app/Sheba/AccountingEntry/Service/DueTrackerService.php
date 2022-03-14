@@ -3,23 +3,28 @@
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\Pos\Order\PosOrderObject;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
 use Carbon\Carbon;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Illuminate\Support\Collection;
+use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Exception;
-
+use Throwable;
 
 
 class DueTrackerService
 {
     protected $partner;
     protected $dueTrackerRepo;
-    protected $contactType;
+    protected $contact_type;
     protected $order;
     protected $order_by;
     protected $balance_type;
@@ -36,7 +41,8 @@ class DueTrackerService
     protected $attachments;
     protected $start_date;
     protected $end_date;
-    protected $contactId;
+    protected $contact_id;
+    protected $note;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -53,8 +59,9 @@ class DueTrackerService
         return $this;
     }
 
-    public function setContactId($contactId): DueTrackerService {
-        $this->contactId = $contactId;
+    public function setContactId($contact_id): DueTrackerService
+    {
+        $this->contact_id = $contact_id;
         return $this;
     }
 
@@ -129,12 +136,12 @@ class DueTrackerService
     }
 
     /**
-     * @param mixed $contactType
+     * @param mixed $contact_type
      * @return DueTrackerService
      */
-    public function setContactType($contactType): DueTrackerService
+    public function setContactType($contact_type): DueTrackerService
     {
-        $this->contactType = $contactType;
+        $this->contact_type = $contact_type;
         return $this;
     }
 
@@ -228,6 +235,25 @@ class DueTrackerService
     }
 
     /**
+     * @param $note
+     * @return $this
+     */
+    public function setNote($note): DueTrackerService
+    {
+        $this->note = $note;
+        return $this;
+    }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function storeEntry()
+    {
+        $data = $this->makeDataForEntry();
+        return $this->dueTrackerRepo->createEntry($data);
+    }
+
+    /**
      * @throws AccountingEntryServerError
      */
     public function getDueListBalance(): array
@@ -235,7 +261,6 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
         return [
-            'total_transactions' => $result['total_transactions'],
             'total' => $result['total'],
             'stats' => $result['stats'],
             'partner' => $this->getPartnerInfo($this->partner),
@@ -259,13 +284,13 @@ class DueTrackerService
     public function dueListBalanceByContact(): array
     {
         $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contactId, $queryString);
+        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
         $customer = [];
 
         if (is_null($result['contact_details'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($this->customer_id)->setPartner($this->partner)->get();
+            $posCustomer = $posCustomerResolver->setCustomerId($this->contact_id)->setPartner($this->partner)->get();
             if (empty($posCustomer)) {
                 throw new InvalidPartnerPosCustomer();
             }
@@ -295,37 +320,42 @@ class DueTrackerService
     }
 
 //    TODO: Add contact type
+
     /**
      * @return array
      * @throws AccountingEntryServerError
-     * @throws \App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError
+     * @throws PosOrderServiceServerError
      */
     public function dueListByContact(): array
     {
         $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contactId, $queryString);
-        $pos_orders = [];
+        $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
+
         $due_list = $result['list'];
-        foreach ($due_list as $key => $item) {
-            if ($item["attachments"]) {
-                $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
+        $pos_orders = [];
+        collect($due_list)->each(function($each) use (&$pos_orders) {
+            if (!is_null($each['source_id']) && $each['source_type'] == EntryTypes::POS) {
+                $pos_orders [] = $each['source_id'];
             }
+        });
+        if (count($pos_orders) > 0) {
+            $orders = $this->getPartnerWisePosOrders($pos_orders)['orders'];
+        }
+        foreach ($due_list as $key => &$item) {
+            $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
             $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS) {
-                $pos_orders[] =  $item['source_id'];
-            }
-            $due_list[$key]['partner_wise_order_id']= null;
-        }
-
-        if (count($pos_orders) > 0) {
-            $orders = $this->getPartnerWise($pos_orders)['orders'];
-        }
-
-        foreach ($due_list as $key => $val) {
-            if ($val['source_id'] && $val['source_type'] == EntryTypes::POS && count($orders) > 0) {
-
-                $due_list[$key]['partner_wise_order_id'] = $orders[$val['source_id']]['partner_wise_order_id'];
+            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && isset($orders[$item['source_id']])) {
+                $order = $orders[$item['source_id']];
+                $item['partner_wise_order_id'] = $order['partner_wise_order_id'];
+                $item['source_type'] = 'PosOrder';
+                $item['head'] = 'POS sales';
+                $item['head_bn'] = 'সেলস';
+                if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
+                    $item['source_type'] = 'Webstore Order';
+                    $item['head'] = 'Webstore sales';
+                    $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+                }
             }
         }
         return [
@@ -334,12 +364,28 @@ class DueTrackerService
     }
 
     /**
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function report()
+    {
+        $queryString = $this->generateQueryString();
+        $dueListData = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
+        $dueListBalance = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
+        $dueListBalance = [
+            'total' => $dueListBalance['total'],
+            'stats' => $dueListBalance['stats'],
+            'partner' => $this->getPartnerInfo($this->partner),
+        ];
+        return array_merge($dueListData,$dueListBalance);
+    }
+    /**
      * @param $request
-     * @return string|void
+     * @return string
      * @throws AccountingEntryServerError
      * @throws \Mpdf\MpdfException
-     * @throws \Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer
-     * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
+     * @throws InvalidPartnerPosCustomer
+     * @throws NotAssociativeArray
      * @throws \Throwable
      */
     public function downloadPDF($request)
@@ -347,16 +393,18 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $data = [];
         $data['start_date'] = $this->start_date ?? null;
-        $data['end_date']   = $this->end_date ?? null;
-        if($this->contactId == null){
+        $data['end_date'] = $this->end_date ?? null;
+        if ($this->contact_id == null) {
             $list = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
             $data = array_merge($data, $list);
             $balanceData = $this->getDueListBalance();
             $data = array_merge($data, $balanceData);
-            return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
+            //TODO: Will Change the Pdf Generation
+            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf" ;
+            //return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
         }
 
-        $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contactId, $queryString);
+        $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
         $data = array_merge($data, $list);
         $balanceData = $this->setCustomerId($request->contact_id)->dueListBalanceByContact();
         $data = array_merge($data, $balanceData);
@@ -392,8 +440,8 @@ class DueTrackerService
             $query_strings [] = "offset=$this->offset";
         }
 
-        if (isset($this->contactType)) {
-            $query_strings [] = "contact_type=" . strtolower($this->contactType);
+        if (isset($this->contact_type)) {
+            $query_strings [] = "contact_type=" . strtolower($this->contact_type);
         }
 
         if (isset($this->filter_by_supplier)) {
@@ -419,13 +467,51 @@ class DueTrackerService
     /**
      * @param $pos_orders
      * @return mixed
-     * @throws \App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError
+     * @throws PosOrderServiceServerError
      */
-    private function getPartnerWise($pos_orders)
+    private function getPartnerWisePosOrders($pos_orders)
     {
         /** @var OrderServiceAlias $orderService */
         $orderService= app(OrderServiceAlias::class);
         return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
+    }
 
+    /**
+     * @param $partner
+     * @param $partnerWiseOrderId
+     * @return PosOrderObject
+     */
+    private function posOrderByPartnerWiseOrderId($partner, $partnerWiseOrderId)
+    {
+        try {
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            return $posOrderResolver->setPartnerWiseOrderId($partner->id, $partnerWiseOrderId)->get();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * @return array
+     */
+    private function makeDataForEntry(): array
+    {
+        $posOrder = ($this->entry_type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($this->partner, $this->partner_wise_order_id) : null;
+
+        $data['contact_id'] = $this->contact_id;
+        $data['customer_id'] = $this->contact_id; //TODO: Should remove when customer resolver fix from POS SIDE
+        $data['contact_type'] = $this->contact_type;
+        $data['amount'] = $this->amount;
+        $data['entry_at'] = $this->date;
+        $data['source_type'] = $this->entry_type;
+        $data['to_account_key'] = $this->entry_type === EntryTypes::DUE ? $this->contact_id : $this->account_key;
+        $data['from_account_key'] = $this->entry_type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $this->contact_id;
+        $data['note'] = $this->note;
+        $data['partner'] = $this->partner;
+        $data['attachments'] = $this->attachments;
+        $data['source_id'] = $posOrder ? $posOrder->id : null;
+
+        return $data;
     }
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mpdf\MpdfException;
@@ -20,22 +21,37 @@ class DueTrackerControllerV2 extends Controller
         $this->dueTrackerService = $dueTrackerService;
     }
 
-    //TODO: FIX ENTRY CREATE FOR DUE TRACKER
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function store(Request $request)
     {
         $this->validate($request, [
-            'amount'                => 'required',
-            'entry_type'            => 'required|in:due,deposit',
-            'account_key'           => 'sometimes|string',
-            'customer_id'           => 'required',
-            'date'                  => 'required|date_format:Y-m-d H:i:s',
+            'amount' => 'required',
+            'source_type' => 'required|in:due,deposit',
+            'account_key' => 'sometimes|string',
+            'contact_type' => 'required|string',
+            'contact_id' => 'required',
+            'note' => 'sometimes',
+            'entry_at' => 'required|date_format:Y-m-d H:i:s',
             'partner_wise_order_id' => 'sometimes|numeric',
-            'attachments'           => 'sometimes|array',
-            'attachments.*'         => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
+            'attachments' => 'sometimes|array',
+            'attachments.*' => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
         ]);
-        $response = $this->dueTrackerService->setPartner($request->partner)->storeEntry($request, $request->entry_type);
+        $response = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setAmount($request->amount)
+            ->setEntryType($request->source_type)
+            ->setAccountKey($request->account_key)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setDate($request->entry_at)
+            ->setPartnerWiseOrderId($request->partner_wise_order_id)
+            ->setAttachments($request->attachments)
+            ->setNote($request->note)
+            ->storeEntry();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
-        return $response;
+        return api_response($request, null, 200, ['data' => $response]);
     }
 
     /**
@@ -49,7 +65,7 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->getDueListBalance();
-        return api_response($request, null, 200, ['data' => $response]);
+        return http_response($request, null, 200, ['data' => $response]);
 
     }
 
@@ -72,9 +88,17 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->getDueList();
-        return api_response($request, null, 200, ['data' => $data]);
+        return http_response($request, null, 200, ['data' => $data]);
     }
-    public function dueListByContact(Request $request){
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws AccountingEntryServerError
+     * @throws PosOrderServiceServerError
+     */
+    public function dueListByContact(Request $request): JsonResponse
+    {
         $data=$this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
@@ -88,7 +112,7 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->dueListByContact();
-        return api_response($request, null, 200, ['data' => $data]);
+        return http_response($request, null, 200, ['data' => $data]);
 
 
     }
@@ -105,9 +129,29 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->dueListBalanceByContact();
-        return api_response($request, null, 200, ['data' => $data]);
+        return http_response($request, null, 200, ['data' => $data]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getReport(Request $request): JsonResponse
+    {
+        $data = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setOrder($request->order)
+            ->setOrderBy($request->order_by)
+            ->setBalanceType($request->balance_type)
+            ->setQuery($request->q)
+            ->setOffset($request->offset)
+            ->setLimit($request->limit)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->report();
+        return http_response($request, null, 200, ['data' => $data]);
+    }
     /**
      * @param Request $request
      * @return JsonResponse
@@ -126,6 +170,6 @@ class DueTrackerControllerV2 extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->downloadPDF($request);
-        return api_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
+        return http_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
     }
 }
