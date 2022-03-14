@@ -44,10 +44,16 @@ class NidOcr
      * @param string $business_name
      * @param string $feature_name
      */
-    public function storeData($request, $nid_ocr_data, $nid_no, $user_agent, $avatar, $business_name = "sManager", $feature_name = "NID Verification")
+    public function storeData($request, $nid_ocr_data, $nid_no, $user_agent, $avatar, $feature_name = "NID Verification")
     {
         $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = $avatar instanceof Partner ? get_class($request->auth_user->getResource()) : get_class($request->auth_user->getAffiliate());
+        if ($avatar instanceof Partner) {
+            $submitted_by = get_class($request->auth_user->getResource());
+            $business_name = "sManager";
+        } else {
+            $submitted_by = get_class($request->auth_user->getAffiliate());
+            $business_name = "sBondhu";
+        }
         $ocrData = $nid_ocr_data['data'];
         $ocrData = json_encode(array_except($ocrData, ['id_front_name', 'id_back_name']));
         $log = "NID submitted by the user";
