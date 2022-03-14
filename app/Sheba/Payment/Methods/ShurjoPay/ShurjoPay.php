@@ -7,6 +7,7 @@ use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Methods\DynamicStore;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\ShurjoPay\Response\InitResponse;
+use Sheba\Payment\Methods\ShurjoPay\Response\ValidationResponse;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\Payment\Statuses;
 use Sheba\Pos\Customer\PosCustomerResolver;
@@ -44,11 +45,11 @@ class ShurjoPay extends PaymentMethod
         $response = $this->createAPayment($payment);
         $init_response = new InitResponse();
         $init_response->setResponse($response);
-
         if ($init_response->hasSuccess()) {
             $success = $init_response->getSuccess();
             $payment->transaction_details = json_encode($response);
             $payment->redirect_url = $success->redirect_url;
+            $payment->gateway_transaction_id = $success->id;
         } else {
             $error = $init_response->getError();
             $this->paymentLogRepo->setPayment($payment);
@@ -103,6 +104,7 @@ class ShurjoPay extends PaymentMethod
 
     private function getToken()
     {
+        $this->setConfiguration($this->getCredentials());
         $client = new Client();
         $response = $client->request('POST', 'https://sandbox.shurjopayment.com/api/get_token', [
             'form_params' => [
@@ -118,11 +120,49 @@ class ShurjoPay extends PaymentMethod
 
     public function validate(Payment $payment): Payment
     {
-        // TODO: Implement validate() method.
+        $response = $this->getToken();
+        $client = new Client();
+        $response = $client->request('POST', 'https://sandbox.shurjopayment.com/api/verification', [
+            'form_params' => [
+                'order_id' => $payment->gateway_transaction_id,
+                'token' => $response['token']
+            ],
+            'verify' => false
+        ]);
+        $response = json_decode($response->getBody());
+        $validation_response = new ValidationResponse();
+        $validation_response->setResponse($response[0])->setPayment($payment);
+        $this->paymentLogRepo->setPayment($payment);
+        if ($validation_response->hasSuccess()) {
+            $success = $validation_response->getSuccess();
+            $this->paymentLogRepo->create([
+                'to' => Statuses::VALIDATED,
+                'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details
+            ]);
+            $payment->status = Statuses::VALIDATED;
+            $payment->transaction_details = json_encode($success->details);
+        } else {
+            $error = $validation_response->getError();
+            $this->paymentLogRepo->create([
+                'to' => Statuses::VALIDATION_FAILED,
+                'from' => $payment->status,
+                'transaction_details' => $payment->transaction_details
+            ]);
+            $payment->status = Statuses::VALIDATION_FAILED;
+            $payment->transaction_details = json_encode($error->details);
+        }
+        $payment->update();
+        return $payment;
     }
 
     public function getMethodName()
     {
         // TODO: Implement getMethodName() method.
+    }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        return 0;
     }
 }
