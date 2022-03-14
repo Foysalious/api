@@ -2,23 +2,24 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
-use GuzzleHttp\Client;
 use Sheba\Payment\Factory\PaymentStrategy;
-use Sheba\Payment\Methods\DynamicStore;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\ShurjoPay\Response\InitResponse;
 use Sheba\Payment\Methods\ShurjoPay\Response\ValidationResponse;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\Payment\Statuses;
-use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPRequest;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
-use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 
 class ShurjoPay extends PaymentMethod
 {
     /** @var DynamicSslStoreConfiguration */
     private $configuration;
+    /**
+     * @var TPProxyClient
+     */
+    private $tpClient;
 
     public function setConfiguration(DynamicSslStoreConfiguration $configuration): ShurjoPay
     {
@@ -29,20 +30,16 @@ class ShurjoPay extends PaymentMethod
     public function __construct(TPProxyClient $tp_client)
     {
         parent::__construct();
-        $this->successUrl = config('payment.ssl.urls.success');
-        $this->failUrl = config('payment.ssl.urls.fail');
-        $this->cancelUrl = config('payment.ssl.urls.cancel');
         $this->tpClient = $tp_client;
+        $this->baseUrl = config('payment.shurjopay.base_url');
     }
 
     public function init(Payable $payable): Payment
     {
-        $shurjo_pay = new ShurjoPayStore();
-        $shurjo_pay->setPartner($this->getReceiver($payable));
-//        $shurjo_pay->getStoreAccount(PaymentStrategy::SHURJOPAY);
+        if (!$payable->isPaymentLink()) throw  new \Exception('Only Payment Link payment will work');
+        $this->setConfiguration($this->getCredentials($payable));
         $payment = $this->createPayment($payable, PaymentStrategy::SHURJOPAY);
-        $this->setConfiguration($this->getCredentials());
-        $response = $this->createAPayment($payment);
+        $response = $this->createSecretPayment($payment);
         $init_response = new InitResponse();
         $init_response->setResponse($response);
         if ($init_response->hasSuccess()) {
@@ -71,65 +68,55 @@ class ShurjoPay extends PaymentMethod
         return $payment_link->getPaymentReceiver();
     }
 
-    private function getCredentials(): DynamicSslStoreConfiguration
+    private function getCredentials(Payable $payable): DynamicSslStoreConfiguration
     {
-        $gateway_account = PgwStoreAccount::find(125);
+        $shurjo_pay = new ShurjoPayStore();
+        $shurjo_pay->setPartner($this->getReceiver($payable));
+        $gateway_account = $shurjo_pay->getStoreAccount(PaymentStrategy::SHURJOPAY);
         return (new DynamicSslStoreConfiguration($gateway_account->configuration));
     }
 
-    private function createAPayment(Payment $payment)
+    private function createSecretPayment(Payment $payment)
     {
         $token = $this->getToken();
-        $client = new Client();
-        $response = $client->request('POST', 'https://sandbox.shurjopayment.com/api/secret-pay', [
-            'form_params' => [
-                'token' => $token['token'],
-                'store_id' => $token['store_id'],
+        $request = (new TPRequest())->setUrl($this->baseUrl . '/secret-pay')
+            ->setMethod(TPRequest::METHOD_POST)->setInput([
+                'token' => $token->token,
+                'store_id' => $token->store_id,
                 'prefix' => 'sp',
                 'currency' => 'BDT',
                 'return_url' => 'https://api.dev-sheba.xyz/v2/shurjopay/validate',
                 'cancel_url' => 'https://api.dev-sheba.xyz/v2/shurjopay/validate',
                 'amount' => $payment->payable->amount,
                 'order_id' => $payment->id,
-                'customer_name' => 'Test',
-                'customer_phone' => '01678242978',
+                'customer_name' => $payment->payable->getName(),
+                'customer_phone' => $payment->payable->getMobile(),
                 'customer_address' => 'Dhaka',
                 'customer_city' => 'Dhaka',
                 'client_ip' => getIp()
-            ],
-            'verify' => false
-        ]);
-        return json_decode($response->getBody());
+            ]);
+        return $this->tpClient->call($request);
     }
 
     private function getToken()
     {
-        $this->setConfiguration($this->getCredentials());
-        $client = new Client();
-        $response = $client->request('POST', 'https://sandbox.shurjopayment.com/api/get_token', [
-            'form_params' => [
+        $request = (new TPRequest())->setUrl($this->baseUrl . '/get_token')
+            ->setMethod(TPRequest::METHOD_POST)->setInput([
                 'username' => $this->configuration->getStoreId(),
                 'password' => $this->configuration->getPassword()
-            ],
-            'verify' => false
-        ]);
-        return json_decode($response->getBody(), 1);
+            ]);
+        return $this->tpClient->call($request);
     }
-
-//    private function get
 
     public function validate(Payment $payment): Payment
     {
-        $response = $this->getToken();
-        $client = new Client();
-        $response = $client->request('POST', 'https://sandbox.shurjopayment.com/api/verification', [
-            'form_params' => [
+        $this->setConfiguration($this->getCredentials($payment->payable));
+        $token = $this->getToken();
+        $response = (new TPRequest())->setUrl($this->baseUrl . '/verification')
+            ->setMethod(TPRequest::METHOD_POST)->setInput([
                 'order_id' => $payment->gateway_transaction_id,
-                'token' => $response['token']
-            ],
-            'verify' => false
-        ]);
-        $response = json_decode($response->getBody());
+                'token' => $token->token
+            ]);
         $validation_response = new ValidationResponse();
         $validation_response->setResponse($response[0])->setPayment($payment);
         $this->paymentLogRepo->setPayment($payment);
