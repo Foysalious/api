@@ -1,15 +1,14 @@
 <?php namespace App\Sheba\Business\Payslip\PayReport;
 
-use Sheba\FileManagers\CdnFileManager;
-use Sheba\FileManagers\FileManager;
-use Carbon\Carbon;
 use Excel;
+use Maatwebsite\Excel\Readers\LaravelExcelReader;
 
 class BkashSalaryReportExcel
 {
-    use FileManager, CdnFileManager;
-
     private $payReportData;
+    private $file;
+    /** @var LaravelExcelReader */
+    private $excel;
 
     public function setEmployeeData(array $pay_report_data)
     {
@@ -17,49 +16,35 @@ class BkashSalaryReportExcel
         return $this;
     }
 
-    public function download()
+    public function setFile($file)
     {
-        $six_digit_random_number = random_int(100000, 999999);
-        $file_name = 'Net_Payable_Bkash_Report_' . $six_digit_random_number . '_' . Carbon::now()->toDateTimeString();
-        $file = Excel::create($file_name, function ($excel) {
-            $excel->sheet('data', function ($sheet) {
-                $sheet->fromArray($this->makeData(), null, 'A1', false, false);
-                $sheet->prependRow($this->getHeaders());
-                $sheet->freezeFirstRow();
-                $sheet->cell('A1:D1', function ($cells) {
-                    $cells->setFontWeight('bold');
-                });
-                $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
-                    array('horizontal' => 'left')
-                );
-                $sheet->setAutoSize(true);
-            });
-        })->save();
-
-        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
-        $file_name = $this->uniqueFileName($file_path, $file_name, 'xls');
-        $file_link = $this->saveFileToCDN($file_path, getBulkGrossSalaryFolder(), $file_name);
-        unlink($file_path);
-
-        return $file_link;
+        $this->file = $file;
+        return $this;
     }
 
-    private function makeData()
+    public function makeData()
     {
-        $formatted_data = [];
-        foreach ($this->payReportData as $pay_report_data) {
-            $formatted_data [] = [
-                'employee_id' => $pay_report_data['employee_id'],
-                'employee_name' => $pay_report_data['name'],
-                'bkash_number' => $pay_report_data['account_no'],
-                'net_payable' => $pay_report_data['net_payable'],
-            ];
+        $this->loadExcel();
+
+        $sl_no = 0;
+        foreach ($this->payReportData as $key => $pay_report_data) {
+            $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::SL_NO . ($key + 4), ++$sl_no);
+            $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::WALLET_NO . ($key + 4), $pay_report_data['account_no']);
+            $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::PRINCIPLE_AMOUNT . ($key + 4), $pay_report_data['net_payable']);
         }
-        return $formatted_data;
+        $this->excel->save();
+
+        return $this;
     }
 
-    private function getHeaders()
+    private function loadExcel()
     {
-        return ['Employee Id', 'Employee Name', 'Bkash Number', 'Net Payable'];
+        $this->excel = Excel::selectSheets([BkashPayslipExcel::FINAL_DISBURSEMENT, BkashPayslipExcel::CLIENT, BkashPayslipExcel::FINAL, BkashPayslipExcel::FEE, BkashPayslipExcel::BKASH])->load($this->file);
+    }
+
+    public function takeCompletedAction()
+    {
+        $this->excel->download('xls');
+        unlink($this->file);
     }
 }

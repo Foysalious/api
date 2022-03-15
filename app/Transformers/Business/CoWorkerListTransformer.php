@@ -2,9 +2,9 @@
 
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
+use App\Models\Member;
 use App\Models\Profile;
 use League\Fractal\TransformerAbstract;
-use App\Models\Member;
 
 class CoWorkerListTransformer extends TransformerAbstract
 {
@@ -16,7 +16,6 @@ class CoWorkerListTransformer extends TransformerAbstract
         $profile = $member->profile;
         /** @var BusinessRole $role */
         $role = $business_member->role;
-
         return [
             'id' => $member->id,
             'employee_id' => $business_member->employee_id,
@@ -32,7 +31,8 @@ class CoWorkerListTransformer extends TransformerAbstract
             'status' => $business_member->status,
             'department_id' => $role ? $role->businessDepartment->id : null,
             'department' => $role ? $role->businessDepartment->name : null,
-            'designation' => $role ? $role->name : null
+            'designation' => $role ? $role->name : null,
+            'is_salary_configured' => $business_member->salary ? 1 : 0
         ];
     }
 }

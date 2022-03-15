@@ -55,7 +55,7 @@ class DepartmentController extends Controller
         if ($request->has('is_tagged') && $request->is_tagged == 1) {
             $business_departments = $this->filteredUntaggedDepartment($business_departments);
             if (count($business_departments) > 0)
-                return api_response($request, $business_departments, 200, ['departments' => $business_departments]);
+                return api_response($request, $business_departments, 200, ['departments' => collect($business_departments)->values()]);
         }
 
         $total_business_departments = count($business_departments);

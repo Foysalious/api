@@ -10,17 +10,16 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
 use Sheba\Business\BusinessTransaction\TransactionExcel;
+use Sheba\Dal\Salary\Salary;
+use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
 use App\Transformers\Business\VendorListTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -35,8 +34,6 @@ use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\Partner\PartnerStatuses;
-use Sheba\Reports\ExcelHandler;
-use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
@@ -466,5 +463,17 @@ class BusinessesController extends Controller
     public function fetchJWTToken(Member $member)
     {
         return $this->accountServer->getTokenByIdAndRememberToken($member->id, $member->remember_token, 'member');
+    }
+
+    public function salaryAlert(Request $request, SalaryRepository $salary_repository)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        $active_business_member = $business->getActiveBusinessMember()->pluck('id');
+        $active_business_member_count = $active_business_member->count();
+        $given_salary_count = $salary_repository->whereIn('business_member_id', $active_business_member->toArray())->count();
+        $is_salary_configured = 1;
+        if ($active_business_member_count > $given_salary_count) $is_salary_configured = 0;
+        return api_response($request, null, 200, ['is_salary_configured' => $is_salary_configured]);
     }
 }

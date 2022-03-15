@@ -14,6 +14,7 @@ class PayRunBulkExcel
     private $payrollComponents;
     private $payslip;
     private $maxCell;
+    private $scheduleDate;
 
     public function __construct(ExcelHandler $excelHandler)
     {
@@ -30,6 +31,12 @@ class PayRunBulkExcel
     public function setPayslips($payslip)
     {
         $this->payslip = $payslip;
+        return $this;
+    }
+
+    public function setScheduleDate($schedule_date)
+    {
+        $this->scheduleDate = $schedule_date;
         return $this;
     }
 
@@ -71,7 +78,7 @@ class PayRunBulkExcel
                     'employee_name' => $payslip['employee_name'],
                     'employee_id' => $payslip['employee_id'],
                     'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
-                    'schedule_date' => $payslip['schedule_date'],
+                    'schedule_date' => $this->scheduleDate,
                     'gross_salary' => $payslip['gross_salary'],
                 ] + $this->getComponents($payslip);
             array_push($this->data, $business_member_data);
