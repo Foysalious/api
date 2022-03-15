@@ -6,6 +6,7 @@ use App\Helper\BangladeshiMobileValidator;
 use Sheba\Business\BusinessMemberStatusChangeLog\Creator as BusinessMemberStatusChangeLogCreator;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
+use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
@@ -99,6 +100,8 @@ class Updater
     private $businessMemberStatusChangeLogCreator;
     /** @var CoWorkerBkashAccountRequester $coWorkerBkashAccRequester */
     private $coWorkerBkashAccRequester;
+    /*** @var SalaryRepository */
+    private $salaryRepo;
 
     /**
      * Updater constructor.
@@ -139,6 +142,7 @@ class Updater
         $this->businessRoleRepository = $business_role_repository;
         $this->businessMemberStatusChangeLogCreator = $business_member_status_change_log_creator;
         $this->coWorkerBkashAccRequester = $co_worker_bkash_acc_requester;
+        $this->salaryRepo = app(SalaryRepository::class);
     }
 
     /**
@@ -536,6 +540,7 @@ class Updater
             $business_member_data['join_date'] = $this->basicRequest->getJoinDate();
             $business_member_data['status'] = $this->basicRequest->getStatus();
             $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
+            $this->updateSalary();
             DB::commit();
             return $this->businessMember;
         } catch (Throwable $e) {
@@ -670,5 +675,15 @@ class Updater
         $mobile = BangladeshiMobileValidator::validate($mobile) ? $mobile : null;
         if (!$mobile) return null;
         return $this->businessMemberRepository->where('mobile', $mobile)->first();
+    }
+
+    private function updateSalary()
+    {
+        $gross_salary = $this->basicRequest->getGrossSalary();
+        if ($gross_salary) {
+            $business_member_salary = $this->businessMember->salary;
+            if ($business_member_salary) return $this->salaryRepo->update($business_member_salary, ['gross_salary' => $gross_salary]);
+            $this->salaryRepo->create(['business_member_id' => $this->businessMember->id, 'gross_salary' => $gross_salary]);
+        }
     }
 }
