@@ -61,7 +61,7 @@ class MtbServerClient
         }
     }
 
-    private function makeUrl($uri)
+    private function makeUrl($uri): string
     {
         return $this->baseUrl . "/" . $uri;
     }
@@ -138,20 +138,9 @@ class MtbServerClient
      * @return array|object|string|null
      * @throws MtbServiceServerError|NotFoundAndDoNotReportException
      */
-    public function delete($uri)
+    public function delete($uri, $auth_type)
     {
-        return $this->call('DELETE', $uri);
+        return $this->call('DELETE', $uri, $auth_type);
     }
-
-    private function getModifierNameForHeader()
-    {
-        if ($manager_resource = \request()->manager_resource) {
-            $this->setModifier($manager_resource);
-            return $this->getModifierName();
-        } else {
-            return '';
-        }
-    }
-
 
 }
