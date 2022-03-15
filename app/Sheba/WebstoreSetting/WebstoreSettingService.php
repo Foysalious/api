@@ -17,6 +17,7 @@ class WebstoreSettingService
     private $instagram;
     private $youtube;
     private $email;
+    private $type;
 
     public function __construct(WebstoreSettingServerClient $client)
     {
@@ -68,6 +69,12 @@ class WebstoreSettingService
     public function setEmail($email)
     {
         $this->email = $email;
+        return $this;
+    }
+
+    public function setType($type)
+    {
+        $this->type = $type;
         return $this;
     }
 
@@ -156,4 +163,16 @@ class WebstoreSettingService
         $data = $this->makeStoreData();
         return $this->client->post('api/v1/partners/' . $this->partner . '/theme-settings/sync', $data);
     }
+
+    public function getBannerList()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partner . '/banners/'.$this->type);
+    }
+
+    public function getPageDetails()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partner . '/page-settings/'.$this->type);
+    }
+
+
 }

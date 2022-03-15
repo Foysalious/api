@@ -65,6 +65,11 @@ class Route
                     $api->put('/', 'WebstoreSettingController@update');
                     $api->get('/system-defined', 'WebstoreSettingController@getSystemDefinedSettings');
                 });
+                $api->group(['prefix' => 'webstore/page-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
+                    $api->get('/banners/{type}', 'WebstoreSettingController@getBannerList');
+                    $api->get('/details/{type}', 'WebstoreSettingController@getPageDetails');
+
+                });
                 $api->group(['prefix' => 'collections'], function ($api) {
                     $api->get('/', 'Inventory\CollectionController@index');
                     $api->post('/', 'Inventory\CollectionController@store');
