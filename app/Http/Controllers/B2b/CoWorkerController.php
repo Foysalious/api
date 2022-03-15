@@ -144,6 +144,7 @@ class CoWorkerController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
+        $is_payroll_enable = $business->payrollSetting->is_enable;
         $business_members = $business->getAllBusinessMember();
         list($offset, $limit) = calculatePagination($request);
 
@@ -158,10 +159,10 @@ class CoWorkerController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($business_members->get(), new CoWorkerListTransformer());
+        $employees = new Collection($business_members->get(), new CoWorkerListTransformer($is_payroll_enable));
         $employees_array = $manager->createData($employees)->toArray()['data'];
         usort($employees_array, function ($item1, $item2) {
-            return $item1['is_salary_configured'] <=> $item2['is_salary_configured'];
+            return $item1['show_alert'] < $item2['show_alert'];
         });
         $employees = collect($employees_array);
         $employees = $this->coWorkerInfoSort->sortCoworkerInList($employees, $request);
