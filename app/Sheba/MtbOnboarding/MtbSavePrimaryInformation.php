@@ -37,13 +37,13 @@ class MtbSavePrimaryInformation
         $this->mtbDocumentUpload = $mtbDocumentUpload;
     }
 
-    public function setPartner(Partner $partner)
+    public function setPartner(Partner $partner): MtbSavePrimaryInformation
     {
         $this->partner = $partner;
         return $this;
     }
 
-    private function makePrimaryInformation()
+    private function makePrimaryInformation(): array
     {
         return [
             'RequestData' => [
@@ -83,6 +83,9 @@ class MtbSavePrimaryInformation
 
     }
 
+    /**
+     * @return void
+     */
     public function storePrimaryInformationToMtb()
     {
 //        $data = $this->makePrimaryInformation();
