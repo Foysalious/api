@@ -1,42 +1,50 @@
 <?php namespace Sheba\Business\Payslip\PayReport;
 
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Excel;
+use Maatwebsite\Excel\Readers\LaravelExcelReader;
 
 class BkashSalaryReportExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
     private $payReportData;
+    private $file;
+    /** @var LaravelExcelReader */
+    private $excel;
 
     public function __construct(array $pay_report_data)
     {
         $this->payReportData = $pay_report_data;
     }
 
-    /**
-     * @return Collection
-     */
-    public function collection(): Collection
+    public function setFile($file)
     {
-        $formatted_data = collect([]);
-        foreach ($this->payReportData as $pay_report_data) {
-            $formatted_data->push([
-                'employee_id' => $pay_report_data['employee_id'],
-                'employee_name' => $pay_report_data['name'],
-                'bkash_number' => $pay_report_data['account_no'],
-                'net_payable' => $pay_report_data['net_payable'],
-            ]);
-        }
-        return $formatted_data;
+        $this->file = $file;
+        return $this;
     }
 
-    public function headings(): array
+    public function makeData()
     {
-        return ['Employee Id', 'Employee Name', 'Bkash Number', 'Net Payable'];
+        $this->loadExcel();
+
+        $sl_no = 0;
+        foreach ($this->payReportData as $key => $pay_report_data) {
+            $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::SL_NO . ($key + 4), ++$sl_no);
+            $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::WALLET_NO . ($key + 4), $pay_report_data['account_no']);
+            $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::PRINCIPLE_AMOUNT . ($key + 4), $pay_report_data['net_payable']);
+        }
+        $this->excel->save();
+
+        return $this;
+    }
+
+    private function loadExcel()
+    {
+        $this->excel = Excel::selectSheets([BkashPayslipExcel::FINAL_DISBURSEMENT, BkashPayslipExcel::CLIENT, BkashPayslipExcel::FINAL, BkashPayslipExcel::FEE, BkashPayslipExcel::BKASH])->load($this->file);
+    }
+
+    public function takeCompletedAction()
+    {
+        $this->excel->download('xls');
+        unlink($this->file);
     }
 
     /**
