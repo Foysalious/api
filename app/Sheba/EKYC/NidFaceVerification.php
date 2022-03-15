@@ -2,12 +2,14 @@
 
 namespace Sheba\EKYC;
 
+use App\Models\Affiliate;
 use App\Models\Partner;
 use App\Models\Resource;
 use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
 use Exception;
 use Intervention\Image\Facades\Image;
+use Sheba\Affiliate\VerificationStatus;
 use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\ModificationFields;
@@ -54,6 +56,12 @@ class NidFaceVerification
             ]));
 
             $resourceRepo->storeStatusUpdateLog('verified', 'ekyc_verified', "status changed to verified through ekyc");
+        } elseif (isset($profile->affiliate)) {
+            $previous_status = $profile->affiliate->verification_status;
+
+            $affiliateRepo = new AffiliateRepository();
+            $affiliateRepo->updateData($profile->affiliate, ["verification_status" => 'verified']);
+            $affiliateRepo->storeStatusUpdateLog($profile->affiliate, $previous_status,'verified', 'ekyc_verified', "status changed to verified through ekyc");
         }
     }
 
@@ -71,6 +79,13 @@ class NidFaceVerification
             ]);
 
             $resourceRepo->storeStatusUpdateLog('rejected', 'ekyc_rejected', "status changed to rejected through ekyc");
+        } elseif(isset($profile->affiliate)) {
+            $reason = "ekyc_rejected";
+            $previous_status = $profile->affiliate->verification_status;
+
+            $affiliateRepo = new AffiliateRepository();
+            $affiliateRepo->updateData($profile->affiliate, ["verification_status" => 'rejected', "reject_reason" => $reason]);
+            $affiliateRepo->storeStatusUpdateLog($profile->affiliate, $previous_status, 'rejected', $reason, "status changed to rejected through ekyc");
         }
     }
 
