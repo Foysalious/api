@@ -70,7 +70,8 @@ use Sheba\Dal\UserMigration\Model as UserMigration;
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
     use HasFactory;
-    CONST NOT_ELIGIBLE = 'not_eligible';
+
+    const NOT_ELIGIBLE = 'not_eligible';
     use Wallet, TopUpTrait, MovieTicketTrait, HasFactory;
 
     public $totalCreditForSubscription;
@@ -162,12 +163,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->hasOne(PartnerBasicInformation::class);
     }
-
-    public function partnerMefInformation()
-    {
-        return $this->hasOne(PartnerMefInformation::class);
-    }
-
 
     public function financeResources()
     {
@@ -783,7 +778,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getHyperLocation()
     {
         $geo = json_decode($this->geo_informations);
-        if (empty($geo)){
+        if (empty($geo)) {
             throw  new HyperLocationNotFoundException();
         }
         return HyperLocal::insidePolygon($geo->lat, $geo->lng)->first();
@@ -957,11 +952,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function getCreditBreakdown()
     {
-        $remaining             = (double)0;
-        $wallet                = (double)$this->wallet;
-        $bonus_wallet          = (double)$this->bonusWallet();
-        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
-        $freeze_money          = $this->walletSetting ? (double) $this->walletSetting->pending_withdrawal_amount : 0;
+        $remaining = (double)0;
+        $wallet = (double)$this->wallet;
+        $bonus_wallet = (double)$this->bonusWallet();
+        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $freeze_money = $this->walletSetting ? (double)$this->walletSetting->pending_withdrawal_amount : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
@@ -1166,6 +1161,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->getFirstAdminResource()->updated_at;
     }
+
     /**
      * Create a new factory instance for the model.
      *
@@ -1179,6 +1175,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function financialInformations()
     {
         return $this->hasOne(PartnerFinancialInformation::class);
+    }
+
+    public function partnerMefInformation()
+    {
+        return $this->hasOne(PartnerMefInformation::class);
     }
 
 }

@@ -150,8 +150,7 @@ class Updater
         DB::transaction(function () {
             $this->payslipRepository->where('business_payslip_id', $this->summaryId)
                 ->update([
-                    'status' => Status::DISBURSED,
-                    'disbursed_at' => Carbon::now()
+                    'status' => Status::DISBURSED
                 ]);
         });
     }
