@@ -95,14 +95,6 @@ class AnnouncementV2Controller extends Controller
         ]);
     }
 
-
-    private function filterWithStatus($announcements, $status)
-    {
-        return $announcements->filter(function ($announcement) use ($status) {
-            return $announcement['status'] == ucfirst($status);
-        });
-    }
-
     public function show($business, $announcement, Request $request)
     {
         $announcement = $this->announcementRepo->find($announcement);
@@ -129,6 +121,7 @@ class AnnouncementV2Controller extends Controller
         $this->setModifier($manager_member);
         $announcement = $this->announcementRepo->find($announcement_id);
         if (!$announcement) return api_response($request, null, 404);
+
         $creator_requester->setType($request->type)
             ->setTitle($request->title)
             ->setShortDescription($request->short_description)
@@ -141,10 +134,10 @@ class AnnouncementV2Controller extends Controller
             ->setStartTime($request->start_time)
             ->setEndDate($request->end_date)
             ->setEndTime($request->end_time)
-            ->setStatus($request->status)
-            ->setAnnouncement($announcement);
-        $announcement_update = $updater->setRequest($creator_requester)->update();
-        if ($announcement_update == false) return api_response($request, null, 400, ['message' => 'You cannot edit an expired announcement.']);
+            ->setStatus($request->status);
+
+        $updater->setBusiness($business)->setRequest($creator_requester)->setAnnouncement($announcement)->update();
+
         return api_response($request, null, 200);
     }
 
@@ -190,6 +183,13 @@ class AnnouncementV2Controller extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($announcements)->$sort_by(function ($announcements, $key) {
             return strtoupper($announcements['target_type']);
+        });
+    }
+
+    private function filterWithStatus($announcements, $status)
+    {
+        return $announcements->filter(function ($announcement) use ($status) {
+            return $announcement['status'] == ucfirst($status);
         });
     }
 }
