@@ -24,9 +24,9 @@ use Sheba\OAuth2\VerifyPin;
 use Sheba\OAuth2\WrongPinError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\TopUp\Exception\PinMismatchException;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Sheba\Business\Payslip\PendingMonths;
 use Carbon\Carbon;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class PayRunController extends Controller
 {

@@ -1,22 +1,54 @@
 <?php namespace Sheba\Business\Payslip\PayRun;
 
-use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Maatwebsite\Excel\Concerns\WithHeadings;
-use Maatwebsite\Excel\Concerns\WithStyles;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use App\Models\Business;
+use PHPExcel_Cell;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\PayrollComponent\Components;
 
 class PayRunBulkExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
     private $payrollComponents;
     private $payslip;
+    private $maxCell;
+    private $scheduleDate;
+    /*** @var BusinessPayslipRepository */
+    private $businessPayslipRepo;
+    private $businessPayslip;
 
     public function __construct($payslip, $payroll_components)
     {
+        $this->excelHandler = $excelHandler;
+        $this->data = [];
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
+    }
+
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
+        return $this;
+    }
+
+    public function setPayslips($payslip)
+    {
         $this->payslip = $payslip;
+        return $this;
+    }
+
+    public function setScheduleDate($schedule_date)
+    {
+        $this->scheduleDate = $schedule_date;
+        return $this;
+    }
+
+    public function setBusinessPayslipId($business_payslip_id)
+    {
+        $this->businessPayslip = $this->businessPayslipRepo->find($business_payslip_id);
+        $this->scheduleDate = $this->businessPayslip->schedule_date;
+        return $this;
+    }
+
+    public function setPayrollComponent($payroll_components)
+    {
         $this->payrollComponents = $payroll_components;
     }
 
@@ -25,15 +57,16 @@ class PayRunBulkExcel implements FromCollection, WithHeadings, ShouldAutoSize, W
         $data = collect([]);
         $x = 1;
         foreach ($this->payslip as $payslip) {
-            $data->push([
-                'serial_no' => sprintf("%03d", $x++),
-                'business_member_id' => $payslip['business_member_id'],
-                'employee_name' => $payslip['employee_name'],
-                'employee_id' => $payslip['employee_id'],
-                'department' => $payslip['department'] ?: 'N/A',
-                'schedule_date' => $payslip['schedule_date'],
-                'gross_salary' => $payslip['gross_salary'],
-            ] + $this->getComponents($payslip));
+            $business_member_data = [
+                    'serial_no' => sprintf("%03d", $x++),
+                    'business_member_id' => $payslip['business_member_id'],
+                    'employee_name' => $payslip['employee_name'],
+                    'employee_id' => $payslip['employee_id'],
+                    'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
+                    'schedule_date' => $this->scheduleDate,
+                    'gross_salary' => $payslip['gross_salary'],
+                ] + $this->getComponents($payslip);
+            array_push($this->data, $business_member_data);
         }
 
         return $data;

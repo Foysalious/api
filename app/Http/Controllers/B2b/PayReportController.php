@@ -150,6 +150,6 @@ class PayReportController extends Controller
         $file_link = $this->saveFileToCDN($file_path, getBulkGrossSalaryFolder(), $file_name);
         unlink($file_path);
 
-        return api_response($request, null, 200, ['bkash_salary_report' => $file_link]);
+        return api_response($request, null, 200, ['bkash_salary_report' => $bkash_salary_report]);
     }
 }

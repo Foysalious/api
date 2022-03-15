@@ -153,8 +153,8 @@ class CoWorkerController extends Controller
             return api_response($request, $department_info, 200, ['department_info' => $department_info]);
         }
 
-        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
-        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+        if ($request->filled('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->filled('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
         $business_members = $business_members->with('salary');
 
         $manager = new Manager();
