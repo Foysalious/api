@@ -122,9 +122,10 @@ class JobLogs
             $this->newAdditionalInfoChangeLog($update_log, $decoded_log);
         } else if ($this->isCMChangeLog($decoded_log)) {
             $this->newCMChangeLog($update_log, $decoded_log);
-        } else if ($this->isPartnerChangeLog($decoded_log)) {
-            $this->newPartnerChangeLog($update_log, $decoded_log);
         }
+        // else if ($this->isPartnerChangeLog($decoded_log)) {
+        //     $this->newPartnerChangeLog($update_log, $decoded_log);
+        // }
     }
 
     private function newResourceChangeLog($update_log, $decoded_log)
