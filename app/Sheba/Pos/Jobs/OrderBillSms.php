@@ -59,7 +59,7 @@ class OrderBillSms extends Job implements ShouldQueue
     {
         /** @var OrderService $orderService */
         $orderService = app(OrderService::class);
-        return $orderService->setPartnerId($this->partner->id)->setOrderId($this->orderId)->getDetails()['order'];
+        return $orderService->setPartnerId($this->partner->id)->setOrderId($this->orderId)->getDetailsWithInvoice()['order'];
     }
 
     private function generateCommonData()
