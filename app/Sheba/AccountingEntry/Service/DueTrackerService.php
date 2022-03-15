@@ -43,6 +43,10 @@ class DueTrackerService
     protected $end_date;
     protected $contact_id;
     protected $note;
+    protected $sms;
+    protected $reminder_date;
+    protected $reminder_status;
+    protected $sms_status;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -72,6 +76,46 @@ class DueTrackerService
     public function setEntryType($entry_type): DueTrackerService
     {
         $this->entry_type = $entry_type;
+        return $this;
+    }
+
+    /**
+     * @param $sms
+     * @return $this
+     */
+    public function setSms($sms): DueTrackerService
+    {
+        $this->sms = $sms;
+        return $this;
+    }
+
+    /**
+     * @param $reminder_date
+     * @return $this
+     */
+    public function setReminderDate($reminder_date): DueTrackerService
+    {
+        $this->reminder_date = $reminder_date;
+        return $this;
+    }
+
+    /**
+     * @param $reminder_status
+     * @return $this
+     */
+    public function setReminderStatus($reminder_status): DueTrackerService
+    {
+        $this->reminder_status = $reminder_status;
+        return $this;
+    }
+
+    /**
+     * @param $sms_status
+     * @return $this
+     */
+    public function setSmsStatus($sms_status): DueTrackerService
+    {
+        $this->sms_status = $sms_status;
         return $this;
     }
 
@@ -408,9 +452,14 @@ class DueTrackerService
         $data = array_merge($data, $list);
         $balanceData = $this->setCustomerId($request->contact_id)->dueListBalanceByContact();
         $data = array_merge($data, $balanceData);
-        return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
+        //TODO: Will Change the Pdf Generation
+        return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220315_due_tracker_by_customer_report_1647338702.pdf";
+        //return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
     }
-
+    public function createReminder(){
+            $data = $this->makeDataForReminderCreate();
+            return $this->dueTrackerRepo->createReminder($data);
+    }
     /**
      * @return string
      */
@@ -512,6 +561,21 @@ class DueTrackerService
         $data['attachments'] = $this->attachments;
         $data['source_id'] = $posOrder ? $posOrder->id : null;
 
+        return $data;
+    }
+
+    /**
+     * @return array
+     */
+    private function makeDataForReminderCreate(): array
+    {
+        $data['partner_id']= $this->partner->id;
+        $data['contact_type']= $this->contact_type;
+        $data['contact_id']= $this->contact_id;
+        $data['sms']= $this->sms;
+        $data['reminder_date']= $this->reminder_date;
+        $data['reminder_status']= $this->reminder_status;
+        $data['sms_status']= $this->sms_status;
         return $data;
     }
 }

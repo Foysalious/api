@@ -33,6 +33,14 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     }
 
     /**
+     * @param $data
+     * @return void
+     */
+    public function createReminder($data){
+        return $data;
+    }
+
+    /**
      * @param $query_string
      * @return array
      * @throws AccountingEntryServerError

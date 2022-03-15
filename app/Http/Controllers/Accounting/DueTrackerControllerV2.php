@@ -141,12 +141,6 @@ class DueTrackerControllerV2 extends Controller
         $data = $this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
-            ->setOrder($request->order)
-            ->setOrderBy($request->order_by)
-            ->setBalanceType($request->balance_type)
-            ->setQuery($request->q)
-            ->setOffset($request->offset)
-            ->setLimit($request->limit)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->report();
@@ -171,5 +165,32 @@ class DueTrackerControllerV2 extends Controller
             ->setEndDate($request->end_date)
             ->downloadPDF($request);
         return http_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function storeReminder(Request $request): JsonResponse
+    {
+        $this->validate($request, [
+            'partner' => 'required',
+            'contact_type' => 'required|in:customer,supplier',
+            'sms' => 'required',
+            'reminder_date' => 'required|date_format:Y-m-d',
+            'reminder_status' => 'required',
+            'sms_status' => 'required'
+        ]);
+        $response = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contactId)
+            ->setSms($request->sms)
+            ->setReminderDate($request->reminder_date)
+            ->setReminderStatus($request->reminder_status)
+            ->setSmsStatus($request->sms_status)
+            ->createReminder();
+        return http_response($request, null, 200, ['data' => $response]);
+
     }
 }
