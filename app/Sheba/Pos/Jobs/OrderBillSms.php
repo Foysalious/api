@@ -39,11 +39,16 @@ class OrderBillSms extends Job implements ShouldQueue
     public function handle(SmsHandler $handler)
     {
         if ($this->attempts() > 2) return;
-        $this->resolvePosOrder();
-        $this->generateCommonData();
-        if (!$this->partner->isMigrated(Modules::POS)) $this->generateDataForOldSystem();
-        else $this->generateDataForNewSystem();
-        $handler->setPartner($this->partner)->setData($this->data)->handle();
+        try {
+            $this->resolvePosOrder();
+            $this->generateCommonData();
+            if (!$this->partner->isMigrated(Modules::POS)) $this->generateDataForOldSystem();
+            else $this->generateDataForNewSystem();
+            $handler->setPartner($this->partner)->setData($this->data)->handle();
+        } catch (Exception $e) {
+            app('sentry')->captureException($e);
+        }
+
     }
 
     private function resolvePosOrder()
