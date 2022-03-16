@@ -85,7 +85,7 @@ class AttendanceTransformer extends TransformerAbstract
             if ($is_weekend_or_holiday || $is_on_leave ) {
                 $weekend_holiday = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);;
                 $breakdown_data['weekend_or_holiday_tag'] = $weekend_holiday;
-                $breakdown_data['is_holiday'] = $weekend_holiday == 'weekend' ? 1 : 0;
+                $breakdown_data['is_holiday'] = $weekend_holiday == 'weekend' ? 0 : 1;
             }
             if ($is_weekend_or_holiday) {
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;

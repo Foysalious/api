@@ -37,6 +37,7 @@ class DynamicForm
         return [
             "name" => $this->getSectionNames(),
             "fields" => $this->getSectionFields(),
+            "post_url" => $this->section->post_url
         ];
     }
 
