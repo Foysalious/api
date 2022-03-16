@@ -43,6 +43,10 @@ class DueTrackerService
     protected $end_date;
     protected $contact_id;
     protected $note;
+    protected $sms;
+    protected $reminder_date;
+    protected $reminder_status;
+    protected $sms_status;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -59,6 +63,10 @@ class DueTrackerService
         return $this;
     }
 
+    /**
+     * @param $contact_id
+     * @return $this
+     */
     public function setContactId($contact_id): DueTrackerService
     {
         $this->contact_id = $contact_id;
@@ -408,9 +416,10 @@ class DueTrackerService
         $data = array_merge($data, $list);
         $balanceData = $this->setCustomerId($request->contact_id)->dueListBalanceByContact();
         $data = array_merge($data, $balanceData);
-        return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
+        //TODO: Will Change the Pdf Generation
+        return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220315_due_tracker_by_customer_report_1647338702.pdf";
+        //return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
     }
-
     /**
      * @return string
      */
@@ -514,4 +523,6 @@ class DueTrackerService
 
         return $data;
     }
+
+
 }

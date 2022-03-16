@@ -141,12 +141,6 @@ class DueTrackerControllerV2 extends Controller
         $data = $this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
-            ->setOrder($request->order)
-            ->setOrderBy($request->order_by)
-            ->setBalanceType($request->balance_type)
-            ->setQuery($request->q)
-            ->setOffset($request->offset)
-            ->setLimit($request->limit)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->report();
@@ -172,4 +166,5 @@ class DueTrackerControllerV2 extends Controller
             ->downloadPDF($request);
         return http_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
     }
+
 }

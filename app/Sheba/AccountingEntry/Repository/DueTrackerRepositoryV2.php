@@ -32,6 +32,7 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->storeEntry((object) $data, $data['source_type']);
     }
 
+
     /**
      * @param $query_string
      * @return array
