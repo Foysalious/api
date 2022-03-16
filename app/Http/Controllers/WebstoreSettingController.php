@@ -125,4 +125,28 @@ class WebstoreSettingController extends Controller
         return api_response($request, null, 200, ['message' => 'Successful']);
     }
 
+    public function getBannerList(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $banners =   $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->getBannerList();
+        return api_response($request, null, 200, ['message' => 'Successful', 'banners' => $banners]);
+
+    }
+
+    public function getPageDetails(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $pageDetails = $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->getPageDetails();
+        return api_response($request, null, 200, ['message' => 'Successful', 'page-settings' => $pageDetails]);
+    }
+
+    public function storePageSettings(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $pageDetails = $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->setBannerId($request->banner_id)->setTitle($request->title)->setDescription($request->description)->storePageSettings();
+        return api_response($request, null, 200, ['message' => 'Successful']);
+    }
+
+
+
 }

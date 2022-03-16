@@ -74,6 +74,12 @@ class Route
                     $api->put('/', 'WebstoreSettingController@update');
                     $api->get('/system-defined', 'WebstoreSettingController@getSystemDefinedSettings');
                 });
+                $api->group(['prefix' => 'webstore/page-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
+                    $api->get('/banners/{type}', 'WebstoreSettingController@getBannerList');
+                    $api->get('/details/{type}', 'WebstoreSettingController@getPageDetails');
+                    $api->post('/update/{type}', 'WebstoreSettingController@storePageSettings');
+
+                });
                 $api->group(['prefix' => 'webstore-banner', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/settings', 'WebstoreSettingController@getBannerSettings');
                     $api->get('/{banner}', 'WebstoreSettingController@getBanner');
@@ -158,6 +164,7 @@ class Route
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'PosOrder\OrderController@show');
                         $api->post('/update-status', 'PosOrder\OrderController@updateStatus');
+                        $api->post('/validate-promo', 'PosOrder\OrderController@validatePromo');
                         $api->get('/logs', 'PosOrder\OrderController@logs');
                         $api->get('/logs/{log}/invoice', 'PosOrder\OrderController@generateLogInvoice');
                         $api->post('payment/create', "PosOrder\OrderController@createPayment");
@@ -220,7 +227,7 @@ class Route
                 $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformationV2');
             });
             /**
-             * End sdelivery route
+             * End jwtAccessToken Middleware
              */
         });
     }

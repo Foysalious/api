@@ -18,9 +18,11 @@ class WebstoreSettingService
     private $youtube;
     private $email;
     private $title;
-    private $description;
     private $isPublish;
     private $image;
+    private $type;
+    private $bannerId;
+    private $description;
 
     public function __construct(WebstoreSettingServerClient $client)
     {
@@ -99,6 +101,18 @@ class WebstoreSettingService
         return $this;
     }
 
+
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    public function setBannerId($bannerId)
+    {
+        $this->bannerId = $bannerId;
+        return $this;
+    }
 
     public function getallSettings($partner)
     {
@@ -230,4 +244,32 @@ class WebstoreSettingService
         $data = $this->makeBannerUpdateData();
         return $this->client->put('api/v1/partners/' . $this->partner . '/banners/' . $banner, $data);
     }
+
+    public function getBannerList()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partner . '/banners/'.$this->type);
+    }
+
+    public function getPageDetails()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partner . '/page-settings/'.$this->type);
+    }
+
+    public function storePageSettings()
+    {
+        $data = $this->createPageSettingsData();
+        return $this->client->put('api/v1/partners/' . $this->partner . '/page-settings/'.$this->type, $data);
+    }
+
+    private function createPageSettingsData()
+    {
+        return [
+            "banner_id" => $this->bannerId ?? null,
+            "title" => $this->title ?? null,
+            "description" => $this->description ?? null,
+        ];
+
+    }
+
+
 }
