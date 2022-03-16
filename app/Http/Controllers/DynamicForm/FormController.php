@@ -56,4 +56,15 @@ class FormController extends Controller
             ->setSection($section_id)->postSectionFields();
         return http_response($request, null, 200, ['data' => $data]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function selectTypes(Request $request): JsonResponse
+    {
+        $this->validate($request, ["type" => "required"]);
+        $data = $this->dynamicForm->setType($request->type)->typeData($request);
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $data]);
+    }
 }
