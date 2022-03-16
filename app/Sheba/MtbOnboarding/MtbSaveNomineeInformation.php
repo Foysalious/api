@@ -29,16 +29,6 @@ class MtbSaveNomineeInformation
 
     private function makeData()
     {
-//        return [
-//            'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
-//            'nomNm' => $this->partner->getFirstAdminResource()->profile->nominee->name,
-//            'nomFatherNm' => $this->partner->getFirstAdminResource()->profile->nominee->father_name,
-//            'nomMotherNm' => $this->partner->getFirstAdminResource()->profile->nominee->mother_name,
-//            'nomDob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->nominee->dob)),
-//            'nomMobileNum' => $this->partner->getFirstAdminResource()->profile->nominee->mobile,
-//            'nomRelation' => $this->partner->getFirstAdminResource()->profile->nominee_relation
-//        ];
-
         return [
             'RequestData' => [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
