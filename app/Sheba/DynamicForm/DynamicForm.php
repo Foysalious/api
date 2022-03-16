@@ -2,6 +2,8 @@
 
 namespace App\Sheba\DynamicForm;
 
+use App\Models\District;
+use App\Models\Division;
 use Sheba\Dal\MefForm\Model as MefForm;
 use Sheba\Dal\MefSections\Model as MefSection;
 
@@ -11,6 +13,7 @@ class DynamicForm
     private $section;
     private $partner;
     private $requestData;
+    private $type;
 
     public function setForm($form_id): DynamicForm
     {
@@ -32,7 +35,7 @@ class DynamicForm
     public function getSectionDetails(): array
     {
         return [
-            "name"   => $this->getSectionNames(),
+            "name" => $this->getSectionNames(),
             "fields" => $this->getSectionFields(),
         ];
     }
@@ -85,5 +88,31 @@ class DynamicForm
     {
         $this->requestData = $requestData;
         return $this;
+    }
+
+    /**
+     * @param mixed $requestData
+     * @return DynamicForm
+     */
+    public function setType($type): DynamicForm
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+
+    public function typeData($request)
+    {
+        if ($this->type == "division") {
+            return Division::get();
+        }
+        if ($this->type == "district") {
+            if ($request->division)
+                return District::where('division_id', $request->division)->get();
+            return District::get();
+        }
+        if ($this->type == "tradeLicenseExist") {
+            return config('trade_license.data');
+        }
     }
 }
