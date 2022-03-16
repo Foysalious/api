@@ -655,10 +655,18 @@ class JobController extends Controller
     {
         $this->validate($request, [
             'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet,nagad',
-            'emi_month' => 'numeric'
+            'emi_month' => 'numeric',
+            'amount' => 'integer'
         ]);
+        if($request->has('amount') && $request->amount < 10) {
+            return api_response($request, null, 400, ['message' => 'Amount can not be less than 10 taka']);
+        }
+
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
         $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->setEmiMonth($request->emi_month);
+
+        if ($request->has('amount') && $request->amount > $order_adapter->getDue()) return api_response($request, null, 400, ['message' => 'Amount can not be greater than due amount']);
+
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($order_adapter->getPayable())->init();
         return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
     }
