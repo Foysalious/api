@@ -112,7 +112,7 @@ class ShurjoPay extends PaymentMethod
     {
         $this->setConfiguration($this->getCredentials($payment->payable));
         $token = $this->getToken();
-        $request = (new TPRequest())->setUrl($this->baseUrl . '/verification')
+        $request = (new TPRequest())->setUrl($this->baseUrl . '/payment-status')
             ->setMethod(TPRequest::METHOD_POST)->setInput([
                 'order_id' => $payment->gateway_transaction_id,
                 'token' => $token->token
