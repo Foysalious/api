@@ -413,6 +413,7 @@ class JobController extends Controller
         $bill['surcharge_percentage'] = count($job->jobServices) > 0 && $job->jobServices[0] ? (double)$job->jobServices[0]->surcharge_percentage : 0;
         $bill['surcharge_amount'] = (double)$job->totalServiceSurcharge;
         $bill['is_inspection_service'] = $has_inspection_service;
+        $bill['is_partial_payable'] = (bool)$partnerOrder->order->is_credit_limit_adjustable;
 
         return api_response($request, $bill, 200, ['bill' => $bill]);
     }
