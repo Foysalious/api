@@ -35,6 +35,7 @@ class BusinessRoute
                     $api->post('unpaid-leave-policy', 'B2b\AttendanceController@createUnpaidLeavePolicy');
                     $api->get('checkin-checkout-policy', 'B2b\AttendanceController@getLateCheckinEarlyCheckoutPolicy');
                     $api->get('changes-logs', 'B2b\AttendanceController@getOfficeSettingChangesLogs');
+                    $api->get('office-locations', 'B2b\AttendanceController@getOfficeLocations');
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->group(['prefix' => 'prorate'], function ($api) {
