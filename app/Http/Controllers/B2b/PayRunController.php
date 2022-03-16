@@ -89,7 +89,7 @@ class PayRunController extends Controller
         $addition_payroll_components = $business->payrollSetting->components->where('type', Type::ADDITION)->sortBy('name');
         $deduction_payroll_components = $business->payrollSetting->components->where('type', Type::DEDUCTION)->sortBy('name');
         $payroll_components = $addition_payroll_components->merge($deduction_payroll_components);
-        if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setScheduleDate($payslip->businessPayslip->scedule_date)->setPayrollComponent($payroll_components)->get();
+        if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setBusinessPayslipId($business_payslip_id)->setPayrollComponent($payroll_components)->get();
         
         $payslip = collect($payslip)->splice($offset, $limit);
 
