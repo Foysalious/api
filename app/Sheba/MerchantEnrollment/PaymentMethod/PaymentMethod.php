@@ -101,7 +101,14 @@ abstract class PaymentMethod
      */
     private function validateEmail($email)
     {
+        if(!$this->isEmailValid($email)){
+            throw new InvalidCategoryPostDataException("Invalid email address.");
+        }
         if(!(new PersonalInformation())->setPartner($this->partner)->checkIfUniqueEmail($email))
             throw new InvalidCategoryPostDataException("Invalid email address. Email not unique");
+    }
+
+    private function isEmailValid($str) : bool {
+        return (!preg_match("/^([a-z0-9\+_\-]+)(\.[a-z0-9\+_\-]+)*@([a-z0-9\-]+\.)+[a-z]{2,6}$/ix", $str)) ? false : true;
     }
 }
