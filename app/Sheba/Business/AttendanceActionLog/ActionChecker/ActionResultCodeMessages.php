@@ -13,4 +13,5 @@ class ActionResultCodeMessages
     const SUCCESSFUL_CHECKIN = "You have successfully checked-in";
     const CHECKIN_FIRST = "You've to checkin first";
     const ALREADY_DEVICE_USED = "This device is already used in another account today";
+    const OUT_OF_GEO_LOCATION = "You are not inside of Geo Location coverage area!";
 }

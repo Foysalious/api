@@ -102,6 +102,11 @@ class AttendanceController extends Controller
             'user_agent' => 'string',
             'is_in_wifi_area' => 'required|numeric|in:0,1'
         ];
+        
+        return response()->json(['code' => 509,
+            'is_note_required' => 0,
+            'date' => Carbon::now()->format('jS F Y'),
+            'message' => "You are not inside of Geo Location coverage area!"]);
 
         $business_member = $this->getBusinessMember($request);
         /** @var Business $business */
