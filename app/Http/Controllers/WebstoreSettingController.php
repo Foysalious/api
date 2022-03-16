@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Sheba\WebstoreSetting\Pages;
 use App\Sheba\WebstoreSetting\WebstoreSettingService;
 use Illuminate\Http\Request;
 
@@ -105,7 +103,13 @@ class WebstoreSettingController extends Controller
         $partner = $request->auth_user->getPartner();
         $pageDetails = $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->getPageDetails();
         return api_response($request, null, 200, ['message' => 'Successful', 'page-settings' => $pageDetails]);
+    }
 
+    public function storePageSettings(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $pageDetails = $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->setBannerId($request->banner_id)->setTitle($request->title)->setDescription($request->description)->storePageSettings();
+        return api_response($request, null, 200, ['message' => 'Successful']);
     }
 
 

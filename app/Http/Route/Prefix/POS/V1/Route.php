@@ -68,6 +68,7 @@ class Route
                 $api->group(['prefix' => 'webstore/page-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/banners/{type}', 'WebstoreSettingController@getBannerList');
                     $api->get('/details/{type}', 'WebstoreSettingController@getPageDetails');
+                    $api->post('/update/{type}', 'WebstoreSettingController@storePageSettings');
 
                 });
                 $api->group(['prefix' => 'collections'], function ($api) {
