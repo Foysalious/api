@@ -32,13 +32,6 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->storeEntry((object) $data, $data['source_type']);
     }
 
-    /**
-     * @param $data
-     * @return void
-     */
-    public function createReminder($data){
-        return $data;
-    }
 
     /**
      * @param $query_string
