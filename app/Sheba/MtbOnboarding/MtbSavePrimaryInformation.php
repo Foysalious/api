@@ -27,14 +27,19 @@ class MtbSavePrimaryInformation
      * @var MtbDocumentUpload
      */
     private $mtbDocumentUpload;
+    /**
+     * @var MtbSaveTransaction
+     */
+    private $mtbSaveTransaction;
 
     public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
-                                MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload)
+                                MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload, MtbSaveTransaction $mtbSaveTransaction)
     {
         $this->client = $client;
         $this->mtbAccountStatus = $mtbAccountStatus;
         $this->mtbSaveNomineeInformation = $mtbSaveNomineeInformation;
         $this->mtbDocumentUpload = $mtbDocumentUpload;
+        $this->mtbSaveTransaction = $mtbSaveTransaction;
     }
 
     public function setPartner(Partner $partner): MtbSavePrimaryInformation
@@ -94,7 +99,8 @@ class MtbSavePrimaryInformation
 //        $this->partner->partnerMefInformation->save();
 //        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
 //        $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
-        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
+//        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
+        $this->mtbSaveTransaction->setPartner($this->partner)->saveTransactionInformation();
 
         return;
     }
