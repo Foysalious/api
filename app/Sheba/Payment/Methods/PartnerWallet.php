@@ -68,4 +68,9 @@ class PartnerWallet extends PaymentMethod
     {
         return "partner_wallet";
     }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        return 0;
+    }
 }
