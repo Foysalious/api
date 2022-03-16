@@ -68,4 +68,9 @@ class BondhuBalance extends PaymentMethod
     {
         return "bondhu_balance";
     }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        return 0;
+    }
 }
