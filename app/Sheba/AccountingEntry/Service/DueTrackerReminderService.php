@@ -99,8 +99,14 @@ class DueTrackerReminderService
         return $data;
     }
 
+    /**
+     * @return void
+     */
     public function createReminder(){
         $data = $this->makeDataForReminderCreate();
         return $this->dueTrackerReminderRepo->createReminder($data);
+    }
+    public function getReminders(){
+        return $this->dueTrackerReminderRepo->getReminders($this->partner);
     }
 }

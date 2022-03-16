@@ -14,7 +14,7 @@ class AccountingRoute
                 $api->get('/download-pdf', 'Accounting\\DueTrackerControllerV2@downloadPdf');
                 $api->get('/report','Accounting\\DueTrackerControllerV2@getReport');
                 $api->group(['prefix' => 'reminders'], function ($api) {
-                    $api->get('/', 'Accounting\\DueTrackerReminderController@getReminders');
+                    $api->get('/', 'Accounting\\DueTrackerReminderController@reminders');
                     $api->post('/{contactId}', 'Accounting\\DueTrackerReminderController@store');
                 });
 

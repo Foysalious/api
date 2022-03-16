@@ -40,4 +40,10 @@ class DueTrackerReminderController extends Controller
         return http_response($request, null, 200, ['data' => $response]);
 
     }
+    public function reminders(Request $request){
+        $data = $this->dueTrackerReminderService
+            ->setPartner($request->partner)
+            ->getReminders();
+        return http_response($request, null, 200, ['data' => $data]);
+    }
 }
