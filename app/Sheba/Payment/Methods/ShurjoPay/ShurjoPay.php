@@ -112,11 +112,12 @@ class ShurjoPay extends PaymentMethod
     {
         $this->setConfiguration($this->getCredentials($payment->payable));
         $token = $this->getToken();
-        $response = (new TPRequest())->setUrl($this->baseUrl . '/verification')
+        $request = (new TPRequest())->setUrl($this->baseUrl . '/verification')
             ->setMethod(TPRequest::METHOD_POST)->setInput([
                 'order_id' => $payment->gateway_transaction_id,
                 'token' => $token->token
             ]);
+        $response = $this->tpClient->call($request);
         $validation_response = new ValidationResponse();
         $validation_response->setResponse($response[0])->setPayment($payment);
         $this->paymentLogRepo->setPayment($payment);
