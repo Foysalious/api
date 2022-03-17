@@ -103,9 +103,17 @@ class JobDiscountHandler
         return $this->discount;
     }
 
-    public function hasDiscount()
+    public function hasDiscount($category_id = null)
     {
-        return !is_null($this->discount) && (double) $this->discount !== 0;
+        if ($category_id) {
+            $discount_applicable_category_id = $this->discount
+                ? $this->discount->applicables
+                ->where('applicable_id', $category_id)
+                ->where('applicable_type',"Sheba\\Dal\\Category\\Category")->toArray()
+                : null;
+            return !is_null($this->discount) && (double) $this->discount->amount !== 0.0 && $discount_applicable_category_id;
+        }
+        else return !is_null($this->discount) && (double) $this->discount->amount !== 0.0;
     }
 
     public function create(Job $job)
