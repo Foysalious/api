@@ -76,6 +76,7 @@ abstract class PaymentMethod
             } elseif ($form['id'] === 'email') {
                 if(isset($data[$form['id']])) {
                     $trimmedEmail = trim($data[$form['id']]);
+                    dd($trimmedEmail);
                     if(!empty($trimmedEmail)) {
                         $this->validateEmail($trimmedEmail);
                     }
