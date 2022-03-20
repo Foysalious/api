@@ -3,6 +3,7 @@
 namespace App\Sheba\DynamicForm;
 
 use App\Sheba\DynamicForm\Exceptions\FormValidationException;
+use Carbon\Carbon;
 use Sheba\Dal\MefFields\Model as MefFields;
 
 class FormValidator
@@ -42,10 +43,21 @@ class FormValidator
             $fieldData = json_decode($field->data);
             $form_field = (new FormField())->setFormInput($fieldData)->toArray();
             if($form_field['mandatory']) {
-                if(!isset($this->postData[$fieldData['id']]))
+                if(!isset($this->postData[$form_field['id']]))
                     throw new FormValidationException($form_field["error"]);
             }
-            dd($form_field, $this->postData);
+            if ($form_field['input_type'] === 'date') {
+                try {
+                    if(isset($this->postData[$form_field['id']])) Carbon::parse($this->postData[$form_field['id']]);
+                } catch (\Throwable $e) {
+                    throw new FormValidationException($form_field['id']." date is Invalid");
+                }
+            } elseif ($form_field['input_type'] === 'email') {
+                $email = trim($this->postData[$form_field['id']]);
+                if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    throw new FormValidationException($form_field['id']." invalid email");
+                }
+            }
         }
     }
 }

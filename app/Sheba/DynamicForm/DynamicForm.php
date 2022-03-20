@@ -48,11 +48,14 @@ class DynamicForm
         ];
     }
 
+    /**
+     * @return void
+     * @throws Exceptions\FormValidationException
+     */
     public function postSectionFields()
     {
         (new FormValidator())->setFields($this->section->fields)->setPostData($this->requestData)->validate();
-        dd($this->section->fields);
-        dd($this->requestData);
+        (new FormSubmit())->setPartner($this->partner)->setFields($this->section->fields)->setPostData($this->requestData)->store();
     }
 
     private function getSectionNames()
@@ -101,7 +104,7 @@ class DynamicForm
     }
 
     /**
-     * @param mixed $requestData
+     * @param $type
      * @return DynamicForm
      */
     public function setType($type): DynamicForm
