@@ -14,6 +14,7 @@ use Sheba\Transactions\Wallet\HasWalletTransaction;
 
 class ShurjoPay extends PaymentMethod
 {
+    const NAME = 'shurjopay';
     /** @var DynamicSslStoreConfiguration */
     private $configuration;
     /**
@@ -146,7 +147,7 @@ class ShurjoPay extends PaymentMethod
 
     public function getMethodName()
     {
-        // TODO: Implement getMethodName() method.
+        return self::NAME;
     }
 
     public function getCalculatedChargedAmount($transaction_details)
