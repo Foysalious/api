@@ -74,11 +74,14 @@ abstract class PaymentMethod
                     throw new InvalidCategoryPostDataException($form['id']." date is Invalid");
                 }
             } elseif ($form['id'] === 'email') {
-                $email = $data[$form['id']];
-                $this->validateEmail($email);
+                if(isset($data[$form['id']])) {
+                    $trimmedEmail = trim($data[$form['id']]);
+                    if(!empty($trimmedEmail)) {
+                        $this->validateEmail($trimmedEmail);
+                    }
+                }
             }
         }
-
         return $this;
     }
 
