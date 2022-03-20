@@ -66,12 +66,12 @@ class CustomerFavoriteController extends Controller
         $manager->setSerializer(new ArraySerializer());
         $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $favoriteService, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
             $services = [];
-            $favorite['category_name'] = $favorite->category->name;
-            $favorite['category_slug'] = $favorite->category->slug;
-            $favorite['category_icon'] = $favorite->category->icon_png;
+            $favorite['category_name'] = $favorite->category ? $favorite->category->name : null;
+            $favorite['category_slug'] = $favorite->category ? $favorite->category->slug : null;
+            $favorite['category_icon'] = $favorite->category ? $favorite->category->icon_png : null;
             $favorite['min_order_amount'] = $favorite->category->min_order_amount;
             $favorite['icon_color'] = isset(config('sheba.category_colors')[$favorite->category->parent->id]) ? config('sheba.category_colors')[$favorite->category->parent->id] : null;
-            $favorite['rating'] = $favorite->job->review ? $favorite->job->review->rating : 0.00;
+            $favorite['rating'] = ($favorite->job && $favorite->job->review) ? $favorite->job->review->rating : 0.00;
             $favorite['is_vat_applicable'] = $favorite->category ? $favorite->category['is_vat_applicable'] : null;
             $favorite['max_order_amount'] = $favorite->category ? (double)$favorite->category['max_order_amount'] : null;
             $location_services = LocationService::where('location_id', $this->location)
@@ -107,7 +107,7 @@ class CustomerFavoriteController extends Controller
                 $service_data_with_price_and_discount = $pivot->toArray() + $price_data;
 
                 array_push($services, $service_data_with_price_and_discount);
-            });;
+            });
             $partner = $favorite->partner;
             $favorite['total_price'] = $favorite->total_price;
             $favorite['partner_id'] = $partner ? $partner->id : null;

@@ -3,6 +3,7 @@
 use App\Models\Affiliate;
 use App\Models\AffiliateStatusChangeLog;
 use App\Models\AffiliateTransaction;
+use App\Models\Resource;
 use Sheba\Affiliate\VerificationStatus;
 use Sheba\Voucher\Creator\BroadcastPromo;
 use Sheba\Voucher\VoucherCodeGenerator;
@@ -50,6 +51,28 @@ class AffiliateRepository extends BaseRepository
                 'to' => $pending_status,
                 'log' => null,
                 'reason' => 're-submitted NID',
+            ];
+            $this->saveStatusChangeLog($affiliate, $log_data);
+        }
+    }
+
+    public function updateData($affiliate, $data)
+    {
+        $affiliate = $affiliate instanceof Affiliate ? $affiliate : Affiliate::find($affiliate);
+        $affiliate->update($this->withUpdateModificationField($data));
+    }
+
+    public function storeStatusUpdateLog($affiliate, $previous_status, $new_status, $reason, $log)
+    {
+        $affiliate = $affiliate instanceof Affiliate ? $affiliate : Affiliate::find($affiliate);
+
+        if ($previous_status != $new_status) {
+            $log_data = [
+                'from' => $previous_status,
+                'to' => $new_status,
+                'affiliate_id' => $affiliate->id,
+                'reason' => $reason,
+                'log' => $log,
             ];
             $this->saveStatusChangeLog($affiliate, $log_data);
         }
