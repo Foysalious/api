@@ -74,7 +74,7 @@ class OrderAdapter implements PayableAdapter
         return $this;
     }
 
-    public function getPayable(): Payable
+    public function getPayable($amount = 0): Payable
     {
         if (!$this->canInit()) throw new PayableInitiateErrorException('Payable can not be initiated');
         $payable = new Payable();
@@ -82,7 +82,7 @@ class OrderAdapter implements PayableAdapter
         $payable->type_id = $this->partnerOrder->id;
         $payable->user_id = $this->userId;
         $payable->user_type = $this->userType;
-        $due = (double)$this->partnerOrder->dueWithLogisticWithoutRoundingCutoff;
+        $due = $amount === 0 ? $this->getDue() : $amount;
         $payable->amount = $this->calculateAmount($due);
         $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
@@ -91,6 +91,11 @@ class OrderAdapter implements PayableAdapter
         $payable->created_at = Carbon::now();
         $payable->save();
         return $payable;
+    }
+
+    public function getDue()
+    {
+        return (double)$this->partnerOrder->dueWithLogisticWithoutRoundingCutoff;
     }
 
     private function calculateAmount($due)
