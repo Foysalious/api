@@ -22,6 +22,10 @@ class DueTrackerReminderRepository extends AccountingRepository
         return $data;
     }
 
+    /**
+     * @param $partner
+     * @return array
+     */
     public function getReminders($partner){
         //TODO: will get the reminders for that partner
         //dd($partner->id);
@@ -45,6 +49,15 @@ class DueTrackerReminderRepository extends AccountingRepository
                 "reminder_status" => "upcoming",
                 "sms_status" => "Will Send SMS"
             ]];
+        return $data;
+    }
+
+    /**
+     * @param $data
+     * @return mixed
+     */
+    public function updateReminder($data){
+        //TODO: will update the reminder through post api
         return $data;
     }
 }

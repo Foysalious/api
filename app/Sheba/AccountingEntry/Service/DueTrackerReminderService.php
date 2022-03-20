@@ -13,10 +13,25 @@ class DueTrackerReminderService
     protected $reminder_date;
     protected $reminder_status;
     protected $sms_status;
+    protected $reminder_id;
+    /**
+     * @var DueTrackerReminderRepository
+     */
+    private $dueTrackerReminderRepo;
 
     public function __construct(DueTrackerReminderRepository $dueTrackerReminderRepo)
     {
         $this->dueTrackerReminderRepo = $dueTrackerReminderRepo;
+    }
+
+    /**
+     * @param $reminder_id
+     * @return $this
+     */
+    public function setReminderId($reminder_id): DueTrackerReminderService
+    {
+        $this->reminder_id = $reminder_id;
+        return $this;
     }
     /**
      * @param mixed $contact_type
@@ -98,6 +113,14 @@ class DueTrackerReminderService
         $data['sms_status']= $this->sms_status;
         return $data;
     }
+    private function makeDataForReminderUpdate(){
+        $data['reminder_id']= $this->reminder_id;
+        $data['sms']= $this->sms;
+        $data['reminder_date']= $this->reminder_date;
+        $data['reminder_status']= $this->reminder_status;
+        $data['sms_status']= $this->sms_status;
+        return $data;
+    }
 
     /**
      * @return void
@@ -106,7 +129,20 @@ class DueTrackerReminderService
         $data = $this->makeDataForReminderCreate();
         return $this->dueTrackerReminderRepo->createReminder($data);
     }
-    public function getReminders(){
+
+    /**
+     * @return array
+     */
+    public function getReminders(): array
+    {
         return $this->dueTrackerReminderRepo->getReminders($this->partner);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function update(){
+        $data = $this->makeDataForReminderUpdate();
+        return $this->dueTrackerReminderRepo->updateReminder($data);
     }
 }
