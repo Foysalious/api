@@ -338,7 +338,7 @@ class Job extends BaseModel implements MorphCommentable
 //        $this->totalDiscount = $this->discount = $this_discount + $this->serviceDiscounts;
 
         $this->discountByPromo = $this->serviceDiscounts ? 0 : $this->discount - $this->otherDiscounts;
-        $this->totalDiscount = $this->discount = $this->serviceDiscounts ? $this->serviceDiscounts : $this_discount + $this->serviceDiscounts;
+        $this->totalDiscount = $this->discount = $this->serviceDiscounts ? $this->serviceDiscounts + ($this->otherDiscountsByType['online_payment'] ?? 0) : $this_discount + $this->serviceDiscounts;
         $this->totalDiscountWithoutOtherDiscounts = $this->totalDiscount - $this->otherDiscounts;
         $this->originalDiscount = $this->isCapApplied() ? 0 : $this->original_discount_amount + $this->serviceDiscounts;
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
