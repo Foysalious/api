@@ -667,7 +667,8 @@ class JobController extends Controller
 
         if ($request->has('amount') && $request->amount > $order_adapter->getDue()) return api_response($request, null, 400, ['message' => 'Amount can not be greater than due amount']);
 
-        $payment = $payment_manager->setMethodName($payment_method)->setPayable($order_adapter->getPayable())->init();
+        $amount = $request->has('amount') ? $request->amount : 0;
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($order_adapter->getPayable($amount))->init();
         return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
     }
 
