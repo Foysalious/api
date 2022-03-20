@@ -82,9 +82,10 @@ class OrderAdapter implements PayableAdapter
         $payable->type_id = $this->partnerOrder->id;
         $payable->user_id = $this->userId;
         $payable->user_type = $this->userType;
-        $due = $amount === 0 ? $this->getDue() : $amount;
-        $payable->amount = $this->calculateAmount($due);
-        $payable->emi_month = $this->resolveEmiMonth($payable);
+        $due = $this->getDue();
+        $amount = ($amount === 0 || $this->resolveEmiMonth($due)) ? $due : $amount;
+        $payable->amount = $this->calculateAmount($amount);
+        $payable->emi_month = $this->resolveEmiMonth($due);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
         $payable->success_url = $this->getSuccessUrl();
         $payable->fail_url = $this->getFailUrl();
@@ -155,9 +156,9 @@ class OrderAdapter implements PayableAdapter
         else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
-    private function resolveEmiMonth(Payable $payable)
+    private function resolveEmiMonth($amount)
     {
-        return $payable->amount >= config('sheba.min_order_amount_for_emi') ? $this->emiMonth : null;
+        return $amount >= config('sheba.min_order_amount_for_emi') ? $this->emiMonth : null;
     }
 
     public function setModelForPayable($model)
