@@ -128,9 +128,9 @@ abstract class ActionChecker
 
     private function hasSameActionForToday()
     {
-        return $this->attendanceLogsOfToday ? $this->attendanceLogsOfToday->filter(function ($log) {
+        return $this->attendanceLogsOfToday && $this->attendanceLogsOfToday->filter(function ($log) {
                 return $log->action == $this->getActionName();
-            })->count() > 0 : false;
+            })->count() > 0;
     }
 
     protected function checkDeviceId()
@@ -147,9 +147,9 @@ abstract class ActionChecker
 
     private function hasDifferentDeviceId()
     {
-        return $this->attendanceLogsOfToday ? $this->attendanceLogsOfToday->filter(function ($log) {
+        return $this->attendanceLogsOfToday && $this->attendanceLogsOfToday->filter(function ($log) {
                 return $log->device_id != $this->deviceId;
-            })->count() > 0 : false;
+            })->count() > 0;
     }
 
     private function hasDeviceUsedInDifferentAccountToday()
@@ -167,17 +167,15 @@ abstract class ActionChecker
     protected function checkIpOrRemote()
     {
         if (!$this->isSuccess()) return;
-        if ($this->business->isIpBasedAttendanceEnable()) {
+        if ($this->business->isIpBasedAttendanceEnable() && !$this->business->isGeoLocationAttendanceEnable() && !$this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
             $office_ip_count = $this->business->offices()->count();
             if ($office_ip_count > 0 && !$this->isInWifiArea()) {
-                if ($this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
-                    $this->remoteAttendance();
-                } else {
-                    $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
-                }
-            } else {
-                if ($office_ip_count < 1) $this->isRemote = 1;
-                $this->setSuccessfulResponseMessage();
+                $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+            }
+        } else if ($this->business->isGeoLocationAttendanceEnable() && !$this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
+            $office_geo_location_count = $this->business->geoOffices()->count();
+            if ($office_geo_location_count > 0 && !$this->isInGeoLocation()) {
+                $this->setResult(ActionResultCodes::OUT_OF_GEO_LOCATION, ActionResultCodeMessages::OUT_OF_GEO_LOCATION);
             }
         } else {
             $this->remoteAttendance();
@@ -197,6 +195,11 @@ abstract class ActionChecker
     private function isInWifiArea()
     {
         return in_array($this->ip, $this->business->offices->pluck('ip')->toArray());
+    }
+
+    private function isInGeoLocation()
+    {
+        return true;
     }
 
     protected function setResult($result_code, $result_message)
