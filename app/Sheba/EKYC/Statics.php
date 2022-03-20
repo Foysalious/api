@@ -50,9 +50,9 @@ class Statics
         $serviceHolder = $avatar instanceof Partner ? "sManager" : "Bondhu";
 
         if ($nid_verification_request_count < self::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
-            $fail_message = isset($user) ? self::BONDHU_FAIL_MESSAGE : sprintf(self::FAIL_MESSAGE, $serviceHolder, convertNumbersToBangla($remaining_attempt, false));
+            $fail_message = $user == 'affiliate' ? self::BONDHU_FAIL_MESSAGE : sprintf(self::FAIL_MESSAGE, $serviceHolder, convertNumbersToBangla($remaining_attempt, false));
         } else {
-            $fail_message = isset($user) ? $fail_message = self::PENDING_MESSAGE : sprintf(self::FINAL_FAIL_MESSAGE, $serviceHolder);
+            $fail_message = $user == 'affiliate' ? $fail_message = self::PENDING_MESSAGE : sprintf(self::FINAL_FAIL_MESSAGE, $serviceHolder);
         }
         return [
             'status'  => $status,
