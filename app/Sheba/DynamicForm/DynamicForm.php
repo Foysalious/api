@@ -4,14 +4,21 @@ namespace App\Sheba\DynamicForm;
 
 use App\Models\District;
 use App\Models\Division;
+use App\Models\Partner;
 use Sheba\Dal\MefForm\Model as MefForm;
 use Sheba\Dal\MefSections\Model as MefSection;
 
 class DynamicForm
 {
+    /*** @var MefForm */
     private $form;
+
+    /*** @var MefSection*/
     private $section;
+
+    /*** @var Partner */
     private $partner;
+
     private $requestData;
     private $type;
 
@@ -41,9 +48,14 @@ class DynamicForm
         ];
     }
 
+    /**
+     * @return void
+     * @throws Exceptions\FormValidationException
+     */
     public function postSectionFields()
     {
-        dd($this->requestData);
+        (new FormValidator())->setFields($this->section->fields)->setPostData($this->requestData)->validate();
+        (new FormSubmit())->setPartner($this->partner)->setFields($this->section->fields)->setPostData($this->requestData)->store();
     }
 
     private function getSectionNames()
@@ -92,7 +104,7 @@ class DynamicForm
     }
 
     /**
-     * @param mixed $requestData
+     * @param $type
      * @return DynamicForm
      */
     public function setType($type): DynamicForm
