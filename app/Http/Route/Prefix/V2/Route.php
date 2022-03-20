@@ -65,7 +65,7 @@ class Route
                 $api->post('validate', 'SslController@validatePayment');
             });
             $api->group(['prefix' => 'shurjopay'], function ($api) {
-                $api->post('validate', 'Payment\ShurjoPayPGWController@validatePayment');
+                $api->get('validate', 'Payment\ShurjoPayPGWController@validatePayment');
             });
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
