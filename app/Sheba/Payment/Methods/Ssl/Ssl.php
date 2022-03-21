@@ -19,6 +19,7 @@ class Ssl extends PaymentMethod
     /** @var SslStore */
     private $store;
 
+    private $apiUrl;
     private $successUrl;
     private $failUrl;
     private $cancelUrl;
@@ -38,6 +39,7 @@ class Ssl extends PaymentMethod
         $this->successUrl = config('payment.ssl.urls.success');
         $this->failUrl = config('payment.ssl.urls.fail');
         $this->cancelUrl = config('payment.ssl.urls.cancel');
+        $this->apiUrl = rtrim(config('payment.ssl.urls.api'), '/');
         $this->tpClient = $tp_client;
     }
 
@@ -156,7 +158,7 @@ class Ssl extends PaymentMethod
     {
         if ($this->sslIpnHashValidation()) {
             $validation_response = new ValidationResponse();
-            $validation_response->setResponse($this->validateOrder());
+            $validation_response->setResponse($this->validateOrder($payment));
             $validation_response->setPayment($payment);
             $this->paymentLogRepo->setPayment($payment);
             if ($validation_response->hasSuccess()) {
@@ -217,10 +219,10 @@ class Ssl extends PaymentMethod
         return md5($hash_string) == request('verify_sign');
     }
 
-    private function validateOrder()
+    private function validateOrder(Payment $payment)
     {
         try {
-            $response = $this->validateFromSsl();
+            $response = $this->validateFromSsl($payment);
         } catch (TPProxyServerError $e) {
             $response = new \stdClass();
             $response->status = "ERROR";
@@ -238,10 +240,11 @@ class Ssl extends PaymentMethod
      * @return mixed
      * @throws TPProxyServerError
      */
-    private function validateFromSsl()
+    private function validateFromSsl(Payment $payment)
     {
-        $url = $this->store->getOrderValidationUrl();
-        $url .= "?val_id=" . request('val_id');
+        $val_id = (request('val_id')) ?: ($payment->request_payload && isset(json_decode($payment->request_payload, 1)['val_id'])) ? json_decode($payment->request_payload, 1)['val_id'] : null;
+        if ($val_id) $url = $this->store->getOrderValidationUrl() . "?val_id=" . $val_id;
+        else $url = $this->apiUrl . '/merchantTransIDvalidationAPI.php?sessionkey=' . $payment->gateway_transaction_id;
         $url = $this->addIdPasswordToUrl($url);
         return $this->tpClient->call((new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET));
     }
