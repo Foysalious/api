@@ -4,6 +4,7 @@ namespace App\Http\Controllers\DynamicForm;
 
 use App\Http\Controllers\Controller;
 use App\Sheba\DynamicForm\DynamicForm;
+use App\Sheba\DynamicForm\Exceptions\FormValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -48,13 +49,15 @@ class FormController extends Controller
      * @param $form_id
      * @param $section_id
      * @return JsonResponse
+     * @throws FormValidationException
      */
     public function postSectionWiseFields(Request $request, $form_id, $section_id): JsonResponse
     {
+        $this->validate($request, ["data" => "required|json"]);
         $partner = $request->auth_user->getPartner();
-        $data = $this->dynamicForm->setForm($form_id)->setRequestData($request->data)->setPartner($partner)
+        $this->dynamicForm->setForm($form_id)->setRequestData($request->data)->setPartner($partner)
             ->setSection($section_id)->postSectionFields();
-        return http_response($request, null, 200, ['data' => $data]);
+        return http_response($request, null, 200, ['message' => "Successful"]);
     }
 
     /**
