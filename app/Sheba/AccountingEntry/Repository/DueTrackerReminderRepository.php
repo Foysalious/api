@@ -60,4 +60,13 @@ class DueTrackerReminderRepository extends AccountingRepository
         //TODO: will update the reminder through post api
         return $data;
     }
+
+    /**
+     * @param $reminder_id
+     * @return mixed
+     */
+    public function  deleteReminder($reminder_id){
+        //TODO: will delete the reminder through post api
+        return $reminder_id;
+    }
 }

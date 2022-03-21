@@ -51,6 +51,11 @@ class DueTrackerReminderController extends Controller
             ->getReminders();
         return http_response($request, null, 200, ['data' => $data]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function update(Request $request){
         $this->validate($request, [
             'reminder_id' => 'required',
@@ -69,5 +74,21 @@ class DueTrackerReminderController extends Controller
             ->setSmsStatus($request->sms_status)
             ->update();
         return http_response($request, null, 200, ['data' => $response]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete(Request $request){
+        $this->validate($request,[
+            'partner' => 'required',
+            'reminder_id' => 'required',
+        ]);
+        $response = $this->dueTrackerReminderService
+            ->setReminderId($request->reminder_id)
+            ->delete();
+        return http_response($request, null, 200, ['data' => $response]);
+
     }
 }

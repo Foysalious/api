@@ -141,8 +141,14 @@ class DueTrackerReminderService
     /**
      * @return mixed
      */
-    public function update(){
+    public function update()
+    {
         $data = $this->makeDataForReminderUpdate();
         return $this->dueTrackerReminderRepo->updateReminder($data);
     }
+    public function delete()
+    {
+        return $this->dueTrackerReminderRepo->deleteReminder($this->reminder_id);
+    }
+
 }
