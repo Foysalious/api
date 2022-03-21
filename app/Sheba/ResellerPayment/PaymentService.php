@@ -70,7 +70,6 @@ class PaymentService
         $this->key = $key;
         return $this;
     }
-
     /**
      * @return array
      * @throws InvalidQRKeyException
@@ -109,12 +108,10 @@ class PaymentService
             return $this->getPGWDetails();
         }
     }
-
     /**
      * @return array
      * @throws Exceptions\MORServiceServerError
      * @throws NotFoundAndDoNotReportException
-     * @throws ResellerPaymentException
      */
     public function getPGWDetails(): array
     {

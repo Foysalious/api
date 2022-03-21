@@ -134,7 +134,7 @@ class BusinessWisePayslip
         $business_pay_cycle_start = $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d'));
         $business_pay_cycle_end = $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d');
         $business_payslip_data = [
-            'payroll_setting_id' => $this->payrollSetting->id,
+            'business_id' => $this->business->id,
             'schedule_date' => Carbon::now()->toDateString(),
             'cycle_start_date' => $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d')),
             'cycle_end_date' => $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d'),
