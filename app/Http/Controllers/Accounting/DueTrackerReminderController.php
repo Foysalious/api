@@ -48,6 +48,11 @@ class DueTrackerReminderController extends Controller
     public function reminders(Request $request){
         $data = $this->dueTrackerReminderService
             ->setPartner($request->partner)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->setOffset($request->offset)
+            ->setLimit($request->limit)
+            ->setOrderBy($request->order_by)
             ->getReminders();
         return http_response($request, null, 200, ['data' => $data]);
     }

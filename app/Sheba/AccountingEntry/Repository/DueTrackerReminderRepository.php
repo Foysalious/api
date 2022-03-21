@@ -26,9 +26,9 @@ class DueTrackerReminderRepository extends AccountingRepository
      * @param $partner
      * @return array
      */
-    public function getReminders($partner){
+    public function getReminders($partner,$query_string){
         //TODO: will get the reminders for that partner
-        //dd($partner->id);
+        //dd($partner->id,$query_string);
         $data['list'] = [[
                 "id" => 1,
                 "partner_id" => 217122,
