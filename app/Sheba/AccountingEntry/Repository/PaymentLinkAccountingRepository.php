@@ -244,7 +244,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
      */
     private function makeData($userId)
     {
-        if ($this->debit_account_key == null && $this->credit_account_key == null) {
+        if ($this->credit_account_key == null) {
             if ($this->interest > 0) {
                 $this->setCreditAccountKey((new Accounts())->income->incomeFromEmi::INCOME_FROM_EMI);
             } else {
