@@ -38,6 +38,9 @@ return [
             'cancel'  => env('SHEBA_API_URL') . '/v2/orders/payments/cancel'
         ]
     ],
+    'shurjopay' => [
+        'base_url' => env('SHURJOPAY_BASE_URL', 'https://sandbox.shurjopayment.com/api'),
+    ],
     'port_wallet' => [
         'base_url'       => env('PORT_WALLET_BASE_URL'),
         'app_key'        => env('PORT_WALLET_APP_KEY'),
