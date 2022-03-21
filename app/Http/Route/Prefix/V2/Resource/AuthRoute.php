@@ -32,7 +32,7 @@ class AuthRoute
                     $api->get('/', 'Resource\ResourceJobController@jobDetails');
                     $api->post('status', 'Resource\ResourceJobController@updateStatus')->middleware('job.concurrent_serve_collect:status');
                     $api->post('reschedule', 'Resource\ResourceJobController@rescheduleJob');
-                    $api->post('collection', 'Resource\ResourceJobController@collectMoney')->middleware(['job.concurrent_serve_collect:collection', 'concurrent_request']);
+                    $api->post('collection', 'Resource\ResourceJobController@collectMoney')->middleware(['concurrent_request', 'job.concurrent_serve_collect:collection']);
                     $api->get('bills', 'Resource\ResourceJobController@getBills');
                     $api->get('rates', 'Resource\ResourceJobRateController@index');
                     $api->post('rating', 'Resource\ResourceJobRateController@storeCustomerRating');
