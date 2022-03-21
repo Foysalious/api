@@ -38,7 +38,12 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function offices()
     {
-        return $this->hasMany(BusinessOffice::class);
+        return $this->hasMany(BusinessOffice::class)->where('is_location', 0);
+    }
+
+    public function geoOffices()
+    {
+        return $this->hasMany(BusinessOffice::class)->where('is_location', 1);
     }
 
     public function announcements()
@@ -408,6 +413,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         if ($this->isShebaTech($business_member_id)) return true;
         return in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray());
+    }
+
+    public function isGeoLocationAttendanceEnable()
+    {
+        return in_array(AttendanceTypes::GEO_LOCATION_BASED, $this->attendanceTypes->pluck('attendance_type')->toArray());
     }
 
     public function isShebaTech($business_member_id)
