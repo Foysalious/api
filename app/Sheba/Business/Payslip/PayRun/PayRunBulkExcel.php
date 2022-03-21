@@ -2,6 +2,7 @@
 
 use App\Models\Business;
 use PHPExcel_Cell;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Reports\ExcelHandler;
 use Excel;
@@ -14,11 +15,16 @@ class PayRunBulkExcel
     private $payrollComponents;
     private $payslip;
     private $maxCell;
+    private $scheduleDate;
+    /*** @var BusinessPayslipRepository */
+    private $businessPayslipRepo;
+    private $businessPayslip;
 
     public function __construct(ExcelHandler $excelHandler)
     {
         $this->excelHandler = $excelHandler;
         $this->data = [];
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     public function setBusiness(Business $business)
@@ -30,6 +36,19 @@ class PayRunBulkExcel
     public function setPayslips($payslip)
     {
         $this->payslip = $payslip;
+        return $this;
+    }
+
+    public function setScheduleDate($schedule_date)
+    {
+        $this->scheduleDate = $schedule_date;
+        return $this;
+    }
+
+    public function setBusinessPayslipId($business_payslip_id)
+    {
+        $this->businessPayslip = $this->businessPayslipRepo->find($business_payslip_id);
+        $this->scheduleDate = $this->businessPayslip->schedule_date;
         return $this;
     }
 
@@ -71,7 +90,7 @@ class PayRunBulkExcel
                     'employee_name' => $payslip['employee_name'],
                     'employee_id' => $payslip['employee_id'],
                     'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
-                    'schedule_date' => $payslip['schedule_date'],
+                    'schedule_date' => $this->scheduleDate,
                     'gross_salary' => $payslip['gross_salary'],
                 ] + $this->getComponents($payslip);
             array_push($this->data, $business_member_data);

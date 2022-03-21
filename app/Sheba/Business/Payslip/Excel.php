@@ -57,17 +57,17 @@ class Excel
             $member = $business_member->member;
             $profile = $member->profile;
             $bank = $profile->banks->last();
-            array_push($this->data, [
-                'employee_id'       => $payslip['employee_id'],
-                'employee_name'     => $payslip['employee_name'],
-                'department'        => $payslip['department'],
-                'gross_salary'      => $payslip['gross_salary'],
-                'addition'          => $payslip['addition'],
-                'deduction'         => $payslip['deduction'],
-                'net_payable'       => $payslip['net_payable'],
-                'bank_name'         => $bank ? ucwords(str_replace('_', ' ', $bank->bank_name)) : null,
-                'bank_account_no'   =>  $bank ? $bank->account_no : null,
-            ]);
+            $this->data[] = [
+                'employee_id' => $payslip['employee_id'],
+                'employee_name' => $payslip['employee_name'],
+                'department' => $payslip['department'],
+                'gross_salary' => $payslip['gross_salary'],
+                'addition' => $payslip['addition'],
+                'deduction' => $payslip['deduction'],
+                'net_payable' => $payslip['net_payable'],
+                'bank_name' => $bank ? ucwords(str_replace('_', ' ', $bank->bank_name)) : null,
+                'bank_account_no' => $bank ? $bank->account_no : null,
+            ];
         }
     }
 

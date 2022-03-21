@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessQueue;
+use Carbon\Carbon;
 use Sheba\Dal\Payslip\Payslip;
 use Sheba\PushNotificationHandler;
 
@@ -31,7 +32,7 @@ class SendPayslipDisburseNotificationToEmployee extends BusinessQueue
     public function handle()
     {
         if ($this->attempts() < 2) {
-            $title = "Your salary for ".$this->payslip->schedule_date->format('M Y')." has been disbursed";
+            $title = "Your salary for ".Carbon::parse($this->payslip->businessPayslip->schedule_date)->format('M Y')." has been disbursed";
             notify()->member($this->businessMember->member)->send([
                 'title' => $title,
                 'type' => 'Info',

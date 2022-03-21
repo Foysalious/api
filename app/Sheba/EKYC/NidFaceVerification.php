@@ -2,11 +2,14 @@
 
 namespace Sheba\EKYC;
 
+use App\Models\Affiliate;
+use App\Models\Partner;
 use App\Models\Resource;
 use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
 use Exception;
 use Intervention\Image\Facades\Image;
+use Sheba\Affiliate\VerificationStatus;
 use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 use Sheba\EKYC\Exceptions\EKycException;
 use Sheba\ModificationFields;
@@ -53,6 +56,12 @@ class NidFaceVerification
             ]));
 
             $resourceRepo->storeStatusUpdateLog('verified', 'ekyc_verified', "status changed to verified through ekyc");
+        } elseif (isset($profile->affiliate)) {
+            $previous_status = $profile->affiliate->verification_status;
+
+            $affiliateRepo = new AffiliateRepository();
+            $affiliateRepo->updateData($profile->affiliate, ["verification_status" => 'verified']);
+            $affiliateRepo->storeStatusUpdateLog($profile->affiliate, $previous_status,'verified', 'ekyc_verified', "status changed to verified through ekyc");
         }
     }
 
@@ -70,14 +79,24 @@ class NidFaceVerification
             ]);
 
             $resourceRepo->storeStatusUpdateLog('rejected', 'ekyc_rejected', "status changed to rejected through ekyc");
+        } elseif(isset($profile->affiliate)) {
+            $reason = "ekyc_rejected";
+            $previous_status = $profile->affiliate->verification_status;
+
+            $affiliateRepo = new AffiliateRepository();
+            $affiliateRepo->updateData($profile->affiliate, ["verification_status" => 'rejected', "reject_reason" => $reason]);
+            $affiliateRepo->storeStatusUpdateLog($profile->affiliate, $previous_status, 'rejected', $reason, "status changed to rejected through ekyc");
         }
     }
 
-    public function beforePorichoyCallChanges($profile)
+    public function beforePorichoyCallChanges($profile, $avatar = null)
     {
         $this->profileRepo->increase_verification_request_count($profile);
-        if(isset($profile->resource)) (new ResourceRepository($profile->resource))->setToPendingStatus();
-        elseif(isset($profile->affiliate)) (new AffiliateRepository())->updateVerificationStatusToPending($profile->affiliate);
+        if($avatar instanceof Partner) {
+            (new ResourceRepository($profile->resource))->setToPendingStatus();
+        } else {
+            (new AffiliateRepository())->updateVerificationStatusToPending($profile->affiliate);
+        }
     }
 
     /**
@@ -142,10 +161,10 @@ class NidFaceVerification
 
     }
 
-    public function storeData($request, $faceVerificationData, $profileNIDSubmissionRepo)
+    public function storeData($request, $avatar, $faceVerificationData, $profileNIDSubmissionRepo)
     {
         $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
+        $submitted_by = $avatar instanceof Partner ? get_class($request->auth_user->getResource()) : get_class($request->auth_user->getAffiliate());
         $faceVerify = null;
         $verificationStatus = "rejected";
         $rejectReasons = "Invalid Data";
@@ -179,40 +198,15 @@ class NidFaceVerification
         }
     }
 
-    public function storePendingData($request, $profileNIDSubmissionRepo)
-    {
-        $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
-
-        $requestedData = [
-            'nid' => $request->nid,
-            'dob' => $request->dob,
-        ];
-        $requestedData = json_encode($requestedData);
-
-        $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
-            ->where('submitted_by', $submitted_by)
-            ->where('nid_no', $request->nid)
-            ->orderBy('id', 'desc')->first();
-
-        if ($porichoyNIDSubmission) {
-            $porichoyNIDSubmission->update([
-                'porichoy_request'    => $requestedData,
-                "verification_status" => "rejected",
-                "rejection_reasons"   => null,
-                'created_at'          => Carbon::now()->toDateTimeString()
-            ]);
-        }
-    }
-
     /**
      * @param $request
+     * @param $avatar
      * @param $profileNIDSubmissionRepo
      */
-    public function updateLivelinessCount($request, $profileNIDSubmissionRepo)
+    public function updateLivelinessCount($request, $avatar, $profileNIDSubmissionRepo)
     {
         $profile_id = $request->auth_user->getProfile()->id;
-        $submitted_by = get_class($request->auth_user->getResource());
+        $submitted_by = $avatar instanceof Partner ? get_class($request->auth_user->getResource()) : get_class($request->auth_user->getAffiliate());
 
         $porichoyNIDSubmission = $profileNIDSubmissionRepo->where('profile_id', $profile_id)
             ->where('submitted_by', $submitted_by)
