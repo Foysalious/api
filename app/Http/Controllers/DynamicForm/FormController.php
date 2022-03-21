@@ -67,4 +67,15 @@ class FormController extends Controller
         $data = $this->dynamicForm->setType($request->type)->typeData($request);
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $data]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function uploadDocument(Request $request): JsonResponse
+    {
+        $partner = $request->auth_user->getPartner();
+        $data = $this->dynamicForm->uploadDocumentData($request,$partner);
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $data]);
+    }
 }
