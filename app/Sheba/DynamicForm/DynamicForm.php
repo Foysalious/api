@@ -14,7 +14,7 @@ class DynamicForm
     /*** @var MefForm */
     private $form;
 
-    /*** @var MefSection*/
+    /*** @var MefSection */
     private $section;
 
     /*** @var Partner */
@@ -130,9 +130,14 @@ class DynamicForm
         }
     }
 
-    public function uploadDocumentData($request, $partner)
+
+    public function uploadDocumentData($document, $document_id)
     {
-        $form_field = $request->document_id;
-        $url = (new MerchantEnrollmentFileHandler())->setPartner($partner)->uploadDocument($request->document, $form_field)->getUploadedUrl();
+        $field = $this->section->fields->where('name', $document_id)->first();
+        $url = (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($document, json_decode($field->data, true))->getUploadedUrl();
+        $dynamic_field = json_decode($field->data, true);
+        $dynamic_field['data'] = $url;
+        $field->data = json_encode($dynamic_field);
+        return $field->save();
     }
 }
