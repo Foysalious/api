@@ -12,6 +12,7 @@ class ActionResultCodes
     const ALREADY_DEVICE_USED = 507;
     const LEFT_EARLY_TODAY = 508;
     const OUT_OF_GEO_LOCATION = 509;
+    const OUT_OF_WIFI_GEO_LOCATION = 510;
     const SUCCESSFUL = 200;
 
 }

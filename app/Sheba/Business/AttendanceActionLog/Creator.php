@@ -6,6 +6,7 @@ use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckinStatusCalculator;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckoutStatusCalculator;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\Location\Geo;
 
@@ -30,6 +31,7 @@ class Creator
     private $checkinStatusCalculator;
     /** @var CheckoutStatusCalculator $checkoutStatusCalculator */
     private $checkoutStatusCalculator;
+    private $attendanceType;
 
     /**
      * Creator constructor.
@@ -133,6 +135,12 @@ class Creator
         return $this;
     }
 
+    public function setAttendanceType($attendance_type)
+    {
+        $this->attendanceType = $attendance_type;
+        return $this;
+    }
+
     /**
      * @param $which_half
      * @return $this
@@ -160,9 +168,26 @@ class Creator
             'ip' => $this->ip,
             'user_agent' => $this->userAgent,
             'device_id' => $this->deviceId,
-            'status' => $status,
-            'is_remote' => $this->isRemote
+            'status' => $status
         ];
+        if ($this->attendanceType === AttendanceTypes::IP_BASED) {
+            $attendance_log_data = array_merge($attendance_log_data, [
+                'is_remote' => 0,
+                'is_geo_location' => 0
+            ]);
+        }
+        if ($this->attendanceType === AttendanceTypes::GEO_LOCATION_BASED) {
+            $attendance_log_data = array_merge($attendance_log_data, [
+                'is_remote' => 0,
+                'is_geo_location' => 1
+            ]);
+        }
+        if ($this->attendanceType === AttendanceTypes::REMOTE) {
+            $attendance_log_data = array_merge($attendance_log_data, [
+                'is_remote' => 1,
+                'is_geo_location' => 0
+            ]);
+        }
         $this->address = $this->getAddress();
 
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);

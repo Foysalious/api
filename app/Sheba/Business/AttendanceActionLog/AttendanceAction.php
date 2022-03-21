@@ -39,6 +39,7 @@ class AttendanceAction
     private $lng;
     private $isRemote;
     private $remoteMode;
+    private $attendanceType;
 
     /**
      * AttendanceAction constructor.
@@ -150,9 +151,9 @@ class AttendanceAction
     {
         $processor = new ActionProcessor();
         $action = $processor->setActionName($this->action)->getAction();
-        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business)->setBusinessMember($this->businessMember);
+        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setLat($this->lat)->setLng($this->lng)->setBusiness($this->business)->setBusinessMember($this->businessMember);
         $action->check();
-        $this->isRemote = $action->getIsRemote();
+        $this->attendanceType = $action->getAttendanceType();
         return $action;
     }
 
@@ -170,7 +171,7 @@ class AttendanceAction
                 ->setBusiness($this->business)
                 ->setWhichHalfDay($this->checkHalfDayLeave());
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
-            if ($this->isRemote) $this->attendanceActionLogCreator->setRemoteMode($this->remoteMode);
+            $this->attendanceActionLogCreator->setAttendanceType($this->attendanceType);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });
