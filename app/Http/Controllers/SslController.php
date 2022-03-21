@@ -32,7 +32,7 @@ class SslController extends Controller
             } else {
                 throw new Exception('Payment not found to validate.');
             }
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             logError($e);
         }
         return redirect($redirect_url);
