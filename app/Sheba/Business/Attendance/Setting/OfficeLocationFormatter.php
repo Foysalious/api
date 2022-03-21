@@ -17,7 +17,7 @@ class OfficeLocationFormatter
             $location = $business_office->location;
             $office_locations[] = [
                 'id' => $business_office->id,
-                'office_name' => $business_office->name,
+                'location_name' => $business_office->name,
                 'lat' => $location['lat'],
                 'lng' => $location['lng'],
                 'radius' => intval($location['radius']),
