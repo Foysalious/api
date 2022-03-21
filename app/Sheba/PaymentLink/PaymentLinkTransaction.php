@@ -1,5 +1,6 @@
 <?php
 
+
 namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
@@ -244,8 +245,6 @@ class PaymentLinkTransaction
     private function setEntryAmount()
     {
         $amount = $this->getAmount();
-        Log::debug("Entry AMount ----");
-        Log::debug([$amount, $this->getFee(), $this->getInterest(), $this->partnerProfit, $this->real_amount]);
         if ($this->isPaidByPartner()) {
             $this->entryAmount = $amount;
         } else {
@@ -287,7 +286,7 @@ class PaymentLinkTransaction
             ->setPaidBy($this->paidBy)
             ->setIsDueTrackerPaymentLink($this->is_due_tracker_payment_link)
             ->setRealAmount($this->real_amount)
-            ->setSourceId($this->payment->id);
+            ->setDebitAccountKey($this->getPaymentMethod());
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
                     ->setCustomerName($customer->name)
