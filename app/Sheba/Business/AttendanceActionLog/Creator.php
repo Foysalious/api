@@ -1,14 +1,16 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
 use App\Models\Business;
-use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
+use Illuminate\Support\Facades\Log;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckinStatusCalculator;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckoutStatusCalculator;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
-use Sheba\Map\Client\BarikoiClient;
 use Sheba\Location\Geo;
+use Sheba\Map\Client\BarikoiClient;
+use Throwable;
 
 class Creator
 {
@@ -41,8 +43,8 @@ class Creator
      * @param CheckoutStatusCalculator $checkout_status_calculator
      */
     public function __construct(AttendanceActionLogRepositoryInterface $attendance_action_log_repository,
-                                CheckinStatusCalculator $checkin_status_calculator,
-                                CheckoutStatusCalculator $checkout_status_calculator)
+                                CheckinStatusCalculator                $checkin_status_calculator,
+                                CheckoutStatusCalculator               $checkout_status_calculator)
     {
         $this->attendanceActionLogRepository = $attendance_action_log_repository;
         $this->checkinStatusCalculator = $checkin_status_calculator;
@@ -170,28 +172,15 @@ class Creator
             'device_id' => $this->deviceId,
             'status' => $status
         ];
-        if ($this->attendanceType === AttendanceTypes::IP_BASED) {
-            $attendance_log_data = array_merge($attendance_log_data, [
-                'is_remote' => 0,
-                'is_geo_location' => 0
-            ]);
-        }
-        if ($this->attendanceType === AttendanceTypes::GEO_LOCATION_BASED) {
-            $attendance_log_data = array_merge($attendance_log_data, [
-                'is_remote' => 0,
-                'is_geo_location' => 1
-            ]);
-        }
-        if ($this->attendanceType === AttendanceTypes::REMOTE) {
-            $attendance_log_data = array_merge($attendance_log_data, [
-                'is_remote' => 1,
-                'is_geo_location' => 0
-            ]);
-        }
-        $this->address = $this->getAddress();
 
+        if ($this->attendanceType === AttendanceTypes::GEO_LOCATION_BASED) $attendance_log_data['is_geo_location'] = 1;
+        if ($this->attendanceType === AttendanceTypes::REMOTE) $attendance_log_data['is_remote'] = 1;
+        $this->address = $this->getAddress();
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);
         if ($this->remoteMode) $attendance_log_data['remote_mode'] = $this->remoteMode;
+
+        Log::info("Attendance Log for Employee#" . json_encode($attendance_log_data));
+
         return $this->attendanceActionLogRepository->create($attendance_log_data);
     }
 
@@ -202,7 +191,7 @@ class Creator
     {
         try {
             return (new BarikoiClient)->getAddressFromGeo($this->geo)->getAddress();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             return "";
         }
     }

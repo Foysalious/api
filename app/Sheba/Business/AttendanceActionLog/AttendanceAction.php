@@ -168,10 +168,11 @@ class AttendanceAction
                 ->setDeviceId($this->deviceId)
                 ->setUserAgent($this->userAgent)
                 ->setIsRemote($this->isRemote)
+                ->setAttendanceType($this->attendanceType)
                 ->setBusiness($this->business)
                 ->setWhichHalfDay($this->checkHalfDayLeave());
+
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
-            $this->attendanceActionLogCreator->setAttendanceType($this->attendanceType);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });
