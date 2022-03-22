@@ -191,7 +191,7 @@ class WebstoreSettingsController extends Controller
         $partner = resolvePartnerFromAuthMiddleware($request);
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($partner, new WebstoreSettingsTransformer());
+        $resource = new Item($partner->load('webstoreDomain'), new WebstoreSettingsTransformer());
         return $fractal->createData($resource)->toArray()['data'];
     }
 

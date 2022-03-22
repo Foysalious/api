@@ -305,6 +305,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->morphMany(ArtisanLeave::class, 'artisan');
     }
 
+    public function webstoreDomain()
+    {
+        return $this->hasOne(PartnerWebstoreDomainInfo::class);
+    }
+
     public function shebaCredit()
     {
         return $this->wallet + $this->shebaBonusCredit();
