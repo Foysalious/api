@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\BusinessMemberBkashInfo\BusinessMemberBkashInfo;
 use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
@@ -329,5 +330,11 @@ class BusinessMember extends Model
         $time_frame->forDateRange($start_date, $end_date);
 
         return $time_frame->hasDateBetween(Carbon::now());
+    }
+
+    public function isBusinessMemberActive()
+    {
+        if ($this->status == Statuses::ACTIVE) return true;
+        return false;
     }
 }
