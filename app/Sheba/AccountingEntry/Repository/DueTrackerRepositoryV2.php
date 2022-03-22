@@ -70,7 +70,7 @@ class DueTrackerRepositoryV2 extends AccountingRepository
      */
     public function getDuelistByContactId($contact_id, $url_param, string $userType = UserType::PARTNER)
     {
-        $url = "api/due-list/" . $contact_id . "?".$url_param;
+        $url = "api/v2/due-tracker/due-list/" . $contact_id . "?".$url_param;
         return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
     }
 
