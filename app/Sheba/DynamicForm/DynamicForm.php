@@ -7,13 +7,14 @@ use App\Models\Division;
 use App\Models\Partner;
 use Sheba\Dal\MefForm\Model as MefForm;
 use Sheba\Dal\MefSections\Model as MefSection;
+use Sheba\MerchantEnrollment\MerchantEnrollmentFileHandler;
 
 class DynamicForm
 {
     /*** @var MefForm */
     private $form;
 
-    /*** @var MefSection*/
+    /*** @var MefSection */
     private $section;
 
     /*** @var Partner */
@@ -131,5 +132,16 @@ class DynamicForm
         if ($this->type == "tradeLicenseExist") {
             return config('trade_license.data');
         }
+    }
+
+
+    public function uploadDocumentData($document, $document_id)
+    {
+        $field = $this->section->fields->where('name', $document_id)->first();
+        $url = (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($document, json_decode($field->data, true))->getUploadedUrl();
+        $dynamic_field = json_decode($field->data, true);
+        $dynamic_field['data'] = $url;
+        $field->data = json_encode($dynamic_field);
+        return $field->save();
     }
 }
