@@ -2,23 +2,27 @@
 
 namespace App\Sheba\DynamicForm;
 
-use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
+use Illuminate\Contracts\Support\Arrayable;
+use Sheba\Helpers\BasicGetter;
+use Sheba\NeoBanking\PrivateGetterTrait;
 
-class FormField
+class FormField implements Arrayable
 {
-    use ProtectedGetterTrait;
+    use BasicGetter;
 
-    protected $input_type = '';
-    protected $label = '';
-    protected $message = '';
-    protected $hint = '';
-    protected $id = '';
-    protected $error = '';
-    protected $data = '';
-    protected $min_length = '';
-    protected $max_length = '';
-    protected $is_editable = false;
-    protected $mandatory = false;
+    private $input_type = '';
+    private $label = '';
+    private $message = '';
+    private $hint = '';
+    private $id = '';
+    private $error = '';
+    private $data = '';
+    private $min_length = '';
+    private $max_length = '';
+    private $is_editable = false;
+    private $mandatory = false;
+    private $data_source = '';
+    private $data_source_id = '';
 
     public function setFormInput($input): FormField
     {
@@ -37,4 +41,22 @@ class FormField
         $this->data = $value;
         return $this;
     }
+
+    public function toArray(): array
+    {
+        return [
+            "input_type" => $this->input_type,
+            "label" => $this->label,
+            "message" => $this->message,
+            "hint" => $this->hint,
+            "id" => $this->id,
+            "error" => $this->error,
+            "data" => $this->data,
+            "min_length" => $this->min_length,
+            "max_length" => $this->max_length,
+            "is_editable" => $this->is_editable,
+            "mandatory" => $this->mandatory
+        ];
+    }
+
 }
