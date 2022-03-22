@@ -2,11 +2,14 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Voucher\VoucherUsageCalculator;
 
 class Voucher extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
     protected $dates = ['start_date', 'end_date'];
     protected $casts = ['is_amount_percentage' => 'integer', 'cap' => 'double', 'amount' => 'double'];

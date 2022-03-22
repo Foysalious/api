@@ -1,10 +1,13 @@
 <?php namespace App\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Promotion extends Model
 {
+    use HasFactory;
+
     protected $guarded = ['id'];
     protected $dates = ['valid_till'];
 

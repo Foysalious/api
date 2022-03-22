@@ -9,10 +9,8 @@ use App\Models\Promotion;
 use App\Models\Voucher;
 use Tests\Feature\FeatureTestCase;
 
-
 class AddPromoTest extends FeatureTestCase
 {
-
     private $voucher;
     protected $job;
 
@@ -50,12 +48,9 @@ class AddPromoTest extends FeatureTestCase
         $this->job = Job::factory()->create([
             'partner_order_id' => $this->partner_order->id
         ]);
-
-
     }
 
     public function test_API_Giving_200_For_Valid_Input_XYZ()
-
     {
         $response = $this->post("v2/customers/" . $this->customer->id . "/jobs/" . $this->job->id . "/promotions",
             [
@@ -65,7 +60,6 @@ class AddPromoTest extends FeatureTestCase
             [
                 'Authorization' => "Bearer $this->token"
             ]);
-
         Promotion::factory()->create([
             'customer_id' => $this->customer->id,
             'voucher_id' => $this->voucher->id,
@@ -74,7 +68,6 @@ class AddPromoTest extends FeatureTestCase
         ]);
 
         $data = $response->decodeResponseJson();
-
         $this->assertEquals(200, $data['code']);
 
     }

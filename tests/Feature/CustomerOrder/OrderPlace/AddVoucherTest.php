@@ -15,7 +15,7 @@ use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Tests\Feature\FeatureTestCase;
-use function Tests\Feature\CustomerOrder\MxOrderPlace\factory;
+use function Tests\Feature\CustomerOrder\OrderPlace\factory;
 
 
 class AddVoucherTest extends FeatureTestCase
@@ -31,19 +31,19 @@ class AddVoucherTest extends FeatureTestCase
 
         $this->location = Location::find(4);
 
-        $this->masterCategory = factory(Category::class)->create();
-        $this->secondaryCategory = factory(Category::class)->create([
+        $this->masterCategory = Category::factory()->create();
+        $this->secondaryCategory = Category::factory()->create([
             'parent_id' => $this->masterCategory->id
         ]);
-        $this->service = factory(Service::class)->create([
+        $this->service = Service::factory()->create([
             'category_id' => $this->secondaryCategory->id
         ]);
 
-        factory(CategoryLocation::class)->create([
+        CategoryLocation::factory()->create([
             'category_id' => $this->masterCategory->id,
             'location_id' => $this->location->id
         ]);
-        factory(CategoryLocation::class)->create([
+        CategoryLocation::factory()->create([
             'category_id' => $this->secondaryCategory->id,
             'location_id' => $this->location->id
         ]);
@@ -53,7 +53,7 @@ class AddVoucherTest extends FeatureTestCase
             'service_id' => $this->service->id,
             'prices' => 2000
         ]);
-        $this->voucher = factory(Voucher::class)->create();
+        $this->voucher =Voucher::factory()->create();
 
 
         $response = $this->post("v3/customers/1/orders/promotions/add",
