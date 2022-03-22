@@ -112,6 +112,7 @@ class PaymentService
      * @return array
      * @throws Exceptions\MORServiceServerError
      * @throws NotFoundAndDoNotReportException
+     * @throws ResellerPaymentException
      */
     public function getPGWDetails(): array
     {
