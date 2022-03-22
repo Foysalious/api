@@ -88,6 +88,9 @@ class MtbSavePrimaryInformation
 
     }
 
+    /**
+     * @return void
+     */
     private function applyMtb()
     {
         $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
