@@ -32,12 +32,12 @@ class MtbSaveNomineeInformation
         return [
             'RequestData' => [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
-                'nomNm' => $this->partner->getFirstAdminResource()->profile->nominee->name,
-                'nomFatherNm' => $this->partner->getFirstAdminResource()->profile->nominee->father_name,
-                'nomMotherNm' => $this->partner->getFirstAdminResource()->profile->nominee->mother_name,
-                'nomDob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->nominee->dob)),
-                'nomMobileNum' => $this->partner->getFirstAdminResource()->profile->nominee->mobile,
-                'nomRelation' => $this->partner->getFirstAdminResource()->profile->nominee_relation
+                'nomNm' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeName,
+                'nomFatherNm' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeFatherName,
+                'nomMotherNm' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeMotherName,
+                'nomDob' => date("Ymd", strtotime(json_decode($this->partner->partnerMefInformation->partner_information)->nomineeDOB)),
+                'nomMobileNum' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineePhone,
+                'nomRelation' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeRelation
             ],
             'requestId' => strval($this->partner->id),
             'channelId' => "Sheba_XYZ"
