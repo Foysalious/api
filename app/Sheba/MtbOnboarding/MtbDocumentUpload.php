@@ -29,7 +29,7 @@ class MtbDocumentUpload
 
     private function makeData()
     {
-        $test = array(
+        $data = array(
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nid_no,
@@ -45,17 +45,25 @@ class MtbDocumentUpload
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
-                'docImage' => base64_encode(file_get_contents($this->partner->getFirstAdminResource()->profile->nominee->nid_image_front)),
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partner->partnerMefInformation->partner_information)->nominee_nid)),
                 'docType' => 5,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
-                'docImage' => base64_encode(file_get_contents(json_decode($this->partner->partnerMefInformation->partner_information)->signature)),
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partner->partnerMefInformation->partner_information)->customer_signature)),
                 'docType' => 6,
             ]);
+        if (json_decode($this->partner->partnerMefInformation->partner_information)->tradeLicenseExists == 'y') {
+            $data[] = [
+                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
+                'docRefId' => strval($this->partner->id),
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partner->partnerMefInformation->partner_information)->trade_license)),
+                'docType' => 4,
+            ];
+        }
         return [
-            'RequestData' => $test,
+            'RequestData' => $data,
             'requestId' => strval($this->partner->id),
             'channelId' => "Sheba_XYZ"
         ];
