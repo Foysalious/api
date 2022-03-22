@@ -26,10 +26,17 @@ class MtbSaveTransaction
     {
         return [
             'RequestData' => [
-                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id
+                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
+                'StockAmt' => "0",
+                'MonthlyTotalSale' => "0",
+                'MonthlyIncome' => "0",
+                'MonthlyExpense' => "0",
+                'LoanOutstanding' => "0",
+                'TotalIncome' => "0",
+                'MonthlyMercSale' => "0"
             ],
             'requestId' => strval($this->partner->id),
-            'channelId' => "Sheba_XYZ"
+            'channelId' => "Sheba_XYZ",
         ];
     }
 

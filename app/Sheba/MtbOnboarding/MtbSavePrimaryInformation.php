@@ -64,21 +64,21 @@ class MtbSavePrimaryInformation
                 "contactAddress" => 'present',
                 'custGrade' => 'Moderate',
                 'presentAddress' => [
-                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->presentAddressLine1,
+                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->presentAddress,
                     'postCode' => json_decode($this->partner->partnerMefInformation->partner_information)->presentPostCode,
                     'division' => json_decode($this->partner->partnerMefInformation->partner_information)->presentDivision,
                     'district' => json_decode($this->partner->partnerMefInformation->partner_information)->presentDistrict,
                     'country' => 'Bangladesh'
                 ],
                 'permanentAddress' => [
-                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentAddressLine1,
+                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentAddress,
                     'postCode' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentpostCode,
                     'country' => 'Bangladesh',
                     'contactAddress' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentcontactAddress
                 ],
                 'shopInfo' => [
-                    'businessStartDt' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentcontactAddress,//need to clarify
-                    'tradeLicenseExists' => 'y',
+                    'businessStartDt' => date("Ymd", strtotime(json_decode($this->partner->partnerMefInformation->partner_information)->businessStartDt)),
+                    'tradeLicenseExists' => json_decode($this->partner->partnerMefInformation->partner_information)->tradeLicenseExists,
                     'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
                 ]
             ],
@@ -93,15 +93,14 @@ class MtbSavePrimaryInformation
      */
     public function storePrimaryInformationToMtb()
     {
-//        $data = $this->makePrimaryInformation();
-//        $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
-//        $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
-//        $this->partner->partnerMefInformation->save();
-//        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
-//        $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
-//        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
+        $data = $this->makePrimaryInformation();
+        $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
+        $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
+        $this->partner->partnerMefInformation->save();
+        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
+        $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
+        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
         $this->mtbSaveTransaction->setPartner($this->partner)->saveTransactionInformation();
 
-        return;
     }
 }

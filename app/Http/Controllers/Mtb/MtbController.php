@@ -18,7 +18,7 @@ class MtbController extends Controller
         $this->mtbSavePrimaryInformation = $mtbSavePrimaryInformation;
     }
 
-    public function index(Request $request)
+    public function apply(Request $request)
     {
         $partner = $request->auth_user->getPartner();
         $this->mtbSavePrimaryInformation->setPartner($partner)->storePrimaryInformationToMtb();
