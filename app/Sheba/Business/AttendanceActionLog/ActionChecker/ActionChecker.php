@@ -240,11 +240,10 @@ abstract class ActionChecker
     private function isInGeoLocation()
     {
         $is_within = false;
-        $from_coords = (new Coords(floatval($this->lat), floatval($this->lng)))->toRadians();
-
+        $from_coords = new Coords(floatval($this->lat), floatval($this->lng));
         foreach ($this->geoOffices as $geo_office){
             $geo = $geo_office->location;
-            $to_coords = (new Coords(floatval($geo['lat']), floatval($geo['lng'])))->toRadians();
+            $to_coords = new Coords(floatval($geo['lat']), floatval($geo['lng']));
             $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
             $is_within = $distance->to($to_coords)->from($from_coords)->isWithin(floatval($geo['radius']));
             if ($is_within) break;
