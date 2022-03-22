@@ -188,10 +188,15 @@ abstract class ActionChecker
     protected function checkIpOrRemote()
     {
         if (!$this->isSuccess()) return;
-        if ($this->business->isIpBasedAttendanceEnable() && $this->business->isGeoLocationAttendanceEnable() && $this->business->isRemoteAttendanceEnable($this->businessMember->id)) {//WGR
+
+        $isIpBasedAttendanceEnable = $this->business->isIpBasedAttendanceEnable();
+        $isGeoLocationAttendanceEnable = $this->business->isGeoLocationAttendanceEnable();
+        $isRemoteAttendanceEnable = $this->business->isRemoteAttendanceEnable($this->businessMember->id);
+
+        if ($isIpBasedAttendanceEnable && $isGeoLocationAttendanceEnable && $isRemoteAttendanceEnable) {//WGR
             $this->attendanceType = ($this->isInWifiArea()) ? AttendanceTypes::IP_BASED : (($this->isInGeoLocation()) ? AttendanceTypes::GEO_LOCATION_BASED : AttendanceTypes::REMOTE);
             $this->setSuccessfulResponseMessage();
-        } else if ($this->business->isIpBasedAttendanceEnable() && !$this->business->isGeoLocationAttendanceEnable() && !$this->business->isRemoteAttendanceEnable($this->businessMember->id)) {//W
+        } else if ($isIpBasedAttendanceEnable && !$isGeoLocationAttendanceEnable && !$isRemoteAttendanceEnable) {//W
             $office_ip_count = $this->business->offices()->count();
             if ($office_ip_count > 0 && !$this->isInWifiArea()) {
                 $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
@@ -199,7 +204,7 @@ abstract class ActionChecker
                 $this->attendanceType = AttendanceTypes::IP_BASED;
                 $this->setSuccessfulResponseMessage();
             }
-        }else if ($this->business->isGeoLocationAttendanceEnable() && !$this->business->isIpBasedAttendanceEnable() && !$this->business->isRemoteAttendanceEnable($this->businessMember->id)) {//G
+        }else if ($isGeoLocationAttendanceEnable && !$isIpBasedAttendanceEnable && !$isRemoteAttendanceEnable) {//G
             $office_geo_location_count = $this->business->geoOffices()->count();
             if ($office_geo_location_count > 0 && !$this->isInGeoLocation()) {
                 $this->setResult(ActionResultCodes::OUT_OF_GEO_LOCATION, ActionResultCodeMessages::OUT_OF_GEO_LOCATION);
@@ -207,7 +212,7 @@ abstract class ActionChecker
                 $this->attendanceType = AttendanceTypes::GEO_LOCATION_BASED;
                 $this->setSuccessfulResponseMessage();
             }
-        } else if ($this->business->isGeoLocationAttendanceEnable() && $this->business->isIpBasedAttendanceEnable() && !$this->business->isRemoteAttendanceEnable($this->businessMember->id)){//GW
+        } else if ($isGeoLocationAttendanceEnable && $isIpBasedAttendanceEnable && !$isRemoteAttendanceEnable){//GW
             $is_in_wifi = $this->isInWifiArea();
             if (!$is_in_wifi && !$this->isInGeoLocation()) {
                 $this->setResult(ActionResultCodes::OUT_OF_WIFI_GEO_LOCATION, ActionResultCodeMessages::OUT_OF_WIFI_GEO_LOCATION);
@@ -215,25 +220,15 @@ abstract class ActionChecker
                 $this->attendanceType = ($is_in_wifi) ? AttendanceTypes::IP_BASED : AttendanceTypes::GEO_LOCATION_BASED;
                 $this->setSuccessfulResponseMessage();
             }
-        } else if($this->business->isGeoLocationAttendanceEnable() && $this->business->isRemoteAttendanceEnable($this->businessMember->id) && !$this->business->isIpBasedAttendanceEnable()) {//GR
+        } else if($isGeoLocationAttendanceEnable && $isRemoteAttendanceEnable && !$isIpBasedAttendanceEnable) {//GR
             $this->attendanceType = $this->isInGeoLocation() ? AttendanceTypes::GEO_LOCATION_BASED : AttendanceTypes::REMOTE;
             $this->setSuccessfulResponseMessage();
-        } else if ($this->business->isRemoteAttendanceEnable($this->businessMember->id) && $this->business->isIpBasedAttendanceEnable() && !$this->business->isGeoLocationAttendanceEnable()) {//RI
+        } else if ($isRemoteAttendanceEnable && $isIpBasedAttendanceEnable && !$isGeoLocationAttendanceEnable) {//RI
             $this->attendanceType = $this->isInWifiArea() ? AttendanceTypes::IP_BASED : AttendanceTypes::REMOTE;
             $this->setSuccessfulResponseMessage();
         } else {
             $this->attendanceType = AttendanceTypes::REMOTE;
             $this->setSuccessfulResponseMessage();
-        }
-    }
-
-    private function remoteAttendance()
-    {
-        if ($this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
-            $this->isRemote = 1;
-            $this->setSuccessfulResponseMessage();
-        } else {
-            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
         }
     }
 
@@ -245,9 +240,10 @@ abstract class ActionChecker
     private function isInGeoLocation()
     {
         $is_within = false;
+        $from_coords = (new Coords(floatval($this->lat), floatval($this->lng)))->toRadians();
+
         foreach ($this->geoOffices as $geo_office){
             $geo = $geo_office->location;
-            $from_coords = (new Coords(floatval($this->lat), floatval($this->lng)))->toRadians();
             $to_coords = (new Coords(floatval($geo['lat']), floatval($geo['lng'])))->toRadians();
             $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
             $is_within = $distance->to($to_coords)->from($from_coords)->isWithin(floatval($geo['radius']));
