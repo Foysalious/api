@@ -86,6 +86,11 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         $url = "api/v2/due-tracker/due-list/" . $contact_id . "/balance?".$url_param;
         return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
     }
+    public function reminderByContact($contactId,$contactType){
+        //TODO: Update ApI call for Reminder status
+        $url = "api/reminders/?contact_type=customer&offset=0&limit=1";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
 
 
 }

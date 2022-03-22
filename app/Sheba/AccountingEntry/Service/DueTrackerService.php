@@ -293,6 +293,24 @@ class DueTrackerService
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
+        $reminder = $this->dueTrackerRepo->setPartner($this->partner)->reminderByContact($this->contact_id,$this->contact_type);
+        $reminderStatus = [];
+        if(is_null($reminder)){
+            $reminderStatus['should_send_sms'] = null;
+            $reminderStatus['reminder_status'] = null;
+            $reminderStatus['sms_status'] = null;
+            $reminderStatus['reminder_at'] = null;
+
+        }
+        else{
+
+            $reminderStatus['should_send_sms'] = $reminder[0]['should_send_sms'];
+            $reminderStatus['reminder_status'] = $reminder[0]['reminder_status'];
+            $reminderStatus['sms_status'] = $reminder[0]['sms_status'];
+            $reminderStatus['reminder_at'] = $reminder[0]['reminder_at'];
+
+
+        }
         $customer = [];
 
         if (is_null($result['contact_details'])) {
@@ -323,7 +341,8 @@ class DueTrackerService
             'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
-            'balance' => $result['balance']
+            'balance' => $result['balance'],
+            'reminder'=> $reminderStatus
         ];
     }
 

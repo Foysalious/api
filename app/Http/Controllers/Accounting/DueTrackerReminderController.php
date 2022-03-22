@@ -24,9 +24,7 @@ class DueTrackerReminderController extends Controller
             'partner' => 'required',
             'contact_type' => 'required|in:customer,supplier',
             'sms' => 'required',
-            'reminder_date' => 'required|date_format:Y-m-d',
-            'reminder_status' => 'required',
-            'sms_status' => 'required'
+            'reminder_date' => 'required|date_format:Y-m-d H:i:s',
         ]);
         $response = $this->dueTrackerReminderService
             ->setPartner($request->partner)
@@ -34,8 +32,6 @@ class DueTrackerReminderController extends Controller
             ->setContactId($request->contactId)
             ->setSms($request->sms)
             ->setReminderDate($request->reminder_date)
-            ->setReminderStatus($request->reminder_status)
-            ->setSmsStatus($request->sms_status)
             ->createReminder();
         return http_response($request, null, 200, ['data' => $response]);
 
@@ -53,6 +49,8 @@ class DueTrackerReminderController extends Controller
             ->setOffset($request->offset)
             ->setLimit($request->limit)
             ->setOrderBy($request->order_by)
+            ->setReminderStatus($request->reminder_status)
+            ->setContactType($request->contact_type)
             ->getReminders();
         return http_response($request, null, 200, ['data' => $data]);
     }
@@ -63,7 +61,6 @@ class DueTrackerReminderController extends Controller
      */
     public function update(Request $request){
         $this->validate($request, [
-            'reminder_id' => 'required',
             'partner' => 'required',
             'contact_type' => 'required|in:customer,supplier',
             'sms' => 'required',
@@ -88,7 +85,6 @@ class DueTrackerReminderController extends Controller
     public function delete(Request $request){
         $this->validate($request,[
             'partner' => 'required',
-            'reminder_id' => 'required',
         ]);
         $response = $this->dueTrackerReminderService
             ->setReminderId($request->reminder_id)

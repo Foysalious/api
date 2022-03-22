@@ -2,6 +2,8 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
+
+use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 
 class DueTrackerReminderRepository extends AccountingRepository
@@ -16,10 +18,10 @@ class DueTrackerReminderRepository extends AccountingRepository
      * @param $data
      * @return void
      */
-    public function createReminder($data)
+    public function createReminder($partner,$data)
     {
-        //TODO: will create the reminder through post api
-        return $data;
+        $url = "api/reminders/";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
     }
 
     /**
@@ -27,29 +29,8 @@ class DueTrackerReminderRepository extends AccountingRepository
      * @return array
      */
     public function getReminders($partner,$query_string){
-        //TODO: will get the reminders for that partner
-        //dd($partner->id,$query_string);
-        $data['list'] = [[
-                "id" => 1,
-                "partner_id" => 217122,
-                "contact_type" => "customer",
-                "contact_id" => "first contact id here",
-                "sms" => "1",
-                "reminder_date" => "2022-03-23",
-                "reminder_status" => "upcoming",
-                "sms_status" => "Will Send SMS"
-            ],
-            [
-                "id" => 2,
-                "partner_id" => 217122,
-                "contact_type" => "customer",
-                "contact_id" => "second contact id here",
-                "sms" => "1",
-                "reminder_date" => "2022-03-25",
-                "reminder_status" => "upcoming",
-                "sms_status" => "Will Send SMS"
-            ]];
-        return $data;
+        $url = "api/reminders/?".$query_string;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->get($url);
     }
 
     /**
