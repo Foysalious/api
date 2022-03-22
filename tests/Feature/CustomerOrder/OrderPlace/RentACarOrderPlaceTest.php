@@ -1,5 +1,5 @@
 <?php
-namespace Tests\Feature\Order\OrderPlace;
+namespace Tests\Feature\CustomerOrder\OrderPlace;
 
 use App\Models\Profile;
 use GuzzleHttp\Client;

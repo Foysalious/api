@@ -1,4 +1,4 @@
-<?php namespace Tests\Feature\Order;
+<?php namespace Tests\Feature\CustomerOrder;
 
 use App\Models\Location;
 use Sheba\Dal\Category\Category;

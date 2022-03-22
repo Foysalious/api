@@ -1,4 +1,4 @@
-<?php namespace Tests\Feature\Order\OrderPlace;
+<?php namespace Tests\Feature\CustomerOrder\OrderPlace;
 
 use App\Models\Category;
 use App\Models\Location;

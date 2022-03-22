@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Order\PartnerList;
+namespace Tests\Feature\CustomerOrder\PartnerList;
 
 use GuzzleHttp\Client;
 use Tests\Feature\FeatureTestCase;

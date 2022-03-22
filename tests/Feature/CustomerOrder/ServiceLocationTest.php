@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Order;
+namespace Tests\Feature\CustomerOrder;
 
 use App\Models\Location;
 use Sheba\Cache\CacheAside;
