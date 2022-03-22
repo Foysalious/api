@@ -284,7 +284,8 @@ class PaymentLinkTransaction
             ->setPaidBy($this->paidBy)
             ->setIsDueTrackerPaymentLink($this->is_due_tracker_payment_link)
             ->setRealAmount($this->real_amount)
-            ->setSourceId($this->payment->id);
+            ->setSourceId($this->payment->id)
+            ->setDebitAccountKey($this->getPaymentMethod());
         if ($customer) {
             $transaction = $transaction->setCustomerId($customer->id)
                     ->setCustomerName($customer->name)
