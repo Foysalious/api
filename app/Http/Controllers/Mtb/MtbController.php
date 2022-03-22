@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\MtbOnboarding\MtbSavePrimaryInformation;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 
 class MtbController extends Controller
@@ -18,7 +19,11 @@ class MtbController extends Controller
         $this->mtbSavePrimaryInformation = $mtbSavePrimaryInformation;
     }
 
-    public function apply(Request $request)
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function apply(Request $request): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
         $this->mtbSavePrimaryInformation->setPartner($partner)->storePrimaryInformationToMtb();
