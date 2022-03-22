@@ -1,5 +1,8 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
+use App\Sheba\Business\Attendance\AttendanceTypes\GeoLocation;
+use App\Sheba\Business\Attendance\AttendanceTypes\IPBased;
+use App\Sheba\Business\Attendance\AttendanceTypes\Remote;
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
@@ -188,6 +191,10 @@ abstract class ActionChecker
     protected function checkIpOrRemote()
     {
         if (!$this->isSuccess()) return;
+
+        $remote = new Remote();
+        $geo = new GeoLocation();
+        $ip_based = new IPBased();
 
         $isIpBasedAttendanceEnable = $this->business->isIpBasedAttendanceEnable();
         $isGeoLocationAttendanceEnable = $this->business->isGeoLocationAttendanceEnable();
