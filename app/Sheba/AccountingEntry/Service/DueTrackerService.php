@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
+use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\Pos\Order\PosOrderObject;
@@ -266,13 +267,15 @@ class DueTrackerService
      */
     public function getDueListBalance(): array
     {
+
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
-        return [
-            'total' => $result['total'],
-            'stats' => $result['stats'],
-            'partner' => $this->getPartnerInfo($this->partner),
-        ];
+        $return_data = $result;
+        if($this->contact_type == ContactType::SUPPLIER) {
+            $supplier_due = $this->dueTrackerRepo->setPartner($this->partner)->getSupplierMonthlyDue();
+            $return_data['supplier_due'] = $supplier_due['due'];
+        }
+        return $return_data ;
     }
 
     /**
