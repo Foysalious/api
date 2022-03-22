@@ -167,7 +167,7 @@ class AttendanceAction
                 ->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)
                 ->setUserAgent($this->userAgent)
-                ->setIsRemote($this->isRemote)
+                ->setRemoteMode($this->remoteMode)
                 ->setAttendanceType($this->attendanceType)
                 ->setBusiness($this->business)
                 ->setWhichHalfDay($this->checkHalfDayLeave());

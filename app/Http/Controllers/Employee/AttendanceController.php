@@ -1,42 +1,45 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Http\Controllers\Controller;
+use App\Models\Business;
+use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Transformers\Business\AttendanceTransformer;
+use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
+use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
-use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
-use App\Transformers\Business\AttendanceTransformer;
-use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
-use Illuminate\Validation\ValidationException;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use App\Transformers\CustomSerializer;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\JsonResponse;
-use League\Fractal\Resource\Item;
-use App\Models\BusinessMember;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Location\Geo;
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
-use Illuminate\Http\Request;
-use Sheba\Helpers\TimeFrame;
-use League\Fractal\Manager;
-use App\Models\Business;
-use Carbon\Carbon;
-use Throwable;
 
 class AttendanceController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
 
     const FIRST_DAY_OF_MONTH = 1;
+
+    const REMOTE_MESSAGE = "Give attendance from anywhere by providing GPS access";
+    const WIFI_MESSAGE = "Give attendance under your Office WiFi Network only";
+    const WIFI_AND_REMOTE_MESSAGE = "Give attendance under office IP when you are in office and from GPS when you are are outside office";
 
     /**
      * @param Request $request
@@ -110,11 +113,13 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
-        if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
-            #$validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        if ($request->is_geo_location_enable && !$request->is_in_wifi_area) {
+            $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        }
+        if (!$request->is_geo_location_enable && !$request->is_in_wifi_area) {
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
-        #$this->validate($request, $validation_data);
+        $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
         $attendance_action->setBusinessMember($business_member)
@@ -132,16 +137,6 @@ class AttendanceController extends Controller
             'is_note_required' => $is_note_required,
             'date' => Carbon::now()->format('jS F Y'),
             'message' => $action->getResultMessage()]);
-    }
-
-    /**
-     * @param $month
-     * @param $year
-     * @return bool
-     */
-    private function isShowRunningMonthsAttendance($year, $month)
-    {
-        return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 
     public function getTodaysInfo(Request $request, ActionProcessor $action_processor)
@@ -205,6 +200,35 @@ class AttendanceController extends Controller
             ->setNote($request->note)
             ->updateNote();
         return api_response($request, null, 200);
+    }
+
+    public function getAttendancePolicy(Request $request, BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
+    {
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
+        $attendance_setting_data = $transformer->getEmployeePolicyData($attendance_types, $business_offices);
+        $message = ($attendance_setting_data['attendance_type']['is_remote_enable'] &&  $attendance_setting_data['attendance_type']['is_wifi_enable']) ? self::WIFI_AND_REMOTE_MESSAGE : ($attendance_setting_data['attendance_type']['is_remote_enable'] ? self::REMOTE_MESSAGE : self::WIFI_MESSAGE);
+
+        return api_response($request, null, 200, [
+            'attendance_type' => $attendance_setting_data['attendance_type']['types'],
+            'office_ip' => $attendance_setting_data['attendance_type']['is_wifi_enable'] ? $attendance_setting_data['office_ip'] : null,
+            'message' => $message
+        ]);
+    }
+
+    /**
+     * @param $month
+     * @param $year
+     * @return bool
+     */
+    private function isShowRunningMonthsAttendance($year, $month)
+    {
+        return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 
 }

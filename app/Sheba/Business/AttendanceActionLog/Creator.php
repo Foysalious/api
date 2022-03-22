@@ -117,15 +117,6 @@ class Creator
         return $this;
     }
 
-    /**
-     * @param $is_remote
-     * @return $this
-     */
-    public function setIsRemote($is_remote)
-    {
-        $this->isRemote = $is_remote;
-        return $this;
-    }
 
     /**
      * @param $remoteMode
