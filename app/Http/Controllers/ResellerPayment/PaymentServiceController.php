@@ -106,7 +106,14 @@ class PaymentServiceController extends Controller
         }
     }
 
-    public function bannerAndStatus(Request $request, PaymentService $paymentService)
+    /**
+     * @param Request $request
+     * @param PaymentService $paymentService
+     * @return JsonResponse
+     * @throws MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     */
+    public function bannerAndStatus(Request $request, PaymentService $paymentService): JsonResponse
     {
         $partner = $request->partner;
         $data = $paymentService->setPartner($partner)->getStatusAndBanner();

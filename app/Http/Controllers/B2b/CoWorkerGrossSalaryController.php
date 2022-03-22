@@ -73,7 +73,7 @@ class CoWorkerGrossSalaryController extends Controller
             if (!$value->$employee_email || !$value->$gross_salary) {
                 $halt_execution = true;
                 $excel_error = 'Email or gross salary cannot be empty';
-            } elseif (!isEmailValid($value->$employee_email)) {
+            } elseif (!isEmailValidWithCustomExtLength($value->$employee_email, 2, 8)) {
                 $halt_execution = true;
                 $excel_error = 'Email is invalid';
             } elseif (!$profile) {

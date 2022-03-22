@@ -28,6 +28,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
     private $paidBy;
     private $is_due_tracker_payment_link;
     private $real_amount;
+    private $target_id;
 
 
     public function __construct(AccountingEntryClient $client)
@@ -243,9 +244,7 @@ class PaymentLinkAccountingRepository extends AccountingRepository
      */
     private function makeData($userId)
     {
-        if ($this->debit_account_key == null && $this->credit_account_key == null) {
-            $this->setDebitAccountKey((new Accounts())->asset->cash::SSL);
-
+        if ($this->credit_account_key == null) {
             if ($this->interest > 0) {
                 $this->setCreditAccountKey((new Accounts())->income->incomeFromEmi::INCOME_FROM_EMI);
             } else {
@@ -274,6 +273,17 @@ class PaymentLinkAccountingRepository extends AccountingRepository
         $data['is_due_tracker_payment_link'] = $this->is_due_tracker_payment_link;
         $data['paid_by'] = $this->paidBy;
         $data['real_amount'] = $this->real_amount;
+        $data['target_id'] = $this->target_id;
         return $data;
+    }
+
+    /**
+     * @param mixed $target_id
+     * @return PaymentLinkAccountingRepository
+     */
+    public function setTargetId($target_id): PaymentLinkAccountingRepository
+    {
+        $this->target_id = $target_id;
+        return $this;
     }
 }

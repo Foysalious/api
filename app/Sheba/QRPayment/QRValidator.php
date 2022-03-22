@@ -5,16 +5,14 @@ namespace App\Sheba\QRPayment;
 use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Models\Partner;
 use App\Models\Payable;
-use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
-use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\QRPayment\DTO\QRGeneratePayload;
-use Carbon\Carbon;
 use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
 use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\QRPayable\Contract as QRPayableRepo;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Statuses;
 use Sheba\QRPayment\Exceptions\FinancialInformationNotFoundException;
 use Sheba\QRPayment\Exceptions\QRException;
@@ -35,10 +33,13 @@ class QRValidator
     private $qrPayableRepo;
     private $request;
     private $gateway;
+    /*** @var QRPaymentManager */
+    private $qrPaymentManager;
 
-    public function __construct(QRPayableRepo $qr_payable_repo)
+    public function __construct(QRPayableRepo $qr_payable_repo, QRPaymentManager $qrPaymentManager)
     {
         $this->qrPayableRepo = $qr_payable_repo;
+        $this->qrPaymentManager = $qrPaymentManager;
     }
 
     /**
@@ -85,8 +86,8 @@ class QRValidator
      */
     public function complete()
     {
-        if(config('app.env') == 'production')
-            if(!$this->mtbValidated()) throw new QRException("MTB Validation failed for this transaction", 400);
+        if(config('app.env') == 'production' && !$this->validated())
+            throw new QRException("MTB validation failed for this transaction", 400);
 
         if (!isset($this->qrId)) {
             $partner = $this->getPartnerFromMerchantId();
@@ -189,32 +190,14 @@ class QRValidator
     }
 
     /**
-     * @throws NotFoundAndDoNotReportException
+     * @return bool
+     * @throws InvalidPaymentMethod
      * @throws MtbServiceServerError
+     * @throws NotFoundAndDoNotReportException
      */
-    public function mtbValidated(): bool
+    public function validated(): bool
     {
-        /** @var MtbServerClient $mtb_client */
-        $mtb_client = app()->make(MtbServerClient::class);
-        $data = $this->makeApiData();
-
-        $url = QRPaymentStatics::MTB_VALIDATE_URL . http_build_query($data);
-
-        $response = $mtb_client->get($url, AuthTypes::BASIC_AUTH_TYPE);
-
-        if(isset($response["transactions"])) {
-            $transaction = $response["transactions"];
-            if(count($transaction) > 0) return true;
-        }
-        return false;
-    }
-
-    private function makeApiData(): array
-    {
-        return array(
-            'mid' => $this->merchantId,
-            'amt' => $this->amount,
-            'txndt' => (config('app.env') == 'production') ? Carbon::now()->format("Y-m-d") : "2022-03-03"/*Carbon::now()->format("Y-m-d")*/
-        );
+        return $this->qrPaymentManager->getQRMethod($this->gateway->method_name)
+            ->setAmount($this->amount)->setMerchantId($this->merchantId)->validate();
     }
 }

@@ -469,11 +469,13 @@ class BusinessesController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
+        $is_payroll_enable = $business->payrollSetting->is_enable;
+        if (!$is_payroll_enable) return api_response($request, null, 200, ['is_payroll_enable' => $is_payroll_enable, 'show_alert' => 0]);
         $active_business_member = $business->getActiveBusinessMember()->pluck('id');
         $active_business_member_count = $active_business_member->count();
         $given_salary_count = $salary_repository->whereIn('business_member_id', $active_business_member->toArray())->count();
-        $is_salary_configured = 1;
-        if ($active_business_member_count > $given_salary_count) $is_salary_configured = 0;
-        return api_response($request, null, 200, ['is_salary_configured' => $is_salary_configured]);
+        $is_salary_configured = 0;
+        if ($active_business_member_count > $given_salary_count) $is_salary_configured = 1;
+        return api_response($request, null, 200, ['is_payroll_enable' => $is_payroll_enable, 'show_alert' => $is_salary_configured]);
     }
 }
