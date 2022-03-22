@@ -7,6 +7,7 @@ use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
+use Sheba\Dal\BusinessPayslip\BusinessPayslip;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\Dal\OfficePolicy\OfficePolicy;
 use Sheba\Dal\OfficePolicy\Type;
@@ -214,6 +215,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $this->hasOne(PayrollSetting::class);
     }
 
+    public function payslipSummary()
+    {
+        return $this->hasMany(BusinessPayslip::class);
+    }
+
     public function activePartners()
     {
         return $this->partners()->where('is_active_for_b2b', 1);
@@ -396,7 +402,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function isShebaTech($business_member_id)
     {
-        $sheba_tech = [574, 1031, 6885];
+        $sheba_tech = [574, 586, 847, 922, 1031, 4493, 6885, 7102];
         return in_array($business_member_id, $sheba_tech);
     }
 

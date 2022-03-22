@@ -68,6 +68,8 @@ class PaymentService
 
     /**
      * @return array
+     * @throws Exceptions\MORServiceServerError
+     * @throws NotFoundAndDoNotReportException
      */
     public function getPGWDetails(): array
     {
@@ -215,7 +217,7 @@ class PaymentService
             $this->status = 'ekyc_completed';
     }
 
-    public function getPgwStatusForHomePage()
+    public function getPgwStatusForHomePage(): PaymentService
     {
         $pgw_store_accounts = PgwStoreAccount::where('user_type',get_class($this->partner))->where('user_id', $this->partner->id)->get();
 
@@ -263,7 +265,7 @@ class PaymentService
         $partner = Partner::where('id', $partnerId)->first();
         $pgwStores = new PgwStore();
 
-        $pgwStores = $pgwStores->select('id', 'name', 'key', 'name_bn', 'icon')->get();
+        $pgwStores = $pgwStores->publishedForMEF()->select('id', 'name', 'key', 'name_bn', 'icon')->get();
         foreach ($pgwStores as $pgwStore) {
             $completionData = (new MerchantEnrollment())->setPartner($partner)->setKey($pgwStore->key)->getCompletion();
             $mor_status = $this->getMORStatus($pgwStore->key);

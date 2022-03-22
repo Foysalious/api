@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepoImplementation;
@@ -32,7 +33,6 @@ class PayrunList
     private $payslipRepositoryInterface;
     /** @var SalaryRepository */
     private $salaryRepository;
-    private $businessMemberIds;
     private $payslipList;
     private $search;
     private $sortColumn;
@@ -43,6 +43,10 @@ class PayrunList
     private $isProratedFilterApplicable;
     private $grossSalaryProrated;
     private $paysliprepo;
+    private $businessPayslipId;
+    private $businessMemberIds;
+    /*** @var BusinessPayslipRepository */
+    private $businessPayslipRepo;
 
     /**
      * PayrunList constructor.
@@ -56,6 +60,7 @@ class PayrunList
         $this->payslipRepositoryInterface = $payslip_repository_interface;
         $this->salaryRepository = $salary_repository;
         $this->paysliprepo = app(PayslipRepoImplementation::class);//Test
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     /**
@@ -66,6 +71,12 @@ class PayrunList
     {
         $this->business = $business;
         $this->businessMemberIds = $this->business->getActiveBusinessMember()->pluck('id')->toArray();
+        return $this;
+    }
+
+    public function setBusinessPayslipId($business_payslip_id)
+    {
+        $this->businessPayslipId = $business_payslip_id;
         return $this;
     }
 
@@ -134,8 +145,7 @@ class PayrunList
 
     private function runPayslipQuery()
     {
-        $payslips = $this->getPaySlipByStatus($this->businessMemberIds, Status::PENDING)->orderBy('id', 'DESC');
-        if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
+        $payslips = $this->getPaySlipById()->orderBy('id', 'DESC');
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
         if($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
         $this->payslipList = $payslips->get();
@@ -217,19 +227,6 @@ class PayrunList
      * @param $payslips
      * @return mixed
      */
-    private function filterByMonthYear($payslips)
-    {
-        return $payslips->where('schedule_date', 'LIKE', '%' . $this->monthYear . '%')->where(function ($query) {
-            return $query->where('generation_type', self::AUTO_GENERATED)->OrWhere(function ($query) {
-                $query->where('generation_type', self::MANUALLY_GENERATED)->where('generated_for', 'LIKE' ,"%$this->monthYear%");
-            });
-        });
-    }
-
-    /**
-     * @param $payslips
-     * @return mixed
-     */
     private function filterByDepartment($payslips)
     {
         return $payslips->whereHas('businessMember', function ($q) {
@@ -247,10 +244,9 @@ class PayrunList
         if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
     }
 
-    public function getPaySlipByStatus($business_member_ids, $status)
+    public function getPaySlipById()
     {
-        return $this->paysliprepo->where('status', $status)
-            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
+        return $this->paysliprepo->where('business_payslip_id', $this->businessPayslipId)->whereIn('business_member_id', $this->businessMemberIds)->with(['businessMember' => function ($q){
                 $q->with(['member' => function ($q) {
                     $q->select('id', 'profile_id')
                         ->with([
@@ -265,5 +261,15 @@ class PayrunList
                     ]);
                 }]);
             }]);
+    }
+    public function getSalaryMonth()
+    {
+        $business_payslip = $this->businessPayslipRepo->find($this->businessPayslipId);
+        if (!$business_payslip) return null;
+        $schedule_date = $business_payslip->schedule_date;
+        return [
+            'value' => Carbon::parse($schedule_date)->format('Y-m'),
+            'viewValue' => Carbon::parse($schedule_date)->format('F Y')
+        ];
     }
 }
