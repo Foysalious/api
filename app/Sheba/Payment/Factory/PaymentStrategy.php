@@ -29,21 +29,20 @@ class PaymentStrategy
 {
     use ConstGetter;
 
-    const BKASH = "bkash";
-    const ONLINE = "online";
-    const SSL = "ssl";
-    const WALLET = "wallet";
-    const CBL = "cbl";
+    const BKASH          = "bkash";
+    const ONLINE         = "online";
+    const SSL            = "ssl";
+    const WALLET         = "wallet";
+    const CBL            = "cbl";
     const PARTNER_WALLET = "partner_wallet";
     const BONDHU_BALANCE = "bondhu_balance";
-    const OK_WALLET = 'ok_wallet';
-    const SSL_DONATION = "ssl_donation";
-    const PORT_WALLET = "port_wallet";
-    const NAGAD = 'nagad';
-    const EBL = 'ebl';
-    const SHURJOPAY = 'shurjopay';
-    const UPAY           = 'upay';
+    const OK_WALLET      = 'ok_wallet';
+    const SSL_DONATION   = "ssl_donation";
+    const PORT_WALLET    = "port_wallet";
+    const NAGAD          = 'nagad';
+    const EBL            = 'ebl';
     const MTB            = 'mtb';
+    const SHURJOPAY = 'shurjopay';
 
     public static function getDefaultOnlineMethod()
     {
