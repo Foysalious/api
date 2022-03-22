@@ -6,6 +6,10 @@ use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Dal\Attendance\Model as Attendance;
 use App\Models\BusinessMember;
 use App\Models\Business;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
+use Sheba\Location\Coords;
+use Sheba\Location\Distance\Distance;
+use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Location\Geo;
 use Carbon\Carbon;
 
@@ -27,6 +31,10 @@ abstract class ActionChecker
     protected $resultMessage;
     protected $isRemote = 0;
     const BUSINESS_OFFICE_HOUR = 1;
+    protected $attendanceType = null;
+    private $geoOffices;
+    private $lat;
+    private $lng;
 
     /**
      * @param Business $business
@@ -35,6 +43,7 @@ abstract class ActionChecker
     public function setBusiness($business)
     {
         $this->business = $business;
+        $this->geoOffices = $this->business->geoOffices()->get();
         return $this;
     }
 
@@ -76,6 +85,18 @@ abstract class ActionChecker
         return $this;
     }
 
+    public function setLat($lat)
+    {
+        $this->lat = $lat;
+        return $this;
+    }
+
+    public function setLng($lng)
+    {
+        $this->lng = $lng;
+        return $this;
+    }
+
     protected function setResultCode($code)
     {
         $this->resultCode = $code;
@@ -98,9 +119,9 @@ abstract class ActionChecker
         return $this->resultMessage;
     }
 
-    public function getIsRemote()
+    public function getAttendanceType()
     {
-        return $this->isRemote;
+        return $this->attendanceType;
     }
 
     public function check()
@@ -167,28 +188,47 @@ abstract class ActionChecker
     protected function checkIpOrRemote()
     {
         if (!$this->isSuccess()) return;
-        if ($this->business->isIpBasedAttendanceEnable() && !$this->business->isGeoLocationAttendanceEnable() && !$this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
+
+        $isIpBasedAttendanceEnable = $this->business->isIpBasedAttendanceEnable();
+        $isGeoLocationAttendanceEnable = $this->business->isGeoLocationAttendanceEnable();
+        $isRemoteAttendanceEnable = $this->business->isRemoteAttendanceEnable($this->businessMember->id);
+
+        if ($isIpBasedAttendanceEnable && $isGeoLocationAttendanceEnable && $isRemoteAttendanceEnable) {//WGR
+            $this->attendanceType = ($this->isInWifiArea()) ? AttendanceTypes::IP_BASED : (($this->isInGeoLocation()) ? AttendanceTypes::GEO_LOCATION_BASED : AttendanceTypes::REMOTE);
+            $this->setSuccessfulResponseMessage();
+        } else if ($isIpBasedAttendanceEnable && !$isGeoLocationAttendanceEnable && !$isRemoteAttendanceEnable) {//W
             $office_ip_count = $this->business->offices()->count();
             if ($office_ip_count > 0 && !$this->isInWifiArea()) {
                 $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+            }else{
+                $this->attendanceType = AttendanceTypes::IP_BASED;
+                $this->setSuccessfulResponseMessage();
             }
-        } else if ($this->business->isGeoLocationAttendanceEnable() && !$this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
+        }else if ($isGeoLocationAttendanceEnable && !$isIpBasedAttendanceEnable && !$isRemoteAttendanceEnable) {//G
             $office_geo_location_count = $this->business->geoOffices()->count();
             if ($office_geo_location_count > 0 && !$this->isInGeoLocation()) {
                 $this->setResult(ActionResultCodes::OUT_OF_GEO_LOCATION, ActionResultCodeMessages::OUT_OF_GEO_LOCATION);
+            }else{
+                $this->attendanceType = AttendanceTypes::GEO_LOCATION_BASED;
+                $this->setSuccessfulResponseMessage();
             }
-        } else {
-            $this->remoteAttendance();
-        }
-    }
-
-    private function remoteAttendance()
-    {
-        if ($this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
-            $this->isRemote = 1;
+        } else if ($isGeoLocationAttendanceEnable && $isIpBasedAttendanceEnable && !$isRemoteAttendanceEnable){//GW
+            $is_in_wifi = $this->isInWifiArea();
+            if (!$is_in_wifi && !$this->isInGeoLocation()) {
+                $this->setResult(ActionResultCodes::OUT_OF_WIFI_GEO_LOCATION, ActionResultCodeMessages::OUT_OF_WIFI_GEO_LOCATION);
+            } else {
+                $this->attendanceType = ($is_in_wifi) ? AttendanceTypes::IP_BASED : AttendanceTypes::GEO_LOCATION_BASED;
+                $this->setSuccessfulResponseMessage();
+            }
+        } else if($isGeoLocationAttendanceEnable && $isRemoteAttendanceEnable && !$isIpBasedAttendanceEnable) {//GR
+            $this->attendanceType = $this->isInGeoLocation() ? AttendanceTypes::GEO_LOCATION_BASED : AttendanceTypes::REMOTE;
+            $this->setSuccessfulResponseMessage();
+        } else if ($isRemoteAttendanceEnable && $isIpBasedAttendanceEnable && !$isGeoLocationAttendanceEnable) {//RI
+            $this->attendanceType = $this->isInWifiArea() ? AttendanceTypes::IP_BASED : AttendanceTypes::REMOTE;
             $this->setSuccessfulResponseMessage();
         } else {
-            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+            $this->attendanceType = AttendanceTypes::REMOTE;
+            $this->setSuccessfulResponseMessage();
         }
     }
 
@@ -199,7 +239,17 @@ abstract class ActionChecker
 
     private function isInGeoLocation()
     {
-        return true;
+        $is_within = false;
+        $from_coords = (new Coords(floatval($this->lat), floatval($this->lng)))->toRadians();
+
+        foreach ($this->geoOffices as $geo_office){
+            $geo = $geo_office->location;
+            $to_coords = (new Coords(floatval($geo['lat']), floatval($geo['lng'])))->toRadians();
+            $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+            $is_within = $distance->to($to_coords)->from($from_coords)->isWithin(floatval($geo['radius']));
+            if ($is_within) break;
+        }
+        return $is_within;
     }
 
     protected function setResult($result_code, $result_message)

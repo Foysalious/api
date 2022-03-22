@@ -14,4 +14,5 @@ class ActionResultCodeMessages
     const CHECKIN_FIRST = "You've to checkin first";
     const ALREADY_DEVICE_USED = "This device is already used in another account today";
     const OUT_OF_GEO_LOCATION = "You are not inside of Geo Location coverage area!";
+    const OUT_OF_WIFI_GEO_LOCATION = "You're not in specified location channels. Please move your position and try again";
 }
