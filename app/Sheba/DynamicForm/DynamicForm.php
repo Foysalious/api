@@ -32,8 +32,12 @@ class DynamicForm
     {
         $categories = array();
         foreach ($this->form->sections as $section) {
+            $this->setSection($section->id);
+            $fields = $this->getSectionFields();
+            $completion = (new CompletionCalculation())->setFields($fields)->calculate();
+
             $categories[] = (new CategoryDetails())->setCategoryCode($section->key)
-                ->setCompletionPercentage(100)->setCategoryId($section->id)
+                ->setCompletionPercentage($completion)->setCategoryId($section->id)
                 ->setName($section->name, $section->bn_name)->toArray();
         }
         return ["category_list" => $categories];

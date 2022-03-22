@@ -27,7 +27,8 @@ class FormController extends Controller
      */
     public function getSections(Request $request, $form_id): JsonResponse
     {
-        $data = $this->dynamicForm->setForm($form_id)->getFormSections();
+        $partner = $request->auth_user->getPartner();
+        $data = $this->dynamicForm->setPartner($partner)->setForm($form_id)->getFormSections();
         return http_response($request, null, 200, ['data' => $data]);
     }
 
