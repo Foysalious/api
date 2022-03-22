@@ -38,6 +38,12 @@ class MtbDocumentUpload
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
+                'docRefId' => $this->partner->getFirstAdminResource()->profile->nid_no,
+                'docImage' => base64_encode(file_get_contents($this->partner->getFirstAdminResource()->profile->nid_image_back)),
+                'docType' => 11,
+            ],
+            [
+                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
                 'docImage' => base64_encode(file_get_contents($this->partner->getFirstAdminResource()->profile->pro_pic)),
                 'docType' => 3,
@@ -47,6 +53,12 @@ class MtbDocumentUpload
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
                 'docImage' => base64_encode(file_get_contents(json_decode($this->partner->partnerMefInformation->partner_information)->nominee_nid)),
                 'docType' => 5,
+            ],
+            [
+                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
+                'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partner->partnerMefInformation->partner_information)->nid_image_back)),
+                'docType' => 12,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,

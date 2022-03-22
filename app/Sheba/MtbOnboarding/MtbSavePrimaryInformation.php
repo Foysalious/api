@@ -74,7 +74,7 @@ class MtbSavePrimaryInformation
                     'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentAddress,
                     'postCode' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentpostCode,
                     'country' => 'Bangladesh',
-                    'contactAddress' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentcontactAddress
+                    'contactAddress' => json_decode($this->partner->partnerMefInformation->partner_information)->presentAddress
                 ],
                 'shopInfo' => [
                     'businessStartDt' => date("Ymd", strtotime(json_decode($this->partner->partnerMefInformation->partner_information)->businessStartDt)),
@@ -88,6 +88,14 @@ class MtbSavePrimaryInformation
 
     }
 
+    private function applyMtb()
+    {
+        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
+        $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
+        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
+        $this->mtbSaveTransaction->setPartner($this->partner)->saveTransactionInformation();
+    }
+
     /**
      * @return void
      */
@@ -97,10 +105,6 @@ class MtbSavePrimaryInformation
         $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
-        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
-        $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
-        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
-        $this->mtbSaveTransaction->setPartner($this->partner)->saveTransactionInformation();
-
+        $this->applyMtb();
     }
 }
