@@ -264,6 +264,11 @@ class OrderService
         return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId);
     }
 
+    public function getDetailsWithInvoice()
+    {
+        return $this->client->get('api/v1/partners/' . $this->partnerId . '/orders/' . $this->orderId . '?generate_invoice=1');
+    }
+
     public function getPartnerDetails()
     {
         return $this->client->get('api/v1/partners/' . $this->partnerId);

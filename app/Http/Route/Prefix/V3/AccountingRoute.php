@@ -6,8 +6,18 @@ class AccountingRoute
     {
         $api->group(['prefix' => 'accounting', 'middleware' => ['accounting.auth']], function ($api) {
             $api->group(['prefix' => 'due-tracker'], function ($api) {
-                $api->get('/balance', 'Accounting\\DueTrackerControllerV2@getDueTrackerBalance');
-                $api->get('/search-due-list', 'Accounting\\DueTrackerControllerV2@searchDueList');
+                $api->post('/', 'Accounting\\DueTrackerControllerV2@store');
+                $api->get('/due-list-balance', 'Accounting\\DueTrackerControllerV2@getDueListBalance');
+                $api->get('/due-list', 'Accounting\\DueTrackerControllerV2@dueList');
+                $api->get('/due-list/{contactId}/balance', 'Accounting\\DueTrackerControllerV2@dueListBalanceByContact');
+                $api->get('/due-list/{contactId}', 'Accounting\\DueTrackerControllerV2@dueListByContact');
+                $api->get('/download-pdf', 'Accounting\\DueTrackerControllerV2@downloadPdf');
+                $api->get('/report','Accounting\\DueTrackerControllerV2@getReport');
+                $api->group(['prefix' => 'reminders'], function ($api) {
+                    $api->get('/', 'Accounting\\DueTrackerReminderController@getReminders');
+                    $api->post('/{contactId}', 'Accounting\\DueTrackerReminderController@store');
+                });
+
             });
         });
     }

@@ -43,6 +43,7 @@ class BusinessRoute
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
+                $api->get('/salary-alert', 'B2b\BusinessesController@salaryAlert');
 
 
                 $api->group(['prefix' => 'departments'], function ($api) {
@@ -376,11 +377,11 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'pay-run'], function ($api) {
                     $api->post('/update', 'B2b\PayRunController@bulkUpdate');
-                    $api->post('/disburse', 'B2b\PayRunController@disburse');
+                    $api->post('/disburse/{summary_id}', 'B2b\PayRunController@disburse');
                     $api->get('/pending-months','B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
-                    $api->get('/bkash-salary-report','B2b\PayReportController@bkashSalaryReport');
+                    $api->get('/bkash-salary-report/{id}','B2b\PayReportController@bkashSalaryReport');
                     $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');
 

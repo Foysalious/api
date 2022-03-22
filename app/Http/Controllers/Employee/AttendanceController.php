@@ -60,10 +60,12 @@ class AttendanceController extends Controller
         $time_frame = $time_frame->forAMonth($month, $year);
         $business_member_created_date = $business_member->created_at;
         $business_member_joining_date = $business_member->join_date;
+        $is_new_joiner = false;
         if ($this->checkJoiningDate($business_member_joining_date, $month, $year)){
             $start_date = $business_member_joining_date;
             $end_date = Carbon::now()->month($month)->year($year)->lastOfMonth();
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
+            $is_new_joiner = true;
         }
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
         $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
@@ -74,7 +76,7 @@ class AttendanceController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $business_holiday, $weekend_settings, $business_member_leave));
+        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $is_new_joiner, $business_holiday, $weekend_settings, $business_member_leave));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, [
@@ -151,7 +153,8 @@ class AttendanceController extends Controller
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0,
-            'is_remote_enable' => $is_remote_enable
+            'is_remote_enable' => $is_remote_enable,
+            'is_geo_location_enable' => $is_remote_enable
         ];
         return api_response($request, null, 200, ['attendance' => $data]);
     }

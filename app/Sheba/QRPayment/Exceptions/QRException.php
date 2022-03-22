@@ -2,9 +2,10 @@
 
 namespace Sheba\QRPayment\Exceptions;
 
+use App\Exceptions\HttpException;
 use Throwable;
 
-class QRException extends \Exception
+class QRException extends HttpException
 {
     public function __construct($message = "", $code = 500, Throwable $previous = null)
     {

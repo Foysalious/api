@@ -82,7 +82,8 @@ class CacheAside
     private function setOnCache(array $data = null)
     {
         try {
-            $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds() / 60);
+            $expired_at = now()->addSeconds($this->cacheObject->getExpirationTimeInSeconds());
+            $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $expired_at);
         } catch (Throwable $e) {
             throw new CacheStoreException();
         }

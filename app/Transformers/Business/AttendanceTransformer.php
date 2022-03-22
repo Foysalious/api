@@ -15,19 +15,22 @@ class AttendanceTransformer extends TransformerAbstract
     private $businessHoliday;
     private $businessWeekendSettings;
     private $businessMemberLeave;
+    private $isNewJoiner;
 
     /**
      * @param TimeFrame $time_frame
+     * @param $is_new_joiner
      * @param $business_holiday
      * @param $weekend_settings
      * @param $business_member_leave
      */
-    public function __construct(TimeFrame $time_frame, $business_holiday, $weekend_settings, $business_member_leave)
+    public function __construct(TimeFrame $time_frame, $is_new_joiner, $business_holiday, $weekend_settings, $business_member_leave)
     {
         $this->timeFrame = $time_frame;
         $this->businessHoliday = $business_holiday;
         $this->businessWeekendSettings = $weekend_settings;
         $this->businessMemberLeave = $business_member_leave;
+        $this->isNewJoiner = $is_new_joiner;
     }
 
     /**
@@ -49,6 +52,15 @@ class AttendanceTransformer extends TransformerAbstract
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $remaining_days = (($this->timeFrame->start)->diffInDays($this->timeFrame->end)) + 1;
+        if ($this->timeFrame->start->format('Y-m') === Carbon::now()->format('Y-m')) {
+           if ($this->isNewJoiner) {
+               $start_date = $this->timeFrame->start;
+               $end_date = Carbon::now()->endOfMonth();
+               $remaining_days = (($start_date)->diffInDays($end_date)) + 1;
+           } else {
+               $remaining_days = $this->timeFrame->start->daysInMonth;
+           }
+        }
         $statistics = [
             'working_days' => $remaining_days,
             'present' => 0,
@@ -73,7 +85,7 @@ class AttendanceTransformer extends TransformerAbstract
             if ($is_weekend_or_holiday || $is_on_leave ) {
                 $weekend_holiday = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);;
                 $breakdown_data['weekend_or_holiday_tag'] = $weekend_holiday;
-                $breakdown_data['is_holiday'] = $weekend_holiday == 'weekend' ? 1 : 0;
+                $breakdown_data['is_holiday'] = $weekend_holiday == 'weekend' ? 0 : 1;
             }
             if ($is_weekend_or_holiday) {
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;

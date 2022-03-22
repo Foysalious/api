@@ -52,6 +52,7 @@ class CollectMoney
      */
     public function collect()
     {
+        info("Resource or partner is collecting money for partner_order id#{$this->partnerOrder->id}");
         $client = new Client();
         $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $this->partnerOrder->id . '/collect',
             [

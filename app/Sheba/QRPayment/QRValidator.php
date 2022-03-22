@@ -2,13 +2,19 @@
 
 namespace App\Sheba\QRPayment;
 
+use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Models\Partner;
+use App\Models\Payable;
+use App\Sheba\MTB\Exceptions\MtbServiceServerError;
 use App\Sheba\QRPayment\DTO\QRGeneratePayload;
+use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
 use Sheba\Dal\QRGateway\Model as QRGateway;
 use Sheba\Dal\QRPayable\Contract as QRPayableRepo;
 use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Statuses;
+use Sheba\QRPayment\Exceptions\FinancialInformationNotFoundException;
 use Sheba\QRPayment\Exceptions\QRException;
 use Sheba\QRPayment\Exceptions\QRPayableNotFoundException;
 use Sheba\QRPayment\Exceptions\QRPaymentAlreadyCompleted;
@@ -16,31 +22,39 @@ use Throwable;
 
 class QRValidator
 {
-    private $qr_id;
+    private $qrId;
     private $amount;
-    private $merchant_id;
+    private $merchantId;
+    /** @var Payable */
     private $payable;
-    private $qr_payment;
-
-    private $qr_payable_repo;
-    private $response;
+    /*** @var QRPaymentModel */
+    private $qrPayment;
+    /*** @var QRPayableRepo */
+    private $qrPayableRepo;
+    private $request;
     private $gateway;
+    /*** @var QRPaymentManager */
+    private $qrPaymentManager;
 
-    public function __construct(QRPayableRepo $qr_payable_repo)
+    public function __construct(QRPayableRepo $qr_payable_repo, QRPaymentManager $qrPaymentManager)
     {
-        $this->qr_payable_repo = $qr_payable_repo;
+        $this->qrPayableRepo = $qr_payable_repo;
+        $this->qrPaymentManager = $qrPaymentManager;
     }
 
     /**
-     * @param mixed $qr_id
+     * @param mixed $qrId
      * @return QRValidator
      * @throws QRException
      */
-    public function setQrId($qr_id): QRValidator
+    public function setQrId($qrId): QRValidator
     {
-        $this->qr_id = $qr_id;
-        if($this->qr_id)
-            $this->setPayable();
+        $this->qrId = $qrId;
+        if ($this->qrId) {
+            $qr_payable = $this->qrPayableRepo->where('qr_id', $this->qrId)->first();
+            if (!isset($qr_payable)) throw new QRPayableNotFoundException();
+            $this->setPayable($qr_payable->payable);
+        }
         return $this;
     }
 
@@ -55,12 +69,12 @@ class QRValidator
     }
 
     /**
-     * @param mixed $response
+     * @param mixed $request
      * @return QRValidator
      */
-    public function setResponse($response): QRValidator
+    public function setRequest($request): QRValidator
     {
-        $this->response = json_encode($response);
+        $this->request = json_encode($request);
         return $this;
     }
 
@@ -72,17 +86,21 @@ class QRValidator
      */
     public function complete()
     {
-        if(!isset($this->qr_id)) {
-            $partner = Partner::find(38015);
+        if(config('app.env') == 'production' && !$this->validated())
+            throw new QRException("MTB validation failed for this transaction", 400);
+
+        if (!isset($this->qrId)) {
+            $partner = $this->getPartnerFromMerchantId();
             $data = new QRGeneratePayload([
                 "amount" => $this->amount,
                 "payment_method" => $this->gateway->method_name
             ]);
-            $qrPayment = (new QRPayment())->setPartner($partner)->setData($data)->generate();
-            $this->payable = $qrPayment->getPayable();
+            $qr_payable = (new QRPayableGenerator())->setPartner($partner)->setData($data)->getQrPayable();
+            $this->setPayable($qr_payable->payable);
         }
         $this->storePayment();
         $this->qrPaymentComplete();
+
     }
 
     /**
@@ -92,19 +110,15 @@ class QRValidator
      */
     private function qrPaymentComplete()
     {
-        (new QRPaymentManager())->setQrPayment($this->qr_payment)->complete();
+        (new QRPaymentManager())->setQrPayment($this->qrPayment)->complete();
     }
 
     /**
      * @return void
-     * @throws QRException
      */
-    public function setPayable()
+    public function setPayable(Payable $payable)
     {
-        $qr_payable = $this->qr_payable_repo->where('qr_id', $this->qr_id)->first();
-        if(!isset($qr_payable)) throw new QRPayableNotFoundException();
-
-        $this->payable    = $qr_payable->payable;
+        $this->payable = $payable;
     }
 
     /**
@@ -115,7 +129,7 @@ class QRValidator
     {
         $data = $this->makePaymentData();
         $this->checkIsCompleted();
-        $this->qr_payment = QRPaymentModel::create($data);
+        $this->qrPayment = QRPaymentModel::create($data);
     }
 
     /**
@@ -126,7 +140,7 @@ class QRValidator
     {
         $qr_payment = QRPaymentModel::query()->where("payable_id", $this->payable->id)
             ->where("status", Statuses::COMPLETED)->first();
-        if(isset($qr_payment))
+        if (isset($qr_payment))
             throw new QRPaymentAlreadyCompleted();
     }
 
@@ -138,7 +152,7 @@ class QRValidator
         return [
             "payable_id" => $this->payable->id,
             "qr_gateway_id" => $this->gateway->id,
-            "gateway_response" => $this->response,
+            "gateway_response" => $this->request,
             "status" => "validated"
         ];
     }
@@ -154,12 +168,36 @@ class QRValidator
     }
 
     /**
-     * @param mixed $merchant_id
+     * @param mixed $merchantId
      * @return QRValidator
      */
-    public function setMerchantId($merchant_id): QRValidator
+    public function setMerchantId($merchantId): QRValidator
     {
-        $this->merchant_id = $merchant_id;
+        $this->merchantId = $merchantId;
         return $this;
+    }
+
+    /**
+     * @throws QRException
+     */
+    private function getPartnerFromMerchantId(): Partner
+    {
+        if(config('app.env') !== 'production')
+            return Partner::find(38015);
+        $finance_information = PartnerFinancialInformation::query()->where("mtb_merchant_id", $this->merchantId)->first();
+        if (!$finance_information) throw new FinancialInformationNotFoundException();
+        return $finance_information->partner;
+    }
+
+    /**
+     * @return bool
+     * @throws InvalidPaymentMethod
+     * @throws MtbServiceServerError
+     * @throws NotFoundAndDoNotReportException
+     */
+    public function validated(): bool
+    {
+        return $this->qrPaymentManager->getQRMethod($this->gateway->method_name)
+            ->setAmount($this->amount)->setMerchantId($this->merchantId)->validate();
     }
 }

@@ -3,10 +3,12 @@
 use App\Models\Business;
 use App\Transformers\Business\BkashSalaryReportTransformer;
 use App\Transformers\Business\PayReportListTransformer;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepoImplementation;
@@ -36,6 +38,9 @@ class PayReportList
      */
     private $paysliprepo;
     private $businessPayslipId;
+    private $businessMemberIds;
+    /*** @var BusinessPayslipRepository */
+    private $businessPayslipRepo;
 
     /**
      * PayReportList constructor.
@@ -47,11 +52,13 @@ class PayReportList
         $this->payslipRepository = $payslip_repository;
         $this->salaryRepository = $salary_repository;
         $this->paysliprepo = app(PayslipRepoImplementation::class);//Test
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     public function setBusiness(Business $business)
     {
         $this->business = $business;
+        $this->businessMemberIds = $this->business->getActiveBusinessMember()->pluck('id')->toArray();
         return $this;
     }
 
@@ -117,6 +124,13 @@ class PayReportList
         return $this;
     }
 
+    public function getDisbursedMonth()
+    {
+        $payslip = $this->businessPayslipRepo->where('business_id', $this->business->id)->where('status', Status::DISBURSED)->select('schedule_date')->orderBy('schedule_date', 'DESC')->first();
+        if (!$payslip) return null;
+        return Carbon::parse($payslip->schedule_date)->format('Y-m');
+    }
+
     /**
      * @return \Illuminate\Support\Collection
      */
@@ -127,17 +141,9 @@ class PayReportList
         return $this->payslip;
     }
 
-    /*public function getDisbursedMonth()
-    {
-        $payslip = $this->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->select('schedule_date')->orderBy('schedule_date', 'DESC')->first();
-        if (!$payslip) return null;
-        return $payslip->schedule_date->format('Y-m');
-    }*/
-
     private function runPayslipQuery()
     {
         $payslips = $this->getPaySlipById()->orderBy('id', 'DESC');
-        //if ($this->monthYear) $payslips = $this->filterByMonthYear($payslips);
         if ($this->departmentID) $payslips = $this->filterByDepartment($payslips);
         if ($this->grossSalaryProrated) $this->filterByGrossSalaryProrated($payslips);
         $this->payslipList = $payslips->get();
@@ -189,6 +195,36 @@ class PayReportList
     public function getIsProratedFilterApplicable()
     {
         return $this->isProratedFilterApplicable;
+    }
+
+    public function getPaySlipById()
+    {
+        return $this->paysliprepo->where('business_payslip_id', $this->businessPayslipId)->whereIn('business_member_id', $this->businessMemberIds)->with(['businessMember' => function ($q) {
+            $q->with(['member' => function ($q) {
+                $q->select('id', 'profile_id')
+                    ->with([
+                        'profile' => function ($q) {
+                            $q->select('id', 'name');
+                        }]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }]);
+        }]);
+    }
+
+    public function getSalaryMonth()
+    {
+        $business_payslip = $this->businessPayslipRepo->find($this->businessPayslipId);
+        if (!$business_payslip) return null;
+        $schedule_date = $business_payslip->schedule_date;
+        return [
+            'value' => Carbon::parse($schedule_date)->format('Y-m'),
+            'viewValue' => Carbon::parse($schedule_date)->format('F Y')
+        ];
     }
 
     /**
@@ -248,24 +284,5 @@ class PayReportList
     {
         if ($this->grossSalaryProrated === 'yes') $payslips->where('joining_log', '<>', null);
         if ($this->grossSalaryProrated === 'no') $payslips->where('joining_log', null);
-    }
-
-    public function getPaySlipById()
-    {
-        return $this->paysliprepo->where('business_payslip_id', $this->businessPayslipId)->with(['businessMember' => function ($q) {
-                $q->with(['member' => function ($q) {
-                    $q->select('id', 'profile_id')
-                        ->with([
-                            'profile' => function ($q) {
-                                $q->select('id', 'name');
-                            }]);
-                }, 'role' => function ($q) {
-                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                        'businessDepartment' => function ($q) {
-                            $q->select('business_departments.id', 'business_id', 'name');
-                        }
-                    ]);
-                }]);
-            }]);
     }
 }

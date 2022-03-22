@@ -78,14 +78,12 @@ class ReportsController extends Controller
                 $template = 'pos_product_wise_sales';
                 $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->saveExcel($name, $template);
                 return api_response($request, $link, 200, ['link' => $link]);
-            }
-            elseif ($request->has('save_pdf')) {
+            } elseif ($request->has('save_pdf')) {
                 $name = 'Product Wise Sales Report';
                 $template = 'pos_product_wise_sales';
                 $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->savePdf($name, $template);
                 return api_response($request, $link, 200, ['link' => $link]);
-            }
-            else {
+            } else {
                 $data = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData()->getData();
                 return api_response($request, $data, 200, ['result' => $data]);
             }
@@ -129,5 +127,363 @@ class ReportsController extends Controller
         $response = $this->accountingReportRepository->getAccountingReportsList();
         return api_response($request, $response, 200, ['data' => $response]);
 
+    }
+
+    public function getTransactionList(Request $request): JsonResponse
+    {
+        $response = '{
+              "code":200,
+              "message" :"Successful",
+              "data": [
+                    {
+                      "name": "Foysal",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2412256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    },
+                    {
+                      "name": "Suniv",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    }
+                  ]
+            }';
+        if ($request->offset == 0 || $request->offset == 1 || $request->offset == 2 || $request->offset == 3) {
+            $response = '{
+              "code":200,
+              "message" :"Successful",
+              "data": [
+                    {
+                      "name": "Foysal",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2412256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    },
+                    {
+                      "name": "Suniv",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    },
+                    {
+                      "name": "Arafat",
+                      "mobile": "018555708333",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "25-01-2021"
+                    }]
+            }';
+            return response()->json($response);
+        } elseif ($request->offset == 4) {
+            $response = '{
+              "code":200,
+              "message" :"Successful",
+              "data": [
+                    {
+                      "name": "Foysal",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2412256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    },
+                    {
+                      "name": "Suniv",
+                      "mobile": "01855570841",
+                      "amount": "15000",
+                      "transaction_id": "SSL-2482256",
+                      "transaction_gateway": "ssl",
+                      "is_reconciled": 0,
+                      "date": "26-01-2021"
+                    }
+                    ]
+            }';
+            return response()->json($response);
+        } elseif ($request->offset == 5) {
+            $response = '{
+              "code":200,
+              "message" :"Successful",
+              "data": []
+            }';
+            return response()->json($response);
+        }
+        return response()->json($response);
     }
 }

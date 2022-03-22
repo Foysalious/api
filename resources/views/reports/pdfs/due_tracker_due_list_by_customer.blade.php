@@ -22,15 +22,15 @@
         </tr>
     </table>
     @if($start_date && $end_date)
-    <table style="width: 100%">
-        <tr>
-            <td>
-                <div class="timeline">
-                   <p style="margin-bottom: 0;">Transaction deadline: {{ date('d-m-Y', strtotime($start_date)) }} -- {{ date('d-m-Y', strtotime($end_date))}}</p>
-                </div>
-            </td>
-        </tr>
-    </table>
+        <table style="width: 100%">
+            <tr>
+                <td>
+                    <div class="timeline">
+                        <p style="margin-bottom: 0;">Transaction deadline: {{ date('d-m-Y', strtotime($start_date)) }} -- {{ date('d-m-Y', strtotime($end_date))}}</p>
+                    </div>
+                </td>
+            </tr>
+        </table>
     @endif
     <table style="width: 100%;line-height: 1">
         <tr>

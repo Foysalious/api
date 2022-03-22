@@ -50,7 +50,7 @@ class WebstoreBannerSettings
     {
         $partnerBanners = PartnerWebstoreBanner::where('partner_id', $partner->id)->pluck('banner_id')->toArray();
 
-        return WebstoreBanner::whereIn('id', array_unique($partnerBanners))->orWhere('is_published_for_sheba', 1)->get()->map(function ($banner) {
+        return WebstoreBanner::whereIn('id', array_unique($partnerBanners))->orWhere('is_published_for_sheba', 1)->orderBy('id', 'desc')->get()->map(function ($banner) {
             return [
                 'id' => $banner->id,
                 'image_link' => $banner->image_link

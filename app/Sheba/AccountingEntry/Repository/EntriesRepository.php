@@ -39,10 +39,10 @@ class EntriesRepository extends BaseRepository
                 $data["attachments"] = json_decode($data["attachments"]);
             }
             $data["customer_details"] = null;
-            if ($data["customer_id"]) {
+            if ($data["contact_id"]) {
                 /** @var PosCustomerResolver $posCustomerResolver */
                 $posCustomerResolver = app(PosCustomerResolver::class);
-                $posCustomer = $posCustomerResolver->setCustomerId($data["customer_id"])->setPartner($this->partner)->get();
+                $posCustomer = $posCustomerResolver->setCustomerId($data["contact_id"])->setPartner($this->partner)->get();
                 if ($posCustomer) {
                     $data["customer_details"] = [
                         'id' => $posCustomer->id,

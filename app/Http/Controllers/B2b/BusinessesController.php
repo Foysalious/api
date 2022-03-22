@@ -12,7 +12,10 @@ use App\Models\Procurement;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
+use Sheba\Dal\Salary\Salary;
+use Sheba\Dal\Salary\SalaryRepository;
 use Maatwebsite\Excel\Facades\Excel as MaatwebsiteExcel;
+use Sheba\Business\BusinessTransaction\TransactionExcel;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
@@ -276,7 +279,6 @@ class BusinessesController extends Controller
         }
     }
 
-
     /**
      * @param $business
      * @param TimeFrameReportRequest $request
@@ -466,5 +468,24 @@ class BusinessesController extends Controller
     public function fetchJWTToken(Member $member)
     {
         return $this->accountServer->getTokenByIdAndRememberToken($member->id, $member->remember_token, 'member');
+    }
+
+    public function getSignUpPage(Request $request)
+    {
+        return api_response($request, null, 200, ['sign_up_page' => "https://business.sheba.xyz/auth/sign-up"]);
+    }
+
+    public function salaryAlert(Request $request, SalaryRepository $salary_repository)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        $is_payroll_enable = $business->payrollSetting->is_enable;
+        if (!$is_payroll_enable) return api_response($request, null, 200, ['is_payroll_enable' => $is_payroll_enable, 'show_alert' => 0]);
+        $active_business_member = $business->getActiveBusinessMember()->pluck('id');
+        $active_business_member_count = $active_business_member->count();
+        $given_salary_count = $salary_repository->whereIn('business_member_id', $active_business_member->toArray())->count();
+        $is_salary_configured = 0;
+        if ($active_business_member_count > $given_salary_count) $is_salary_configured = 1;
+        return api_response($request, null, 200, ['is_payroll_enable' => $is_payroll_enable, 'show_alert' => $is_salary_configured]);
     }
 }

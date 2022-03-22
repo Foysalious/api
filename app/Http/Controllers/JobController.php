@@ -413,6 +413,7 @@ class JobController extends Controller
         $bill['surcharge_percentage'] = count($job->jobServices) > 0 && $job->jobServices[0] ? (double)$job->jobServices[0]->surcharge_percentage : 0;
         $bill['surcharge_amount'] = (double)$job->totalServiceSurcharge;
         $bill['is_inspection_service'] = $has_inspection_service;
+        $bill['is_partial_payable'] = (bool)$partnerOrder->order->is_credit_limit_adjustable;
 
         return api_response($request, $bill, 200, ['bill' => $bill]);
     }
@@ -653,11 +654,20 @@ class JobController extends Controller
     {
         $this->validate($request, [
             'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet,nagad',
-            'emi_month' => 'numeric'
+            'emi_month' => 'numeric',
+            'amount' => 'integer'
         ]);
-        $payment_method = $request->filled('payment_method') ? $request->payment_method : 'online';
+        if($request->has('amount') && $request->amount < 10) {
+            return api_response($request, null, 400, ['message' => 'Amount can not be less than 10 taka']);
+        }
+
+        $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
         $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->setEmiMonth($request->emi_month);
-        $payment = $payment_manager->setMethodName($payment_method)->setPayable($order_adapter->getPayable())->init();
+
+        if ($request->has('amount') && $request->amount > $order_adapter->getDue()) return api_response($request, null, 400, ['message' => 'Amount can not be greater than due amount']);
+
+        $amount = $request->has('amount') ? $request->amount : 0;
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($order_adapter->getPayable($amount))->init();
         return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
     }
 
