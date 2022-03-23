@@ -192,12 +192,13 @@ abstract class ActionChecker
         $isIpBasedAttendanceEnable = $this->business->isIpBasedAttendanceEnable();
         $isGeoLocationAttendanceEnable = $this->business->isGeoLocationAttendanceEnable();
         $isRemoteAttendanceEnable = $this->business->isRemoteAttendanceEnable($this->businessMember->id);
+        $office_ip_count = $this->business->offices()->count();
+        $office_geo_location_count = $this->business->geoOffices()->count();
 
         if ($isIpBasedAttendanceEnable && $isGeoLocationAttendanceEnable && $isRemoteAttendanceEnable) {//WGR
             $this->attendanceType = ($this->isInWifiArea()) ? AttendanceTypes::IP_BASED : (($this->isInGeoLocation()) ? AttendanceTypes::GEO_LOCATION_BASED : AttendanceTypes::REMOTE);
             $this->setSuccessfulResponseMessage();
         } else if ($isIpBasedAttendanceEnable && !$isGeoLocationAttendanceEnable && !$isRemoteAttendanceEnable) {//W
-            $office_ip_count = $this->business->offices()->count();
             if ($office_ip_count > 0 && !$this->isInWifiArea()) {
                 $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
             }else{
@@ -205,7 +206,7 @@ abstract class ActionChecker
                 $this->setSuccessfulResponseMessage();
             }
         }else if ($isGeoLocationAttendanceEnable && !$isIpBasedAttendanceEnable && !$isRemoteAttendanceEnable) {//G
-            $office_geo_location_count = $this->business->geoOffices()->count();
+
             if ($office_geo_location_count > 0 && !$this->isInGeoLocation()) {
                 $this->setResult(ActionResultCodes::OUT_OF_GEO_LOCATION, ActionResultCodeMessages::OUT_OF_GEO_LOCATION);
             }else{
@@ -240,11 +241,10 @@ abstract class ActionChecker
     private function isInGeoLocation()
     {
         $is_within = false;
-        $from_coords = (new Coords(floatval($this->lat), floatval($this->lng)))->toRadians();
-
+        $from_coords = new Coords(floatval($this->lat), floatval($this->lng));
         foreach ($this->geoOffices as $geo_office){
             $geo = $geo_office->location;
-            $to_coords = (new Coords(floatval($geo['lat']), floatval($geo['lng'])))->toRadians();
+            $to_coords = new Coords(floatval($geo['lat']), floatval($geo['lng']));
             $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
             $is_within = $distance->to($to_coords)->from($from_coords)->isWithin(floatval($geo['radius']));
             if ($is_within) break;

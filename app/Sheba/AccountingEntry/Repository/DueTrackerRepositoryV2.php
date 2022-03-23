@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\UserType;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -85,6 +86,17 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     {
         $url = "api/v2/due-tracker/due-list/" . $contact_id . "/balance?".$url_param;
         return $this->client->setUserType($userType)->setUserId($this->partner->id)->get($url);
+    }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
+    public function getSupplierMonthlyDue()
+    {
+        $start_date = Carbon::now()->firstOfMonth()->format('Y-m-d');
+        $end_date = Carbon::now()->lastOfMonth()->format('Y-m-d');
+        $url = "api/v2/due-tracker/suppliers/due-amount?" . "start_date=$start_date&" . "end_date=$end_date";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
 

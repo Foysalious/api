@@ -113,11 +113,13 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
-        if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
-            #$validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        if ($request->is_geo_location_enable && !$request->is_in_wifi_area) {
+            $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        }
+        if (!$request->is_geo_location_enable && !$request->is_in_wifi_area) {
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
-        #$this->validate($request, $validation_data);
+        $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
         $attendance_action->setBusinessMember($business_member)
@@ -147,6 +149,7 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $is_remote_enable = $business->isRemoteAttendanceEnable($business_member->id);
+        $is_geo_location_enable = $business->isGeoLocationAttendanceEnable();
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
@@ -154,7 +157,7 @@ class AttendanceController extends Controller
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0,
             'is_remote_enable' => $is_remote_enable,
-            'is_geo_location_enable' => $is_remote_enable
+            'is_geo_location_enable' => $is_geo_location_enable
         ];
         return api_response($request, null, 200, ['attendance' => $data]);
     }
