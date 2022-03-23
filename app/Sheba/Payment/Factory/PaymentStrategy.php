@@ -43,6 +43,7 @@ class PaymentStrategy
     const EBL            = 'ebl';
     const MTB            = 'mtb';
     const SHURJOPAY = 'shurjopay';
+    const UPAY = 'upay';
 
     public static function getDefaultOnlineMethod()
     {
