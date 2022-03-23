@@ -16,7 +16,7 @@ class MtbAccountStatus
         $this->client = $client;
     }
 
-    public function setPartner(Partner $partner)
+    public function setPartner(Partner $partner): MtbAccountStatus
     {
         $this->partner = $partner;
         return $this;

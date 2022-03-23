@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
 use App\Models\Partner;
+use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbServerClient;
 
@@ -14,6 +15,10 @@ class MtbSaveNomineeInformation
      * @var Partner
      */
     private $partner;
+    /**
+     * @var PartnerMefInformation
+     */
+    private $partnerMefInformation;
 
     public function __construct(MtbServerClient $client)
     {
@@ -26,17 +31,24 @@ class MtbSaveNomineeInformation
         return $this;
     }
 
+    public function setPartnerMefInformation($partnerMefInformation): MtbSaveNomineeInformation
+    {
+        $this->partnerMefInformation = $partnerMefInformation;
+        return $this;
+    }
+
     private function makeData()
     {
+        $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         return [
             'RequestData' => [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
-                'nomNm' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeName,
-                'nomFatherNm' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeFatherName,
-                'nomMotherNm' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeMotherName,
-                'nomDob' => date("Ymd", strtotime(json_decode($this->partner->partnerMefInformation->partner_information)->nomineeDOB)),
-                'nomMobileNum' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineePhone,
-                'nomRelation' => json_decode($this->partner->partnerMefInformation->partner_information)->nomineeRelation
+                'nomNm' => $this->partnerMefInformation->nomineeName,
+                'nomFatherNm' => $this->partnerMefInformation->nomineeFatherName,
+                'nomMotherNm' => $this->partnerMefInformation->nomineeMotherName,
+                'nomDob' => date("Ymd", strtotime($this->partnerMefInformation->nomineeDOB)),
+                'nomMobileNum' => $this->partnerMefInformation->nomineePhone,
+                'nomRelation' => $this->partnerMefInformation->nomineeRelation
             ],
             'requestId' => strval($this->partner->id),
             'channelId' => "Sheba_XYZ"

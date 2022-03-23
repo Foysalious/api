@@ -8,7 +8,6 @@ use App\Models\Partner;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\MefForm\Model as MefForm;
 use Sheba\Dal\MefSections\Model as MefSection;
-use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use Sheba\MerchantEnrollment\MerchantEnrollmentFileHandler;
 
 class DynamicForm
@@ -24,11 +23,20 @@ class DynamicForm
 
     private $requestData;
     private $type;
+    /**
+     * @var PartnerMefInformation
+     */
+    private $partnerMefInformation;
 
     public function setForm($form_id): DynamicForm
     {
         $this->form = MefForm::find($form_id);
         return $this;
+    }
+
+    public function __construct(PartnerMefInformation $partnerMefInformation)
+    {
+        $this->partnerMefInformation = $partnerMefInformation;
     }
 
     public function getFormSections(): array
@@ -76,7 +84,6 @@ class DynamicForm
         $form_builder = (new FormFieldBuilder())->setPartner($this->partner);
         foreach ($this->section->fields as $field)
             $fields[] = $form_builder->setField($field)->build()->toArray();
-        dd($fields);
         return $fields;
     }
 
@@ -141,9 +148,9 @@ class DynamicForm
     {
         $field = DB::table('fields')->where('data->id', $document_id)->first();
         $url = (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($document, json_decode($field->data, true))->getUploadedUrl();
-        $partner_mef_information = json_decode($this->partner->partnerMefInformation->partner_information, true);
-        $partner_mef_information[$document_id] = $url;
-        $this->partner->partnerMefInformation->partner_information = json_encode($partner_mef_information);
+        $partner_mef_information = $this->partnerMefInformation->setProperty(json_decode($this->partner->partnerMefInformation->partner_information));
+        $partner_mef_information->$document_id = $url;
+        $this->partner->partnerMefInformation->partner_information = json_encode($this->partnerMefInformation->getAvailable());
         return $this->partner->partnerMefInformation->save();
     }
 }

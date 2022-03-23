@@ -49,7 +49,7 @@ class FormFieldBuilder
     public function build(): FormField
     {
         $form_field = (new FormField())->setFormInput(json_decode($this->field->data));
-        if(isset($form_field->data_source)) {
+        if(($form_field->data_source) !== "") {
             $data_source = ($form_field->data_source);
             $data_source_id = ($form_field->data_source_id);
             if (!isset($this->$data_source)) {
