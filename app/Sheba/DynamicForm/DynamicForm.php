@@ -148,8 +148,8 @@ class DynamicForm
     {
         $field = DB::table('fields')->where('data->id', $document_id)->first();
         $url = (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($document, json_decode($field->data, true))->getUploadedUrl();
-        $partner_mef_information = $this->partnerMefInformation->setProperty(json_decode($this->partner->partnerMefInformation->partner_information));
-        $partner_mef_information->$document_id = $url;
+        $this->partnerMefInformation->setProperty(json_decode($this->partner->partnerMefInformation->partner_information));
+        $this->partnerMefInformation->$document_id = $url;
         $this->partner->partnerMefInformation->partner_information = json_encode($this->partnerMefInformation->getAvailable());
         return $this->partner->partnerMefInformation->save();
     }
