@@ -21,7 +21,7 @@ class MtbController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function apply(Request $request): JsonResponse
     {
