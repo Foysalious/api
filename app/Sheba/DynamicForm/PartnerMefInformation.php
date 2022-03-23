@@ -27,8 +27,10 @@ class PartnerMefInformation implements Arrayable
     private $tradeLicenseExists;
     private $permanentPostCode;
     private $nominee_nid;
-    private $nid_image_back;
+    private $nominee_nid_image_back;
     private $customer_signature;
+    private $trade_license;
+
 
     public function setProperty($input): PartnerMefInformation
     {
@@ -46,7 +48,7 @@ class PartnerMefInformation implements Arrayable
     public function toArray(): array
     {
         $reflection_class = new ReflectionClass($this);
-        $data             = [];
+        $data = [];
         foreach ($reflection_class->getProperties() as $item) {
             $data[$item->name] = $this->{$item->name};
         }
@@ -58,7 +60,7 @@ class PartnerMefInformation implements Arrayable
         $reflection_class = new ReflectionClass($this);
         $data = [];
         foreach ($reflection_class->getProperties() as $item)
-            if(isset($this->{$item->name}))
+            if (isset($this->{$item->name}))
                 $data[$item->name] = $this->{$item->name};
 
         return $data;

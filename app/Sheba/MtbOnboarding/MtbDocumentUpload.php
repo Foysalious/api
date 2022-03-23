@@ -69,7 +69,7 @@ class MtbDocumentUpload
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
-                'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->nid_image_back)),
+                'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->nominee_nid_image_back)),
                 'docType' => MtbDocument::NOMINEE_NID_BACK,
             ],
             [
