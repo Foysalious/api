@@ -3,7 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
-use App\Sheba\MTB\MtbDocument;
+use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 
 class MtbSaveNomineeInformation
@@ -51,7 +51,7 @@ class MtbSaveNomineeInformation
                 'nomRelation' => $this->partnerMefInformation->nomineeRelation
             ],
             'requestId' => strval($this->partner->id),
-            'channelId' => MtbDocument::CHANNEL_ID
+            'channelId' => MtbConstants::CHANNEL_ID
         ];
     }
 

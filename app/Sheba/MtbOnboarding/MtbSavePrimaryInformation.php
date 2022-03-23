@@ -3,7 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
-use App\Sheba\MTB\MtbDocument;
+use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 
 
@@ -67,7 +67,7 @@ class MtbSavePrimaryInformation
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
-                'orgCode' => MtbDocument::CHANNEL_ID,
+                'orgCode' => MtbConstants::CHANNEL_ID,
                 'name' => $this->partner->getFirstAdminResource()->profile->name,
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
                 'nid' => $this->partner->getFirstAdminResource()->profile->nid_no,
@@ -82,12 +82,12 @@ class MtbSavePrimaryInformation
                     'postCode' => $this->partnerMefInformation->presentPostCode,
                     'division' => $this->partnerMefInformation->presentDivision,
                     'district' => $this->partnerMefInformation->presentDistrict,
-                    'country' => MtbDocument::COUNTRY
+                    'country' => MtbConstants::COUNTRY
                 ],
                 'permanentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->permanentAddress,
                     'postCode' => $this->partnerMefInformation->permanentpostCode,
-                    'country' => MtbDocument::COUNTRY,
+                    'country' => MtbConstants::COUNTRY,
                     'contactAddress' => $this->partnerMefInformation->presentAddress
                 ],
                 'shopInfo' => [

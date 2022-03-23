@@ -2,7 +2,7 @@
 
 use Sheba\Helpers\ConstGetter;
 
-class MtbDocument
+class MtbConstants
 {
     use ConstGetter;
 

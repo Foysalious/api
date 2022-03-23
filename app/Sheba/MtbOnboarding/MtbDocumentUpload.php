@@ -3,7 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
-use App\Sheba\MTB\MtbDocument;
+use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 
 class MtbDocumentUpload
@@ -45,50 +45,50 @@ class MtbDocumentUpload
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nid_no,
                 'docImage' => base64_encode(file_get_contents($this->partner->getFirstAdminResource()->profile->nid_image_front)),
-                'docType' => MtbDocument::NID_FRONT,
+                'docType' => MtbConstants::NID_FRONT,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nid_no,
                 'docImage' => base64_encode(file_get_contents($this->partner->getFirstAdminResource()->profile->nid_image_back)),
-                'docType' => MtbDocument::NID_BACK,
+                'docType' => MtbConstants::NID_BACK,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
                 'docImage' => base64_encode(file_get_contents($this->partner->getFirstAdminResource()->profile->pro_pic)),
-                'docType' => MtbDocument::CUSTOMER_PHOTO,
+                'docType' => MtbConstants::CUSTOMER_PHOTO,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
                 'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->nominee_nid)),
-                'docType' => MtbDocument::NOMINEE_NID_FRONT,
+                'docType' => MtbConstants::NOMINEE_NID_FRONT,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
                 'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->nominee_nid_image_back)),
-                'docType' => MtbDocument::NOMINEE_NID_BACK,
+                'docType' => MtbConstants::NOMINEE_NID_BACK,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
                 'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->customer_signature)),
-                'docType' => MtbDocument::CUSTOMER_SIGNATURE,
+                'docType' => MtbConstants::CUSTOMER_SIGNATURE,
             ]);
         if ($this->partnerMefInformation->tradeLicenseExists == 'y') {
             $data[] = [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
                 'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->trade_license)),
-                'docType' => MtbDocument::TRADE_LICENSE,
+                'docType' => MtbConstants::TRADE_LICENSE,
             ];
         }
         return [
             'RequestData' => $data,
             'requestId' => strval($this->partner->id),
-            'channelId' => MtbDocument::CHANNEL_ID
+            'channelId' => MtbConstants::CHANNEL_ID
         ];
     }
 
