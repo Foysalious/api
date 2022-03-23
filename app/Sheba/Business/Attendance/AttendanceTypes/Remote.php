@@ -2,7 +2,7 @@
 
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 
-class Remote implements CheckType
+class Remote extends AttendanceType
 {
     public function check(): string
     {

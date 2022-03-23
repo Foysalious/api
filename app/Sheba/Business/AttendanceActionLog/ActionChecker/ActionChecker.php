@@ -192,15 +192,16 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
 
-        $remote = new Remote();
-        $geo = new GeoLocation();
-        $ip_based = new IPBased();
-
         $isIpBasedAttendanceEnable = $this->business->isIpBasedAttendanceEnable();
         $isGeoLocationAttendanceEnable = $this->business->isGeoLocationAttendanceEnable();
         $isRemoteAttendanceEnable = $this->business->isRemoteAttendanceEnable($this->businessMember->id);
         $office_ip_count = $this->business->offices()->count();
         $office_geo_location_count = $this->business->geoOffices()->count();
+
+        $checker = null;
+        if ($isIpBasedAttendanceEnable) $checker = new IPBased($this->business, $this->ip);
+        if ($isGeoLocationAttendanceEnable) $checker = $checker ? $checker->setNext(new GeoLocation($this->business, $this->lat, $this->lng)) : new GeoLocation($this->business, $this->lat, $this->lng);
+        if ($isRemoteAttendanceEnable) $checker = $checker ? $checker->setNext(new Remote()) : new Remote();
 
         if ($isIpBasedAttendanceEnable && $isGeoLocationAttendanceEnable && $isRemoteAttendanceEnable) {//WGR
             $this->attendanceType = ($this->isInWifiArea()) ? AttendanceTypes::IP_BASED : (($this->isInGeoLocation()) ? AttendanceTypes::GEO_LOCATION_BASED : AttendanceTypes::REMOTE);
