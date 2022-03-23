@@ -75,8 +75,8 @@ class MtbSavePrimaryInformation
                 'gender' => $this->partner->getFirstAdminResource()->profile->gender,
                 'fatherName' => $this->partner->getFirstAdminResource()->profile->father_name,
                 'motherName' => $this->partner->getFirstAdminResource()->profile->mother_name,
-                "contactAddress" => 'present',
-                'custGrade' => 'Moderate',
+                "contactAddress" => MtbConstants::CONTACT_ADDRESS,
+                'custGrade' => MtbConstants::CUSTOMER_GRADE,
                 'presentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->presentAddress,
                     'postCode' => $this->partnerMefInformation->presentPostCode,
