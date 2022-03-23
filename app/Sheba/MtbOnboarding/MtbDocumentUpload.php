@@ -38,7 +38,7 @@ class MtbDocumentUpload
         return $this;
     }
 
-    private function makeData()
+    private function makeData(): array
     {
         $data = array(
             [

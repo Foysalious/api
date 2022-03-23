@@ -23,7 +23,7 @@ class MtbSaveTransaction
         return $this;
     }
 
-    private function makeData()
+    private function makeData(): array
     {
         return [
             'RequestData' => [
