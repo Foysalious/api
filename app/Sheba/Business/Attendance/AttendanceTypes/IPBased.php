@@ -1,21 +1,26 @@
 <?php namespace App\Sheba\Business\Attendance\AttendanceTypes;
 
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 
 class IPBased extends AttendanceType
 {
     private $business;
     private $ip;
+    private $error;
 
-    public function __construct($business, $ip)
+    public function __construct($business, $ip, $error)
     {
         $this->business = $business;
         $this->ip = $ip;
+        $this->error = $error;
     }
 
-    public function check(): string
+    public function check()
     {
         if ($this->isInWifiArea()) return AttendanceTypes::IP_BASED;
+        $this->error[] = ActionResultCodes::OUT_OF_WIFI_AREA;
+        return $this->error;
     }
 
     private function isInWifiArea()
