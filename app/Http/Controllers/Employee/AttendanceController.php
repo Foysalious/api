@@ -116,7 +116,7 @@ class AttendanceController extends Controller
         if ($request->is_geo_location_enable && !$request->is_in_wifi_area) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
         }
-        if (!$request->is_geo_location_enable && !$request->is_in_wifi_area) {
+        if (!$request->is_geo_location_enable && !$request->is_in_wifi_area && $business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         $this->validate($request, $validation_data);
