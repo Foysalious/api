@@ -1,7 +1,6 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
-use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
-use Carbon\CarbonPeriod;
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
 use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\Leave\HalfDay\HalfDayLeaveCheck;
@@ -13,7 +12,6 @@ use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\Attendance\Statuses;
 use App\Models\BusinessMember;
 use App\Models\Business;
-use Sheba\Helpers\TimeFrame;
 use Sheba\Location\Geo;
 use Carbon\Carbon;
 use DB;
@@ -37,9 +35,7 @@ class AttendanceAction
     private $userAgent;
     private $lat;
     private $lng;
-    private $isRemote;
     private $remoteMode;
-    private $attendanceType;
 
     /**
      * AttendanceAction constructor.
@@ -140,7 +136,7 @@ class AttendanceAction
     public function doAction()
     {
         $action = $this->checkTheAction();
-        if ($action->getResult()->isSuccess()) $this->doDatabaseTransaction();
+        if ($action->getResult()->isSuccess()) $this->doDatabaseTransaction($action->getAttendanceSuccess());
         return $action;
     }
 
@@ -153,13 +149,12 @@ class AttendanceAction
         $action = $processor->setActionName($this->action)->getAction();
         $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setLat($this->lat)->setLng($this->lng)->setBusiness($this->business)->setBusinessMember($this->businessMember);
         $action->check();
-        $this->attendanceType = $action->getAttendanceType();
         return $action;
     }
 
-    private function doDatabaseTransaction()
+    private function doDatabaseTransaction(AttendanceSuccess $attendance_success)
     {
-        DB::transaction(function () {
+        DB::transaction(function () use ($attendance_success) {
             if (!$this->attendance) $this->createAttendance();
             $this->attendanceActionLogCreator
                 ->setAction($this->action)
@@ -167,8 +162,8 @@ class AttendanceAction
                 ->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)
                 ->setUserAgent($this->userAgent)
-                ->setIsRemote($this->isRemote)
-                ->setAttendanceType($this->attendanceType)
+                ->setRemoteMode($this->remoteMode)
+                ->setAttendanceSuccess($attendance_success)
                 ->setBusiness($this->business)
                 ->setWhichHalfDay($this->checkHalfDayLeave());
 

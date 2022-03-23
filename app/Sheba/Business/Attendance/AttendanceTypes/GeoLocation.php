@@ -1,11 +1,9 @@
 <?php  namespace App\Sheba\Business\Attendance\AttendanceTypes;
 
-use Sheba\Business\Attendance\AttendanceTypes\AttendanceModeType;
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResult;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
-use Sheba\Location\Coords;
-use Sheba\Location\Distance\Distance;
-use Sheba\Location\Distance\DistanceStrategy;
+use Sheba\Location\Circle;
 
 class GeoLocation extends AttendanceType
 {
@@ -21,31 +19,32 @@ class GeoLocation extends AttendanceType
         $this->geoOffices = $this->business->geoOffices()->get();
         $this->coords = $coords;
     }
+
+    /**
+     * @return AttendanceSuccess | null
+     */
     public function check()
     {
         $office_geo_location_count = $this->business->geoOffices()->count();
-        if ($office_geo_location_count > 0){
-            $attendance_mode_type = new AttendanceModeType();
-            $attendance_mode_type->setAttendanceModeType(AttendanceTypes::GEO_LOCATION_BASED)->setBusinessOffice($this->businessOfficeId);
-            if ($this->isInGeoLocation()) return $attendance_mode_type->get();
-            $this->error->push(ActionResult::OUT_OF_GEO_LOCATION);
+        if ($office_geo_location_count > 0) {
+            if ($this->isInGeoLocation()) {
+                return new AttendanceSuccess(AttendanceTypes::GEO_LOCATION_BASED, $this->businessOfficeId);
+            }
+            $this->errors->push(ActionResult::OUT_OF_GEO_LOCATION);
         }
         return $this->next ? $this->next->check() : null;
     }
 
     private function isInGeoLocation(): bool
     {
-        $is_within = false;
-        foreach ($this->geoOffices as $geo_office){
-            $geo = $geo_office->location;
-            $to_coords = new Coords(floatval($geo['lat']), floatval($geo['lng']));
-            $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
-            $is_within = $distance->to($to_coords)->from($this->coords)->isWithin(floatval($geo['radius']));
-            if ($is_within) {
+        foreach ($this->geoOffices as $geo_office) {
+            /** @var Circle $circle */
+            $circle = $geo_office->circle;
+            if ($circle->contains($this->coords)) {
                 $this->businessOfficeId = $geo_office->id;
-                break;
+                return true;
             }
         }
-        return $is_within;
+        return false;
     }
 }

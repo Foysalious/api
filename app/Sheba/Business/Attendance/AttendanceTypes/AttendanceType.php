@@ -1,15 +1,13 @@
 <?php namespace App\Sheba\Business\Attendance\AttendanceTypes;
 
-use Sheba\Business\Attendance\AttendanceTypes\AttendanceModeType;
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
 
 abstract class AttendanceType
 {
     /** @var AttendanceType */
     protected $next;
-    /** @var AttendanceError */
-    protected $error;
-    /*** @var AttendanceModeType  */
-    protected $attendanceModeType;
+    /** @var AttendanceErrorList */
+    protected $errors;
 
     public function setNext(AttendanceType $next)
     {
@@ -17,29 +15,23 @@ abstract class AttendanceType
         return $this;
     }
 
-    public function setError(AttendanceError $error)
+    public function setError(AttendanceErrorList $errors)
     {
-        if ($this->next) $this->next->setError($error);
-        $this->error = $error;
+        if ($this->next) $this->next->setError($errors);
+        $this->errors = $errors;
         return $this;
     }
 
-    public function setAttendanceModeType(AttendanceModeType $attendance_mode_type)
+    /**
+     * @return AttendanceErrorList
+     */
+    public function getErrors()
     {
-        if ($this->next) $this->next->setAttendanceModeType($attendance_mode_type);
-        $this->attendanceModeType = $attendance_mode_type;
-        return $this;
+        return $this->errors;
     }
 
-    public function getError()
-    {
-        return $this->error;
-    }
-
-    public function getAttendanceModeType()
-    {
-        return $this->attendanceModeType;
-    }
-
+    /**
+     * @return AttendanceSuccess | null
+     */
     abstract function check();
 }

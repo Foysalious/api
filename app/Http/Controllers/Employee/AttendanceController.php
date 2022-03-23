@@ -103,11 +103,14 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
-        if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
-            #$validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        if ($request->is_geo_location_enable && !$request->is_in_wifi_area) {
+            $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        }
+
+        if (!$request->is_geo_location_enable && !$request->is_in_wifi_area && $business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
-        #$this->validate($request, $validation_data);
+        $this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
         $attendance_action->setBusinessMember($business_member)

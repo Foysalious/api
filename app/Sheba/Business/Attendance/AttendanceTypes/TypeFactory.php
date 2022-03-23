@@ -2,13 +2,20 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Sheba\Business\Attendance\AttendanceTypes\AttendanceError;
+use App\Sheba\Business\Attendance\AttendanceTypes\AttendanceErrorList;
+use App\Sheba\Business\Attendance\AttendanceTypes\AttendanceType;
 use App\Sheba\Business\Attendance\AttendanceTypes\GeoLocation;
 use App\Sheba\Business\Attendance\AttendanceTypes\IPBased;
 use App\Sheba\Business\Attendance\AttendanceTypes\Remote;
 
 class TypeFactory
 {
+    /**
+     * @param BusinessMember $business_member
+     * @param $ip
+     * @param $coords
+     * @return AttendanceType
+     */
     public static function create(BusinessMember $business_member, $ip, $coords)
     {
         /** @var Business $business */
@@ -38,8 +45,7 @@ class TypeFactory
                 $next_checker = $remote;
             }
         }
-        $checker->setError(new AttendanceError());
-        //$checker->setAttendanceModeType(new AttendanceModeType());
+        $checker->setError(new AttendanceErrorList());
         return $checker;
     }
 }

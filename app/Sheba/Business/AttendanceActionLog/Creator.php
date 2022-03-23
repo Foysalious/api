@@ -2,6 +2,7 @@
 
 use App\Models\Business;
 use Illuminate\Support\Facades\Log;
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckinStatusCalculator;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckoutStatusCalculator;
 use Sheba\Dal\Attendance\Model as Attendance;
@@ -33,7 +34,8 @@ class Creator
     private $checkinStatusCalculator;
     /** @var CheckoutStatusCalculator $checkoutStatusCalculator */
     private $checkoutStatusCalculator;
-    private $attendanceType;
+    /** @var AttendanceSuccess */
+    private $attendanceSuccess;
 
     /**
      * Creator constructor.
@@ -118,16 +120,6 @@ class Creator
     }
 
     /**
-     * @param $is_remote
-     * @return $this
-     */
-    public function setIsRemote($is_remote)
-    {
-        $this->isRemote = $is_remote;
-        return $this;
-    }
-
-    /**
      * @param $remoteMode
      * @return $this
      */
@@ -137,9 +129,9 @@ class Creator
         return $this;
     }
 
-    public function setAttendanceType($attendance_type)
+    public function setAttendanceSuccess(AttendanceSuccess $success)
     {
-        $this->attendanceType = $attendance_type;
+        $this->attendanceSuccess = $success;
         return $this;
     }
 
@@ -173,8 +165,11 @@ class Creator
             'status' => $status
         ];
 
-        if ($this->attendanceType === AttendanceTypes::GEO_LOCATION_BASED) $attendance_log_data['is_geo_location'] = 1;
-        if ($this->attendanceType === AttendanceTypes::REMOTE) $attendance_log_data['is_remote'] = 1;
+        if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::IP_BASED) $attendance_log_data['is_in_wifi'] = 1;
+        else if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::GEO_LOCATION_BASED) $attendance_log_data['is_geo_location'] = 1;
+        else if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::REMOTE) $attendance_log_data['is_remote'] = 1;
+        //$attendance_log_data['business_office_id'] = $this->attendanceSuccess->getBusinessOfficeId();
+
         $this->address = $this->getAddress();
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);
         if ($this->remoteMode) $attendance_log_data['remote_mode'] = $this->remoteMode;

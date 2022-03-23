@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
 use Sheba\Business\Attendance\AttendanceTypes\TypeFactory;
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
@@ -29,7 +30,8 @@ abstract class ActionChecker
     protected $resultMessage;
     protected $isRemote = 0;
     const BUSINESS_OFFICE_HOUR = 1;
-    protected $attendanceType = null;
+    /** @var AttendanceSuccess  */
+    protected $attendanceSuccess = null;
     private $geoOffices;
     private $lat;
     private $lng;
@@ -97,14 +99,20 @@ abstract class ActionChecker
         return $this;
     }
 
+    /**
+     * @return ActionResult
+     */
     public function getResult()
     {
         return $this->result;
     }
 
-    public function getAttendanceType()
+    /**
+     * @return AttendanceSuccess
+     */
+    public function getAttendanceSuccess()
     {
-        return $this->attendanceType;
+        return $this->attendanceSuccess;
     }
 
     public function check()
@@ -168,12 +176,12 @@ abstract class ActionChecker
         if ($this->isAlreadyFailed()) return;
         $coords = new Coords(floatval($this->lat), floatval($this->lng));
         $checker = TypeFactory::create($this->businessMember, $this->ip, $coords);
-        $checker_status = $checker->check();
-        dd($checker->getAttendanceModeType());
-        $error = $checker->getError()->get();
-        if ($checker_status) $this->attendanceType = $checker_status;
+        $checker_success = $checker->check();
+        $error = $checker->getErrors()->getSingle();
+
+        if ($checker_success) $this->attendanceSuccess = $checker_success;
         else if ($error) $this->setResult($error);
-        else throw new \Exception('No error or status found.');
+        else throw new \Exception('No error or success found.');
     }
 
     protected function setResult($result_code)

@@ -1,6 +1,6 @@
 <?php namespace App\Sheba\Business\Attendance\AttendanceTypes;
 
-use Sheba\Business\Attendance\AttendanceTypes\AttendanceModeType;
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResult;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 
@@ -16,13 +16,16 @@ class IPBased extends AttendanceType
         $this->ip = $ip;
     }
 
+    /**
+     * @return AttendanceSuccess | null
+     */
     public function check()
     {
         $office_ip_count = $this->business->offices()->count();
-        if ($office_ip_count > 0 ){
-            $attendance_mode_type = new AttendanceModeType();
-            if ($this->isInWifiArea()) $attendance_mode_type->setAttendanceModeType(AttendanceTypes::IP_BASED)->setBusinessOffice($this->businessOfficeId);
-            $this->error->push(ActionResult::OUT_OF_WIFI_AREA);
+        if ($office_ip_count > 0 ) {
+            if ($this->isInWifiArea()) return new AttendanceSuccess(AttendanceTypes::IP_BASED, $this->businessOfficeId);
+
+            $this->errors->push(ActionResult::OUT_OF_WIFI_AREA);
         }
         return $this->next ? $this->next->check() : null;
     }

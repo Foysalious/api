@@ -1,13 +1,15 @@
 <?php namespace App\Sheba\Business\Attendance\AttendanceTypes;
 
-use Sheba\Business\Attendance\AttendanceTypes\AttendanceModeType;
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 
 class Remote extends AttendanceType
 {
+    /**
+     * @return AttendanceSuccess | null
+     */
     public function check()
     {
-        $attendance_mode_type = new AttendanceModeType();
-        $attendance_mode_type->setAttendanceModeType(AttendanceTypes::REMOTE);
+        return new AttendanceSuccess(AttendanceTypes::REMOTE);
     }
 }

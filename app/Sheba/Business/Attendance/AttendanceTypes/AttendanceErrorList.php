@@ -2,7 +2,7 @@
 
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResult;
 
-class AttendanceError
+class AttendanceErrorList
 {
     private $errorCode = [];
 
@@ -12,7 +12,7 @@ class AttendanceError
         return $this;
     }
 
-    public function get()
+    public function getSingle()
     {
         if (count($this->errorCode) > 1) return ActionResult::OUT_OF_WIFI_GEO_LOCATION;
         if (empty($this->errorCode)) return null;
