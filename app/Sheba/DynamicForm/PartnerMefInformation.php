@@ -45,8 +45,7 @@ class PartnerMefInformation implements Arrayable
         $reflection_class = new ReflectionClass($this);
         $data             = [];
         foreach ($reflection_class->getProperties() as $item) {
-            if(isset($this->{$item->name}))
-                $data[$item->name] = $this->{$item->name};
+            $data[$item->name] = $this->{$item->name};
         }
         return $data;
     }
@@ -56,7 +55,8 @@ class PartnerMefInformation implements Arrayable
         $reflection_class = new ReflectionClass($this);
         $data             = [];
         foreach ($reflection_class->getProperties() as $item)
-            $data[$item->name] = $this->{$item->name};
+            if(isset($this->{$item->name}))
+                $data[$item->name] = $this->{$item->name};
 
         return $data;
     }

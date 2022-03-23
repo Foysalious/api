@@ -64,7 +64,11 @@ class FormSubmit
 
     public function setPartnerMefInformation()
     {
-        $this->partnerMefInformation = (new PartnerMefInformation())->setProperty(json_decode($this->partner->partnerMefInformation->partner_information, 1));
+        if(isset($this->partner->partnerMefInformation->partner_information))
+            $this->partnerMefInformation = (new PartnerMefInformation())
+                ->setProperty(json_decode($this->partner->partnerMefInformation->partner_information, 1));
+        else
+            $this->partnerMefInformation = new PartnerMefInformation();
     }
 
     /**
