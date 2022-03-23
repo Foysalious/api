@@ -95,8 +95,8 @@ class MtbSavePrimaryInformation
     {
         $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
         $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
-        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
         $this->mtbSaveTransaction->setPartner($this->partner)->saveTransactionInformation();
+        $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
     }
 
     /**
