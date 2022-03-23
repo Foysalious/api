@@ -5,8 +5,10 @@ namespace App\Sheba\DynamicForm;
 use App\Models\District;
 use App\Models\Division;
 use App\Models\Partner;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\MefForm\Model as MefForm;
 use Sheba\Dal\MefSections\Model as MefSection;
+use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use Sheba\MerchantEnrollment\MerchantEnrollmentFileHandler;
 
 class DynamicForm
@@ -137,11 +139,11 @@ class DynamicForm
 
     public function uploadDocumentData($document, $document_id)
     {
-        $field = $this->section->fields->where('name', $document_id)->first();
+        $field = DB::table('fields')->where('data->id', $document_id)->first();
         $url = (new MerchantEnrollmentFileHandler())->setPartner($this->partner)->uploadDocument($document, json_decode($field->data, true))->getUploadedUrl();
-        $dynamic_field = json_decode($field->data, true);
-        $dynamic_field['data'] = $url;
-        $field->data = json_encode($dynamic_field);
-        return $field->save();
+        $partner_mef_information = json_decode($this->partner->partnerMefInformation->partner_information, true);
+        $partner_mef_information[$document_id] = $url;
+        $this->partner->partnerMefInformation->partner_information = json_encode($partner_mef_information);
+        return $this->partner->partnerMefInformation->save();
     }
 }
