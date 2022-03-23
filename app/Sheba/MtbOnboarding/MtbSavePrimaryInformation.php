@@ -1,9 +1,10 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
 use App\Models\Partner;
+use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
-use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use App\Sheba\MTB\MtbServerClient;
+
 
 class MtbSavePrimaryInformation
 {
@@ -31,6 +32,11 @@ class MtbSavePrimaryInformation
      * @var MtbSaveTransaction
      */
     private $mtbSaveTransaction;
+    /**
+     * @var PartnerMefInformation
+     */
+    private $partnerMefInformation;
+
 
     public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
                                 MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload, MtbSaveTransaction $mtbSaveTransaction)
@@ -42,6 +48,12 @@ class MtbSavePrimaryInformation
         $this->mtbSaveTransaction = $mtbSaveTransaction;
     }
 
+    public function setPartnerMefInformation($partnerMefInformation): MtbSavePrimaryInformation
+    {
+        $this->partnerMefInformation = $partnerMefInformation;
+        return $this;
+    }
+
     public function setPartner(Partner $partner): MtbSavePrimaryInformation
     {
         $this->partner = $partner;
@@ -50,6 +62,7 @@ class MtbSavePrimaryInformation
 
     private function makePrimaryInformation(): array
     {
+        $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
@@ -64,21 +77,21 @@ class MtbSavePrimaryInformation
                 "contactAddress" => 'present',
                 'custGrade' => 'Moderate',
                 'presentAddress' => [
-                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->presentAddress,
-                    'postCode' => json_decode($this->partner->partnerMefInformation->partner_information)->presentPostCode,
-                    'division' => json_decode($this->partner->partnerMefInformation->partner_information)->presentDivision,
-                    'district' => json_decode($this->partner->partnerMefInformation->partner_information)->presentDistrict,
+                    'addressLine1' => $this->partnerMefInformation->presentAddress,
+                    'postCode' => $this->partnerMefInformation->presentPostCode,
+                    'division' => $this->partnerMefInformation->presentDivision,
+                    'district' => $this->partnerMefInformation->presentDistrict,
                     'country' => 'Bangladesh'
                 ],
                 'permanentAddress' => [
-                    'addressLine1' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentAddress,
-                    'postCode' => json_decode($this->partner->partnerMefInformation->partner_information)->permanentpostCode,
+                    'addressLine1' => $this->partnerMefInformation->permanentAddress,
+                    'postCode' => $this->partnerMefInformation->permanentpostCode,
                     'country' => 'Bangladesh',
-                    'contactAddress' => json_decode($this->partner->partnerMefInformation->partner_information)->presentAddress
+                    'contactAddress' => $this->partnerMefInformation->presentAddress
                 ],
                 'shopInfo' => [
-                    'businessStartDt' => date("Ymd", strtotime(json_decode($this->partner->partnerMefInformation->partner_information)->businessStartDt)),
-                    'tradeLicenseExists' => json_decode($this->partner->partnerMefInformation->partner_information)->tradeLicenseExists,
+                    'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
+                    'tradeLicenseExists' => $this->partnerMefInformation->tradeLicenseExists,
                     'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
                 ]
             ],
