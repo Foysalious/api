@@ -2,7 +2,6 @@
 
 use App\Models\Partner;
 use App\Sheba\MTB\AuthTypes;
-use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use App\Sheba\MTB\MtbServerClient;
 
 class MtbDocumentUpload

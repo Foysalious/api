@@ -48,11 +48,10 @@ class FormFieldBuilder
 
     public function build(): FormField
     {
-        $field_data = json_decode($this->field->data);
-        $form_field = (new FormField())->setFormInput($field_data);
-        if(isset($field_data->data_source)) {
-            $data_source = ($field_data->data_source);
-            $data_source_id = ($field_data->data_source_id);
+        $form_field = (new FormField())->setFormInput(json_decode($this->field->data));
+        if(isset($form_field->data_source)) {
+            $data_source = ($form_field->data_source);
+            $data_source_id = ($form_field->data_source_id);
             if (!isset($this->$data_source)) {
                 $function_name = "set" . ucfirst($data_source);
                 $this->$function_name();
