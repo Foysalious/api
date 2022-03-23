@@ -140,7 +140,7 @@ class AttendanceAction
     public function doAction()
     {
         $action = $this->checkTheAction();
-        if ($action->isSuccess()) $this->doDatabaseTransaction();
+        if ($action->getResult()->isSuccess()) $this->doDatabaseTransaction();
         return $action;
     }
 

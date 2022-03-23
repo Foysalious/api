@@ -1,30 +1,36 @@
 <?php namespace App\Sheba\Business\Attendance\AttendanceTypes;
 
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceModeType;
+use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResult;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 
 class IPBased extends AttendanceType
 {
     private $business;
     private $ip;
-    private $error;
+    private $businessOfficeId;
 
-    public function __construct($business, $ip, $error)
+    public function __construct($business, $ip)
     {
         $this->business = $business;
         $this->ip = $ip;
-        $this->error = $error;
     }
 
     public function check()
     {
-        if ($this->isInWifiArea()) return AttendanceTypes::IP_BASED;
-        $this->error[] = ActionResultCodes::OUT_OF_WIFI_AREA;
-        return $this->error;
+        $office_ip_count = $this->business->offices()->count();
+        if ($office_ip_count > 0 ){
+            $attendance_mode_type = new AttendanceModeType();
+            if ($this->isInWifiArea()) $attendance_mode_type->setAttendanceModeType(AttendanceTypes::IP_BASED)->setBusinessOffice($this->businessOfficeId);
+            $this->error->push(ActionResult::OUT_OF_WIFI_AREA);
+        }
+        return $this->next ? $this->next->check() : null;
     }
 
     private function isInWifiArea()
     {
-        return in_array($this->ip, $this->business->offices->pluck('ip')->toArray());
+        $ips = $this->business->offices->pluck('ip', 'id')->toArray();
+        $this->businessOfficeId = array_search($this->ip, $ips);
+        return in_array($this->ip, $ips);
     }
 }

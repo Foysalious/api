@@ -3,17 +3,13 @@
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use App\Transformers\Business\AttendanceTransformer;
 use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
-use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use App\Transformers\CustomSerializer;
@@ -22,15 +18,12 @@ use Illuminate\Http\JsonResponse;
 use League\Fractal\Resource\Item;
 use App\Models\BusinessMember;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
-use Sheba\Location\Geo;
-use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
 use League\Fractal\Manager;
 use App\Models\Business;
 use Carbon\Carbon;
-use Throwable;
 
 class AttendanceController extends Controller
 {
@@ -126,12 +119,14 @@ class AttendanceController extends Controller
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        $is_note_required = in_array($action->getResultCode(), [ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) ? 1 : 0;
+        $result = $action->getResult();
 
-        return response()->json(['code' => $action->getResultCode(),
-            'is_note_required' => $is_note_required,
+        return response()->json([
+            'code' => $result->getCode(),
+            'is_note_required' => (int) $result->isNoteRequired(),
             'date' => Carbon::now()->format('jS F Y'),
-            'message' => $action->getResultMessage()]);
+            'message' => $result->getMessage()
+        ]);
     }
 
     /**
