@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
+use App\Sheba\MTB\MtbDocument;
 use App\Sheba\MTB\MtbServerClient;
 
 class MtbSaveNomineeInformation
@@ -39,7 +40,6 @@ class MtbSaveNomineeInformation
 
     private function makeData()
     {
-        $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         return [
             'RequestData' => [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
@@ -51,7 +51,7 @@ class MtbSaveNomineeInformation
                 'nomRelation' => $this->partnerMefInformation->nomineeRelation
             ],
             'requestId' => strval($this->partner->id),
-            'channelId' => "Sheba_XYZ"
+            'channelId' => MtbDocument::CHANNEL_ID
         ];
     }
 

@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Sheba\MTB\AuthTypes;
+use App\Sheba\MTB\MtbDocument;
 use App\Sheba\MTB\MtbServerClient;
 
 class MtbSaveTransaction
@@ -36,7 +37,7 @@ class MtbSaveTransaction
                 'MonthlyMercSale' => "0"
             ],
             'requestId' => strval($this->partner->id),
-            'channelId' => "Sheba_XYZ",
+            'channelId' => MtbDocument::CHANNEL_ID,
         ];
     }
 

@@ -40,7 +40,6 @@ class MtbDocumentUpload
 
     private function makeData()
     {
-        $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         $data = array(
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
@@ -82,14 +81,14 @@ class MtbDocumentUpload
             $data[] = [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
-                'docImage' => base64_encode(file_get_contents(json_decode($this->partner->partnerMefInformation->partner_information)->trade_license)),
+                'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->trade_license)),
                 'docType' => MtbDocument::TRADE_LICENSE,
             ];
         }
         return [
             'RequestData' => $data,
             'requestId' => strval($this->partner->id),
-            'channelId' => "Sheba_XYZ"
+            'channelId' => MtbDocument::CHANNEL_ID
         ];
     }
 

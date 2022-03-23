@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
+use App\Sheba\MTB\MtbDocument;
 use App\Sheba\MTB\MtbServerClient;
 
 
@@ -66,7 +67,7 @@ class MtbSavePrimaryInformation
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
-                'orgCode' => "SHEBA_XYZ",
+                'orgCode' => MtbDocument::CHANNEL_ID,
                 'name' => $this->partner->getFirstAdminResource()->profile->name,
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
                 'nid' => $this->partner->getFirstAdminResource()->profile->nid_no,
@@ -81,12 +82,12 @@ class MtbSavePrimaryInformation
                     'postCode' => $this->partnerMefInformation->presentPostCode,
                     'division' => $this->partnerMefInformation->presentDivision,
                     'district' => $this->partnerMefInformation->presentDistrict,
-                    'country' => 'Bangladesh'
+                    'country' => MtbDocument::COUNTRY
                 ],
                 'permanentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->permanentAddress,
                     'postCode' => $this->partnerMefInformation->permanentpostCode,
-                    'country' => 'Bangladesh',
+                    'country' => MtbDocument::COUNTRY,
                     'contactAddress' => $this->partnerMefInformation->presentAddress
                 ],
                 'shopInfo' => [
@@ -106,8 +107,8 @@ class MtbSavePrimaryInformation
      */
     private function applyMtb()
     {
-        $this->mtbSaveNomineeInformation->setPartner($this->partner)->storeNomineeInformation();
-        $this->mtbDocumentUpload->setPartner($this->partner)->uploadDocument();
+        $this->mtbSaveNomineeInformation->setPartner($this->partner)->setPartnerMefInformation($this->partnerMefInformation)->storeNomineeInformation();
+        $this->mtbDocumentUpload->setPartner($this->partner)->setPartnerMefInformation($this->partnerMefInformation)->uploadDocument();
         $this->mtbSaveTransaction->setPartner($this->partner)->saveTransactionInformation();
         $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
     }

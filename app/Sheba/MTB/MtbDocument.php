@@ -13,5 +13,7 @@ class MtbDocument
     const NOMINEE_NID_FRONT = 5;
     const NOMINEE_NID_BACK = 12;
     const CUSTOMER_SIGNATURE = 6;
+    const CHANNEL_ID = "Sheba_XYZ";
+    const COUNTRY= "Bangladesh";
 
 }
