@@ -63,12 +63,13 @@ class DueTrackerReminderController extends Controller
         $this->validate($request, [
             'partner' => 'required',
             'contact_type' => 'required|in:customer,supplier',
-            'sms' => 'required',
-            'reminder_date' => 'required|date_format:Y-m-d',
-            'reminder_status' => 'required',
-            'sms_status' => 'required'
+            'sms' => 'required|integer',
+            'reminder_date' => 'required|date_format:Y-m-d H:i:s',
+            'reminder_status' => 'required|integer',
+            'sms_status' => 'required|integer'
         ]);
         $response = $this->dueTrackerReminderService
+            ->setPartner($request->partner)
             ->setReminderId($request->reminder_id)
             ->setSms($request->sms)
             ->setReminderDate($request->reminder_date)
@@ -87,6 +88,7 @@ class DueTrackerReminderController extends Controller
             'partner' => 'required',
         ]);
         $response = $this->dueTrackerReminderService
+            ->setPartner($request->partner)
             ->setReminderId($request->reminder_id)
             ->delete();
         return http_response($request, null, 200, ['data' => $response]);

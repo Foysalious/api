@@ -3,6 +3,7 @@
 namespace App\Sheba\AccountingEntry\Service;
 
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerReminderService
 {
@@ -154,8 +155,10 @@ class DueTrackerReminderService
         return $this;
     }
 
+
     /**
-     * @return void
+     * @return mixed
+     * @throws AccountingEntryServerError
      */
     public function createReminder(){
         $data = $this->makeDataForReminderCreate();
@@ -177,7 +180,7 @@ class DueTrackerReminderService
     public function update()
     {
         $data = $this->makeDataForReminderUpdate();
-        return $this->dueTrackerReminderRepo->updateReminder($data);
+        return $this->dueTrackerReminderRepo->updateReminder($this->partner,$data);
     }
 
     /**
@@ -185,7 +188,7 @@ class DueTrackerReminderService
      */
     public function delete()
     {
-        return $this->dueTrackerReminderRepo->deleteReminder($this->reminder_id);
+        return $this->dueTrackerReminderRepo->deleteReminder($this->partner,$this->reminder_id);
     }
 
     /**
@@ -193,7 +196,7 @@ class DueTrackerReminderService
      */
     private function makeDataForReminderCreate(): array
     {
-        $data['user_id']= $this->partner->id;
+        //$data['user_id']= $this->partner->id;
         $data['contact_type']= $this->contact_type;
         $data['contact_id']= $this->contact_id;
         $data['should_send_sms']= $this->sms;
@@ -204,12 +207,18 @@ class DueTrackerReminderService
     /**
      * @return array
      */
-    private function makeDataForReminderUpdate(){
+    private function makeDataForReminderUpdate(): array
+    {
         $data['reminder_id']= $this->reminder_id;
-        $data['sms']= $this->sms;
-        $data['reminder_date']= $this->reminder_date;
-        $data['reminder_status']= $this->reminder_status;
-        $data['sms_status']= $this->sms_status;
+        if($this->sms == 0){
+            $data['should_send_sms']= false;
+        }
+        else{
+            $data['should_send_sms']= true;
+        }
+        $data['reminder_at']= $this->reminder_date;
+        $data['reminder_status']= (int)$this->reminder_status;
+        $data['sms_status']= (int)$this->sms_status;
         return $data;
     }
     /**
