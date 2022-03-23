@@ -15,6 +15,7 @@ class FormSubmit
     /*** @var Partner */
     private $partner;
 
+    /*** @var PartnerMefInformation */
     private $partnerMefInformation;
 
     /**
@@ -43,25 +44,27 @@ class FormSubmit
     public function store()
     {
         foreach ($this->fields as $field) {
-            $fieldData = json_decode($field->data);
-            if(isset($fieldData->data_source)) {
+            $fieldData = (new FormField())->setFormInput(json_decode($field->data));
+            if(($fieldData->data_source) !== "") {
                 $source = $fieldData->data_source;
                 $source_id = $fieldData->data_source_id;
                 if(!isset($this->$source)) {
                     $setter = "set". ucfirst($source);
                     $this->$setter();
                 }
-                if(isset($this->postData[$source_id]))
-                    $this->$source[$source_id] = trim($this->postData[$source_id]);
+                if(isset($this->postData[$source_id])) {
+                    $this->$source->$source_id = trim($this->postData[$source_id]);
+                }
 
             }
         }
         $this->storePartnerMefInformation();
     }
 
+
     public function setPartnerMefInformation()
     {
-        $this->partnerMefInformation = json_decode($this->partner->partnerMefInformation->partner_information,1) ? : [];
+        $this->partnerMefInformation = (new PartnerMefInformation())->setProperty(json_decode($this->partner->partnerMefInformation->partner_information, 1));
     }
 
     /**
@@ -77,7 +80,7 @@ class FormSubmit
     private function storePartnerMefInformation()
     {
         if(isset($this->partnerMefInformation)) {
-            $this->partner->partnerMefInformation->partner_information = json_encode($this->partnerMefInformation);
+            $this->partner->partnerMefInformation->partner_information = json_encode($this->partnerMefInformation->getAvailable());
             $this->partner->partnerMefInformation->save();
         }
     }

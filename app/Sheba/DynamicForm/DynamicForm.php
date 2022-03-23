@@ -76,7 +76,6 @@ class DynamicForm
         $form_builder = (new FormFieldBuilder())->setPartner($this->partner);
         foreach ($this->section->fields as $field)
             $fields[] = $form_builder->setField($field)->build()->toArray();
-        dd($fields);
         return $fields;
     }
 
