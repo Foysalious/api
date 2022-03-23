@@ -91,11 +91,14 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     /**
      * @throws AccountingEntryServerError
      */
-    public function getSupplierMonthlyDue()
+    public function getSupplierMonthlyDue($contact_id = Null)
     {
         $start_date = Carbon::now()->firstOfMonth()->format('Y-m-d');
         $end_date = Carbon::now()->lastOfMonth()->format('Y-m-d');
         $url = "api/v2/due-tracker/suppliers/due-amount?" . "start_date=$start_date&" . "end_date=$end_date";
+        if ($contact_id) {
+            $url .= "&contact_id=$contact_id";
+        }
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 

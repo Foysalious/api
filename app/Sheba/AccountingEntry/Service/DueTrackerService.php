@@ -317,16 +317,14 @@ class DueTrackerService
             $customer['avatar'] = $result['contact_details']['pro_pic'];
             $customer['due_date_reminder'] = $result['contact_details']['due_date_reminder'];
         }
-
-        $total_debit = $result['other_info']['total_debit'];
-        $total_credit = $result['other_info']['total_credit'];
-        $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
+        if($this->contact_type == ContactType::SUPPLIER) {
+            $supplier_due = $this->dueTrackerRepo->getSupplierMonthlyDue($this->contact_id);
+            $result['stats']['supplier_due'] = $supplier_due['due'];
+        }
         return [
             'contact_details' => $customer,
-            'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
-            'balance' => $result['balance']
         ];
     }
 
