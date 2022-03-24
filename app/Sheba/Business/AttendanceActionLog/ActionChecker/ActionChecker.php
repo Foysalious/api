@@ -1,11 +1,14 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
+use Sheba\Business\Attendance\AttendanceTypes\AttendanceSuccess;
+use Sheba\Business\Attendance\AttendanceTypes\TypeFactory;
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Dal\Attendance\Model as Attendance;
 use App\Models\BusinessMember;
 use App\Models\Business;
+use Sheba\Location\Coords;
 use Sheba\Location\Geo;
 use Carbon\Carbon;
 
@@ -27,6 +30,13 @@ abstract class ActionChecker
     protected $resultMessage;
     protected $isRemote = 0;
     const BUSINESS_OFFICE_HOUR = 1;
+    /** @var AttendanceSuccess  */
+    protected $attendanceSuccess = null;
+    private $geoOffices;
+    private $lat;
+    private $lng;
+    /** @var ActionResult */
+    protected $result;
 
     /**
      * @param Business $business
@@ -35,6 +45,7 @@ abstract class ActionChecker
     public function setBusiness($business)
     {
         $this->business = $business;
+        $this->geoOffices = $this->business->geoOffices()->get();
         return $this;
     }
 
@@ -76,31 +87,32 @@ abstract class ActionChecker
         return $this;
     }
 
-    protected function setResultCode($code)
+    public function setLat($lat)
     {
-        $this->resultCode = $code;
+        $this->lat = $lat;
         return $this;
     }
 
-    protected function setResultMessage($result_message)
+    public function setLng($lng)
     {
-        $this->resultMessage = $result_message;
+        $this->lng = $lng;
         return $this;
     }
 
-    public function getResultCode()
+    /**
+     * @return ActionResult
+     */
+    public function getResult()
     {
-        return $this->resultCode;
+        return $this->result;
     }
 
-    public function getResultMessage()
+    /**
+     * @return AttendanceSuccess
+     */
+    public function getAttendanceSuccess()
     {
-        return $this->resultMessage;
-    }
-
-    public function getIsRemote()
-    {
-        return $this->isRemote;
+        return $this->attendanceSuccess;
     }
 
     public function check()
@@ -108,7 +120,8 @@ abstract class ActionChecker
         $this->setAttendanceActionLogsOfToday();
         $this->checkAlreadyHasActionForToday();
         $this->checkDeviceId();
-        $this->checkIpOrRemote();
+        $this->checkAttendanceType();
+        if (!$this->isAlreadyFailed()) $this->setResult(ActionResult::SUCCESSFUL);
     }
 
     private function setAttendanceActionLogsOfToday()
@@ -118,38 +131,32 @@ abstract class ActionChecker
 
     protected function checkAlreadyHasActionForToday()
     {
-        if (!$this->isSuccess()) return;
-        if ($this->hasSameActionForToday()) {
-            $this->setAlreadyHasActionForTodayResponse();
-        } else {
-            $this->setSuccessfulResponseMessage();
-        }
+        if ($this->isAlreadyFailed()) return;
+        if ($this->hasSameActionForToday()) $this->setAlreadyHasActionForTodayResponse();
     }
 
     private function hasSameActionForToday()
     {
-        return $this->attendanceLogsOfToday ? $this->attendanceLogsOfToday->filter(function ($log) {
+        return $this->attendanceLogsOfToday && $this->attendanceLogsOfToday->filter(function ($log) {
                 return $log->action == $this->getActionName();
-            })->count() > 0 : false;
+            })->count() > 0;
     }
 
     protected function checkDeviceId()
     {
-        if (!$this->isSuccess()) return;
+        if ($this->isAlreadyFailed()) return;
         if ($this->hasDifferentDeviceId()) {
-            $this->setResult(ActionResultCodes::DEVICE_UNAUTHORIZED, ActionResultCodeMessages::DEVICE_UNAUTHORIZED);
+            $this->setResult(ActionResult::DEVICE_UNAUTHORIZED);
         } elseif ($this->hasDeviceUsedInDifferentAccountToday()) {
-            $this->setResult(ActionResultCodes::ALREADY_DEVICE_USED, ActionResultCodeMessages::ALREADY_DEVICE_USED);
-        } else {
-            $this->setSuccessfulResponseMessage();
+            $this->setResult(ActionResult::ALREADY_DEVICE_USED);
         }
     }
 
     private function hasDifferentDeviceId()
     {
-        return $this->attendanceLogsOfToday ? $this->attendanceLogsOfToday->filter(function ($log) {
+        return $this->attendanceLogsOfToday && $this->attendanceLogsOfToday->filter(function ($log) {
                 return $log->device_id != $this->deviceId;
-            })->count() > 0 : false;
+            })->count() > 0;
     }
 
     private function hasDeviceUsedInDifferentAccountToday()
@@ -164,49 +171,27 @@ abstract class ActionChecker
         return $attendances_count > 0 ? 1 : 0;
     }
 
-    protected function checkIpOrRemote()
+    protected function checkAttendanceType()
     {
-        if (!$this->isSuccess()) return;
-        if ($this->business->isIpBasedAttendanceEnable()) {
-            $office_ip_count = $this->business->offices()->count();
-            if ($office_ip_count > 0 && !$this->isInWifiArea()) {
-                if ($this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
-                    $this->remoteAttendance();
-                } else {
-                    $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
-                }
-            } else {
-                if ($office_ip_count < 1) $this->isRemote = 1;
-                $this->setSuccessfulResponseMessage();
-            }
-        } else {
-            $this->remoteAttendance();
-        }
+        if ($this->isAlreadyFailed()) return;
+        $coords = new Coords(floatval($this->lat), floatval($this->lng));
+        $checker = TypeFactory::create($this->businessMember, $this->ip, $coords);
+        $checker_success = $checker->check();
+        $error = $checker->getErrors()->getSingle();
+
+        if ($checker_success) $this->attendanceSuccess = $checker_success;
+        else if ($error) $this->setResult($error);
+        else throw new \Exception('No error or success found.');
     }
 
-    private function remoteAttendance()
+    protected function setResult($result_code)
     {
-        if ($this->business->isRemoteAttendanceEnable($this->businessMember->id)) {
-            $this->isRemote = 1;
-            $this->setSuccessfulResponseMessage();
-        } else {
-            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
-        }
+        $this->result = new ActionResult($result_code);
     }
 
-    private function isInWifiArea()
+    protected function isAlreadyFailed()
     {
-        return in_array($this->ip, $this->business->offices->pluck('ip')->toArray());
-    }
-
-    protected function setResult($result_code, $result_message)
-    {
-        $this->setResultCode($result_code)->setResultMessage($result_message);
-    }
-
-    public function isSuccess()
-    {
-        return $this->resultCode ? in_array($this->resultCode, [ActionResultCodes::SUCCESSFUL, ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) : true;
+        return $this->result ? $this->result->isFailed() : false;
     }
 
     public function isLateNoteRequired()
@@ -266,8 +251,6 @@ abstract class ActionChecker
         }
         return 0;
     }
-
-    abstract protected function setSuccessfulResponseMessage();
 
     abstract protected function setAlreadyHasActionForTodayResponse();
 
