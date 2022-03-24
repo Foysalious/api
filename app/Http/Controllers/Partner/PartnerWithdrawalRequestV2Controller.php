@@ -14,6 +14,7 @@ use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\OrderAdvanceWithdrawal\OrderAdvanceWithdrawalRequestRepositoryInterface;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\FileManagers\CdnFileManager;
@@ -148,7 +149,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         return api_response($request, $new_withdrawal, 200);
     }
 
-    public function withdrawalRequestForOrder($partner, Request $request, PartnerWithdrawalService $partnerWithdrawalService)
+    public function withdrawalRequestForOrder($partner, Request $request, PartnerWithdrawalService $partnerWithdrawalService, OrderAdvanceWithdrawalRequestRepositoryInterface $orderAdvanceWithdrawalRequestRepository)
     {
         $this->validate($request, [
             'order_id'       => 'required|integer',
@@ -172,18 +173,28 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         if (!$order->is_credit_limit_adjustable || $order->isCancelled() || $partnerOrder->isClosed() || $partnerOrder->partner_id != $partner->id)
             return api_response($request, null, 402, ['message' => 'You can not make withdrawal request against this order']);
 
-        if ($partnerWithdrawalService->doesExceedWithdrawalAmountForOrder((double)$request->amount, $order->id, $partnerOrder))
-            return api_response($request, null, 402, ['message' => 'Withdrawal amount can not be greater than sheba collection amount']);
-
-        if ($request->payment_method == 'bkash' && $partnerWithdrawalService->hasPendingBkashRequest($partner))
-            return api_response($request, null, 402, ['message' => 'ইতিমধ্যে আপনার ১ টি বিকাশের মাধ্যমে টাকা উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে, অনুগ্রহ করে আবেদনটি সম্পূর্ণ হওয়া পর্যন্ত অপেক্ষা করুন অথবা ব্যাংকের মাধ্যমে টাকা উত্তোলনের আবেদন করুন।' ]);
-
         $doesExceedWithdrawalLimit = $partnerWithdrawalService->doesExceedWithdrawalLimit((double)$request->amount, $request->payment_method);
         if ($doesExceedWithdrawalLimit['status'])
             return api_response($request, null, 400, ['message' => $doesExceedWithdrawalLimit['msg']]);
 
-        $data = $this->prepareWithdrawRequestData($request, $partner, $order->id);
-        $new_withdrawal = $partnerWithdrawalService->store($partner, $data);
+        $partnerOrder->calculate(true);
+        if ($partnerWithdrawalService->doesExceedWithdrawalAmountForOrder((double)$request->amount, $partnerOrder))
+            return api_response($request, null, 402, ['message' => 'Withdrawal amount can not be greater than sheba collection amount']);
+
+        $data = array_merge((new UserRequestInformation($request))->getInformationArray(), [
+            'order_id'        => $order->id,
+            'partner_id'    => $partner->id,
+            'amount'          => $request->amount,
+            'payment_method'  => $request->payment_method,
+            'payment_info'    => json_encode(['bkash_number' => $request->payment_method != 'bkash' ?: $request->bkash_number]),
+            'created_by_type' => class_basename($request->manager_resource),
+            'created_by'      => $request->manager_resource->id,
+            'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
+            'wallet_balance' => $partner->wallet,
+            'api_request_id' => $request->api_request ? $request->api_request->id : null,
+        ]);
+
+        $new_withdrawal = $orderAdvanceWithdrawalRequestRepository->create($data);
 
         return api_response($request, $new_withdrawal, 200);
     }
