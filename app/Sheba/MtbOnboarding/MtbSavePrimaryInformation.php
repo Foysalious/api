@@ -77,6 +77,9 @@ class MtbSavePrimaryInformation
                 'motherName' => $this->partner->getFirstAdminResource()->profile->mother_name,
                 "contactAddress" => MtbConstants::CONTACT_ADDRESS,
                 'custGrade' => MtbConstants::CUSTOMER_GRADE,
+                'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
+                'tradeLicenseExists' => $this->partnerMefInformation->tradeLicenseExists,
+                'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
                 'presentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->presentAddress,
                     'postCode' => $this->partnerMefInformation->presentPostCode,
@@ -89,11 +92,6 @@ class MtbSavePrimaryInformation
                     'postCode' => $this->partnerMefInformation->permanentpostCode,
                     'country' => MtbConstants::COUNTRY,
                     'contactAddress' => $this->partnerMefInformation->presentAddress
-                ],
-                'shopInfo' => [
-                    'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
-                    'tradeLicenseExists' => $this->partnerMefInformation->tradeLicenseExists,
-                    'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
                 ]
             ],
             'requestId' => strval($this->partner->id)
