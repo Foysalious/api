@@ -35,7 +35,8 @@ class PartnerMefInformation implements Arrayable
     public function setProperty($input): PartnerMefInformation
     {
         foreach ($input as $key => $value)
-            if (isset($this->$key)) $this->$key = $value;
+            if(property_exists($this, $key))
+                $this->$key = $value;
 
         return $this;
     }
