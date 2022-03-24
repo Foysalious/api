@@ -102,5 +102,16 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
+    /**
+     * @param $contactId
+     * @param $contactType
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function reminderByContact($contactId,$contactType){
+        $url = "api/reminders/contact/".$contactId."?contact_type=".$contactType;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
 
 }

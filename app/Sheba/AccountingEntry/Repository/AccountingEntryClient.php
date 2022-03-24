@@ -98,7 +98,7 @@ class AccountingEntryClient
             $res          = decodeGuzzleResponse(
                 $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))
             );
-            if ($res['code'] != 200) {
+            if ($res['code'] >= 300) {
                 throw new AccountingEntryServerError($res['message']);
             }
             return $res['data'] ?? $res['message'];
@@ -159,7 +159,7 @@ class AccountingEntryClient
      * @param $userId
      * @return $this
      */
-    public function setUserId($userId)
+    public function setUserId($userId): AccountingEntryClient
     {
         $this->userId = $userId;
         return $this;

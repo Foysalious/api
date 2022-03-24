@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Service\DueTrackerReminderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerReminderController extends Controller
 {
@@ -14,19 +15,20 @@ class DueTrackerReminderController extends Controller
     public function __construct(DueTrackerReminderService $dueTrackerReminderService){
         $this->dueTrackerReminderService = $dueTrackerReminderService;
     }
+
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function store(Request $request): JsonResponse
     {
         $this->validate($request, [
+            'contactId' => 'required',
             'partner' => 'required',
             'contact_type' => 'required|in:customer,supplier',
             'sms' => 'required',
-            'reminder_date' => 'required|date_format:Y-m-d',
-            'reminder_status' => 'required',
-            'sms_status' => 'required'
+            'reminder_date' => 'required|date_format:Y-m-d H:i:s',
         ]);
         $response = $this->dueTrackerReminderService
             ->setPartner($request->partner)
@@ -34,8 +36,6 @@ class DueTrackerReminderController extends Controller
             ->setContactId($request->contactId)
             ->setSms($request->sms)
             ->setReminderDate($request->reminder_date)
-            ->setReminderStatus($request->reminder_status)
-            ->setSmsStatus($request->sms_status)
             ->createReminder();
         return http_response($request, null, 200, ['data' => $response]);
 
@@ -45,7 +45,8 @@ class DueTrackerReminderController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function reminders(Request $request){
+    public function reminders(Request $request): JsonResponse
+    {
         $data = $this->dueTrackerReminderService
             ->setPartner($request->partner)
             ->setStartDate($request->start_date)
@@ -53,6 +54,8 @@ class DueTrackerReminderController extends Controller
             ->setOffset($request->offset)
             ->setLimit($request->limit)
             ->setOrderBy($request->order_by)
+            ->setReminderStatus($request->reminder_status)
+            ->setContactType($request->contact_type)
             ->getReminders();
         return http_response($request, null, 200, ['data' => $data]);
     }
@@ -61,17 +64,18 @@ class DueTrackerReminderController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function update(Request $request){
+    public function update(Request $request): JsonResponse
+    {
         $this->validate($request, [
-            'reminder_id' => 'required',
             'partner' => 'required',
             'contact_type' => 'required|in:customer,supplier',
-            'sms' => 'required',
-            'reminder_date' => 'required|date_format:Y-m-d',
-            'reminder_status' => 'required',
-            'sms_status' => 'required'
+            'sms' => 'required|integer',
+            'reminder_date' => 'required|date_format:Y-m-d H:i:s',
+            'reminder_status' => 'required|integer',
+            'sms_status' => 'required|integer'
         ]);
         $response = $this->dueTrackerReminderService
+            ->setPartner($request->partner)
             ->setReminderId($request->reminder_id)
             ->setSms($request->sms)
             ->setReminderDate($request->reminder_date)
@@ -85,12 +89,13 @@ class DueTrackerReminderController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function delete(Request $request){
+    public function delete(Request $request): JsonResponse
+    {
         $this->validate($request,[
             'partner' => 'required',
-            'reminder_id' => 'required',
         ]);
         $response = $this->dueTrackerReminderService
+            ->setPartner($request->partner)
             ->setReminderId($request->reminder_id)
             ->delete();
         return http_response($request, null, 200, ['data' => $response]);
