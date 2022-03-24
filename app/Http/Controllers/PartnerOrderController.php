@@ -192,7 +192,7 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function getBillsV2($partner, Request $request, FormatServices $formatServices)
+    public function getBillsV2($partner, Request $request, FormatServices $formatServices, OrderAdvanceWithdrawalRequestRepositoryInterface $orderAdvanceWithdrawalRequestRepository)
     {
         try {
             $partner_order = $request->partner_order;
@@ -234,7 +234,7 @@ class PartnerOrderController extends Controller
             $maxWithdrawalAmount = 0;
             if ($partner_order->order->is_credit_limit_adjustable && $partner_order->sheba_collection > 0) {
                 $activeWithdrawalAmount = app()->make(PartnerWithdrawalService::class)->activeRequestAgainstPartnerOrderAmount($partner_order);
-                $activeWithdrawalAmount += app()->make(OrderAdvanceWithdrawalRequestRepositoryInterface::class)->getTotalPendingAmountForPartnerOrder($partner_order);
+                $activeWithdrawalAmount += $orderAdvanceWithdrawalRequestRepository->getTotalPendingAmountForPartnerOrder($partner_order);
 
                 if ($partner_order->sheba_collection > $activeWithdrawalAmount) {
                     $isMoneyWithdrawable = true;
@@ -270,7 +270,8 @@ class PartnerOrderController extends Controller
                 'is_logistic' => $partner_order->order->isLogisticOrder(),
                 'is_ready_to_pick' => $partner_order->order->isReadyToPick(),
                 'is_money_withdrawable' => $isMoneyWithdrawable,
-                'max_withdrawable_amount' => $maxWithdrawalAmount
+                'max_withdrawable_amount' => $maxWithdrawalAmount,
+                'order_advance_withdrawal_requests' => $orderAdvanceWithdrawalRequestRepository->getMergedWithdrawalRequests($partner_order)
             ];
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (Throwable $e) {
