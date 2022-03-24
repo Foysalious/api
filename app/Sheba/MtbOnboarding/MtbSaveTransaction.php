@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Sheba\MTB\AuthTypes;
+use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 
 class MtbSaveTransaction
@@ -22,7 +23,7 @@ class MtbSaveTransaction
         return $this;
     }
 
-    private function makeData()
+    private function makeData(): array
     {
         return [
             'RequestData' => [
@@ -36,7 +37,7 @@ class MtbSaveTransaction
                 'MonthlyMercSale' => "0"
             ],
             'requestId' => strval($this->partner->id),
-            'channelId' => "Sheba_XYZ",
+            'channelId' => MtbConstants::CHANNEL_ID,
         ];
     }
 
