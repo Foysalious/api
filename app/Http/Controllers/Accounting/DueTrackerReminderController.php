@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Service\DueTrackerReminderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerReminderController extends Controller
 {
@@ -14,13 +15,16 @@ class DueTrackerReminderController extends Controller
     public function __construct(DueTrackerReminderService $dueTrackerReminderService){
         $this->dueTrackerReminderService = $dueTrackerReminderService;
     }
+
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function store(Request $request): JsonResponse
     {
         $this->validate($request, [
+            'contactId' => 'required',
             'partner' => 'required',
             'contact_type' => 'required|in:customer,supplier',
             'sms' => 'required',
@@ -41,7 +45,8 @@ class DueTrackerReminderController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function reminders(Request $request){
+    public function reminders(Request $request): JsonResponse
+    {
         $data = $this->dueTrackerReminderService
             ->setPartner($request->partner)
             ->setStartDate($request->start_date)
@@ -59,7 +64,8 @@ class DueTrackerReminderController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function update(Request $request){
+    public function update(Request $request): JsonResponse
+    {
         $this->validate($request, [
             'partner' => 'required',
             'contact_type' => 'required|in:customer,supplier',
@@ -83,7 +89,8 @@ class DueTrackerReminderController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function delete(Request $request){
+    public function delete(Request $request): JsonResponse
+    {
         $this->validate($request,[
             'partner' => 'required',
         ]);
