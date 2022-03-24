@@ -44,10 +44,6 @@ class DueTrackerService
     protected $end_date;
     protected $contact_id;
     protected $note;
-    protected $sms;
-    protected $reminder_date;
-    protected $reminder_status;
-    protected $sms_status;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
@@ -270,11 +266,11 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
         $return_data = $result;
-        if($this->contact_type == ContactType::SUPPLIER) {
+        if ($this->contact_type == ContactType::SUPPLIER) {
             $supplier_due = $this->dueTrackerRepo->setPartner($this->partner)->getSupplierMonthlyDue();
             $return_data['supplier_due'] = $supplier_due['due'];
         }
-        return $return_data ;
+        return $return_data;
     }
 
     /**
@@ -295,7 +291,7 @@ class DueTrackerService
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
-        $reminder = $this->dueTrackerRepo->setPartner($this->partner)->reminderByContact($this->contact_id,$this->contact_type);
+        $reminder = $this->dueTrackerRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
         $customer = [];
 
         if (is_null($result['contact_details'])) {
@@ -309,13 +305,11 @@ class DueTrackerService
             $customer['name'] = $posCustomer->name;
             $customer['mobile'] = $posCustomer->mobile;
             $customer['avatar'] = $posCustomer->pro_pic;
-            $customer['due_date_reminder'] = null;
         } else {
             $customer['id'] = $result['contact_details']['id'];
             $customer['name'] = $result['contact_details']['name'];
             $customer['mobile'] = $result['contact_details']['mobile'];
             $customer['avatar'] = $result['contact_details']['pro_pic'];
-            $customer['due_date_reminder'] = $result['contact_details']['due_date_reminder'];
         }
 
         $total_debit = $result['other_info']['total_debit'];
@@ -327,11 +321,9 @@ class DueTrackerService
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
             'balance' => $result['balance'],
-            'reminder'=> $reminder
+            'reminder' => $reminder
         ];
     }
-
-//    TODO: Add contact type
 
     /**
      * @return array
@@ -341,11 +333,12 @@ class DueTrackerService
     public function dueListByContact(): array
     {
         $queryString = $this->generateQueryString();
+        //    TODO: Add contact type
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
 
         $due_list = $result['list'];
         $pos_orders = [];
-        collect($due_list)->each(function($each) use (&$pos_orders) {
+        collect($due_list)->each(function ($each) use (&$pos_orders) {
             if (!is_null($each['source_id']) && $each['source_type'] == EntryTypes::POS) {
                 $pos_orders [] = $each['source_id'];
             }
@@ -376,17 +369,18 @@ class DueTrackerService
     }
 
     /**
-     * @return mixed
+     * @return array
      * @throws AccountingEntryServerError
      */
-    public function report()
+    public function report(): array
     {
         $queryString = $this->generateQueryString();
         $dueListData = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
         $dueListBalance = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
 
-        return array_merge($dueListData,$dueListBalance);
+        return array_merge($dueListData, $dueListBalance);
     }
+
     /**
      * @param $request
      * @return string
@@ -396,7 +390,7 @@ class DueTrackerService
      * @throws NotAssociativeArray
      * @throws \Throwable
      */
-    public function downloadPDF($request)
+    public function downloadPDF($request): string
     {
         $queryString = $this->generateQueryString();
         $data = [];
@@ -408,18 +402,20 @@ class DueTrackerService
             $balanceData = $this->getDueListBalance();
             $data = array_merge($data, $balanceData);
             //TODO: Will Change the Pdf Generation
-            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf" ;
+            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf";
             //return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
         }
 
         $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
         $data = array_merge($data, $list);
+        //TODO: change method name
         $balanceData = $this->setCustomerId($request->contact_id)->dueListBalanceByContact();
         $data = array_merge($data, $balanceData);
         //TODO: Will Change the Pdf Generation
         return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220315_due_tracker_by_customer_report_1647338702.pdf";
         //return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
     }
+
     /**
      * @return string
      */
@@ -481,8 +477,8 @@ class DueTrackerService
     private function getPartnerWisePosOrders($pos_orders)
     {
         /** @var OrderServiceAlias $orderService */
-        $orderService= app(OrderServiceAlias::class);
-        return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
+        $orderService = app(OrderServiceAlias::class);
+        return $orderService->getPartnerWiseOrderIds('[' . implode(",", $pos_orders) . ']', 0, count($pos_orders));
     }
 
     /**
@@ -523,6 +519,4 @@ class DueTrackerService
 
         return $data;
     }
-
-
 }

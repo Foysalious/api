@@ -24,7 +24,7 @@ class DueTrackerControllerV2 extends Controller
     /**
      * @throws AccountingEntryServerError
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $this->validate($request, [
             'amount' => 'required',
@@ -113,12 +113,13 @@ class DueTrackerControllerV2 extends Controller
             ->setEndDate($request->end_date)
             ->dueListByContact();
         return http_response($request, null, 200, ['data' => $data]);
-
-
     }
+
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
+     * @throws InvalidPartnerPosCustomer
      */
     public function dueListBalanceByContact(Request $request): JsonResponse
     {
@@ -135,6 +136,7 @@ class DueTrackerControllerV2 extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function getReport(Request $request): JsonResponse
     {

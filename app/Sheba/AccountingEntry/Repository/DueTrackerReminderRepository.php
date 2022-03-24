@@ -15,7 +15,6 @@ class DueTrackerReminderRepository extends AccountingRepository
         parent::__construct($client);
     }
 
-
     /**
      * @param $partner
      * @param $data
@@ -30,7 +29,9 @@ class DueTrackerReminderRepository extends AccountingRepository
 
     /**
      * @param $partner
+     * @param $query_string
      * @return array
+     * @throws AccountingEntryServerError
      */
     public function getReminders($partner,$query_string): array
     {
@@ -39,8 +40,10 @@ class DueTrackerReminderRepository extends AccountingRepository
     }
 
     /**
+     * @param $partner
      * @param $data
      * @return mixed
+     * @throws AccountingEntryServerError
      */
     public function updateReminder($partner,$data){
         $url = "api/reminders/".$data['reminder_id'];
@@ -49,8 +52,10 @@ class DueTrackerReminderRepository extends AccountingRepository
     }
 
     /**
+     * @param $partner
      * @param $reminder_id
      * @return mixed
+     * @throws AccountingEntryServerError
      */
     public function  deleteReminder($partner,$reminder_id){
         $url = "api/reminders/".$reminder_id;

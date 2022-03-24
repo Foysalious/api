@@ -109,7 +109,7 @@ class DueTrackerReminderService
 
     /**
      * @param mixed $order_by
-     * @return DueTrackerService
+     * @return $this
      */
     public function setOrderBy($order_by): DueTrackerReminderService
     {
@@ -118,7 +118,7 @@ class DueTrackerReminderService
     }
     /**
      * @param mixed $limit
-     * @return DueTrackerService
+     * @return $this
      */
     public function setLimit($limit): DueTrackerReminderService
     {
@@ -128,13 +128,14 @@ class DueTrackerReminderService
 
     /**
      * @param mixed $offset
-     * @return DueTrackerService
+     * @return $this
      */
     public function setOffset($offset): DueTrackerReminderService
     {
         $this->offset = $offset;
         return $this;
     }
+
     /**
      * @param $start_date
      * @return $this
@@ -155,18 +156,19 @@ class DueTrackerReminderService
         return $this;
     }
 
-
     /**
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function createReminder(){
+    public function createReminder()
+    {
         $data = $this->makeDataForReminderCreate();
         return $this->dueTrackerReminderRepo->createReminder($this->partner,$data);
     }
 
     /**
      * @return array
+     * @throws AccountingEntryServerError
      */
     public function getReminders(): array
     {
@@ -176,6 +178,7 @@ class DueTrackerReminderService
 
     /**
      * @return mixed
+     * @throws AccountingEntryServerError
      */
     public function update()
     {
@@ -185,6 +188,7 @@ class DueTrackerReminderService
 
     /**
      * @return mixed
+     * @throws AccountingEntryServerError
      */
     public function delete()
     {
@@ -196,7 +200,6 @@ class DueTrackerReminderService
      */
     private function makeDataForReminderCreate(): array
     {
-        //$data['user_id']= $this->partner->id;
         $data['contact_type']= $this->contact_type;
         $data['contact_id']= $this->contact_id;
         $data['should_send_sms']= $this->sms;
@@ -231,31 +234,16 @@ class DueTrackerReminderService
             $query_strings [] = 'order_by=' . $this->order_by;
             $query_strings [] = isset($this->order) ? 'order=' . strtolower($this->order) : 'order=desc';
         }
-
-        if (isset($this->balance_type)) {
-            $query_strings [] = "balance_type=$this->balance_type&";
-        }
-
-        if (isset($this->query)) {
-            $query_strings [] = "q=$this->query";
-        }
-
         if (isset($this->start_date) && isset($this->end_date)) {
             $query_strings [] = "start_date=$this->start_date";
             $query_strings [] = "end_date=$this->end_date";
         }
-
         if (isset($this->limit) && isset($this->offset)) {
             $query_strings [] = "limit=$this->limit";
             $query_strings [] = "offset=$this->offset";
         }
-
         if (isset($this->contact_type)) {
             $query_strings [] = "contact_type=" . strtolower($this->contact_type);
-        }
-
-        if (isset($this->filter_by_supplier)) {
-            $query_strings [] = "filter_by_supplier=" . $this->filter_by_supplier;
         }
         if(isset($this->reminder_status)){
             $query_strings [] = "reminder_status=" . $this->reminder_status;
