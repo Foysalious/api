@@ -75,6 +75,7 @@ class DueTrackerReminderRepository extends AccountingRepository
         $url = "api/reminders/".$reminder_id;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
     }
+
     /**
      * @param $contactId
      * @param $contactType

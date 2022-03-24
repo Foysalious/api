@@ -43,6 +43,7 @@ class DueTrackerReminderController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function reminders(Request $request): JsonResponse
     {
@@ -62,6 +63,7 @@ class DueTrackerReminderController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function update(Request $request): JsonResponse
     {
@@ -85,6 +87,7 @@ class DueTrackerReminderController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function delete(Request $request): JsonResponse
     {

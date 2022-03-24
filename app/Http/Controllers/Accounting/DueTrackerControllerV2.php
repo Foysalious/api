@@ -148,6 +148,7 @@ class DueTrackerControllerV2 extends Controller
             ->report();
         return http_response($request, null, 200, ['data' => $data]);
     }
+
     /**
      * @param Request $request
      * @return JsonResponse
