@@ -11,7 +11,9 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Announcement\AnnouncementList;
+use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\Dal\Announcement\AnnouncementTarget;
 use Sheba\Dal\Announcement\AnnouncementTypes;
 
 class AnnouncementController extends Controller
@@ -42,7 +44,7 @@ class AnnouncementController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $announcement_list->setBusinessId($business_member['business_id'])->setOffset($offset)->setLimit($limit);
         if ($request->type) $announcement_list->setType($request->type);
-        $announcements = $announcement_list->get();
+        $announcements = $announcement_list->get($business_member);
         if (count($announcements) == 0) return api_response($request, null, 404);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -55,7 +57,26 @@ class AnnouncementController extends Controller
                 return $announcement['status'] == $status && $announcement['is_published_for_app'] == self::IS_PUBLISHED_FOR_APP;
             });
         }
-
+        $announcements = $this->getFilteredAnnouncements($announcements);
+        dd($announcements);
         return api_response($request, $announcements, 200, ['announcements' => $announcements->values()]);
+    }
+
+    private function getFilteredAnnouncements($announcements)
+    {
+
+        foreach ($announcements as )
+        if ($announcement->target_type === AnnouncementTarget::ALL) {
+
+        }
+        if ($announcement->target_type === AnnouncementTarget::DEPARTMENT) {
+
+        }
+        if ($announcement->target_type === AnnouncementTarget::EMPLOYEE) {
+
+        }
+        if ($announcement->target_type === AnnouncementTarget::EMPLOYEE_TYPE) {
+
+        }
     }
 }

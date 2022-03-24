@@ -63,9 +63,15 @@ class AnnouncementList
         return $this;
     }
 
-    public function get()
+    public function get($business_member)
     {
-        $announcements = Announcement::where('business_id', $this->businessId);
+        $department = $business_member->department();
+
+        $announcements = Announcement::where('business_id', $this->businessId)->orWhere(function ($query)use($business_member,$department){
+            $query->where('target_type', 'employee')->where('target_id', $business_member->id);
+        })->orWhere(function ($query)use($business_member,$department){
+            $query->where('target_type', 'department')->where('target_id', $department->id);
+        });
         if ($this->type) $announcements = $announcements->where('type', $this->type);
         $announcements = $announcements->orderBy('id', 'desc')
             ->skip($this->offset)
