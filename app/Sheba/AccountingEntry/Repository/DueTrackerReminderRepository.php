@@ -10,6 +10,20 @@ use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 class DueTrackerReminderRepository extends AccountingRepository
 {
 
+    private $partner;
+
+
+    /**
+     * @param $partner
+     * @return $this
+     */
+    public function setPartner($partner): DueTrackerReminderRepository
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
+
     public function __construct(AccountingEntryClient $client)
     {
         parent::__construct($client);
@@ -60,5 +74,15 @@ class DueTrackerReminderRepository extends AccountingRepository
     public function  deleteReminder($partner,$reminder_id){
         $url = "api/reminders/".$reminder_id;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
+    }
+    /**
+     * @param $contactId
+     * @param $contactType
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function reminderByContact($contactId,$contactType){
+        $url = "api/reminders/contact/".$contactId."?contact_type=".$contactType;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 }

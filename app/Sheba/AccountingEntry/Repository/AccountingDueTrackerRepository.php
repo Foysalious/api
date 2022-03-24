@@ -6,6 +6,7 @@ use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -108,7 +109,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $request
      * @param $customerId
      * @return array
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|PosOrderServiceServerError
      */
     public function getDueListByCustomer($request, $customerId): array
     {
@@ -326,7 +327,7 @@ class AccountingDueTrackerRepository extends BaseRepository
     /**
      * @param $pos_orders
      * @return mixed
-     * @throws \App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError
+     * @throws PosOrderServiceServerError
      */
     private function getPartnerWise($pos_orders)
     {
