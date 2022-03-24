@@ -59,8 +59,13 @@ class DynamicForm
         return [
             "name" => $this->getSectionNames(),
             "fields" => $this->getSectionFields(),
-            "post_url" => $this->section->post_url
+            "post_url" => $this->getPostUrl()
         ];
+    }
+
+    private function getPostUrl(): string
+    {
+        return config('sheba.api_url').$this->section->post_url;
     }
 
     /**
