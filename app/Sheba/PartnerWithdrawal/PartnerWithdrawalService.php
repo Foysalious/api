@@ -64,12 +64,17 @@ class PartnerWithdrawalService
     {
         return $partnerOrder->sheba_collection == 0
             || $amount > $partnerOrder->sheba_collection
-            || (($this->activeRequestAgainstOrderAmount($orderid) + $amount) > $partnerOrder->sheba_collection);
+            || (($this->activeRequestAgainstPartnerOrderAmount($partnerOrder) + $amount) > $partnerOrder->sheba_collection);
     }
 
-    public function activeRequestAgainstOrderAmount($orderId)
+    public function activeRequestAgainstPartnerOrderAmount($partner_order)
     {
-        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))->active()->where('order_id', $orderId)->first();
+        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))
+            ->active()
+            ->where('order_id', $partner_order->order_id)
+            ->where('requester_type', 'partner')
+            ->where('requester_id', $partner_order->partner_id)
+            ->first();
 
         return $withdrawalRequest->total_amount ?? 0;
     }

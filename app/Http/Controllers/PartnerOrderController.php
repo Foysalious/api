@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Resource;
+use App\Models\WithdrawalRequest;
 use App\Repositories\CommentRepository;
 use App\Repositories\JobServiceRepository;
 use App\Repositories\PartnerJobRepository;
@@ -8,6 +9,9 @@ use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Sheba\Dal\OrderAdvanceWithdrawal\OrderAdvanceWithdrawalRequest;
+use Sheba\Dal\OrderAdvanceWithdrawal\OrderAdvanceWithdrawalRequestRepositoryInterface;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\Discount;
@@ -21,6 +25,7 @@ use Illuminate\Http\Request;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Sheba\ModificationFields;
+use Sheba\PartnerWithdrawal\PartnerWithdrawalService;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
 use Sheba\Services\FormatServices;
@@ -224,6 +229,19 @@ class PartnerOrderController extends Controller
                     }
                 }
             }
+
+            $isMoneyWithdrawable = false;
+            $maxWithdrawalAmount = 0;
+            if ($partner_order->order->is_credit_limit_adjustable && $partner_order->sheba_collection > 0) {
+                $activeWithdrawalAmount = app()->make(PartnerWithdrawalService::class)->activeRequestAgainstPartnerOrderAmount($partner_order);
+                $activeWithdrawalAmount += app()->make(OrderAdvanceWithdrawalRequestRepositoryInterface::class)->getTotalPendingAmountForPartnerOrder($partner_order);
+
+                if ($partner_order->sheba_collection > $activeWithdrawalAmount) {
+                    $isMoneyWithdrawable = true;
+                    $maxWithdrawalAmount = $partner_order->sheba_collection - $activeWithdrawalAmount;
+                }
+            }
+
             $partner_order = [
                 'id' => $partner_order->id,
                 'total_material_price' => (double)$partner_order->totalMaterialPrice,
@@ -250,7 +268,9 @@ class PartnerOrderController extends Controller
                 'sheba_delivery_discount_amount' => (double)$partner_order->totalDeliveryDiscountShebaContribution,
                 'partner_delivery_discount_amount' => (double)$partner_order->totalDeliveryDiscountPartnerContribution,
                 'is_logistic' => $partner_order->order->isLogisticOrder(),
-                'is_ready_to_pick' => $partner_order->order->isReadyToPick()
+                'is_ready_to_pick' => $partner_order->order->isReadyToPick(),
+                'is_money_withdrawable' => $isMoneyWithdrawable,
+                'max_withdrawable_amount' => $maxWithdrawalAmount
             ];
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (Throwable $e) {
