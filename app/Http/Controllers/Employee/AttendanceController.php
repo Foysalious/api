@@ -152,6 +152,7 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $is_remote_enable = $business->isRemoteAttendanceEnable($business_member->id);
+        $is_geo_location_enable = $business->isGeoLocationAttendanceEnable();
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
@@ -159,7 +160,7 @@ class AttendanceController extends Controller
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0,
             'is_remote_enable' => $is_remote_enable,
-            'is_geo_location_enable' => $is_remote_enable
+            'is_geo_location_enable' => $is_geo_location_enable
         ];
         return api_response($request, null, 200, ['attendance' => $data]);
     }
