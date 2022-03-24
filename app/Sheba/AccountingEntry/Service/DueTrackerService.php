@@ -267,7 +267,6 @@ class DueTrackerService
      */
     public function getDueListBalance(): array
     {
-
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
         $return_data = $result;
@@ -296,6 +295,7 @@ class DueTrackerService
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
+        $reminder = $this->dueTrackerRepo->setPartner($this->partner)->reminderByContact($this->contact_id,$this->contact_type);
         $customer = [];
 
         if (is_null($result['contact_details'])) {
@@ -317,14 +317,17 @@ class DueTrackerService
             $customer['avatar'] = $result['contact_details']['pro_pic'];
             $customer['due_date_reminder'] = $result['contact_details']['due_date_reminder'];
         }
-        if($this->contact_type == ContactType::SUPPLIER) {
-            $supplier_due = $this->dueTrackerRepo->getSupplierMonthlyDue($this->contact_id);
-            $result['stats']['supplier_due'] = $supplier_due['due'];
-        }
+
+        $total_debit = $result['other_info']['total_debit'];
+        $total_credit = $result['other_info']['total_credit'];
+        $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
         return [
             'contact_details' => $customer,
+            'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
+            'balance' => $result['balance'],
+            'reminder'=> $reminder
         ];
     }
 
@@ -381,11 +384,7 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $dueListData = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
         $dueListBalance = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
-        $dueListBalance = [
-            'total' => $dueListBalance['total'],
-            'stats' => $dueListBalance['stats'],
-            'partner' => $this->getPartnerInfo($this->partner),
-        ];
+
         return array_merge($dueListData,$dueListBalance);
     }
     /**

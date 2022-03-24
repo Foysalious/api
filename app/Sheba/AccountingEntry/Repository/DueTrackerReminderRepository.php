@@ -2,6 +2,9 @@
 
 namespace App\Sheba\AccountingEntry\Repository;
 
+
+use App\Sheba\AccountingEntry\Constants\UserType;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
 
 class DueTrackerReminderRepository extends AccountingRepository
@@ -12,61 +15,45 @@ class DueTrackerReminderRepository extends AccountingRepository
         parent::__construct($client);
     }
 
+
     /**
+     * @param $partner
      * @param $data
-     * @return void
+     * @return mixed
+     * @throws AccountingEntryServerError
      */
-    public function createReminder($data)
+    public function createReminder($partner,$data)
     {
-        //TODO: will create the reminder through post api
-        return $data;
+        $url = "api/reminders/";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->post($url, $data);
     }
 
     /**
      * @param $partner
      * @return array
      */
-    public function getReminders($partner,$query_string){
-        //TODO: will get the reminders for that partner
-        //dd($partner->id,$query_string);
-        $data['list'] = [[
-                "id" => 1,
-                "partner_id" => 217122,
-                "contact_type" => "customer",
-                "contact_id" => "first contact id here",
-                "sms" => "1",
-                "reminder_date" => "2022-03-23",
-                "reminder_status" => "upcoming",
-                "sms_status" => "Will Send SMS"
-            ],
-            [
-                "id" => 2,
-                "partner_id" => 217122,
-                "contact_type" => "customer",
-                "contact_id" => "second contact id here",
-                "sms" => "1",
-                "reminder_date" => "2022-03-25",
-                "reminder_status" => "upcoming",
-                "sms_status" => "Will Send SMS"
-            ]];
-        return $data;
+    public function getReminders($partner,$query_string): array
+    {
+        $url = "api/reminders/?".$query_string;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->get($url);
     }
 
     /**
      * @param $data
      * @return mixed
      */
-    public function updateReminder($data){
-        //TODO: will update the reminder through post api
-        return $data;
+    public function updateReminder($partner,$data){
+        $url = "api/reminders/".$data['reminder_id'];
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->put($url, $data);
+
     }
 
     /**
      * @param $reminder_id
      * @return mixed
      */
-    public function  deleteReminder($reminder_id){
-        //TODO: will delete the reminder through post api
-        return $reminder_id;
+    public function  deleteReminder($partner,$reminder_id){
+        $url = "api/reminders/".$reminder_id;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->delete($url);
     }
 }
