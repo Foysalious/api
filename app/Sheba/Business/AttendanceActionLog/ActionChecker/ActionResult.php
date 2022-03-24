@@ -1,5 +1,7 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
+use Sheba\Dal\AttendanceActionLog\Actions;
+
 class ActionResult
 {
     const LATE_TODAY = 501;
@@ -43,8 +45,10 @@ class ActionResult
         return $this->code;
     }
 
-    public function getMessage()
+    public function getMessage($action = null)
     {
+        if ($action == Actions::CHECKIN && $this->code == self::SUCCESSFUL) return self::SUCCESSFUL_CHECKIN_MESSAGE;
+        if ($action == Actions::CHECKOUT && $this->code == self::SUCCESSFUL) return self::SUCCESSFUL_CHECKOUT_MESSAGE;
         return self::$MESSAGES[$this->code];
     }
 

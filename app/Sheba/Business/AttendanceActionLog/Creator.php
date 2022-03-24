@@ -165,10 +165,16 @@ class Creator
             'status' => $status
         ];
 
-        if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::IP_BASED) $attendance_log_data['is_in_wifi'] = 1;
-        else if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::GEO_LOCATION_BASED) $attendance_log_data['is_geo_location'] = 1;
+        if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::IP_BASED) {
+            $attendance_log_data['is_in_wifi'] = 1;
+            $attendance_log_data['is_remote'] = 0;
+        }
+        else if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::GEO_LOCATION_BASED) {
+            $attendance_log_data['is_geo_location'] = 1;
+            $attendance_log_data['is_remote'] = 0;
+        }
         else if ($this->attendanceSuccess->getAttendanceType() === AttendanceTypes::REMOTE) $attendance_log_data['is_remote'] = 1;
-        //$attendance_log_data['business_office_id'] = $this->attendanceSuccess->getBusinessOfficeId();
+        $attendance_log_data['business_office_id'] = $this->attendanceSuccess->getBusinessOfficeId();
 
         $this->address = $this->getAddress();
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);
