@@ -1,5 +1,8 @@
 <?php namespace Sheba\Business\Attendance\Setting;
 
+use App\Sheba\Business\Attendance\Setting\OfficeIpFormatter;
+use App\Sheba\Business\Attendance\Setting\OfficeLocationFormatter;
+
 class AttendanceSettingTransformer
 {
     public function getData($attendance_types, $business_offices)
@@ -8,7 +11,8 @@ class AttendanceSettingTransformer
 
         $attendance_setting_info['sheba_attendance_types'] = $this->getShebaAttendanceTypes();
         $attendance_setting_info['attendance_types'] = $this->getAttendanceTypes($attendance_types);
-        $attendance_setting_info['business_offices'] = $this->getOfficeNamesWithIp($business_offices);
+        $attendance_setting_info['business_offices'] = (new OfficeIpFormatter($business_offices))->get();
+        $attendance_setting_info['business_geo_locations'] = (new OfficeLocationFormatter($business_offices))->get();
 
         return $attendance_setting_info;
     }
@@ -18,36 +22,21 @@ class AttendanceSettingTransformer
         $attendance_types_data = [];
         foreach ( $attendance_types as $attendance_type )
         {
-            array_push($attendance_types_data,[
+            $attendance_types_data[] = [
                 'id' => $attendance_type->id,
                 'type' => $attendance_type->attendance_type,
                 'status' => $attendance_type->trashed() ? 'deleted' : 'not_deleted'
-            ]);
+            ];
         }
-
         return $attendance_types_data;
-    }
-
-    private function getOfficeNamesWithIp($business_offices)
-    {
-        $office_names_with_ip = [];
-        foreach ($business_offices as $business_office)
-        {
-            array_push($office_names_with_ip,[
-                'id' => $business_office->id,
-                'office_name' => $business_office->name,
-                'ip' => $business_office->ip
-            ]);
-        }
-
-        return $office_names_with_ip;
     }
 
     private function getShebaAttendanceTypes()
     {
         return [
-            [ 'value' => 'ip_based' , 'title' => 'IP based attendance', 'subtitle' => ' - from office Wi-Fi network only' ],
-            [ 'value' => 'remote', 'title' => 'Remote attendance', 'subtitle' => ' - from anywhere' ]
+            [ 'value' => 'ip_based' , 'title' => 'Wifi based', 'subtitle' => ' - from office Wi-Fi network only' ],
+            [ 'value' => 'remote', 'title' => 'Remote', 'subtitle' => ' - from anywhere' ],
+            [ 'value' => 'location_based', 'title' => 'Locations Based', 'subtitle' => ' - from office location zone' ]
         ];
     }
 }

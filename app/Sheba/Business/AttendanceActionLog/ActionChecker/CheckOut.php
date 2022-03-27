@@ -14,7 +14,7 @@ class CheckOut extends ActionChecker
 
     protected function setAlreadyHasActionForTodayResponse()
     {
-        $this->setResult(ActionResultCodes::ALREADY_CHECKED_OUT, ActionResultCodeMessages::ALREADY_CHECKED_OUT);
+        $this->setResult(ActionResult::ALREADY_CHECKED_OUT);
     }
 
     public function check()
@@ -26,8 +26,8 @@ class CheckOut extends ActionChecker
 
     private function checkAlreadyCheckedIn()
     {
-        if (!$this->isSuccess()) return;
-        if (!$this->hasCheckedIn()) $this->setResult(ActionResultCodes::CHECKIN_FIRST, ActionResultCodeMessages::CHECKIN_FIRST);
+        if ($this->isAlreadyFailed()) return;
+        if (!$this->hasCheckedIn()) $this->setResult(ActionResult::CHECKIN_FIRST);
     }
 
     private function hasCheckedIn()
@@ -35,11 +35,6 @@ class CheckOut extends ActionChecker
         return $this->attendanceLogsOfToday ? $this->attendanceLogsOfToday->filter(function ($log) {
                 return $log->action == Actions::CHECKIN;
             })->count() > 0 : false;
-    }
-
-    protected function setSuccessfulResponseMessage()
-    {
-        $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKOUT);
     }
 
     protected function checkLeftEarly()
@@ -51,16 +46,16 @@ class CheckOut extends ActionChecker
         $today_last_checkout_time = $this->business->calculationTodayLastCheckOutTime($which_half_day);
 
         if (is_null($today_last_checkout_time)) return;
-        if (!$this->isSuccess()) return;
+        if ($this->isAlreadyFailed()) return;
 
         $today_checkout_time_without_second = Carbon::parse($date->format('Y-m-d H:i'));
         $is_full_day_leave = (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkFullDayLeave();
 
         if ($today_checkout_time_without_second->lessThan(Carbon::parse($today_last_checkout_time))) {
             if ($weekendHoliday->isWeekendByBusiness($date) || $weekendHoliday->isHolidayByBusiness($date) || $is_full_day_leave) {
-                $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKOUT);
+                $this->setResult(ActionResult::SUCCESSFUL);
             } else {
-                $this->setResult(ActionResultCodes::LEFT_EARLY_TODAY, ActionResultCodeMessages::LEFT_EARLY_TODAY);
+                $this->setResult(ActionResult::LEFT_EARLY_TODAY);
             }
         }
     }
