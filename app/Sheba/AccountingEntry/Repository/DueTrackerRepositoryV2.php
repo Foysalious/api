@@ -102,5 +102,4 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
-
 }

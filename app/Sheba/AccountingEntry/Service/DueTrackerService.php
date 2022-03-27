@@ -2,6 +2,7 @@
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
@@ -24,6 +25,7 @@ use Throwable;
 class DueTrackerService
 {
     protected $partner;
+    protected $reminderRepo;
     protected $dueTrackerRepo;
     protected $contact_type;
     protected $order;
@@ -44,14 +46,11 @@ class DueTrackerService
     protected $end_date;
     protected $contact_id;
     protected $note;
-    protected $sms;
-    protected $reminder_date;
-    protected $reminder_status;
-    protected $sms_status;
 
-    public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
+    public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo,DueTrackerReminderRepository $reminderRepo)
     {
         $this->dueTrackerRepo = $dueTrackerRepo;
+        $this->reminderRepo = $reminderRepo;
     }
 
     /**
@@ -267,15 +266,14 @@ class DueTrackerService
      */
     public function getDueListBalance(): array
     {
-
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
         $return_data = $result;
-        if($this->contact_type == ContactType::SUPPLIER) {
+        if ($this->contact_type == ContactType::SUPPLIER) {
             $supplier_due = $this->dueTrackerRepo->setPartner($this->partner)->getSupplierMonthlyDue();
             $return_data['supplier_due'] = $supplier_due['due'];
         }
-        return $return_data ;
+        return $return_data;
     }
 
     /**
@@ -289,13 +287,15 @@ class DueTrackerService
     }
 
     /**
-     * @throws InvalidPartnerPosCustomer
+     * @return array
      * @throws AccountingEntryServerError
+     * @throws InvalidPartnerPosCustomer
      */
     public function dueListBalanceByContact(): array
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
+        $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
         $customer = [];
 
         if (is_null($result['contact_details'])) {
@@ -309,26 +309,25 @@ class DueTrackerService
             $customer['name'] = $posCustomer->name;
             $customer['mobile'] = $posCustomer->mobile;
             $customer['avatar'] = $posCustomer->pro_pic;
-            $customer['due_date_reminder'] = null;
         } else {
             $customer['id'] = $result['contact_details']['id'];
             $customer['name'] = $result['contact_details']['name'];
             $customer['mobile'] = $result['contact_details']['mobile'];
             $customer['avatar'] = $result['contact_details']['pro_pic'];
-            $customer['due_date_reminder'] = $result['contact_details']['due_date_reminder'];
         }
-        if($this->contact_type == ContactType::SUPPLIER) {
-            $supplier_due = $this->dueTrackerRepo->getSupplierMonthlyDue($this->contact_id);
-            $result['stats']['supplier_due'] = $supplier_due['due'];
-        }
+
+        $total_debit = $result['other_info']['total_debit'];
+        $total_credit = $result['other_info']['total_credit'];
+        $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
         return [
             'contact_details' => $customer,
+            'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
+            'balance' => $result['balance'],
+            'reminder' => $reminder
         ];
     }
-
-//    TODO: Add contact type
 
     /**
      * @return array
@@ -339,10 +338,9 @@ class DueTrackerService
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
-
         $due_list = $result['list'];
         $pos_orders = [];
-        collect($due_list)->each(function($each) use (&$pos_orders) {
+        collect($due_list)->each(function ($each) use (&$pos_orders) {
             if (!is_null($each['source_id']) && $each['source_type'] == EntryTypes::POS) {
                 $pos_orders [] = $each['source_id'];
             }
@@ -373,31 +371,26 @@ class DueTrackerService
     }
 
     /**
-     * @return mixed
+     * @return array
      * @throws AccountingEntryServerError
      */
-    public function report()
+    public function report(): array
     {
         $queryString = $this->generateQueryString();
         $dueListData = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
         $dueListBalance = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
-        $dueListBalance = [
-            'total' => $dueListBalance['total'],
-            'stats' => $dueListBalance['stats'],
-            'partner' => $this->getPartnerInfo($this->partner),
-        ];
-        return array_merge($dueListData,$dueListBalance);
+
+        return array_merge($dueListData, $dueListBalance);
     }
+
     /**
      * @param $request
      * @return string
      * @throws AccountingEntryServerError
-     * @throws \Mpdf\MpdfException
      * @throws InvalidPartnerPosCustomer
-     * @throws NotAssociativeArray
-     * @throws \Throwable
+     * @throws Throwable
      */
-    public function downloadPDF($request)
+    public function downloadPDF($request): string
     {
         $queryString = $this->generateQueryString();
         $data = [];
@@ -409,18 +402,18 @@ class DueTrackerService
             $balanceData = $this->getDueListBalance();
             $data = array_merge($data, $balanceData);
             //TODO: Will Change the Pdf Generation
-            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf" ;
+            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf";
             //return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
         }
-
         $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
         $data = array_merge($data, $list);
-        $balanceData = $this->setCustomerId($request->contact_id)->dueListBalanceByContact();
+        $balanceData = $this->setContactId($request->contact_id)->dueListBalanceByContact();
         $data = array_merge($data, $balanceData);
         //TODO: Will Change the Pdf Generation
         return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220315_due_tracker_by_customer_report_1647338702.pdf";
         //return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
     }
+
     /**
      * @return string
      */
@@ -482,8 +475,8 @@ class DueTrackerService
     private function getPartnerWisePosOrders($pos_orders)
     {
         /** @var OrderServiceAlias $orderService */
-        $orderService= app(OrderServiceAlias::class);
-        return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
+        $orderService = app(OrderServiceAlias::class);
+        return $orderService->getPartnerWiseOrderIds('[' . implode(",", $pos_orders) . ']', 0, count($pos_orders));
     }
 
     /**
@@ -524,6 +517,4 @@ class DueTrackerService
 
         return $data;
     }
-
-
 }

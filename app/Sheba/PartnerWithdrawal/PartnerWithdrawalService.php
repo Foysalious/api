@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Models\WithdrawalRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\OrderAdvanceWithdrawal\OrderAdvanceWithdrawalRequestRepositoryInterface;
 
 class PartnerWithdrawalService
 {
@@ -60,17 +61,23 @@ class PartnerWithdrawalService
         return ['status' => false];
     }
 
-    public function doesExceedWithdrawalAmountForOrder($amount, $orderid, $partnerOrder): bool
+    public function doesExceedWithdrawalAmountForOrder($amount, $partnerOrder): bool
     {
-        return $partnerOrder->sheba_collection == 0
-            || $amount > $partnerOrder->sheba_collection
-            || (($this->activeRequestAgainstOrderAmount($orderid) + $amount) > $partnerOrder->sheba_collection);
+        $minAmount = min([$partnerOrder->sheba_collection, $partnerOrder->grossAmountWithLogistic]);
+        return $partnerOrder->sheba_collection == 0 || (($this->activeRequestAgainstPartnerOrderAmount($partnerOrder) + $amount) > $minAmount);
     }
 
-    public function activeRequestAgainstOrderAmount($orderId)
+    public function activeRequestAgainstPartnerOrderAmount($partner_order)
     {
-        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))->active()->where('order_id', $orderId)->first();
+        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))
+            ->active()
+            ->where('order_id', $partner_order->order_id)
+            ->where('requester_type', 'partner')
+            ->where('requester_id', $partner_order->partner_id)
+            ->first();
 
-        return $withdrawalRequest->total_amount ?? 0;
+        $totalAmount = $withdrawalRequest->total_amount ?? 0;
+        $totalAmount += app()->make(OrderAdvanceWithdrawalRequestRepositoryInterface::class)->getTotalPendingAmountForPartnerOrder($partner_order);
+        return $totalAmount;
     }
 }

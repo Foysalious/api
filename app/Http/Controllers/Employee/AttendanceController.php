@@ -14,21 +14,16 @@ use Illuminate\Support\Facades\Log;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
-use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
-use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
+use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
-use Sheba\Location\Geo;
-use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
 
 class AttendanceController extends Controller
@@ -116,6 +111,7 @@ class AttendanceController extends Controller
         if ($request->is_geo_location_enable && !$request->is_in_wifi_area) {
             $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
         }
+
         if (!$request->is_geo_location_enable && !$request->is_in_wifi_area && $business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
@@ -131,12 +127,14 @@ class AttendanceController extends Controller
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        $is_note_required = in_array($action->getResultCode(), [ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) ? 1 : 0;
+        $result = $action->getResult();
 
-        return response()->json(['code' => $action->getResultCode(),
-            'is_note_required' => $is_note_required,
+        return response()->json([
+            'code' => $result->getCode(),
+            'is_note_required' => (int) $result->isNoteRequired(),
             'date' => Carbon::now()->format('jS F Y'),
-            'message' => $action->getResultMessage()]);
+            'message' => $result->getMessage($request->action)
+        ]);
     }
 
     public function getTodaysInfo(Request $request, ActionProcessor $action_processor)
