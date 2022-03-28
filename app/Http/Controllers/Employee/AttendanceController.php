@@ -2,18 +2,15 @@
 
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionResultCodes;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
-use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use App\Transformers\Business\AttendanceTransformer;
 use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
-use Illuminate\Validation\ValidationException;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use App\Transformers\CustomSerializer;
@@ -22,15 +19,12 @@ use Illuminate\Http\JsonResponse;
 use League\Fractal\Resource\Item;
 use App\Models\BusinessMember;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
-use Sheba\Location\Geo;
-use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
 use League\Fractal\Manager;
 use App\Models\Business;
 use Carbon\Carbon;
-use Throwable;
 
 class AttendanceController extends Controller
 {
@@ -93,6 +87,7 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceAction $attendance_action
      * @return JsonResponse
+     * @throws ValidationException
      */
     public function takeAction(Request $request, AttendanceAction $attendance_action)
     {
@@ -100,7 +95,7 @@ class AttendanceController extends Controller
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            'is_in_wifi_area' => 'required|numeric|in:0,1'
+            #'is_in_wifi_area' => 'required|numeric|in:0,1'
         ];
 
         $business_member = $this->getBusinessMember($request);
@@ -110,8 +105,11 @@ class AttendanceController extends Controller
 
         Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
-        if ($business->isRemoteAttendanceEnable($business_member->id) && !$request->is_in_wifi_area) {
-            #$validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        if ($request->is_geo_location_enable && !$request->is_in_wifi_area) {
+            $validation_data += ['lat' => 'required|numeric', 'lng' => 'required|numeric'];
+        }
+
+        if (!$request->is_geo_location_enable && !$request->is_in_wifi_area && $business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
         #$this->validate($request, $validation_data);
@@ -126,12 +124,14 @@ class AttendanceController extends Controller
             ->setLng($request->lng);
         $action = $attendance_action->doAction();
 
-        $is_note_required = in_array($action->getResultCode(), [ActionResultCodes::LATE_TODAY, ActionResultCodes::LEFT_EARLY_TODAY]) ? 1 : 0;
+        $result = $action->getResult();
 
-        return response()->json(['code' => $action->getResultCode(),
-            'is_note_required' => $is_note_required,
+        return response()->json([
+            'code' => $result->getCode(),
+            'is_note_required' => (int) $result->isNoteRequired(),
             'date' => Carbon::now()->format('jS F Y'),
-            'message' => $action->getResultMessage()]);
+            'message' => $result->getMessage($request->action)
+        ]);
     }
 
     /**
@@ -154,13 +154,15 @@ class AttendanceController extends Controller
         /** @var Business $business */
         $business = $this->getBusiness($request);
         $is_remote_enable = $business->isRemoteAttendanceEnable($business_member->id);
+        $is_geo_location_enable = $business->isGeoLocationAttendanceEnable();
         $data = [
             'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
             'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
             'checkin_time' => $attendance ? $attendance->checkin_time : null,
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0,
-            'is_remote_enable' => $is_remote_enable
+            'is_remote_enable' => $is_remote_enable,
+            'is_geo_location_enable' => $is_geo_location_enable
         ];
         return api_response($request, null, 200, ['attendance' => $data]);
     }
