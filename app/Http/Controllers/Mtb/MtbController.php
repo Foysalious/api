@@ -26,7 +26,7 @@ class MtbController extends Controller
     public function apply(Request $request): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
-        $this->mtbSavePrimaryInformation->setPartner($partner)->storePrimaryInformationToMtb();
-        return http_response($request, null, 200, ['message' => 'Successful']);
+        return $this->mtbSavePrimaryInformation->setPartner($partner)->storePrimaryInformationToMtb($request);
+
     }
 }
