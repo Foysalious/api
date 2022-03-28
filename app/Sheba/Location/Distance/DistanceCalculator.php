@@ -30,6 +30,6 @@ abstract class DistanceCalculator
 
     public function isWithin($meters)
     {
-        return true;
+        return $meters >= $this->distance();
     }
 }

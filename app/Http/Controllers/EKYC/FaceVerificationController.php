@@ -48,16 +48,17 @@ class FaceVerificationController extends Controller
     {
         try {
             $this->validate($request, Statics::faceVerificationValidate());
-            $this->nidFaceVerification->updateLivelinessCount($request, $profileNIDSubmissionRepo);
-            $userAgentInformation->setRequest($request);
+            $avatar = $request->auth_user->getAvatar();
+            $this->nidFaceVerification->updateLivelinessCount($request, $avatar, $profileNIDSubmissionRepo);
             $profile = $request->auth_user->getProfile();
+            $userAgentInformation->setRequest($request);
             $userAgent = $userAgentInformation->getUserAgent();
             $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
             $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
-            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->nidFaceVerification->beforePorichoyCallChanges($profile, $avatar);
             $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
-            $data = $this->getFaceVerificationDataFromEkyc($request, $requestedData, $profileNIDSubmissionRepo);
+            $data = $this->getFaceVerificationDataFromEkyc($request, $avatar, $requestedData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, $data);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
@@ -111,6 +112,8 @@ class FaceVerificationController extends Controller
         try {
             $profileNIDSubmissionLog = ProfileNIDSubmissionLog::find($id);
             $profile = Profile::find($profileNIDSubmissionLog->profile_id);
+            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
             $photoLink = $profile->pro_pic;
             $this->resubmit_url .= "/".$profileNIDSubmissionLog->nid_no;
             $faceVerificationData = $this->client->post($this->resubmit_url, null);
@@ -145,7 +148,7 @@ class FaceVerificationController extends Controller
         }
     }
 
-    private function getFaceVerificationDataFromEkyc($request, $requestedData, $profileNIDSubmissionRepo): array
+    private function getFaceVerificationDataFromEkyc($request, $avatar, $requestedData, $profileNIDSubmissionRepo): array
     {
         $profile = $request->auth_user->getProfile();
         try {
@@ -155,14 +158,14 @@ class FaceVerificationController extends Controller
                 $status = Statics::VERIFIED;
                 $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
             } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
-            $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
+            $this->nidFaceVerification->storeData($request, $avatar, $faceVerificationData, $profileNIDSubmissionRepo);
             return ['data' => Statics::faceVerificationResponse($status, $profile->nid_verification_request_count,
-                $faceVerificationData['data']['message'])];
+                $faceVerificationData['data']['message'], $avatar)];
         } catch (EKycException $e) {
             $this->nidFaceVerification->unverifiedChanges($profile);
-            $this->nidFaceVerification->storeData($request, null, $profileNIDSubmissionRepo);
+            $this->nidFaceVerification->storeData($request, $avatar, null, $profileNIDSubmissionRepo);
             return ['data' => Statics::faceVerificationResponse(Statics::PENDING, $request->auth_user
-                ->getProfile()->nid_verification_request_count, $e->getMessage())];
+                ->getProfile()->nid_verification_request_count, $e->getMessage(), $avatar)];
         } catch (\Throwable $e) {
             logError($e);
             return ['message' => $e->getMessage()];

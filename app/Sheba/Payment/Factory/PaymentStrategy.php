@@ -16,6 +16,7 @@ use Sheba\Payment\Methods\OkWallet\OkWallet;
 use Sheba\Payment\Methods\PartnerWallet;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\PortWallet\PortWallet;
+use Sheba\Payment\Methods\ShurjoPay\ShurjoPay;
 use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Ssl\SslBuilder;
 use Sheba\Payment\Methods\Wallet;
@@ -25,18 +26,19 @@ class PaymentStrategy
 {
     use ConstGetter;
 
-    const BKASH          = "bkash";
-    const ONLINE         = "online";
-    const SSL            = "ssl";
-    const WALLET         = "wallet";
-    const CBL            = "cbl";
+    const BKASH = "bkash";
+    const ONLINE = "online";
+    const SSL = "ssl";
+    const WALLET = "wallet";
+    const CBL = "cbl";
     const PARTNER_WALLET = "partner_wallet";
     const BONDHU_BALANCE = "bondhu_balance";
-    const OK_WALLET      = 'ok_wallet';
-    const SSL_DONATION   = "ssl_donation";
-    const PORT_WALLET    = "port_wallet";
-    const NAGAD          = 'nagad';
-    const EBL            = 'ebl';
+    const OK_WALLET = 'ok_wallet';
+    const SSL_DONATION = "ssl_donation";
+    const PORT_WALLET = "port_wallet";
+    const NAGAD = 'nagad';
+    const EBL = 'ebl';
+    const SHURJOPAY = 'shurjopay';
 
     public static function getDefaultOnlineMethod()
     {
@@ -78,6 +80,8 @@ class PaymentStrategy
                 return NagadBuilder::get($payable);
             case self::EBL:
                 return EblBuilder::get($payable);
+            case self::SHURJOPAY:
+                return app(ShurjoPay::class);
         }
     }
 

@@ -197,7 +197,8 @@ class CoWorkerStatusController extends Controller
             ->setRole($request->role)
             ->setGender($request->gender)
             ->setStatus('active')
-            ->setJoinDate($request->join_date);
+            ->setJoinDate($request->join_date)
+            ->setGrossSalary($request->gross_salary);
 
         $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setBusinessMember($business_member);
         $business_member = $this->coWorkerUpdater->activeFormInviteOrInactive();
