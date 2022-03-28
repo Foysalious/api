@@ -34,9 +34,9 @@ class AttendanceSettingTransformer
     private function getShebaAttendanceTypes()
     {
         return [
-            [ 'value' => 'ip_based' , 'title' => 'Wifi based', 'subtitle' => ' - from office Wi-Fi network only' ],
+            [ 'value' => 'location_based', 'title' => 'Locations Based', 'subtitle' => ' - from office location zone' ],
             [ 'value' => 'remote', 'title' => 'Remote', 'subtitle' => ' - from anywhere' ],
-            [ 'value' => 'location_based', 'title' => 'Locations Based', 'subtitle' => ' - from office location zone' ]
+            [ 'value' => 'ip_based' , 'title' => 'Wifi based', 'subtitle' => ' - from office Wi-Fi network only' ]
         ];
     }
 }
