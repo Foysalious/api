@@ -104,7 +104,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
             'member' => function ($q) {
                 $q->select('members.id', 'profile_id')->with([
                     'profile' => function ($q) {
-                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic', 'dob', 'address', 'nationality', 'nid_no', 'tin_no');
                     }
                 ]);
             }, 'role' => function ($q) {
