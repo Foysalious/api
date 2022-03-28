@@ -132,7 +132,9 @@ class ReportsController extends Controller
     public function getTransactionList(Request $request): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
-        $data = $this->accountingReportRepository->transactionList($request, $partner->id);
+        $data = $this->accountingReportRepository->setLimit($request->limit)->setOffset($request->offset)->setStartDate($request->start_date)->setEndDate($request->end_date)
+            ->setTransactionType($request->transaction_type)->setReconcile($request->reconcile)->setGateway($request->gateway)->setQ($request->q)
+            ->transactionList($partner->id);
         return api_response($request, $data, 200, ['data' => $data]);
     }
 }

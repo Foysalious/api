@@ -9,6 +9,15 @@ use App\Sheba\AccountingEntry\Constants\AccountingReport;
 class AccountingReportRepository extends BaseRepository
 {
     private $api;
+    private $q;
+    private $userId;
+    private $limit;
+    private $offset;
+    private $startDate;
+    private $endDate;
+    private $transactionType;
+    private $reconcile;
+    private $gateway;
 
     /**
      * AccountingReportRepository constructor.
@@ -80,10 +89,101 @@ class AccountingReportRepository extends BaseRepository
         ];
     }
 
-    public function transactionList($request, $userId, $userType = UserType::PARTNER)
+    /**
+     * @param $userId
+     * @return $this
+     */
+    public function setUserId($userId): AccountingReportRepository
     {
-        return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . "accounting-report/payments_report?" . ($request->limit ? "limit={$request->limit}" : "") . ($request->offset ? "&offset={$request->offset}" : "&offset=0")
-            . ($request->start_date ? "&start_date={$request->start_date}" : "") . ($request->end_date ? "&end_date={$request->end_date}" : "") . ($request->transaction_type ? "&transaction_type={$request->transaction_type}" : "")
-            . ($request->reconcile ? "&reconcile={$request->reconcile}" : "") . ($request->gateway ? "&gateway={$request->gateway}" : "") . ($request->q ? "&q={$request->q}" : ""));
+        $this->userId = $userId;
+        return $this;
+    }
+
+    /**
+     * @param $limit
+     * @return $this
+     */
+    public function setLimit($limit): AccountingReportRepository
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     * @return $this
+     */
+    public function setOffset($offset): AccountingReportRepository
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param $startDate
+     * @return $this
+     */
+    public function setStartDate($startDate): AccountingReportRepository
+    {
+        $this->startDate = $startDate;
+        return $this;
+    }
+
+    /**
+     * @param $endDate
+     * @return $this
+     */
+    public function setEndDate($endDate): AccountingReportRepository
+    {
+        $this->endDate = $endDate;
+        return $this;
+    }
+
+    /**
+     * @param $transactionType
+     * @return $this
+     */
+    public function setTransactionType($transactionType): AccountingReportRepository
+    {
+        $this->transactionType = $transactionType;
+        return $this;
+    }
+
+    /**
+     * @param $reconcile
+     * @return $this
+     */
+    public function setReconcile($reconcile): AccountingReportRepository
+    {
+        $this->reconcile = $reconcile;
+        return $this;
+    }
+
+    /**
+     * @param $gateway
+     * @return $this
+     */
+    public function setGateway($gateway): AccountingReportRepository
+    {
+        $this->gateway = $gateway;
+        return $this;
+    }
+
+    /**
+     * @param $q
+     * @return $this
+     */
+    public function setQ($q): AccountingReportRepository
+    {
+        $this->q = $q;
+        return $this;
+    }
+
+
+    public function transactionList($userId, $userType = UserType::PARTNER)
+    {
+        return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . "accounting-report/payments_report?" . ($this->limit ? "limit={$this->limit}" : "") . ($this->offset ? "&offset={$this->offset}" : "&offset=0")
+            . ($this->startDate ? "&start_date={$this->startDate}" : "") . ($this->endDate ? "&end_date={$this->endDate}" : "") . ($this->transactionType ? "&transaction_type={$this->transactionType}" : "")
+            . ($this->reconcile ? "&reconcile={$this->reconcile}" : "") . ($this->gateway ? "&gateway={$this->gateway}" : "") . ($this->q ? "&q={$this->q}+" : ""));
     }
 }
