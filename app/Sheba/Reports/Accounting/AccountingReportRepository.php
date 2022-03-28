@@ -9,6 +9,7 @@ use App\Sheba\AccountingEntry\Constants\AccountingReport;
 class AccountingReportRepository extends BaseRepository
 {
     private $api;
+    private $q;
     private $userId;
     private $limit;
     private $offset;
@@ -17,7 +18,6 @@ class AccountingReportRepository extends BaseRepository
     private $transactionType;
     private $reconcile;
     private $gateway;
-    private $q;
 
     /**
      * AccountingReportRepository constructor.
@@ -180,7 +180,7 @@ class AccountingReportRepository extends BaseRepository
     }
 
 
-    public function transactionList($request, $userId, $userType = UserType::PARTNER)
+    public function transactionList($userId, $userType = UserType::PARTNER)
     {
         return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . "accounting-report/payments_report?" . ($this->limit ? "limit={$this->limit}" : "") . ($this->offset ? "&offset={$this->offset}" : "&offset=0")
             . ($this->startDate ? "&start_date={$this->startDate}" : "") . ($this->endDate ? "&end_date={$this->endDate}" : "") . ($this->transactionType ? "&transaction_type={$this->transactionType}" : "")
