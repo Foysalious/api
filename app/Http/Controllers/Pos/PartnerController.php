@@ -30,7 +30,7 @@ class PartnerController extends Controller
     public function findById($partner, Request $request)
     {
         /** delivery_charge is used only in pos-order */
-        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain', 'delivery_charge')->with('posSetting')->first();
+        $partner = Partner::where('id', $partner)->select('id', 'name', 'logo', 'sub_domain', 'delivery_charge', 'is_webstore_sms_active')->with('posSetting')->first();
         if (!$partner) return http_response($request, null, 404);
         list($is_registered_for_sdelivery, $delivery_method, $delivery_charge) = $this->getDeliveryInformation($partner);
         $partner->is_registered_for_sdelivery = $is_registered_for_sdelivery;
