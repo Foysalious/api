@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
@@ -91,6 +92,7 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceAction $attendance_action
      * @return JsonResponse
+     * @throws ValidationException
      */
     public function takeAction(Request $request, AttendanceAction $attendance_action)
     {
@@ -98,7 +100,7 @@ class AttendanceController extends Controller
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            'is_in_wifi_area' => 'required|numeric|in:0,1'
+            #'is_in_wifi_area' => 'required|numeric|in:0,1'
         ];
 
         $business_member = $this->getBusinessMember($request);
@@ -115,7 +117,7 @@ class AttendanceController extends Controller
         if (!$request->is_geo_location_enable && !$request->is_in_wifi_area && $business->isRemoteAttendanceEnable($business_member->id)) {
             $validation_data += ['remote_mode' => 'required|string|in:' . implode(',', RemoteMode::get())];
         }
-        $this->validate($request, $validation_data);
+        #$this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
 
         $attendance_action->setBusinessMember($business_member)
