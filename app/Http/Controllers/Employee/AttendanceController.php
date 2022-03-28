@@ -2,6 +2,7 @@
 
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -86,6 +87,7 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceAction $attendance_action
      * @return JsonResponse
+     * @throws ValidationException
      */
     public function takeAction(Request $request, AttendanceAction $attendance_action)
     {
@@ -93,7 +95,7 @@ class AttendanceController extends Controller
             'action' => 'required|string|in:' . implode(',', Actions::get()),
             'device_id' => 'string',
             'user_agent' => 'string',
-            'is_in_wifi_area' => 'required|numeric|in:0,1'
+            #'is_in_wifi_area' => 'required|numeric|in:0,1'
         ];
 
         $business_member = $this->getBusinessMember($request);
