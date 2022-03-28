@@ -269,6 +269,7 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
         $return_data = $result;
+        $return_data['current_time'] = Carbon::now()->format('Y-m-d H:i:s');
         if ($this->contact_type == ContactType::SUPPLIER) {
             $supplier_due = $this->dueTrackerRepo->setPartner($this->partner)->getSupplierMonthlyDue();
             $return_data['supplier_due'] = $supplier_due['due'];
@@ -296,8 +297,7 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
         $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
-        $customer = [];
-
+        $customer = $result['contact_details'];
         if (is_null($result['contact_details'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
@@ -308,24 +308,15 @@ class DueTrackerService
             $customer['id'] = $posCustomer->id;
             $customer['name'] = $posCustomer->name;
             $customer['mobile'] = $posCustomer->mobile;
-            $customer['avatar'] = $posCustomer->pro_pic;
-        } else {
-            $customer['id'] = $result['contact_details']['id'];
-            $customer['name'] = $result['contact_details']['name'];
-            $customer['mobile'] = $result['contact_details']['mobile'];
-            $customer['avatar'] = $result['contact_details']['pro_pic'];
+            $customer['pro_pic'] = $posCustomer->pro_pic;
         }
 
-        $total_debit = $result['other_info']['total_debit'];
-        $total_credit = $result['other_info']['total_credit'];
-        $result['balance']['color'] = $total_debit > $total_credit ? '#219653' : '#DC1E1E';
         return [
             'contact_details' => $customer,
-            'partner' => $this->getPartnerInfo($this->partner),
             'stats' => $result['stats'],
             'other_info' => $result['other_info'],
-            'balance' => $result['balance'],
-            'reminder' => $reminder
+            'reminder' => $reminder,
+            'current_time' => Carbon::now()->format('Y-m-d H:i:s')
         ];
     }
 
@@ -340,6 +331,7 @@ class DueTrackerService
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
         $due_list = $result['list'];
         $pos_orders = [];
+        /*
         collect($due_list)->each(function ($each) use (&$pos_orders) {
             if (!is_null($each['source_id']) && $each['source_type'] == EntryTypes::POS) {
                 $pos_orders [] = $each['source_id'];
@@ -349,9 +341,6 @@ class DueTrackerService
             $orders = $this->getPartnerWisePosOrders($pos_orders)['orders'];
         }
         foreach ($due_list as $key => &$item) {
-            $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
-            $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
-            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
             if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && isset($orders[$item['source_id']])) {
                 $order = $orders[$item['source_id']];
                 $item['partner_wise_order_id'] = $order['partner_wise_order_id'];
@@ -365,6 +354,7 @@ class DueTrackerService
                 }
             }
         }
+        */
         return [
             'list' => $due_list
         ];
