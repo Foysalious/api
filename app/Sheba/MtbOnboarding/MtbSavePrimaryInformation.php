@@ -1,10 +1,13 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
 use App\Models\Partner;
+use App\Sheba\DynamicForm\DynamicForm;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
+use App\Sheba\MTB\Validation\ApplyValidation;
+use Illuminate\Auth\Access\AuthorizationException;
 
 
 class MtbSavePrimaryInformation
@@ -37,16 +40,22 @@ class MtbSavePrimaryInformation
      * @var PartnerMefInformation
      */
     private $partnerMefInformation;
+    /**
+     * @var ApplyValidation
+     */
+    private $applyValidation;
 
 
     public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
-                                MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload, MtbSaveTransaction $mtbSaveTransaction)
+                                MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload, MtbSaveTransaction $mtbSaveTransaction,
+                                ApplyValidation           $applyValidation)
     {
         $this->client = $client;
         $this->mtbAccountStatus = $mtbAccountStatus;
         $this->mtbSaveNomineeInformation = $mtbSaveNomineeInformation;
         $this->mtbDocumentUpload = $mtbDocumentUpload;
         $this->mtbSaveTransaction = $mtbSaveTransaction;
+        $this->applyValidation = $applyValidation;
     }
 
     public function setPartnerMefInformation($partnerMefInformation): MtbSavePrimaryInformation
@@ -112,14 +121,18 @@ class MtbSavePrimaryInformation
     }
 
     /**
-     * @return void
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function storePrimaryInformationToMtb()
+    public function storePrimaryInformationToMtb($request)
     {
+        $data = $this->applyValidation->setPartner($this->partner)->setForm(MtbConstants::MTB_FORM_ID)->getFormSections();
+        if ($data['total_percentage'] != 100)
+            return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data['total_percentage'] . " completed"]);
         $data = $this->makePrimaryInformation();
         $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
         $this->applyMtb();
+        return http_response($request, null, 200, ['message' => 'Successful']);
     }
 }

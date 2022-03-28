@@ -18,10 +18,10 @@ class PartnerRoute
             (new PartnerJwtAuthRoute())->set($api);
             $api->get('search', 'Partner\PartnerPosController@search');
         });
+        (new DynamicFormRoute())->set($api);
         (new ExternalPaymentLinkRoute())->set($api);
         (new ResellerPaymentRoute())->set($api);
         (new QRPaymentRoute())->set($api);
-        (new DynamicFormRoute())->set($api);
         (new MtbRoute())->set($api);
     }
 }
