@@ -20,6 +20,7 @@ use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerDataMigration\PartnerDataMigration;
 use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
+use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -1148,5 +1149,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function survey()
     {
         return $this->morphMany(Survey::class, 'user');
+    }
+
+    public function partnerMefInformation()
+    {
+        return $this->hasOne(PartnerMefInformation::class);
     }
 }
