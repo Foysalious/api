@@ -49,7 +49,7 @@ class Bkash extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $this->setCredentials($payable->user,$payable->type);
+        $this->setCredentials($payable->user, $payable->type);
 
         $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $payment = new Payment();
@@ -69,7 +69,7 @@ class Bkash extends PaymentMethod
             $payment_details->amount = $payable->amount;
             $payment_details->save();
         });
-        if (false && $payment->payable->user->getAgreementId()) {
+        if ($payment->payable->user->getAgreementId()) {
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
             $data = $tokenized_payment->create($payment);
@@ -93,7 +93,7 @@ class Bkash extends PaymentMethod
     private function setCredentials($user, $type)
     {
         /** @var BkashAuthBuilder $bkash_auth */
-        $bkash_auth = BkashAuthBuilder::getForUserAndType($user,$type);
+        $bkash_auth = BkashAuthBuilder::getForUserAndType($user, $type);
         $this->appKey = $bkash_auth->appKey;
         $this->appSecret = $bkash_auth->appSecret;
         $this->username = $bkash_auth->username;
@@ -108,11 +108,11 @@ class Bkash extends PaymentMethod
         $token = $token ? $token : $this->grantToken();
         $intent = 'sale';
         $create_pay_body = json_encode(array(
-               'amount' => $payment->payable->amount,
-               'currency' => 'BDT',
-               'intent' => $intent,
-               'merchantInvoiceNumber' => $payment->gateway_transaction_id
-           ));
+            'amount' => $payment->payable->amount,
+            'currency' => 'BDT',
+            'intent' => $intent,
+            'merchantInvoiceNumber' => $payment->gateway_transaction_id
+        ));
         $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
             'Content-Type:application/json',
@@ -168,10 +168,10 @@ class Bkash extends PaymentMethod
      */
     public function validate(Payment $payment): Payment
     {
-        $this->setCredentials($payment->payable->user,$payment->payable->type);
+        $this->setCredentials($payment->payable->user, $payment->payable->type);
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
-        if (false && $payment->payable->user->getAgreementId()) {
+        if ($payment->payable->user->getAgreementId()) {
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
             $res = $tokenized_payment->execute($payment);
