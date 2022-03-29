@@ -3,6 +3,7 @@
 namespace Sheba\ResellerPayment;
 
 use App\Models\Partner;
+use App\Sheba\ResellerPayment\MORServiceClient;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\ResellerPayment\Exceptions\StoreValidationException;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
@@ -64,6 +65,9 @@ class StoreConfiguration
         /** @var PaymentStore $store */
         $store = (new StoreFactory())->setKey($this->key)->get();
         $store->setData($this->request_data)->setPartner($this->partner)->setGatewayId($this->gateway_id)->postConfiguration();
+        /** @var MORServiceClient $morClient */
+        $morClient = app(MORServiceClient::class);
+        $morClient->put("api/v1/application/type/partner/users/" . $this->partner->id . "?key=" . $this->key, null);
     }
 
     /**
@@ -93,12 +97,12 @@ class StoreConfiguration
     public function validate()
     {
         $static_data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
-        if(!isset($static_data)) throw new InvalidKeyException();
+        if (!isset($static_data)) throw new InvalidKeyException();
         $request = json_decode($this->request_data, 1);
-        if(!isset($request) || !is_array($request)) throw new StoreValidationException();
+        if (!isset($request) || !is_array($request)) throw new StoreValidationException();
         foreach ($static_data as $data) {
             if ($data["mandatory"]) {
-                if(array_key_exists($data["id"], $request)) continue;
+                if (array_key_exists($data["id"], $request)) continue;
                 throw new StoreValidationException();
             }
         }
