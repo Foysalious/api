@@ -15,7 +15,7 @@ abstract class BkashToken
 
     public function get()
     {
-        if ($token = $this->getTokenFromRedis()) return $token;
+//        if ($token = $this->getTokenFromRedis()) return $token;
         $curl = $this->getCurlObject();
         $result_data = curl_exec($curl);
         if (curl_errno($curl) > 0) throw new \InvalidArgumentException('Bkash grant token API error.');

@@ -20,11 +20,11 @@ return [
     'verification_endpoint' => env('BKASH_VERIFICATION_ENDPOINT', 'https://www.bkashcluster.com:9081/dreamwave/merchant/trxcheck/sendmsg'),
     'merchant_number' => env('BKASH_MERCHANT_NUMBER', '01799444000'),
     'tokenized' => [
-        'app_key' => env('BKASH_TOKENIZED_APP_KEY'),
-        'app_secret' => env('BKASH_TOKENIZED_APP_SECRET'),
-        'username' => env('BKASH_TOKENIZED_USERNAME'),
-        'password' => env('BKASH_TOKENIZED_PASSWORD'),
-        'url' => env('BKASH_TOKENIZED_URL')
+        'app_key' => env('BKASH_TOKENIZED_APP_KEY', '7epj60ddf7id0chhcm3vkejtab'),
+        'app_secret' => env('BKASH_TOKENIZED_APP_SECRET', '18mvi27h9l38dtdv110rq5g603blk0fhh5hg46gfb27cp2rbs66f'),
+        'username' => env('BKASH_TOKENIZED_USERNAME', 'sandboxTokenizedUser01'),
+        'password' => env('BKASH_TOKENIZED_PASSWORD', 'sandboxTokenizedUser12345'),
+        'url' => env('BKASH_TOKENIZED_URL', 'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized')
     ],
     'payout' => [
         'app_key' => env('BKASH_PAYOUT_APP_KEY'),

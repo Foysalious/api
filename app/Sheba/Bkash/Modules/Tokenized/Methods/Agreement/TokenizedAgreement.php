@@ -15,20 +15,24 @@ class TokenizedAgreement extends TokenizedModule
      */
     public function create($payer_reference, $callback_url)
     {
-        $create_pay_body = json_encode(array(
+        $createagreementbody = array(
             'payerReference' => (string)$payer_reference,
             'callbackURL' => $callback_url,
-        ));
-        $curl = curl_init($this->bkashAuth->url . '/checkout/agreement/create');
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $this->getHeader());
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $create_pay_body);
-        curl_setopt($curl, CURLOPT_FAILONERROR, true);
-        $result_data = curl_exec($curl);
-        if (curl_errno($curl) > 0) throw new \InvalidArgumentException('Bkash create API error.');
-        curl_close($curl);
-        return (new CreateResponse())->setResponse(json_decode($result_data));
+            'mode' => '0000',
+        );
+        $url = curl_init($this->bkashAuth->url . '/checkout/create');
+        $createagreementbodyx = json_encode($createagreementbody);
+        curl_setopt($url, CURLOPT_HTTPHEADER, $this->getHeader());
+        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($url, CURLOPT_POSTFIELDS, $createagreementbodyx);
+        curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($url, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        $result_data = curl_exec($url);
+        $obj = json_decode($result_data);
+        if (array_key_exists('errorCode', $obj)) throw new \InvalidArgumentException('Bkash create API error.');
+        curl_close($url);
+        return (new CreateResponse())->setResponse($obj);
     }
 
     public function execute($payment_id)

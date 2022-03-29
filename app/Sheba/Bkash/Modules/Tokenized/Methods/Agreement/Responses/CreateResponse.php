@@ -3,32 +3,15 @@
 
 class CreateResponse
 {
-    private $statusCode;
-    private $statusMessage;
-    private $paymentID;
-    private $bkashURL;
-    private $agreementCreateTime;
-    private $agreementStatus;
-    private $successCallbackURL;
-    private $failureCallbackURL;
-    private $cancelledCallbackURL;
+    private $response;
 
-    public function __get($name)
+    public function setResponse($response): CreateResponse
     {
-        return $this->$name;
+        $this->response = $response;
+        return $this;
     }
 
-    public function setResponse($response)
-    {
-        $this->statusCode = $response->statusCode;
-        $this->statusMessage = $response->statusMessage;
-        $this->paymentID = $response->paymentID;
-        $this->bkashURL = $response->bkashURL;
-        $this->agreementCreateTime = $response->agreementCreateTime;
-        $this->agreementStatus = $response->agreementStatus;
-        $this->successCallbackURL = $response->successCallbackURL;
-        $this->failureCallbackURL = $response->failureCallbackURL;
-        $this->cancelledCallbackURL = $response->cancelledCallbackURL;
-        return $this;
+    public function isSuccess(){
+
     }
 }
