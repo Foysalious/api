@@ -25,7 +25,7 @@ class DueTrackerReminderController extends Controller
     {
         //TODO: sms key should change
         $this->validate($request, [
-            'contactId' => 'required',
+            'contact_id' => 'required',
             'contact_type' => 'required|in:customer,supplier',
             'sms' => 'required',
             'reminder_date' => 'required|date_format:Y-m-d H:i:s',
@@ -33,7 +33,7 @@ class DueTrackerReminderController extends Controller
         $response = $this->dueTrackerReminderService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
-            ->setContactId($request->contactId)
+            ->setContactId($request->contact_id)
             ->setSms($request->sms)
             ->setReminderDate($request->reminder_date)
             ->createReminder();
