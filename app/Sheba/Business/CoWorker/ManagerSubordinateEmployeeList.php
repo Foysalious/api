@@ -28,7 +28,7 @@ class ManagerSubordinateEmployeeList
     {
         $managers = $this->getManager($business_member->id);
         $managers_data = [];
-        foreach ($managers as $business_member) $managers_data[] = $this->formatSubordinateList($business_member);
+        foreach ($managers as $manager) $managers_data[] = $this->formatSubordinateList($manager);
         $managers_data = $this->uniqueManagerData($managers_data);
         if ($department) return $this->filterEmployeeByDepartment($business_member, $managers_data, $is_employee_active);
         return $managers_data;
@@ -36,17 +36,14 @@ class ManagerSubordinateEmployeeList
 
     private function getManager($business_member_id): array
     {
-        $children = [];
+        $manager_data = [];
         $managers = $this->getCoWorkersUnderSpecificManager($business_member_id);
         foreach ($managers as $manager)
         {
-            $children[] = $manager;
-            $arr = $this->getManager($manager->id);
-            foreach ($arr as $v){
-                $children[] = $v;
-            }
+            $manager_data[] = $manager;
+            foreach ($this->getManager($manager->id) as $next_manager) $manager_data[] = $next_manager;
         }
-        return $children;
+        return $manager_data;
     }
 
     /**
@@ -103,6 +100,7 @@ class ManagerSubordinateEmployeeList
 
     private function formatSubordinateList($business_member)
     {
+        return $business_member->id;
         /** @var Member $member */
         $member = $business_member->member;
         /** @var Profile $profile */
