@@ -21,7 +21,7 @@ class TrackingController extends Controller
         $locations = $request->locations;
         $data = [];
         foreach ($locations as $location) {
-            $geo = json_encode([$location['lat'], $location['lng']]);
+            $geo = json_encode(['lat' => $location['lat'], 'lng' => $location['lng']]);
             $data[] = [
                 'business_id' => $business->id,
                 'business_member_id' => $business_member->id,
