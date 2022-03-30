@@ -5,14 +5,34 @@ class ExecuteResponse
 {
     private $agreementID;
 
-    public function __get($name)
+    private $response;
+
+    public function __construct($response)
     {
-        return $this->$name;
+        $this->response = $response;
     }
 
-    public function setResponse($response)
+    /**
+     * @return mixed
+     */
+    public function getAgreementID()
     {
-        $this->agreementID = $response->agreementID;
+        return $this->agreementID;
+    }
+
+    /**
+     * @param mixed $agreementID
+     * @return ExecuteResponse
+     */
+    public function setAgreementID($agreementID)
+    {
+        $this->agreementID = $agreementID;
         return $this;
     }
+
+    public function isSuccess()
+    {
+        return $this->response->statusCode && $this->response->statusCode == "0000";
+    }
+
 }

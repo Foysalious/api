@@ -5,7 +5,6 @@ class InitResponse
 {
     private $transactionId;
     private $redirectUrl;
-    private $successUrl;
 
     public function setTransactionId($id): InitResponse
     {

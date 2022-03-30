@@ -5,9 +5,12 @@ class ValidateResponse
 {
     private $agreementId;
 
-    public function __get($name)
+    /**
+     * @return mixed
+     */
+    public function getAgreementId()
     {
-        return $this->$name;
+        return $this->agreementId;
     }
 
     public function setAgreementId($id)
