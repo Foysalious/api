@@ -70,10 +70,21 @@ class DynamicForm
 
     public function getSectionDetails(): array
     {
+        $fields = $this->getSectionFields();
         return [
             "title" => $this->getSectionNames(),
-            "form_items" => $this->getSectionFields(),
+            "form_items" => $fields,
+            "completion" => $this->getSectionCompletion($fields),
             "post_url" => $this->getPostUrl()
+        ];
+    }
+
+    private function getSectionCompletion($fields): array
+    {
+        $completion = (new CompletionCalculation())->setFields($fields)->calculate();
+        return [
+            "en" => $completion,
+            "bn" => convertNumbersToBangla($completion, false),
         ];
     }
 
