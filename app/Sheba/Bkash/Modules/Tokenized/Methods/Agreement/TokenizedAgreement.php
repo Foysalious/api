@@ -4,6 +4,7 @@
 use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\Responses\CreateResponse;
 use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\Responses\ExecuteResponse;
 use Sheba\Bkash\Modules\Tokenized\TokenizedModule;
+use Sheba\Settings\Payment\Responses\InitResponse;
 
 class TokenizedAgreement extends TokenizedModule
 {
@@ -11,9 +12,10 @@ class TokenizedAgreement extends TokenizedModule
     /**
      * @param $payer_reference
      * @param $callback_url
-     * @return CreateResponse
+     * @return InitResponse
+     * @throws \Exception
      */
-    public function create($payer_reference, $callback_url)
+    public function create($payer_reference, $callback_url): InitResponse
     {
         $createagreementbody = array(
             'payerReference' => (string)$payer_reference,
@@ -30,9 +32,12 @@ class TokenizedAgreement extends TokenizedModule
         curl_setopt($url, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         $result_data = curl_exec($url);
         $obj = json_decode($result_data);
-        if (array_key_exists('errorCode', $obj)) throw new \InvalidArgumentException('Bkash create API error.');
         curl_close($url);
-        return (new CreateResponse())->setResponse($obj);
+        $create_response = new CreateResponse($obj);
+        $init_response = new InitResponse();
+        if (!$create_response->isSuccess()) throw new \Exception("Something went wrong");
+        $init_response->setRedirectUrl($create_response->getRedirectUrl())->setTransactionId($create_response->getTransactionId());
+        return $init_response;
     }
 
     public function execute($payment_id)

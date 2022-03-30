@@ -5,13 +5,23 @@ class CreateResponse
 {
     private $response;
 
-    public function setResponse($response): CreateResponse
+    public function __construct($response)
     {
         $this->response = $response;
-        return $this;
     }
 
-    public function isSuccess(){
+    public function isSuccess(): bool
+    {
+        return $this->response->statusCode && $this->response->statusCode == "0000";
+    }
 
+    public function getTransactionId()
+    {
+        return $this->response->paymentID;
+    }
+
+    public function getRedirectUrl()
+    {
+        return $this->response->bkashURL;
     }
 }

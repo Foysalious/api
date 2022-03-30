@@ -21,13 +21,14 @@ class BkashSetting extends PaymentSettingMethod
         $this->bkashAgreement = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('agreement');
     }
 
+    /**
+     * @throws \Exception
+     */
     public function init(Profile $profile): InitResponse
     {
         $response = $this->bkashAgreement->create($profile->id, config('sheba.api_url') . '/v2/bkash/tokenized/agreement/validate');
-        $init_response = (new InitResponse())->setSuccessUrl($response->successCallbackURL)
-            ->setRedirectUrl($response->bkashURL)->setTransactionId($response->paymentID);
-        $this->setPaymentIdInRedis($init_response->transactionId, $profile);
-        return $init_response;
+        $this->setPaymentIdInRedis($response->getTransactionId(), $profile);
+        return $response;
     }
 
     public function validate($id): ValidateResponse
@@ -41,7 +42,7 @@ class BkashSetting extends PaymentSettingMethod
     {
         Redis::set($transaction_id, json_encode(array(
             'id' => $profile->id,
-            'type' => 'Profile'
+            'type' => 'profile'
         )));
         Redis::expire($transaction_id, 120 * 60 * 60);
     }

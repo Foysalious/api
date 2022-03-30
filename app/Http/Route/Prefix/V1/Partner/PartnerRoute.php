@@ -13,8 +13,10 @@ class PartnerRoute
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             $api->get('search', 'Partner\PartnerPosController@search');
+            $api->group(['prefix' => 'payment-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
+                $api->post('/', 'Payment\PaymentSettingController@store');
+            });
         });
-
         (new ExternalPaymentLinkRoute())->set($api);
         (new ResellerPaymentRoute())->set($api);
     }

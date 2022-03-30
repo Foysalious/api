@@ -88,7 +88,7 @@ class SettingsController extends Controller
                 'payments' => [
                     'is_bkash_saved' => $customer->profile->bkash_agreement_id ? 1 : 0
                 ],
-                'pending_order' => $customer->partnerOrders()->where('closed_and_paid_at', null)->where('cancelled_at', null)->whereHas('jobs', function($q){
+                'pending_order' => $customer->partnerOrders()->where('closed_and_paid_at', null)->where('cancelled_at', null)->whereHas('jobs', function ($q) {
                     $q->where('status', '<>', 'Cancelled');
                 })->count(),
                 'has_rated_customer_app' => ($customer->has_rated_customer_app == 1) ? 1 : (($reviews->count() >= 3) ? 0 : 1)
@@ -109,40 +109,12 @@ class SettingsController extends Controller
             #$data['has_rated_customer_app'] = (int)$request->has_rated_customer_app;
             $data['has_rated_customer_app'] = 1;
             $customer->update($data);
-            return api_response($request,null, 200);
+            return api_response($request, null, 200);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
-
-    public function addPayment($customer, Request $request, PaymentSetting $paymentSetting)
-    {
-        try {
-            //Payment Id is actually gateway transaction id
-            $this->validate($request, [
-                'payment_name' => 'sometimes|required|in:bkash',
-                'order_id' => 'numeric',
-                'order_type' => 'string',
-                'payment_id' => 'string'
-            ]);
-            /** @var Customer $customer */
-            $profile = $request->customer->profile;
-            if ($profile->bkash_agreement_id) return api_response($request, null, 403, ['message' => "$request->payment is already saved"]);
-            $response = $paymentSetting->setMethod($request->payment_name)->init($profile);
-            $key = 'order_' . $response->transactionId;
-            Redis::set($key, json_encode(['order_id' => (int)$request->order_id, 'order_type' => $request->order_type, 'gateway_transaction_id' => $request->payment_id]));
-            Redis::expire($key, 60 * 60);
-            return api_response($request, $response, 200, ['data' => array(
-                'redirect_url' => $response->redirectUrl,
-                'success_url' => $this->getSuccessUrl((int)$request->order_id, $request->order_type),
-            )]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     private function getSuccessUrl($order_id, $order_type)
     {
         $front_url = config('sheba.front_url');
