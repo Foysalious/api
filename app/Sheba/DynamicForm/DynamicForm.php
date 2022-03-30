@@ -55,7 +55,8 @@ class DynamicForm
                 ->setTitle($section->name, $section->bn_name)->toArray();
 
         }
-        return ["category_list" => $categories, "can_apply" => 0, "overall_completion" => ["en"=>95, "bn" => "৯৫"], "message" => [PaymentMethodStatics::mtbCompletionPageMessage()]];
+//        (new SectionListResponse())->setCategoryList($categories)
+        return ["categories" => $categories, "can_apply" => 0, "overall_completion" => ["en"=>95, "bn" => "৯৫"], "message" => [PaymentMethodStatics::mtbCompletionPageMessage()]];
     }
 
     public function getSectionDetails(): array
