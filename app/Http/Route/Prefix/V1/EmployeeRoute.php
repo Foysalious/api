@@ -47,6 +47,11 @@ class EmployeeRoute
                     $api->post('status-update', 'Employee\VisitController@updateStatus');
                 });
             });
+
+            $api->group(['prefix' => 'live-track'], function ($api) {
+                $api->post('insert', 'Employee\TrackingController@insertLocation');
+            });
+
             $api->group(['prefix' => 'my-team'], function ($api) {
                 $api->get('/', 'Employee\MyTeamController@myTeam');
                 $api->get('attendance-summary', 'Employee\MyTeamController@attendanceSummary');
