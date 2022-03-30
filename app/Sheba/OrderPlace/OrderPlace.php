@@ -552,7 +552,7 @@ class OrderPlace
         $order->customer_id = $this->customer->id;
         $order->voucher_id = $this->orderVoucherData->isValid() ? $this->orderVoucherData->getVoucherId() : null;
         $order->partner_id = $this->partnerId;
-        $order->preferred_partner_id = $this->selectedPartnerId;
+        $order->preferred_partner_id = $this->selectedPartnerId == 0 ? null : $this->selectedPartnerId;
         $order->business_id = $this->businessId;
         $order->vendor_id = $this->vendorId;
         $order->delivery_address_id = $this->deliveryAddress->id;
