@@ -26,6 +26,12 @@ return [
             'documents'   => 'Documents'
         ],
     ],
+    'completion_message' => [
+        'mtb' => [
+            "incomplete_message" => "MTB QR সার্ভিস সচল করতে প্রয়োজনীয় তথ্য প্রদান করুন।",
+            "completed_message"  => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, MTB QR সার্ভিস সচল করতে আবেদন করুন।"
+        ]
+    ],
     'exclude_form_keys' => [
         'ssl' => [
             'nid_selfie' => [],

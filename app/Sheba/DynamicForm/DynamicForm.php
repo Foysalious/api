@@ -44,6 +44,16 @@ class DynamicForm
 
     public function getFormSections(): array
     {
+        $categories = $this->sectionDetails();
+        $finalCompletion = (new CompletionCalculation())->getFinalCompletion($categories);
+
+        return (new SectionListResponse())->setCategories($categories)
+            ->setMessage(PaymentMethodStatics::dynamicCompletionPageMessage($this->formKey))
+            ->setOverallCompletion($finalCompletion)->setCanApply($finalCompletion)->toArray();
+    }
+
+    private function sectionDetails(): array
+    {
         $categories = array();
         foreach ($this->form->sections as $section) {
             $this->setSection($section->id);
@@ -55,8 +65,7 @@ class DynamicForm
                 ->setTitle($section->name, $section->bn_name)->toArray();
 
         }
-//        (new SectionListResponse())->setCategoryList($categories)
-        return ["categories" => $categories, "can_apply" => 0, "overall_completion" => ["en"=>95, "bn" => "৯৫"], "message" => [PaymentMethodStatics::mtbCompletionPageMessage()]];
+        return $categories;
     }
 
     public function getSectionDetails(): array
