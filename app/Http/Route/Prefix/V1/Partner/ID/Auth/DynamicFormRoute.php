@@ -8,7 +8,7 @@ class DynamicFormRoute
     {
         $api->group(['prefix' => 'partners', 'middleware' => ['accessToken']], function ($api) {
             $api->get('/type', 'DynamicForm\\FormController@selectTypes');
-            $api->post('/sections/{section_id}/document-upload', 'DynamicForm\\FormController@uploadDocument');
+            $api->post('/sections/document-upload', 'DynamicForm\\FormController@uploadDocument');
 
             $api->group(['prefix' => 'dynamic-form'], function ($api) {
                 $api->get('/', 'DynamicForm\\FormController@getSections');
