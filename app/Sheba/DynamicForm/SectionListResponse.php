@@ -37,7 +37,7 @@ class SectionListResponse implements Arrayable
      */
     public function setCanApply($completion): SectionListResponse
     {
-        $this->can_apply = $completion === 100 ? 1 : 0;
+        $this->can_apply = $completion == 100 ? 1 : 0;
         return $this;
     }
 
