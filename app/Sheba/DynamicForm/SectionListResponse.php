@@ -32,12 +32,12 @@ class SectionListResponse implements Arrayable
     }
 
     /**
-     * @param mixed $can_apply
+     * @param mixed $completion
      * @return SectionListResponse
      */
-    public function setCanApply($can_apply): SectionListResponse
+    public function setCanApply($completion): SectionListResponse
     {
-        $this->can_apply = $can_apply;
+        $this->can_apply = $completion === 100 ? 1 : 0;
         return $this;
     }
 
@@ -47,15 +47,18 @@ class SectionListResponse implements Arrayable
      */
     public function setOverallCompletion($overall_completion): SectionListResponse
     {
-        $this->overall_completion = $overall_completion;
+        $this->overall_completion = [
+            "en" => $overall_completion,
+            "bn" => convertNumbersToBangla($overall_completion, false)
+        ];
         return $this;
     }
 
     /**
-     * @param string $message
+     * @param $message
      * @return SectionListResponse
      */
-    public function setMessage(string $message): SectionListResponse
+    public function setMessage($message): SectionListResponse
     {
         $this->message = $message;
         return $this;
