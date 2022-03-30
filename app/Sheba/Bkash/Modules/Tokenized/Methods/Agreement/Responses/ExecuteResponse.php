@@ -3,8 +3,6 @@
 
 class ExecuteResponse
 {
-    private $agreementID;
-
     private $response;
 
     public function __construct($response)
@@ -17,17 +15,7 @@ class ExecuteResponse
      */
     public function getAgreementID()
     {
-        return $this->agreementID;
-    }
-
-    /**
-     * @param mixed $agreementID
-     * @return ExecuteResponse
-     */
-    public function setAgreementID($agreementID)
-    {
-        $this->agreementID = $agreementID;
-        return $this;
+        return $this->response->agreementID;
     }
 
     public function isSuccess()
