@@ -58,4 +58,12 @@ class PaymentMethodStatics
             "completed_message"  => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, SSL পেমেন্ট সার্ভিস সচল করতে আবেদন করুন।"
         ];
     }
+
+    public static function mtbCompletionPageMessage(): array
+    {
+        return [
+            "incomplete_message" => "MTB QR সার্ভিস সচল করতে প্রয়োজনীয় তথ্য প্রদান করুন।",
+            "completed_message"  => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, MTB QR সার্ভিস সচল করতে আবেদন করুন।"
+        ];
+    }
 }
