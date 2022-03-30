@@ -11,6 +11,8 @@ class CompletionCalculation
     /*** @var MefFields */
     private $fields;
 
+    private $finalCompletion;
+
     /**
      * @param mixed $fields
      * @return CompletionCalculation
@@ -34,5 +36,15 @@ class CompletionCalculation
         }
 
         return $total === 0 ? 100 : round(($filled / $total) * 100, 2);
+    }
+
+    public function getFinalCompletion($categories): float
+    {
+        $total = 0;
+        foreach ($categories as $category) {
+            $total +=($category['completion_percentage']['en']);
+        }
+
+        return round($total / count($categories), 2);
     }
 }
