@@ -56,7 +56,7 @@ class ApplyValidation
 
             $categories[] = $percentage = (new CategoryDetails())->setCategoryCode($section->key)
                 ->setCompletionPercentage($completion)->setCategoryId($section->id)
-                ->setName($section->name, $section->bn_name)->toArray();
+                ->setTitle($section->name, $section->bn_name)->toArray();
             $totalPercentage += ($percentage['completionPercentage']['en']);
         }
         return ["category_list" => $categories,"total_percentage" => $totalPercentage / count($this->form->sections)];
