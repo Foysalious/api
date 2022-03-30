@@ -56,6 +56,11 @@ return [
             'driver' => 'mongodb',
             'database' => env('MONGO_DB_DATABASE', 'sheba'),
             'dsn' => env('MONGO_DB_DSN')
+        ],
+        'mongodb2' => [
+            'driver' => 'mongodb',
+            'database' => env('BUSINESS_MONGO_DB_DATABASE', 'sbusiness'),
+            'dsn' => env('BUSINESS_MONGO_DB_DSN')
         ]
     ],
     'migrations' => 'migrations',
