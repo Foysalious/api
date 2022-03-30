@@ -35,7 +35,8 @@ return [
             'refund' => env('SSL_REFUND_URL'),
             'success' => env('SHEBA_API_URL') . '/v2/orders/payments/success',
             'fail' => env('SHEBA_API_URL') . '/v2/orders/payments/fail',
-            'cancel' => env('SHEBA_API_URL') . '/v2/orders/payments/cancel'
+            'cancel' => env('SHEBA_API_URL') . '/v2/orders/payments/cancel',
+            'api' => env('SSL_API_URL', 'https://sandbox.sslcommerz.com/validator/api')
         ]
     ],
     'shurjopay' => [
