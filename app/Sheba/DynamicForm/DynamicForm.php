@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Sheba\Dal\MefForm\Model as MefForm;
 use Sheba\Dal\MefSections\Model as MefSection;
 use Sheba\MerchantEnrollment\MerchantEnrollmentFileHandler;
+use Sheba\MerchantEnrollment\Statics\PaymentMethodStatics;
 
 class DynamicForm
 {
@@ -54,14 +55,14 @@ class DynamicForm
                 ->setTitle($section->name, $section->bn_name)->toArray();
 
         }
-        return ["category_list" => $categories, "can_apply" => 0, "overall_completion" => ["en"=>95, "bn" => "৯৫"], "message" => []];
+        return ["category_list" => $categories, "can_apply" => 0, "overall_completion" => ["en"=>95, "bn" => "৯৫"], "message" => [PaymentMethodStatics::mtbCompletionPageMessage()]];
     }
 
     public function getSectionDetails(): array
     {
         return [
-            "name" => $this->getSectionNames(),
-            "fields" => $this->getSectionFields(),
+            "title" => $this->getSectionNames(),
+            "form_items" => $this->getSectionFields(),
             "post_url" => $this->getPostUrl()
         ];
     }
