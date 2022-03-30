@@ -18,7 +18,8 @@ class PaymentMethodStatics
     {
         return [
             'ssl'   => 'SslGateway',
-            'bkash' => 'BkashGateway'
+            'bkash' => 'BkashGateway',
+            'shurjopay' => 'ShurjoPayGateway',
         ];
     }
 

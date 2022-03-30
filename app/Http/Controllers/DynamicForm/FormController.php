@@ -22,42 +22,39 @@ class FormController extends Controller
 
     /**
      * @param Request $request
-     * @param $form_id
      * @return JsonResponse
      */
-    public function getSections(Request $request, $form_id): JsonResponse
+    public function getSections(Request $request): JsonResponse
     {
+        $this->validate($request, ["key" => "required"]);
         $partner = $request->auth_user->getPartner();
-        $data = $this->dynamicForm->setPartner($partner)->setForm($form_id)->getFormSections();
+        $data = $this->dynamicForm->setPartner($partner)->setFormKey($request->key)->getFormSections();
         return http_response($request, null, 200, ['data' => $data]);
     }
 
     /**
      * @param Request $request
-     * @param $form_id
-     * @param $section_id
      * @return JsonResponse
      */
-    public function getSectionWiseFields(Request $request, $form_id, $section_id): JsonResponse
+    public function getSectionWiseFields(Request $request): JsonResponse
     {
+        $this->validate($request, ["key" => "required", "category_code" => "required"]);
         $partner = $request->auth_user->getPartner();
-        $data = $this->dynamicForm->setForm($form_id)->setPartner($partner)->setSection($section_id)->getSectionDetails();
+        $data = $this->dynamicForm->setFormKey($request->key)->setPartner($partner)->setSection($request->category_code)->getSectionDetails();
         return http_response($request, null, 200, ['data' => $data]);
     }
 
     /**
      * @param Request $request
-     * @param $form_id
-     * @param $section_id
      * @return JsonResponse
      * @throws FormValidationException
      */
-    public function postSectionWiseFields(Request $request, $form_id, $section_id): JsonResponse
+    public function postSectionWiseFields(Request $request): JsonResponse
     {
-        $this->validate($request, ["data" => "required|json"]);
+        $this->validate($request, ["data" => "required|json", "key" => "required", "category_code" => "required"]);
         $partner = $request->auth_user->getPartner();
-        $this->dynamicForm->setForm($form_id)->setRequestData($request->data)->setPartner($partner)
-            ->setSection($section_id)->postSectionFields();
+        $this->dynamicForm->setFormKey($request->key)->setRequestData($request->data)->setPartner($partner)
+            ->setSection($request->category_code)->postSectionFields();
         return http_response($request, null, 200, ['message' => "Successful"]);
     }
 
