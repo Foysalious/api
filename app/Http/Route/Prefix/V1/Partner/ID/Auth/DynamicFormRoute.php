@@ -11,9 +11,9 @@ class DynamicFormRoute
             $api->post('/sections/{section_id}/document-upload', 'DynamicForm\\FormController@uploadDocument');
 
             $api->group(['prefix' => 'dynamic-form'], function ($api) {
-                $api->get('/{form_id}', 'DynamicForm\\FormController@getSections');
-                $api->get('/{form_id}/section/{section}', 'DynamicForm\\FormController@getSectionWiseFields');
-                $api->post('/{form_id}/section/{section}', 'DynamicForm\\FormController@postSectionWiseFields');
+                $api->get('/', 'DynamicForm\\FormController@getSections');
+                $api->get('/section', 'DynamicForm\\FormController@getSectionWiseFields');
+                $api->post('/section', 'DynamicForm\\FormController@postSectionWiseFields');
             });
         });
     }

@@ -23,14 +23,16 @@ class DynamicForm
 
     private $requestData;
     private $type;
+    private $formKey;
+
     /**
      * @var PartnerMefInformation
      */
     private $partnerMefInformation;
 
-    public function setForm($form_id): DynamicForm
+    public function setForm(): DynamicForm
     {
-        $this->form = MefForm::find($form_id);
+        $this->form = MefForm::where('key',$this->formKey)->first();
         return $this;
     }
 
@@ -49,9 +51,10 @@ class DynamicForm
 
             $categories[] = (new CategoryDetails())->setCategoryCode($section->key)
                 ->setCompletionPercentage($completion)->setCategoryId($section->id)
-                ->setName($section->name, $section->bn_name)->toArray();
+                ->setTitle($section->name, $section->bn_name)->toArray();
+
         }
-        return ["category_list" => $categories];
+        return ["category_list" => $categories, "can_apply" => 0, "overall_completion" => ["en"=>95, "bn" => "৯৫"], "message" => []];
     }
 
     public function getSectionDetails(): array
@@ -80,7 +83,7 @@ class DynamicForm
 
     private function getSectionNames()
     {
-        return (new CategoryDetails())->setName($this->section->name, $this->section->bn_name)->getName();
+        return (new CategoryDetails())->setTitle($this->section->name, $this->section->bn_name)->getTitle();
     }
 
     public function getSectionFields(): array
@@ -132,6 +135,16 @@ class DynamicForm
         return $this;
     }
 
+    /**
+     * @param mixed $formKey
+     * @return DynamicForm
+     */
+    public function setFormKey($formKey): DynamicForm
+    {
+        $this->formKey = $formKey;
+        $this->setForm();
+        return $this;
+    }
 
     public function typeData($request)
     {

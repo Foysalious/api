@@ -8,27 +8,27 @@ class CategoryDetails
 {
     use ProtectedGetterTrait;
 
-    protected $completionPercentage;
-    protected $name;
+    protected $completion_percentage;
+    protected $title;
     private   $last_updated;
-    protected $categoryCode;
+    protected $category_code;
     protected $categoryId;
 
     /**
-     * @param mixed $completionPercentage
+     * @param mixed $completion_percentage
      */
-    public function setCompletionPercentage($completionPercentage): CategoryDetails
+    public function setCompletionPercentage($completion_percentage): CategoryDetails
     {
-        $this->completionPercentage = [
-            "en" => $completionPercentage,
-            "bn" => convertNumbersToBangla($completionPercentage)
+        $this->completion_percentage = [
+            "en" => $completion_percentage,
+            "bn" => convertNumbersToBangla($completion_percentage)
         ];
         return $this;
     }
 
-    public function setName($name_en, $name_bn): CategoryDetails
+    public function setTitle($name_en, $name_bn): CategoryDetails
     {
-        $this->name = [
+        $this->title = [
             "en" => $name_en,
             "bn" => $name_bn,
         ];
@@ -49,7 +49,7 @@ class CategoryDetails
      */
     public function setCategoryCode($code): CategoryDetails
     {
-        $this->categoryCode = $code;
+        $this->category_code = $code;
         return $this;
     }
 
@@ -66,8 +66,8 @@ class CategoryDetails
     /**
      * @return mixed
      */
-    public function getName()
+    public function getTitle()
     {
-        return $this->name;
+        return $this->title;
     }
 }
