@@ -17,6 +17,9 @@ class PartnerRoute
             (new IDAuthRoute())->set($api);
             (new PartnerJwtAuthRoute())->set($api);
             $api->get('search', 'Partner\PartnerPosController@search');
+            $api->group(['prefix' => 'payment-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
+                $api->post('/', 'Payment\PaymentSettingController@store');
+            });
         });
         (new DynamicFormRoute())->set($api);
         (new ExternalPaymentLinkRoute())->set($api);

@@ -3,30 +3,49 @@
 
 class InitResponse
 {
-    private $successUrl;
     private $transactionId;
     private $redirectUrl;
+    private $successUrl;
 
-    public function __get($name)
-    {
-        return $this->$name;
-    }
-
-    public function setTransactionId($id)
+    public function setTransactionId($id): InitResponse
     {
         $this->transactionId = $id;
         return $this;
     }
 
-    public function setSuccessUrl($url)
-    {
-        $this->successUrl = $url;
-        return $this;
-    }
-
-    public function setRedirectUrl($url)
+    public function setRedirectUrl($url): InitResponse
     {
         $this->redirectUrl = $url;
         return $this;
     }
+
+    public function isSuccess(): bool
+    {
+        return isset($this->transactionId);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTransactionId()
+    {
+        return $this->transactionId;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRedirectUrl()
+    {
+        return $this->redirectUrl;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSuccessUrl()
+    {
+        return $this->successUrl;
+    }
+
 }

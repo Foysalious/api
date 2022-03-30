@@ -9,14 +9,11 @@ use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;
-use Sheba\Bkash\Modules\BkashAuth;
 use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
-use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
-use Sheba\Payment\Methods\Bkash\Stores\BkashStore;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
@@ -38,8 +35,6 @@ class Bkash extends PaymentMethod
     private $merchantNumber;
     /** @var Registrar $registrar */
     private $registrar;
-    /** @var BkashStore */
-    private $store;
 
     public function __construct(Registrar $registrar)
     {
@@ -54,45 +49,39 @@ class Bkash extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $this->setStore($payable);
+        $this->setCredentials($payable->user, $payable->type);
 
-        $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, true, true);
+        $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {
-            $payment->payable_id             = $payable->id;
-            $payment->transaction_id         = $invoice;
-            $payment->gateway_account_name   = $this->store->getName();
+            $payment->payable_id = $payable->id;
+            $payment->transaction_id = $invoice;
             $payment->gateway_transaction_id = $invoice;
-            $payment->status                 = 'initiated';
-            $payment->valid_till             = $this->getValidTill();
+            $payment->status = 'initiated';
+            $payment->valid_till = $this->getValidTill();
             $this->setModifier($payable->user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);
             $payment->save();
-            $payment_details             = new PaymentDetail();
+            $payment_details = new PaymentDetail();
             $payment_details->payment_id = $payment->id;
-            $payment_details->method     = self::NAME;
-            $payment_details->amount     = $payable->amount;
+            $payment_details->method = self::NAME;
+            $payment_details->amount = $payable->amount;
             $payment_details->save();
         });
-        try {
-            if (false && $payment->payable->user->getAgreementId()) {
-                /** @var TokenizedPayment $tokenized_payment */
-                $tokenized_payment               = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-                $data                            = $tokenized_payment->create($payment);
-                $payment->gateway_transaction_id = $data->paymentID;
-                $payment->redirect_url           = $data->bkashURL;
-            } else {
-                $data                            = $this->create($payment);
-                $payment->gateway_transaction_id = $data->paymentID;
-                $payment->redirect_url           = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
-            }
-            $payment->transaction_details = json_encode($data);
-            $payment->update();
-        } catch (\Throwable $e) {
-            $this->statusChanger->setPayment($payment)->changeToInitiationFailed($e->getMessage());
+        if ($payment->payable->user->getAgreementId()) {
+            /** @var TokenizedPayment $tokenized_payment */
+            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
+            $data = $tokenized_payment->create($payment);
+            $payment->gateway_transaction_id = $data->paymentID;
+            $payment->redirect_url = $data->bkashURL;
+        } else {
+            $data = $this->create($payment);
+            $payment->gateway_transaction_id = $data->paymentID;
+            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
         }
-
+        $payment->transaction_details = json_encode($data);
+        $payment->update();
         return $payment;
     }
 
@@ -103,47 +92,28 @@ class Bkash extends PaymentMethod
      */
     private function setCredentials($user, $type)
     {
+        /** @var BkashAuthBuilder $bkash_auth */
         $bkash_auth = BkashAuthBuilder::getForUserAndType($user, $type);
-        $this->setCredFromAuth($bkash_auth);
-    }
-
-    private function setCredFromAuth(BkashAuth $bkash_auth)
-    {
-        $this->appKey         = $bkash_auth->getAppKey();
-        $this->appSecret      = $bkash_auth->getAppSecret();
-        $this->username       = $bkash_auth->getUsername();
-        $this->password       = $bkash_auth->getPassword();
-        $this->url            = $bkash_auth->getUrl();
-        $this->merchantNumber = $bkash_auth->getMerchantNumber();
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function setStore(Payable $payable)
-    {
-        $this->store = BkashAuthBuilder::getStore($payable);
-        $bkash_auth  = $this->store->getAuth();
-        $this->setCredFromAuth($bkash_auth);
+        $this->appKey = $bkash_auth->appKey;
+        $this->appSecret = $bkash_auth->appSecret;
+        $this->username = $bkash_auth->username;
+        $this->password = $bkash_auth->password;
+        $this->url = $bkash_auth->url;
+        $this->merchantNumber = $bkash_auth->merchantNumber;
     }
 
     private function create(Payment $payment)
     {
-        $token           = Redis::get('BKASH_TOKEN');
-        $token           = $token ? $token : $this->grantToken();
-        $intent          = 'sale';
+        $token = Redis::get('BKASH_TOKEN');
+        $token = $token ? $token : $this->grantToken();
+        $intent = 'sale';
         $create_pay_body = json_encode(array(
-            'amount'                => $payment->payable->amount,
-            'currency'              => 'BDT',
-            'intent'                => $intent,
+            'amount' => $payment->payable->amount,
+            'currency' => 'BDT',
+            'intent' => $intent,
             'merchantInvoiceNumber' => $payment->gateway_transaction_id
         ));
-        return $this->initPayment($token, $create_pay_body);
-    }
-
-    private function initPayment($token, $create_pay_body)
-    {
-        $url    = curl_init($this->url . '/checkout/payment/create');
+        $url = curl_init($this->url . '/checkout/payment/create');
         $header = array(
             'Content-Type:application/json',
             'authorization:' . $token,
@@ -164,12 +134,12 @@ class Bkash extends PaymentMethod
     private function grantToken()
     {
         $post_token = array(
-            'app_key'    => $this->appKey,
+            'app_key' => $this->appKey,
             'app_secret' => $this->appSecret
         );
-        $url        = curl_init($this->url . '/checkout/token/grant');
+        $url = curl_init($this->url . '/checkout/token/grant');
         $post_token = json_encode($post_token);
-        $header     = array(
+        $header = array(
             'Content-Type:application/json',
             'password:' . $this->password,
             'username:' . $this->username
@@ -183,7 +153,7 @@ class Bkash extends PaymentMethod
         if (curl_errno($url) > 0)
             throw new InvalidArgumentException('Bkash grant token API error.');
         curl_close($url);
-        $data  = json_decode($result_data, true);
+        $data = json_decode($result_data, true);
         $token = $data['id_token'];
         Redis::set('BKASH_TOKEN', $token);
         Redis::expire('BKASH_TOKEN', (int)$data['expires_in'] - 100);
@@ -193,17 +163,18 @@ class Bkash extends PaymentMethod
     /**
      * @param Payment $payment
      * @return Payment|mixed
+     * @throws GuzzleException
      * @throws Exception
      */
     public function validate(Payment $payment): Payment
     {
-        $this->setStore($payment->payable);
+        $this->setCredentials($payment->payable->user, $payment->payable->type);
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
-        if (false && $payment->payable->user->getAgreementId()) {
+        if ($payment->payable->user->getAgreementId()) {
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-            $res               = $tokenized_payment->execute($payment);
+            $res = $tokenized_payment->execute($payment);
         } else {
             $res = $this->execute($payment);
         }
@@ -212,23 +183,28 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
-                $status              = Statuses::VALIDATED;
+                $this->registrar->setAmount($payment->payable->amount)
+                    ->setDetails(json_encode($success->details))
+                    ->setTime(Carbon::now()->format('Y-m-d H:i:s'))
+                    ->setIsValidated(1)
+                    ->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+                $status = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {
-                $status              = Statuses::VALIDATION_FAILED;
+                $status = Statuses::VALIDATION_FAILED;
                 $transaction_details = json_encode(['errorMessage' => $e->getMessage(), 'gateway_response' => $success->getGatewayResponse()]);
             }
         } else {
-            $error               = $execute_response->getError();
-            $status              = Statuses::VALIDATION_FAILED;
+            $error = $execute_response->getError();
+            $status = Statuses::VALIDATION_FAILED;
             $transaction_details = json_encode($error->details);
         }
         $this->paymentLogRepo->create([
-            'to'                  => $status,
-            'from'                => $payment->status,
+            'to' => $status,
+            'from' => $payment->status,
             'transaction_details' => $transaction_details
         ]);
-        $payment->status              = $status;
+        $payment->status = $status;
         $payment->transaction_details = $transaction_details;
         $payment->update();
         return $payment;
@@ -236,9 +212,9 @@ class Bkash extends PaymentMethod
 
     private function execute(Payment $payment)
     {
-        $token  = Redis::get('BKASH_TOKEN');
-        $token  = $token ? $token : $this->grantToken();
-        $url    = curl_init($this->url . '/checkout/payment/execute/' . $payment->gateway_transaction_id);
+        $token = Redis::get('BKASH_TOKEN');
+        $token = $token ? $token : $this->grantToken();
+        $url = curl_init($this->url . '/checkout/payment/execute/' . $payment->gateway_transaction_id);
         $header = array(
             'authorization:' . $token,
             'x-app-key:' . $this->appKey
@@ -250,7 +226,7 @@ class Bkash extends PaymentMethod
         $result_data = curl_exec($url);
         $result_data = json_decode($result_data);
         if (curl_errno($url) > 0) {
-            $error            = new InvalidArgumentException('Bkash execute API error.');
+            $error = new InvalidArgumentException('Bkash execute API error.');
             $error->paymentId = $payment->gateway_transaction_id;
             throw  $error;
         }
@@ -261,39 +237,5 @@ class Bkash extends PaymentMethod
     public function getMethodName()
     {
         return self::NAME;
-    }
-
-    /**
-     * @param BkashStore $store
-     * @return bool
-     * @throws InvalidConfigurationException
-     */
-    public function testInit(BkashStore $store)
-    {
-        $this->setCredFromAuth($store->getAuth());
-        $token           = $this->grantToken();
-        $intent          = 'sale';
-        $create_pay_body = json_encode(array(
-            'amount'                => 10,
-            'currency'              => 'BDT',
-            'intent'                => $intent,
-            'merchantInvoiceNumber' => 'SHEBA_BKASH_TEST_INIT_' . randomString(5)
-        ));
-        $data            = $this->initPayment($token, $create_pay_body);
-        if ($data->paymentID) {
-            return true;
-        }
-        throw new InvalidConfigurationException("Invalid credentials! Please try again.");
-
-    }
-
-    public function getCalculatedChargedAmount($transaction_details)
-    {
-        if ($transaction_details->transactionStatus === "Completed") {
-            $amount = (float)$transaction_details->amount;
-            $charge = (float)config('bkash.transaction_charge');
-            return round($amount * $charge / 100, 2);
-        }
-        return 0;
     }
 }
