@@ -67,14 +67,8 @@ class BkashTokenizedController extends Controller
 
     public function validateAgreement(Request $request, PaymentSetting $paymentSetting)
     {
-        try {
-            $paymentSetting->setMethod('bkash')->save($request->paymentID);
-            $key = 'order_' . $request->paymentID;
-            $order = Redis::get($key);
-            return $order ? redirect(config('sheba.front_url') . '/bkash?paymentID=' . (json_decode($order))->gateway_transaction_id) : redirect(config('sheba.front_url') . '/profile/me');
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['paymentID' => 'required']);
+        $paymentSetting->setMethod(PaymentStrategy::BKASH)->save($request->paymentID);
+        return redirect(config('sheba.front_url') . '/profile/me');
     }
 }

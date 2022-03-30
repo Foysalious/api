@@ -5,6 +5,7 @@ use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\Responses\CreateResponse;
 use Sheba\Bkash\Modules\Tokenized\Methods\Agreement\Responses\ExecuteResponse;
 use Sheba\Bkash\Modules\Tokenized\TokenizedModule;
 use Sheba\Settings\Payment\Responses\InitResponse;
+use Sheba\Settings\Payment\Responses\ValidateResponse;
 
 class TokenizedAgreement extends TokenizedModule
 {
@@ -32,6 +33,7 @@ class TokenizedAgreement extends TokenizedModule
         curl_setopt($url, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         $result_data = curl_exec($url);
         $obj = json_decode($result_data);
+        if (curl_errno($url) > 0) throw new \Exception('Something went wrong');
         curl_close($url);
         $create_response = new CreateResponse($obj);
         $init_response = new InitResponse();
@@ -40,19 +42,24 @@ class TokenizedAgreement extends TokenizedModule
         return $init_response;
     }
 
-    public function execute($payment_id)
+    public function execute($payment_id): ValidateResponse
     {
-        $post_fields = json_encode(['paymentID' => $payment_id]);
-        $curl = curl_init($this->bkashAuth->url . '/checkout/agreement/execute');
-        curl_setopt($curl, CURLOPT_HTTPHEADER, $this->getHeader());
-        curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $post_fields);
-        curl_setopt($curl, CURLOPT_FAILONERROR, true);
-        $result_data = curl_exec($curl);
-        if (curl_errno($curl) > 0) throw new \InvalidArgumentException('API error.');
-        curl_close($curl);
-        return (new ExecuteResponse())->setResponse(json_decode($result_data));
+        $requestbody = array('paymentID' => $payment_id);
+        $url = curl_init($this->bkashAuth->url . '/checkout/execute');
+        $requestbodyJson = json_encode($requestbody);
+        curl_setopt($url, CURLOPT_HTTPHEADER,  $this->getHeader());
+        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
+        curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($url, CURLOPT_POSTFIELDS, $requestbodyJson);
+        curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
+        $resultdatax = curl_exec($url);
+        $obj = json_decode($resultdatax);
+        curl_close($url);
+        $execute_response = new ExecuteResponse($obj);
+        $validate_response = new ValidateResponse();
+        if (!$execute_response->isSuccess()) throw new \Exception("Something went wrong");
+        $validate_response->setAgreementId($execute_response->getAgreementID());
+        return $validate_response;
     }
 
     /**

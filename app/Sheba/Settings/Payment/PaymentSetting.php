@@ -32,16 +32,26 @@ class PaymentSetting
     public function init(Profile $profile)
     {
         if (!isset($this->method)) throw new Exception("Payment Setting Method is not set");
-        return $this->method->init($profile);
+        $response = $this->method->init($profile);
+        $this->setPaymentIdInRedis($response->getTransactionId(), $profile);
+        return $response;
     }
 
-    public function save($payment_id)
+    public function setPaymentIdInRedis($transaction_id, Profile $profile)
     {
-        $response = $this->method->validate($payment_id);
-        $key = json_decode(Redis::get($payment_id));
-        $model_name = "App\\Models\\" . $key->type;
-        $model = $model_name::find((int)$key->id);
-        return $this->method->save($model, $response->agreementId);
+        Redis::set($transaction_id, json_encode(array(
+            'id' => $profile->id,
+            'type' => 'profile'
+        )));
+        Redis::expire($transaction_id, 120 * 60 * 60);
+    }
+
+    public function save($transaction_id)
+    {
+        $response = $this->method->validate($transaction_id);
+        $key = json_decode(Redis::get($transaction_id));
+        $profile = Profile::find((int)$key->id);
+        return $this->method->save($profile, $response->getAgreementId());
     }
 
 }
