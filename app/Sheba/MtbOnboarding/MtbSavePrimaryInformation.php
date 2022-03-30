@@ -130,7 +130,6 @@ class MtbSavePrimaryInformation
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data['total_percentage'] . " completed"]);
         $data = $this->makePrimaryInformation();
         $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
-        dd($response);
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
         $this->applyMtb();
