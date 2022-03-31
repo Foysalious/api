@@ -364,10 +364,9 @@ class JobController extends Controller
             if ($jobService->service->is_inspection_service) $has_inspection_service = 1;
             break;
         }
-//        dd();
 
         $bill = collect();
-        $bill['total'] = (double)($partnerOrder->_calculateThisJobsForBillsDetails()->totalPriceForCancelledOrder + $partnerOrder->_calculateThisJobsForBillsDetails()->totalLogisticChargeForCancelledOrder);
+        $bill['total'] = $job->status == constants('JOB_STATUSES')['Cancelled'] ? (double)($partnerOrder->_calculateThisJobsForBillsDetails()->totalPriceForCancelledOrder + $partnerOrder->_calculateThisJobsForBillsDetails()->totalLogisticChargeForCancelledOrder) : (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
         $bill['original_price'] = (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
