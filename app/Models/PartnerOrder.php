@@ -136,7 +136,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 
     public function calculate($price_only = false, $show_cancel_job_price_details = null)
     {
-        $show_cancel_job_price_details ? $this->_calculateThisJobsForBillsDetails($price_only) : $this->_calculateThisJobs($price_only);
+        $this->_calculateThisJobs($price_only);
         $this->calculateStatus();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
