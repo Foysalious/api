@@ -3,13 +3,13 @@
 return [
     'data' => [
         [
-            'id' => 0,
+            'id' => 1,
             'name' => 'YES',
             'bn_name' => 'হ্যা',
             'key' => 'yes'
         ],
         [
-            'id' => 1,
+            'id' => 0,
             'name' => 'No',
             'bn_name' => 'না',
             'key' => 'no'
