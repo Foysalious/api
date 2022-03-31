@@ -17,34 +17,13 @@ abstract class BkashPayment
 
     abstract public function getCreateBody(Payment $payment);
 
-    public function create(Payment $payment)
-    {
-        $curl = curl_init($this->bkashAuth->url . '/checkout/payment/create');
-        $this->setCurlOptions($curl);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, $this->getCreateBody($payment));
-        $result_data = curl_exec($curl);
-        if (curl_errno($curl) > 0) throw new \InvalidArgumentException('Bkash create API error.');
-        curl_close($curl);
-        return json_decode($result_data);
-    }
+    abstract public function create(Payment $payment);
 
-    public function execute(Payment $payment)
-    {
-        $curl = curl_init($this->bkashAuth->url . '/checkout/payment/execute');
-        $this->setCurlOptions($curl);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(['paymentID' => json_decode($payment->transaction_details)->paymentID]));
-        $result_data = curl_exec($curl);
-        $result_data = json_decode($result_data);
-        if (curl_errno($curl) > 0) {
-            $error = new \InvalidArgumentException('Bkash execute API error.');
-            $error->paymentId = $payment->transaction_id;
-            throw  $error;
-        };
-        curl_close($curl);
-        return $result_data;
-    }
+    abstract public function execute(Payment $payment);
 
-    private function getHeader()
+    abstract public function getToken();
+
+    protected function getHeader()
     {
         return array(
             'Content-Type:application/json',
@@ -52,12 +31,7 @@ abstract class BkashPayment
             'x-app-key:' . $this->bkashAuth->appKey);
     }
 
-    private function getToken()
-    {
-        return (new TokenizedToken())->setBkashAuth($this->bkashAuth)->get();
-    }
-
-    private function setCurlOptions($curl)
+    protected function setCurlOptions($curl)
     {
         curl_setopt($curl, CURLOPT_HTTPHEADER, $this->getHeader());
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, 'POST');
