@@ -34,6 +34,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalMaterialPrice;
     public $totalMaterialCost;
     public $totalPrice;
+    public $totalPriceForCancelledOrder;
     public $grandTotal;
     public $gmv;
     public $serviceCharge;
@@ -58,6 +59,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalDiscountWithRoundingCutOff;
     public $jobDiscounts;
     public $jobPrices;
+    public $jobPricesForCancelledOrder;
     public $financeDue;
     public $totalDiscountedCost;
     public $totalPartnerDiscount;
@@ -69,6 +71,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $revenuePercent = 0;
     public $serviceChargePercent = 0;
     public $totalLogisticCharge = 0;
+    public $totalLogisticChargeForCancelledOrder = 0;
     public $grossLogisticCharge = 0;
     public $totalLogisticPaid = 0;
     public $totalLogisticDue = 0;
@@ -226,14 +229,25 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this;
     }
 
-    private function _calculateThisJobsForBillsDetails($price_only = false)
+    public function _calculateThisJobsForBillsDetails($price_only = false)
     {
         $this->_initializeTotalsToZero();
         foreach ($this->jobs as $job) {
             /** @var Job $job */
             $job = $job->calculate($price_only);
-            $this->_updateTotalPriceAndCost($job);
+            $this->_updateJobPricesTotalPricesLogisticCharge($job);
         }
+        return $this;
+    }
+
+    /**
+     * @param Job $job
+     */
+    private function _updateJobPricesTotalPricesLogisticCharge(Job $job)
+    {
+        $this->jobPricesForCancelledOrder += $job->totalPrice;
+        $this->totalPriceForCancelledOrder += $job->grossPrice;
+        $this->totalLogisticChargeForCancelledOrder += $job->logistic_charge;
         return $this;
     }
 
