@@ -23,18 +23,17 @@ class DueTrackerReminderController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        //TODO: sms key should change
         $this->validate($request, [
             'contact_id' => 'required',
             'contact_type' => 'required|in:customer,supplier',
-            'sms' => 'required',
+            'should_send_sms' => 'required',
             'reminder_date' => 'required|date_format:Y-m-d H:i:s',
         ]);
         $response = $this->dueTrackerReminderService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
-            ->setSms($request->sms)
+            ->setSms($request->should_send_sms)
             ->setReminderDate($request->reminder_date)
             ->createReminder();
         return http_response($request, null, 200, ['data' => $response]);
@@ -68,7 +67,7 @@ class DueTrackerReminderController extends Controller
     public function update(Request $request): JsonResponse
     {
         $this->validate($request, [
-            'sms' => 'required|integer',
+            'should_send_sms' => 'required|integer',
             'reminder_date' => 'required|date_format:Y-m-d H:i:s',
             'reminder_status' => 'required|integer',
             'sms_status' => 'required|integer'
@@ -76,7 +75,7 @@ class DueTrackerReminderController extends Controller
         $response = $this->dueTrackerReminderService
             ->setPartner($request->partner)
             ->setReminderId($request->reminder_id)
-            ->setSms($request->sms)
+            ->setSms($request->should_send_sms)
             ->setReminderDate($request->reminder_date)
             ->setReminderStatus($request->reminder_status)
             ->setSmsStatus($request->sms_status)
