@@ -4,12 +4,8 @@ use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
-use App\Models\Payable;
 use Exception;
-use Sheba\Payment\Methods\Bkash\Stores\BkashDefaultStore;
-use Sheba\Payment\Methods\Bkash\Stores\BkashDynamicStore;
-use Sheba\Payment\Methods\Bkash\Stores\BkashMarketplaceStore;
-use Sheba\Payment\Methods\Bkash\Stores\BkashStore;
+use Sheba\Payment\Methods\Bkash\BkashCredentialDto;
 
 class BkashAuthBuilder
 {
@@ -30,6 +26,14 @@ class BkashAuthBuilder
     }
 
     /**
+     * @return BkashAuth
+     */
+    public static function setTokenizedBkashAuth()
+    {
+        return self::generateBkashAuth('tokenized');
+    }
+
+    /**
      * @param $bkash_number
      * @return BkashAuth
      */
@@ -37,11 +41,11 @@ class BkashAuthBuilder
     {
         $bkash_auth = new BkashAuth();
         $bkash_auth->setKey(config("bkash.$bkash_number.app_key"))
-                   ->setSecret(config("bkash.$bkash_number.app_secret"))
-                   ->setUsername(config("bkash.$bkash_number.username"))
-                   ->setPassword(config("bkash.$bkash_number.password"))
-                   ->setUrl(config("bkash.$bkash_number.url"))
-                   ->setMerchantNumber(config("bkash.$bkash_number.merchant_number"));
+            ->setSecret(config("bkash.$bkash_number.app_secret"))
+            ->setUsername(config("bkash.$bkash_number.username"))
+            ->setPassword(config("bkash.$bkash_number.password"))
+            ->setUrl(config("bkash.$bkash_number.url"))
+            ->setMerchantNumber($bkash_number);
 
         return $bkash_auth;
     }
@@ -52,10 +56,13 @@ class BkashAuthBuilder
      * @return BkashAuth
      * @throws Exception
      */
-    public static function getForUserAndType($user, $type)
+    public static function getForUserAndType(BkashCredentialDto $credential_dto): BkashAuth
     {
-        if ($type == 'payment_link') return self::set017BkashAuth();
-        if ($user instanceof Customer || $user instanceof Business) {
+        if ($credential_dto->getUserType() == 'payment_link') return self::set017BkashAuth();
+        $user = $credential_dto->getUser();
+        if ($credential_dto->getTokenizedId()) {
+            return self::setTokenizedBkashAuth()->setTokenizedId($credential_dto->getTokenizedId());
+        } elseif ($user instanceof Customer || $user instanceof Business) {
             return self::set018BkashAuth();
         } elseif ($user instanceof Affiliate) {
             return self::set017BkashAuth();
@@ -64,32 +71,5 @@ class BkashAuthBuilder
         } else {
             throw new Exception('Invalid User Type');
         }
-    }
-    /**
-     *
-     * @return BkashStore
-     * @throws Exception
-     */
-    public static function getStore(Payable $payable)
-    {
-        $type=$payable->type;
-        $user=$payable->user;
-        if ($type == 'payment_link') return (new BkashDynamicStore())->setPayable($payable)->setBkashAuth();
-        if ($user instanceof Customer || $user instanceof Business) {
-            return (new BkashMarketplaceStore());
-        } elseif ($user instanceof Affiliate) {
-            return (new BkashDefaultStore());
-        } elseif ($user instanceof Partner) {
-            return (new BkashDefaultStore());
-        } else {
-            throw new Exception('Invalid User Type');
-        }
-    }
-
-    public static function sManagerStore(){
-        return self::generateBkashAuth('sManager');
-    }
-    public static function marketplaceStore(){
-        return self::generateBkashAuth('marketplace');
     }
 }

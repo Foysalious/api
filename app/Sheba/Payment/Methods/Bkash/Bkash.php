@@ -9,14 +9,14 @@ use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;
+use Sheba\Bkash\Modules\BkashAuth;
 use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
+use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\PaymentMethod;
-use Sheba\Payment\Methods\Response\PaymentMethodResponse;
-use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\InvalidTransaction;
@@ -33,6 +33,8 @@ class Bkash extends PaymentMethod
     private $password;
     private $url;
     private $merchantNumber;
+    /** @var BkashAuth */
+    private $bkashAuth;
     /** @var Registrar $registrar */
     private $registrar;
 
@@ -43,14 +45,22 @@ class Bkash extends PaymentMethod
     }
 
     /**
+     * @param BkashAuth $bkashAuth
+     * @return Bkash
+     */
+    private function setBkashAuth(BkashAuth $bkashAuth): Bkash
+    {
+        $this->bkashAuth = $bkashAuth;
+        return $this;
+    }
+
+    /**
      * @param Payable $payable
      * @return Payment
      * @throws Exception
      */
     public function init(Payable $payable): Payment
     {
-        $this->setCredentials($payable->user, $payable->type);
-
         $invoice = "SHEBA_BKASH_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice) {
@@ -69,17 +79,19 @@ class Bkash extends PaymentMethod
             $payment_details->amount = $payable->amount;
             $payment_details->save();
         });
-        if ($payment->payable->user->getAgreementId()) {
+        $bkash_agreement_id = $payment->payable->getUserProfile()->getAgreementId(PaymentStrategy::BKASH);
+        $credential_dto = (new BkashCredentialDto())->setUser($payable->user)->setUserType($payable->type)->setTokenizedId($bkash_agreement_id);
+        $this->setCredentials($credential_dto);
+        if ($bkash_agreement_id) {
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-            $data = $tokenized_payment->create($payment);
-            $payment->gateway_transaction_id = $data->paymentID;
+            $data = $tokenized_payment->setBkashAuth($this->bkashAuth)->create($payment);
             $payment->redirect_url = $data->bkashURL;
         } else {
             $data = $this->create($payment);
-            $payment->gateway_transaction_id = $data->paymentID;
             $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
         }
+        $payment->gateway_transaction_id = $data->paymentID;
         $payment->transaction_details = json_encode($data);
         $payment->update();
         return $payment;
@@ -90,10 +102,10 @@ class Bkash extends PaymentMethod
      * @param $type
      * @throws Exception
      */
-    private function setCredentials($user, $type)
+    private function setCredentials(BkashCredentialDto $credential_dto)
     {
-        /** @var BkashAuthBuilder $bkash_auth */
-        $bkash_auth = BkashAuthBuilder::getForUserAndType($user, $type);
+        $bkash_auth = BkashAuthBuilder::getForUserAndType($credential_dto);
+        $this->setBkashAuth($bkash_auth);
         $this->appKey = $bkash_auth->appKey;
         $this->appSecret = $bkash_auth->appSecret;
         $this->username = $bkash_auth->username;
@@ -168,13 +180,15 @@ class Bkash extends PaymentMethod
      */
     public function validate(Payment $payment): Payment
     {
-        $this->setCredentials($payment->payable->user, $payment->payable->type);
+        $bkash_agreement_id = $payment->payable->getUserProfile()->getAgreementId(PaymentStrategy::BKASH);
+        $credential_dto = (new BkashCredentialDto())->setUser($payment->payable->user)->setUserType($payment->payable->type)->setTokenizedId($bkash_agreement_id);
+        $this->setCredentials($credential_dto);
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
-        if ($payment->payable->user->getAgreementId()) {
+        if ($bkash_agreement_id) {
             /** @var TokenizedPayment $tokenized_payment */
-            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-            $res = $tokenized_payment->execute($payment);
+            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment')->setBkashAuth($this->bkashAuth);
+            $res = $tokenized_payment->setBkashAuth($this->bkashAuth)->execute($payment);
         } else {
             $res = $this->execute($payment);
         }
