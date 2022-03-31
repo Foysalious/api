@@ -134,7 +134,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this->order->code() . "-" . str_pad($this->partner_id, 4, '0', STR_PAD_LEFT);
     }
 
-    public function calculate($price_only = false, $show_cancel_job_price_details = null)
+    public function calculate($price_only = false)
     {
         $this->_calculateThisJobs($price_only);
         $this->calculateStatus();
