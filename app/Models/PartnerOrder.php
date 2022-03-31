@@ -131,9 +131,9 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this->order->code() . "-" . str_pad($this->partner_id, 4, '0', STR_PAD_LEFT);
     }
 
-    public function calculate($price_only = false)
+    public function calculate($price_only = false, $show_cancel_job_price_details = null)
     {
-        $this->_calculateThisJobs($price_only);
+        $show_cancel_job_price_details ? $this->_calculateThisJobsForBillsDetails($price_only) : $this->_calculateThisJobs($price_only);
         $this->calculateStatus();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
@@ -223,6 +223,17 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
             //$this->totalJobs++;
         }
         //$this->_setStatus();
+        return $this;
+    }
+
+    private function _calculateThisJobsForBillsDetails($price_only = false)
+    {
+        $this->_initializeTotalsToZero();
+        foreach ($this->jobs as $job) {
+            /** @var Job $job */
+            $job = $job->calculate($price_only);
+            $this->_updateTotalPriceAndCost($job);
+        }
         return $this;
     }
 

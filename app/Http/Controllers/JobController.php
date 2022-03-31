@@ -349,7 +349,7 @@ class JobController extends Controller
             if(!array_key_exists($method['method'], $payment_method_names)) $method['name'] = $method['method'];
             else $method['name'] = $payment_method_names[$method['method']];
         }
-        $partnerOrder->calculate(true);
+        $job->status == constants('JOB_STATUSES')['Cancelled'] ? $partnerOrder->calculate(true,1) : $partnerOrder->calculate(true);
         $original_delivery_charge = $job->deliveryPrice;
         $delivery_discount = $job->deliveryDiscount;
         $voucher = $partnerOrder->order->voucher ? [
