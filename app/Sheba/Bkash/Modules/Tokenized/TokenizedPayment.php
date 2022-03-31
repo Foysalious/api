@@ -24,8 +24,7 @@ class TokenizedPayment extends BkashPayment
             'agreementID' => $this->bkashAuth->getTokenizedId(),
             'mode' => '0001',
             'intent' => 'sale',
-//            'callbackURL' => config('sheba.api_url') . '/v2/bkash/tokenized/payment/validate',
-            'callbackURL' => 'https://api.dev-sheba.xyz/',
+            'callbackURL' => config('sheba.api_url') . '/v2/bkash/tokenized/payment/validate',
             'amount' => $payment->payable->amount,
             'currency' => 'BDT',
             'merchantInvoiceNumber' => $payment->transaction_id
