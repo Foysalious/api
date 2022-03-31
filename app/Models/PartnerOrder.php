@@ -33,6 +33,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalMaterialPrice;
     public $totalMaterialCost;
     public $totalPrice;
+    public $totalPriceForCancelledOrder;
     public $gmv;
     public $serviceCharge;
     public $totalCommission;
@@ -56,6 +57,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalDiscountWithRoundingCutOff;
     public $jobDiscounts;
     public $jobPrices;
+    public $jobPricesForCancelledOrder;
     public $financeDue;
     public $totalDiscountedCost;
     public $totalPartnerDiscount;
@@ -67,6 +69,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $revenuePercent = 0;
     public $serviceChargePercent = 0;
     public $totalLogisticCharge = 0;
+    public $totalLogisticChargeForCancelledOrder = 0;
     public $grossLogisticCharge = 0;
     public $totalLogisticPaid = 0;
     public $totalLogisticDue = 0;
@@ -79,6 +82,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalDeliveryDiscountShebaContribution = 0.00;
     public $totalDeliveryDiscountPartnerContribution = 0.00;
     public $dueWithLogisticWithoutRoundingCutoff = 0;
+    public $totalPriceCalculationForCancelledOrder = 0;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -128,9 +132,9 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this->order->code() . "-" . str_pad($this->partner_id, 4, '0', STR_PAD_LEFT);
     }
 
-    public function calculate($price_only = false, $show_cancel_job_price_details = null)
+    public function calculate($price_only = false)
     {
-        $show_cancel_job_price_details ? $this->_calculateThisJobsForBillsDetails($price_only) : $this->_calculateThisJobs($price_only);
+        $this->_calculateThisJobs($price_only);
         $this->calculateStatus();
         $this->totalDiscount = $this->jobDiscounts + $this->discount;
         $this->_calculateRoundingCutOff();
@@ -223,17 +227,27 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this;
     }
 
-    private function _calculateThisJobsForBillsDetails($price_only = false)
+    public function _calculateThisJobsForBillsDetails($price_only = false)
     {
         $this->_initializeTotalsToZero();
         foreach ($this->jobs as $job) {
             /** @var Job $job */
             $job = $job->calculate($price_only);
-            $this->_updateTotalPriceAndCost($job);
+            $this->_updateJobPricesTotalPricesLogisticCharge($job);
         }
         return $this;
     }
 
+    /**
+     * @param Job $job
+     */
+    private function _updateJobPricesTotalPricesLogisticCharge(Job $job)
+    {
+        $this->jobPricesForCancelledOrder += $job->totalPrice;
+        $this->totalPriceForCancelledOrder += $job->grossPrice;
+        $this->totalLogisticChargeForCancelledOrder += $job->logistic_charge;
+        return $this;
+    }
     /**
      * @param Job $job
      */

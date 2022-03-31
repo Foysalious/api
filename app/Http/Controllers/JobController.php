@@ -344,7 +344,7 @@ class JobController extends Controller
             if(!array_key_exists($method['method'], $payment_method_names)) $method['name'] = $method['method'];
             else $method['name'] = $payment_method_names[$method['method']];
         }
-        $job->status == constants('JOB_STATUSES')['Cancelled'] ? $partnerOrder->calculate(true,1) : $partnerOrder->calculate(true);
+        $partnerOrder->calculate(true);
         $original_delivery_charge = $job->deliveryPrice;
         $delivery_discount = $job->deliveryDiscount;
         $voucher = $partnerOrder->order->voucher ? [
@@ -364,9 +364,10 @@ class JobController extends Controller
             if ($jobService->service->is_inspection_service) $has_inspection_service = 1;
             break;
         }
+//        dd();
 
         $bill = collect();
-        $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
+        $bill['total'] = (double)($partnerOrder->_calculateThisJobsForBillsDetails()->totalPriceForCancelledOrder + $partnerOrder->_calculateThisJobsForBillsDetails()->totalLogisticChargeForCancelledOrder);
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
         $bill['original_price'] = (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
