@@ -35,11 +35,8 @@ class TrackingController extends Controller
                 'dateTime' => $this->timeFormat($location['datetime'])
             ];
         }
-
         TrackingLocation::insert($data);
-        $req = $request->except('access_token', 'auth_user', 'auth_info', 'manager_member', 'business', 'business_member', 'token', 'profile');
-
-        return api_response($request, null, 200, ['data' => $req]);
+        return api_response($request, null, 200);
     }
 
     /**
