@@ -296,7 +296,11 @@ class DueTrackerService
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
-        $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
+        try {
+            $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
+        }catch (Exception $e) {
+            $reminder = [];
+        }
         $customer = $result['contact_details'];
         if (is_null($result['contact_details'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
