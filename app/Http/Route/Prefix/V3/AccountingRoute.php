@@ -22,5 +22,10 @@ class AccountingRoute
 
             });
         });
+        $api->group(['prefix' => 'accounting'], function ($api) {
+            $api->group(['prefix' => 'due-tracker'], function ($api) {
+                $api->get('/public-report', 'Accounting\\DueTrackerControllerV2@publicReport');
+            });
+        });
     }
 }

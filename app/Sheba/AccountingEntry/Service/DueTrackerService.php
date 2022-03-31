@@ -46,6 +46,7 @@ class DueTrackerService
     protected $end_date;
     protected $contact_id;
     protected $note;
+    protected $partner_id;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo,DueTrackerReminderRepository $reminderRepo)
     {
@@ -140,6 +141,16 @@ class DueTrackerService
     public function setPartner($partner): DueTrackerService
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param $partner_id
+     * @return $this
+     */
+    public function setPartnerId($partner_id): DueTrackerService
+    {
+        $this->partner_id = $partner_id;
         return $this;
     }
 
@@ -406,6 +417,12 @@ class DueTrackerService
         //TODO: Will Change the Pdf Generation
         return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220315_due_tracker_by_customer_report_1647338702.pdf";
         //return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
+    }
+
+    public function generatePublicReport(){
+        $queryString = $this->generateQueryString();
+        $data = $this->dueTrackerRepo->reportForWeb($this->partner_id, $this->contact_id , $queryString);
+        return $data;
     }
 
     /**
