@@ -412,6 +412,8 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'live-tracking'], function ($api) {
                     $api->post('setting', 'B2b\TrackingController@settingsAction');
+                    $api->post('employee-setting', 'B2b\TrackingController@employeeTrackingAction');
+                    $api->get('logs', 'B2b\TrackingController@getChangesLogs');
                 });
 
             });
