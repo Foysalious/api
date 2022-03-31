@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Jenssegers\Mongodb\Eloquent\HybridRelations;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\BusinessMemberBkashInfo\BusinessMemberBkashInfo;
@@ -25,6 +26,7 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 class BusinessMember extends Model
 {
     use SoftDeletes, HasFactory;
+    use HybridRelations;
 
     protected $guarded = ['id'];
     protected $dates = ['join_date', 'deleted_at'];
@@ -96,6 +98,16 @@ class BusinessMember extends Model
     public function manager()
     {
         return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    public function tackingLocations()
+    {
+        return $this->hasMany(TrackingLocation::class);
+    }
+
+    public function lastLiveLocation()
+    {
+        return $this->hasMany(TrackingLocation::class)->orderBy('created_at', 'desc')->first();
     }
 
     public function statusChangeLogs()
@@ -336,5 +348,10 @@ class BusinessMember extends Model
     {
         if ($this->status == Statuses::ACTIVE) return true;
         return false;
+    }
+
+    public function liveLocationFilterByDate($date)
+    {
+        return $this->tackingLocations()->where('date', $date)->get();
     }
 }
