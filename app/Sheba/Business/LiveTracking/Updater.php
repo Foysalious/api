@@ -10,8 +10,10 @@ class Updater
     private $isEnable;
     /*** @var Business */
     private $business;
-    /*** @var LiveTrackingSetting  */
+    /*** @var LiveTrackingSettingRepository  */
     private $liveTrackingSettingRepo;
+    private $intervalTime;
+    private $liveTrackingSetting;
 
     public function __construct()
     {
@@ -24,22 +26,38 @@ class Updater
         return $this;
     }
 
+    public function setLiveTrackingSetting($live_tracking_setting)
+    {
+        $this->liveTrackingSetting = $live_tracking_setting;
+        return $this;
+    }
+
     public function setIsEnable($is_enable)
     {
         $this->isEnable = $is_enable;
         return $this;
     }
 
+    public function setIntervalTime($interval_time)
+    {
+        $this->intervalTime = $interval_time;
+        return $this;
+    }
+
     public function update()
     {
-        $live_tracking_setting = $this->business->liveTrackingSettings;
-        if ($live_tracking_setting) {
-            $live_tracking_setting->update($this->withUpdateModificationField(['is_enable' => $this->isEnable]));
-            return $live_tracking_setting;
+
+        if ($this->liveTrackingSetting) {
+            $this->liveTrackingSetting->update($this->withUpdateModificationField([
+                'is_enable' => $this->isEnable,
+                'location_fetch_interval_in_minutes' => $this->intervalTime
+            ]));
+            return $this->liveTrackingSetting;
         }
         return $this->liveTrackingSettingRepo->create($this->withUpdateModificationField([
             'business_id' => $this->business->id,
-            'is_enable' => $this->isEnable
+            'is_enable' => $this->isEnable,
+            'location_fetch_interval_in_minutes' => $this->intervalTime
         ]));
     }
 }
