@@ -372,7 +372,7 @@ class JobController extends Controller
 //        dd();
 
         $bill = collect();
-        $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
+        $bill['total'] = $job->status == constants('JOB_STATUSES')['Cancelled'] ? (double)($partnerOrder->_calculateThisJobsForBillsDetails()->totalPriceForCancelledOrder + $partnerOrder->_calculateThisJobsForBillsDetails()->totalLogisticChargeForCancelledOrder) : (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
         $bill['original_price'] = (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
