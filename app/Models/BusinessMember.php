@@ -49,16 +49,6 @@ class BusinessMember extends Model
         $this->table = $table;
     }
 
-    public function tackingLocations()
-    {
-        return $this->hasMany(TrackingLocation::class);
-    }
-
-    public function lastLiveLocation()
-    {
-        return $this->hasMany(TrackingLocation::class)->orderBy('created_at', 'desc')->first();
-    }
-
     public function member()
     {
         return $this->belongsTo(Member::class);
@@ -122,6 +112,16 @@ class BusinessMember extends Model
     public function manager()
     {
         return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    public function tackingLocations()
+    {
+        return $this->hasMany(TrackingLocation::class);
+    }
+
+    public function lastLiveLocation()
+    {
+        return $this->hasMany(TrackingLocation::class)->orderBy('created_at', 'desc')->first();
     }
 
     public function statusChangeLogs()
