@@ -1,6 +1,7 @@
 <?php namespace Sheba\Bkash\Modules\Tokenized;
 
 use App\Models\Payment;
+use http\Exception\InvalidArgumentException;
 use Sheba\Bkash\Modules\BkashPayment;
 
 class TokenizedPayment extends BkashPayment
@@ -45,12 +46,10 @@ class TokenizedPayment extends BkashPayment
         curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($url, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         $resultdata = curl_exec($url);
+        if (curl_errno($url) > 0) throw new InvalidArgumentException("Payment couldn't be processed");
         curl_close($url);
-        echo $resultdata;
-
         $obj = json_decode($resultdata);
-
-        dd($obj);
+        return $obj;
     }
 
     public function getToken()
@@ -71,19 +70,9 @@ class TokenizedPayment extends BkashPayment
         curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
         curl_setopt($url, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
         $resultdata = curl_exec($url);
+        if (curl_errno($url) > 0) throw new InvalidArgumentException("Payment couldn't be processed");
         curl_close($url);
-
-        $curl = curl_init($this->bkashAuth->url . '/checkout/payment/execute');
-        $this->setCurlOptions($curl);
-        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode(['paymentID' => json_decode($payment->transaction_details)->paymentID]));
-        $result_data = curl_exec($curl);
-        $result_data = json_decode($result_data);
-        if (curl_errno($curl) > 0) {
-            $error = new \InvalidArgumentException('Bkash execute API error.');
-            $error->paymentId = $payment->transaction_id;
-            throw  $error;
-        };
-        curl_close($curl);
-        return $result_data;
+        $obj = json_decode($resultdata);
+        return $obj;
     }
 }

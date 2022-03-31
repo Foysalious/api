@@ -24,24 +24,10 @@ class BkashTokenizedController extends Controller
         $this->validate($request, ['paymentID' => 'required']);
         /** @var Payment $payment */
         $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
-
         if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
         $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
-
-        try {
-            $payment_manager->setMethodName(PaymentStrategy::BKASH)->setPayment($payment)->complete();
-            return redirect($redirect_url);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return redirect($redirect_url);
-        } catch (InvalidTransaction $e) {
-            logError($e);
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
-        } catch (Throwable $e) {
-            logError($e);
-            return redirect($redirect_url);
-        }
+        $payment_manager->setMethodName(PaymentStrategy::BKASH)->setPayment($payment)->complete();
+        return redirect($redirect_url);
     }
 
     public function tokenizePayment(Request $request)

@@ -86,11 +86,12 @@ class Bkash extends PaymentMethod
             /** @var TokenizedPayment $tokenized_payment */
             $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
             $data = $tokenized_payment->setBkashAuth($this->bkashAuth)->create($payment);
+            $payment->redirect_url = $data->bkashURL;
         } else {
             $data = $this->create($payment);
+            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
         }
         $payment->gateway_transaction_id = $data->paymentID;
-        $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
         $payment->transaction_details = json_encode($data);
         $payment->update();
         return $payment;
@@ -179,14 +180,15 @@ class Bkash extends PaymentMethod
      */
     public function validate(Payment $payment): Payment
     {
-        $credential_dto = (new BkashCredentialDto())->setUser($payment->payable->user)->setUserType($payment->payable->type);
+        $bkash_agreement_id = $payment->payable->getUserProfile()->getAgreementId(PaymentStrategy::BKASH);
+        $credential_dto = (new BkashCredentialDto())->setUser($payment->payable->user)->setUserType($payment->payable->type)->setTokenizedId($bkash_agreement_id);
         $this->setCredentials($credential_dto);
         $execute_response = new ExecuteResponse();
         $execute_response->setPayment($payment);
-        if ($payment->payable->user->getAgreementId()) {
+        if ($bkash_agreement_id) {
             /** @var TokenizedPayment $tokenized_payment */
-            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment');
-            $res = $tokenized_payment->execute($payment);
+            $tokenized_payment = (new ShebaBkash())->setModule('tokenized')->getModuleMethod('payment')->setBkashAuth($this->bkashAuth);
+            $res = $tokenized_payment->setBkashAuth($this->bkashAuth)->execute($payment);
         } else {
             $res = $this->execute($payment);
         }
