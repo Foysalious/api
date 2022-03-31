@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Sheba\ModificationFields;
+use Sheba\OrderAdvanceWithdrawalRequest\OrderAdvanceWithdrawalRequestService;
 use Sheba\PartnerWithdrawal\PartnerWithdrawalService;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
@@ -193,7 +194,7 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function getBillsV2($partner, Request $request, FormatServices $formatServices, OrderAdvanceWithdrawalRequestRepositoryInterface $orderAdvanceWithdrawalRequestRepository)
+    public function getBillsV2($partner, Request $request, FormatServices $formatServices, OrderAdvanceWithdrawalRequestRepositoryInterface $orderAdvanceWithdrawalRequestRepository, OrderAdvanceWithdrawalRequestService $orderAdvanceWithdrawalRequestService)
     {
         try {
             $partner_order = $request->partner_order;
@@ -275,7 +276,7 @@ class PartnerOrderController extends Controller
                 'is_ready_to_pick' => $partner_order->order->isReadyToPick(),
                 'is_money_withdrawable' => $isMoneyWithdrawable,
                 'max_withdrawable_amount' => $maxWithdrawalAmount,
-                'order_advance_withdrawal_requests' => $orderAdvanceWithdrawalRequestRepository->getMergedWithdrawalRequests($partner_order)
+                'order_advance_withdrawal_requests' => $orderAdvanceWithdrawalRequestService->getMergedWithdrawalRequests($partner_order)
             ];
             return api_response($request, $partner_order, 200, ['order' => $partner_order]);
         } catch (Throwable $e) {
