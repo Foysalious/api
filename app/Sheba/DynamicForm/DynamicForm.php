@@ -33,7 +33,7 @@ class DynamicForm
 
     public function setForm(): DynamicForm
     {
-        $this->form = MefForm::where('key',$this->formKey)->first();
+        $this->form = MefForm::where('key', $this->formKey)->first();
         return $this;
     }
 
@@ -90,7 +90,7 @@ class DynamicForm
 
     private function getPostUrl(): string
     {
-        return config('sheba.api_url').$this->section->post_url;
+        return config('sheba.api_url') . $this->section->post_url;
     }
 
     /**
@@ -178,7 +178,7 @@ class DynamicForm
                 return District::where('division_id', $request->division)->get();
             return District::get();
         }
-        if ($this->type == "tradeLicenseExist") {
+        if ($this->type == "tradeLicenseExists") {
             return config('trade_license.data');
         }
     }
