@@ -252,4 +252,14 @@ class Bkash extends PaymentMethod
     {
         return self::NAME;
     }
+
+    public function getCalculatedChargedAmount($transaction_details)
+    {
+        if ($transaction_details->transactionStatus === "Completed") {
+            $amount = (float)$transaction_details->amount;
+            $charge = (float)config('bkash.transaction_charge');
+            return round($amount * $charge / 100, 2);
+        }
+        return 0;
+    }
 }
