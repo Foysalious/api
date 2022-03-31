@@ -85,6 +85,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalDeliveryDiscountPartnerContribution = 0.00;
     public $vat;
     public $dueWithLogisticWithoutRoundingCutoff = 0;
+    public $totalPriceCalculationForCancelledOrder = 0;
 
     /** @var CodeBuilder */
     private $codeBuilder;
@@ -250,7 +251,6 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->totalLogisticChargeForCancelledOrder += $job->logistic_charge;
         return $this;
     }
-
     /**
      * @param Job $job
      */
