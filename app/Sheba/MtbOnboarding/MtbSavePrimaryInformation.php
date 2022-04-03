@@ -98,7 +98,7 @@ class MtbSavePrimaryInformation
                 ],
                 'permanentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->permanentAddress,
-                    'postCode' => $this->partnerMefInformation->permanentpostCode,
+                    'postCode' => $this->partnerMefInformation->permanentPostCode,
                     'country' => MtbConstants::COUNTRY,
                     'contactAddress' => $this->partnerMefInformation->presentAddress
                 ]
