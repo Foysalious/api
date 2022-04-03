@@ -20,7 +20,7 @@ use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Exception;
 use Throwable;
-
+use App\Models\Partner;
 
 class DueTrackerService
 {
@@ -46,6 +46,7 @@ class DueTrackerService
     protected $end_date;
     protected $contact_id;
     protected $note;
+    protected $partner_id;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo,DueTrackerReminderRepository $reminderRepo)
     {
@@ -140,6 +141,16 @@ class DueTrackerService
     public function setPartner($partner): DueTrackerService
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param $partner_id
+     * @return $this
+     */
+    public function setPartnerId($partner_id): DueTrackerService
+    {
+        $this->partner_id = $partner_id;
         return $this;
     }
 
@@ -409,6 +420,21 @@ class DueTrackerService
     }
 
     /**
+     * @return mixed
+     */
+    public function generatePublicReport(){
+
+        $queryString = $this->generateQueryString();
+        $data = $this->dueTrackerRepo->reportForWeb($this->partner_id, $this->contact_id , $queryString);
+
+        $this->getPartnerById();
+        $partnerInfo = $this->getPartnerInfo($this->partner);
+
+        $data['partner_info'] = $partnerInfo;
+        return $data;
+    }
+
+    /**
      * @return string
      */
     private function generateQueryString(): string
@@ -439,6 +465,10 @@ class DueTrackerService
 
         if (isset($this->contact_type)) {
             $query_strings [] = "contact_type=" . strtolower($this->contact_type);
+        }
+
+        if (isset($this->contact_id)) {
+            $query_strings [] = "contact_id=" . strtolower($this->contact_id);
         }
 
         if (isset($this->filter_by_supplier)) {
@@ -511,4 +541,14 @@ class DueTrackerService
 
         return $data;
     }
+
+    /**
+     * @return void
+     */
+    private function getPartnerById(){
+        $partner = Partner::where('id', $this->partner_id)->first();
+        $this->setPartner($partner);
+    }
+
+
 }

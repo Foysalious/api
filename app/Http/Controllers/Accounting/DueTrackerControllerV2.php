@@ -169,5 +169,12 @@ class DueTrackerControllerV2 extends Controller
             ->downloadPDF($request);
         return http_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
     }
-
+    public function publicReport(Request $request){
+        $data = $this->dueTrackerService
+            ->setPartnerId($request->partner_id)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->generatePublicReport();
+        return http_response($request, null, 200, ['data' => $data]);
+    }
 }

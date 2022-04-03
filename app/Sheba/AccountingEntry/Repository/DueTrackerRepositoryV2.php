@@ -102,4 +102,16 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
+    /**
+     * @param $partner_id
+     * @param $contact_id
+     * @param $url_param
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function reportForWeb($partner_id,$contact_id ,$url_param){
+        $url = "api/v2/due-tracker/report/web?".$url_param;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
+    }
+
 }

@@ -220,8 +220,8 @@ class DueTrackerReminderService
             $data['should_send_sms']= true;
         }
         $data['reminder_at']= $this->reminder_date;
-        $data['reminder_status']= (int)$this->reminder_status;
-        $data['sms_status']= (int)$this->sms_status;
+        $data['reminder_status']= $this->reminder_status;
+        $data['sms_status']= $this->sms_status;
         return $data;
     }
     /**
