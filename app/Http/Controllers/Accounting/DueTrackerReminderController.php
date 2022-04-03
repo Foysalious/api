@@ -69,8 +69,8 @@ class DueTrackerReminderController extends Controller
         $this->validate($request, [
             'should_send_sms' => 'required|integer',
             'reminder_date' => 'required|date_format:Y-m-d H:i:s',
-            'reminder_status' => 'required|integer',
-            'sms_status' => 'required|integer'
+            'reminder_status' => 'required|in:success,pending,failed',
+            'sms_status' => 'required|in:success,pending,failed'
         ]);
         $response = $this->dueTrackerReminderService
             ->setPartner($request->partner)

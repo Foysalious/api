@@ -20,7 +20,7 @@ use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 use Exception;
 use Throwable;
-
+use App\Models\Partner;
 
 class DueTrackerService
 {
@@ -419,9 +419,18 @@ class DueTrackerService
         //return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
     }
 
+    /**
+     * @return mixed
+     */
     public function generatePublicReport(){
+
         $queryString = $this->generateQueryString();
         $data = $this->dueTrackerRepo->reportForWeb($this->partner_id, $this->contact_id , $queryString);
+
+        $this->getPartnerById();
+        $partnerInfo = $this->getPartnerInfo($this->partner);
+
+        $data['partner_info'] = $partnerInfo;
         return $data;
     }
 
@@ -456,6 +465,10 @@ class DueTrackerService
 
         if (isset($this->contact_type)) {
             $query_strings [] = "contact_type=" . strtolower($this->contact_type);
+        }
+
+        if (isset($this->contact_id)) {
+            $query_strings [] = "contact_id=" . strtolower($this->contact_id);
         }
 
         if (isset($this->filter_by_supplier)) {
@@ -528,4 +541,14 @@ class DueTrackerService
 
         return $data;
     }
+
+    /**
+     * @return void
+     */
+    private function getPartnerById(){
+        $partner = Partner::where('id', $this->partner_id)->first();
+        $this->setPartner($partner);
+    }
+
+
 }
