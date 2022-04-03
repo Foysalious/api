@@ -43,7 +43,7 @@ class Upay extends PaymentMethod
 
     private function setHeader()
     {
-        $this->headers = ['Authorization' => "UPAY $this->login_token"];
+        $this->headers = ["Authorization:UPAY $this->login_token"];
     }
 
     /**

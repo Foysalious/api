@@ -29,6 +29,7 @@ class UpayClient
     {
         $this->client  = app(TPProxyClient::class);
         $this->baseUrl = config('payment.upay.base_url');
+        $this->headers= ["Content-Type:application/json"];
     }
 
     /**
@@ -58,7 +59,7 @@ class UpayClient
      */
     public function setHeaders(array $headers): UpayClient
     {
-        $this->headers = $headers;
+        $this->headers = array_merge($this->headers,$headers);
         return $this;
     }
 
