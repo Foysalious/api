@@ -13,10 +13,14 @@ class AnnouncementTransformer extends TransformerAbstract
 
     public function transform(Announcement $announcement)
     {
+        $target_ids = json_decode($announcement->target_id,1);
+
         return [
             'id' => $announcement->id,
             'title' => $announcement->title,
             'type' => $announcement->type,
+            'target_type' => $announcement->target_type,
+            'target_id' => $target_ids,
             'is_published_for_app' => $announcement->is_published,
             #In new Design short description remove. it should change in app
             'short_description' => $announcement->short_description ?: $announcement->long_description,

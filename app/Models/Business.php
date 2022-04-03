@@ -7,6 +7,7 @@ use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
+use Sheba\Dal\BusinessPayslip\BusinessPayslip;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\Dal\OfficePolicy\OfficePolicy;
 use Sheba\Dal\OfficePolicy\Type;
@@ -36,7 +37,12 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function offices()
     {
-        return $this->hasMany(BusinessOffice::class);
+        return $this->hasMany(BusinessOffice::class)->where('is_location', 0);
+    }
+
+    public function geoOffices()
+    {
+        return $this->hasMany(BusinessOffice::class)->where('is_location', 1);
     }
 
     public function announcements()
@@ -98,7 +104,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
             'member' => function ($q) {
                 $q->select('members.id', 'profile_id')->with([
                     'profile' => function ($q) {
-                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic', 'dob', 'address', 'nationality', 'nid_no', 'tin_no');
                     }
                 ]);
             }, 'role' => function ($q) {
@@ -207,6 +213,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function payrollSetting()
     {
         return $this->hasOne(PayrollSetting::class);
+    }
+
+    public function payslipSummary()
+    {
+        return $this->hasMany(BusinessPayslip::class);
     }
 
     public function activePartners()
@@ -384,9 +395,14 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray());
     }
 
+    public function isGeoLocationAttendanceEnable()
+    {
+        return in_array(AttendanceTypes::GEO_LOCATION_BASED, $this->attendanceTypes->pluck('attendance_type')->toArray());
+    }
+
     public function isShebaTech($business_member_id)
     {
-        $sheba_tech = [574, 1031, 6885];
+        $sheba_tech = [574, 586, 847, 922, 1031, 4493, 6885, 7102, 2111];
         return in_array($business_member_id, $sheba_tech);
     }
 

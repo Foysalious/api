@@ -106,8 +106,10 @@ class Creator
         $new_type_string = implode(", ", $new_type);
         $previous_type_string = str_replace('remote','Remote', $previous_type_string);
         $previous_type_string = str_replace('ip_based', 'WiFi', $previous_type_string);
+        $previous_type_string = str_replace('location_based', 'Location Based', $previous_type_string);
         $new_type_string = str_replace('remote','Remote', $new_type_string);
         $new_type_string = str_replace('ip_based', 'WiFi', $new_type_string);
+        $new_type_string = str_replace('location_based', 'Location Based', $new_type_string);
         $log_data = [
             'business_id' => $this->officeSettingChangesLogsRequester->getBusiness()->id,
             'type' => 'operational',
