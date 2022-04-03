@@ -39,7 +39,7 @@
             <td>{{ ($service->category->parent?$service->category->parent->name:'') . ' > ' . $service->category->name }}</td>
             <td>{{ $service->google_product_category ? $service->google_product_category : ($service->category->parent?$service->category->parent->name:'') . ' > ' . $service->category->name }}</td>
             <td>{{ $service->facebook_product_category ? $service->facebook_product_category : ($service->category->parent?$service->category->parent->name:'') . ' > ' . $service->category->name }}</td>
-            <td>{{ config('sheba.front_url') .($service->getSlug() ?? '') }}</td>
+            <td>{{ config('sheba.front_url'). '/' .($service->getSlug() ?? '') }}</td>
             <td>{{ $service->catalog_thumb ?: $service->app_thumb}}</td>
             <td>new</td>
             <td>in stock</td>
@@ -65,7 +65,7 @@
             <td>{{ $category->parent->name . ' > ' . $category->name }}</td>
             <td>{{ $category->google_product_category ? $category->google_product_category : ($category->parent?$category->parent->name:'') . ' > ' . $category->name }}</td>
             <td>{{ $category->facebook_product_category ? $category->facebook_product_category : ($category->parent?$category->parent->name:'') . ' > ' . $category->name }}</td>
-            <td>{{ config('sheba.front_url') .($category->getSlug() ?? '') }}</td>
+            <td>{{ config('sheba.front_url'). '/' .($category->getSlug() ?? '') }}</td>
             <td>{{ $category->catalog_thumb ?: $category->app_thumb}}</td>
             <td>new</td>
             <td>in stock</td>
