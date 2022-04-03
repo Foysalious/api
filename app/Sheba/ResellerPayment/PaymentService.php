@@ -73,10 +73,13 @@ class PaymentService
 
     /**
      * @return array
+     * @throws Exceptions\MORServiceServerError
      * @throws InvalidQRKeyException
+     * @throws NotFoundAndDoNotReportException
      */
     private function getQRGatewayDetails(): array
     {
+        $this->getResellerPaymentStatus(true);
         $qr_gateway = QRGateway::where('method_name',$this->key)->first();
         if(!$qr_gateway) throw new InvalidQRKeyException();
         return [
@@ -191,9 +194,10 @@ class PaymentService
      * @throws Exceptions\MORServiceServerError
      * @throws NotFoundAndDoNotReportException
      */
-    private function getResellerPaymentStatus()
+    private function getResellerPaymentStatus($exceptMorStatus = false)
     {
-        $this->getMORStatus();
+        if(!$exceptMorStatus)
+            $this->getMORStatus();
         if(isset($this->status))
             return;
         $this->checkMefCompletion();
