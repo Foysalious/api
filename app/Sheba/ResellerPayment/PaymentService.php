@@ -79,9 +79,9 @@ class PaymentService
      */
     private function getQRGatewayDetails(): array
     {
-        $this->getResellerPaymentStatus(true);
         $qr_gateway = QRGateway::where('method_name',$this->key)->first();
         if(!$qr_gateway) throw new InvalidQRKeyException();
+        $this->getResellerPaymentStatus(true);
         return [
             'banner' => PaymentMethodStatics::getMtbBannerURL(),
             'faq' => PaymentMethodStatics::detailsFAQ(),
