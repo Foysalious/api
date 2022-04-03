@@ -70,4 +70,36 @@ class TrackingController extends Controller
         return api_response($request, $tracking_logs, 200, ['live_tracking_setting_changes_logs' => $tracking_logs]);
     }
 
+    public function getTrackingDetails(Request $request)
+    {
+        $data = [
+            'date' => '2022-04-05',
+            'employee' => [
+                'name' => 'Asad Ahmed',
+                'employee_id' => "737",
+                'department' => "IT",
+                'designation' => "Software Engineer"
+            ],
+            'timeline' => [
+                [
+                    'time' => '9:10 AM',
+                    'location' => [
+                        'lat' => 23.2929292,
+                        'lng' => 90.8787484,
+                        'address' => 'Sheba.xyz'
+                    ]
+                ],
+                [
+                    'time' => '9:10 AM',
+                    'location' => [
+                        'lat' => 23.2929292,
+                        'lng' => 90.8787484,
+                        'address' => 'Sheba.xyz'
+                    ]
+                ]
+            ]
+        ];
+        return api_response($request, $data, 200, ['live_tracking_details' => $data]);
+    }
+
 }
