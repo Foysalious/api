@@ -23,7 +23,7 @@ use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class ShurjoPayGateway extends PaymentMethod
 {
-    const KEY = "shurjopay_mef";
+    const KEY = "shurjopay";
 
     private $form;
 
@@ -60,9 +60,9 @@ class ShurjoPayGateway extends PaymentMethod
 
     public function overallCompletionPercentage($completion) {
         $sum = 0;
-        foreach ($completion as $c) {
+        foreach ($completion as $c)
             $sum+= $c;
-        }
+
         $this->overall_completion = round(($sum/count($completion)),2);
     }
 
