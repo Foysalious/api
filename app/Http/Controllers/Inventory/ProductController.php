@@ -130,4 +130,11 @@ class ProductController extends Controller
         return http_response($request, null, 200);
     }
 
+    public function uploadImages(Request $request, int $productId)
+    {
+        $partner = $request->auth_user->getPartner();
+        $this->productService->setPartnerId($partner->id)->setProductId($productId)->setImages($request->file('images'))->uploadImages();
+        return http_response($request, null, 200);
+    }
+
 }
