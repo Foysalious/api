@@ -8,6 +8,7 @@ use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 
 
 class MtbSavePrimaryInformation
@@ -40,22 +41,18 @@ class MtbSavePrimaryInformation
      * @var PartnerMefInformation
      */
     private $partnerMefInformation;
-    /**
-     * @var ApplyValidation
-     */
-    private $applyValidation;
 
 
     public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
                                 MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload, MtbSaveTransaction $mtbSaveTransaction,
-                                ApplyValidation           $applyValidation)
+                                )
     {
         $this->client = $client;
         $this->mtbAccountStatus = $mtbAccountStatus;
         $this->mtbSaveNomineeInformation = $mtbSaveNomineeInformation;
         $this->mtbDocumentUpload = $mtbDocumentUpload;
         $this->mtbSaveTransaction = $mtbSaveTransaction;
-        $this->applyValidation = $applyValidation;
+
     }
 
     public function setPartnerMefInformation($partnerMefInformation): MtbSavePrimaryInformation
@@ -120,12 +117,14 @@ class MtbSavePrimaryInformation
         $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
     }
 
+
     /**
-     * @return \Illuminate\Http\JsonResponse
+     * @param $request
+     * @return JsonResponse
      */
-    public function storePrimaryInformationToMtb($request)
+    public function storePrimaryInformationToMtb($request): JsonResponse
     {
-        $data = $this->applyValidation->setPartner($this->partner)->setForm(MtbConstants::MTB_FORM_ID)->getFormSections();
+        $data = (new ApplyValidation())->setPartner($this->partner)->setForm(MtbConstants::MTB_FORM_ID)->getFormSections();
         if ($data['total_percentage'] != 100)
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data['total_percentage'] . " completed"]);
         $data = $this->makePrimaryInformation();

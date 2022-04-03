@@ -45,20 +45,17 @@ class ApplyValidation
         return $fields;
     }
 
-    public function getFormSections(): array
+    public function getFormSections(): float
     {
         $categories = array();
-        $totalPercentage = 0;
         foreach ($this->form->sections as $section) {
             $this->setSection($section->id);
             $fields = $this->getSectionFields();
             $completion = (new CompletionCalculation())->setFields($fields)->calculate();
-
-            $categories[] = $percentage = (new CategoryDetails())->setCategoryCode($section->key)
+            $categories[] = (new CategoryDetails())->setCategoryCode($section->key)
                 ->setCompletionPercentage($completion)->setCategoryId($section->id)
                 ->setTitle($section->name, $section->bn_name)->toArray();
-            $totalPercentage += ($percentage['completion_percentage']['en']);
         }
-        return ["category_list" => $categories, "total_percentage" => $totalPercentage / count($this->form->sections)];
+        return (new CompletionCalculation())->getFinalCompletion($categories);
     }
 }
