@@ -109,14 +109,24 @@ class ProductController extends Controller
         return http_response($request, null, 200, $product);
     }
 
-    public function getLogs(Request $request, $productId)
+    /**
+     * @param Request $request
+     * @param $productId
+     * @return JsonResponse
+     */
+    public function getLogs(Request $request, $productId): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
         $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->getLogs();
         return http_response($request, null, 200, $product);
     }
 
-    public function addStock(Request $request, $productId)
+    /**
+     * @param Request $request
+     * @param $productId
+     * @return JsonResponse
+     */
+    public function addStock(Request $request, $productId): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
         $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->setStock($request->stock)
@@ -124,10 +134,28 @@ class ProductController extends Controller
         return http_response($request, null, 200, $product);
     }
 
-    public function changePublishStatus(Request $request,$product_id,$status)
+    /**
+     * @param Request $request
+     * @param $product_id
+     * @param $status
+     * @return JsonResponse
+     */
+    public function changePublishStatus(Request $request, $product_id, $status): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
         $this->productService->setPartnerId($partner->id)->setProductId($product_id)->setPublishStatus($status)->changePublishStatus();
+        return http_response($request, null, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param int $productId
+     * @return JsonResponse
+     */
+    public function uploadImages(Request $request, int $productId): JsonResponse
+    {
+        $partner = $request->auth_user->getPartner();
+        $this->productService->setPartnerId($partner->id)->setProductId($productId)->setImages($request->file('images'))->uploadImages();
         return http_response($request, null, 200);
     }
 

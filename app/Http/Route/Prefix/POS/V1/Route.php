@@ -125,6 +125,7 @@ class Route
                         $api->delete('/', 'Inventory\ProductController@destroy');
                         $api->get('/logs', 'Inventory\ProductController@getLogs');
                         $api->post('/add-stock', 'Inventory\ProductController@addStock');
+                        $api->post('/upload-images', 'Inventory\ProductController@uploadImages');
                         $api->put('change-publish-status/{status}','Inventory\ProductController@changePublishStatus')->where('status','publish|unpublish');
                     });
                 });

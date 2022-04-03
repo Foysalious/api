@@ -408,6 +408,12 @@ class ProductService
         return $this->client->post('api/v1/partners/'. $this->partnerId . '/products/' .  $this->productId . '/add-stock', $data, true);
     }
 
+    public function uploadImages()
+    {
+        $data = $this->makeImagesData();
+        return $this->client->post('api/v1/partners/'. $this->partnerId . '/products/' .  $this->productId . '/upload-images', $data, true);
+    }
+
     private function makeAddStockData(): array
     {
         return [
