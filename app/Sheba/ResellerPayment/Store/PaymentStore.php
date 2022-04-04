@@ -11,7 +11,7 @@ abstract class PaymentStore
     protected $data;
     protected $gateway_id;
 
-    private $conn_data;
+//    protected $conn_data;
 
     /**
      * @param mixed $key
