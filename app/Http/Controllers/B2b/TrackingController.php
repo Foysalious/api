@@ -3,6 +3,8 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Models\TrackingLocation;
+use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\Business\LiveTrackingEmployeeListsTransformer;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
 use App\Transformers\CustomSerializer;
@@ -20,6 +22,21 @@ use Sheba\ModificationFields;
 class TrackingController extends Controller
 {
     use ModificationFields;
+
+    public function index(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $tracking_locations = TrackingLocation::select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')->where('business_id', $business->id)->groupBy('business_member_id')->orderBy('created_at', 'DESC')->get();
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($tracking_locations, new LiveTrackingListTransformer());
+        $tracking_locations = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, $tracking_locations, 200, ['tracking_locations' => $tracking_locations]);
+    }
 
     public function settingsAction(Request $request, SettingsUpdater $updater, ChangeLogsCreator $change_logs_creator)
     {
