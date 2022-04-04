@@ -110,6 +110,10 @@ class Route
                     $api->post('fail', 'OkWalletController@validatePayment');
                     $api->post('cancel', 'OkWalletController@validatePayment');
                 });
+                $api->group(['prefix'=>'upay'],function($api){
+                    $api->get('/','Payments\\UpayController@validatePayment');
+                    $api->post('/','Payments\\UpayController@validatePayment');
+                });
             });
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('gmail', 'Auth\GoogleController@login');
