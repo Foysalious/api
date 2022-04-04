@@ -128,17 +128,22 @@ class TrackingController extends Controller
         return api_response($request, $data, 200, ['live_tracking_details' => $data]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function employeeLists(Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
         $business_members = $business->getActiveBusinessMember();
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($business_members->get(), new LiveTrackingEmployeeListsTransformer());
-        $tracking_logs = $manager->createData($resource)->toArray()['data'];
+        $live_tracking_employees = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $tracking_logs, 200, ['live_tracking_setting_changes_logs' => $tracking_logs]);
+        return api_response($request, $live_tracking_employees, 200, ['live_tracking_employees' => $live_tracking_employees]);
     }
 
 }
