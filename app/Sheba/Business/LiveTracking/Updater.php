@@ -46,7 +46,6 @@ class Updater
 
     public function update()
     {
-
         if ($this->liveTrackingSetting) {
             $this->liveTrackingSetting->update($this->withUpdateModificationField([
                 'is_enable' => $this->isEnable,

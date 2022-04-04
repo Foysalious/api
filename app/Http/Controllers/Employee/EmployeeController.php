@@ -169,11 +169,7 @@ class EmployeeController extends Controller
         $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-
-        $member = $this->repo->find($business_member['member_id']);
-        /** @var BusinessMember $business_member */
-        $business_member = BusinessMember::find($business_member['id']);
-        if (!$business_member) return api_response($request, null, 404);
+        $member = $this->getMember($request);
 
         $department = $business_member->department();
         $profile = $business_member->profile();
@@ -197,7 +193,7 @@ class EmployeeController extends Controller
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED])->where('schedule_date', '<=', Carbon::now()->toDateString().' 22:59:59');
+            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED])->where('schedule_date', '<=', Carbon::now()->toDateString() . ' 22:59:59');
         $pending_visit_count = $pending_visit->count();
 
         $current_visit = $visit_repository->where('visitor_id', $business_member->id)
@@ -256,7 +252,8 @@ class EmployeeController extends Controller
                 'name' => $profile->name ?: null,
                 'pro_pic' => $profile->pro_pic ?: null,
                 'designation' => $designation ? ucwords($designation->name) : null
-            ]
+            ],
+            'is_live_track_enable' => $business_member->is_live_track_enable
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
