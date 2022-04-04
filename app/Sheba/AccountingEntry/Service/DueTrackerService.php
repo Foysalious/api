@@ -21,7 +21,7 @@ use Sheba\Reports\PdfHandler;
 use Exception;
 use Throwable;
 use App\Models\Partner;
-
+use Sheba\Helpers\Converters\NumberLanguageConverter;
 class DueTrackerService
 {
     protected $partner;
@@ -420,17 +420,29 @@ class DueTrackerService
     }
 
     /**
-     * @return mixed
+     * @return array|mixed
+     * @throws AccountingEntryServerError
      */
     public function generatePublicReport(){
-
         $queryString = $this->generateQueryString();
         $data = $this->dueTrackerRepo->reportForWeb($this->partner_id, $this->contact_id , $queryString);
+
+        $data['stats']['receivable_bn'] = NumberLanguageConverter::en2bn($data['stats']['receivable']);
+        $data['stats']['payable_bn'] = NumberLanguageConverter::en2bn($data['stats']['payable']);
+        $data['stats']['balance_bn'] = NumberLanguageConverter::en2bn($data['stats']['balance']);
+
+        foreach($data['list'] as $key => $value){
+            $date = date_create($data['list'][$key]['entry_at']);
+            $data['list'][$key]['amount_bn'] = NumberLanguageConverter::en2bn($data['list'][$key]['amount']);
+            $data['list'][$key]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($date,"d")).' '.banglaMonth(date_format($date,"m")).' '.NumberLanguageConverter::en2bn(date_format($date,"Y")) ;
+            $data['list'][$key]['balance_bn'] = NumberLanguageConverter::en2bn($data['list'][$key]['balance']);
+        }
 
         $this->getPartnerById();
         $partnerInfo = $this->getPartnerInfo($this->partner);
 
         $data['partner_info'] = $partnerInfo;
+        $data['partner_info']['contact_type'] = $this->contact_type;
         return $data;
     }
 
