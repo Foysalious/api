@@ -414,7 +414,7 @@ class BusinessRoute
                     $api->post('setting', 'B2b\TrackingController@settingsAction');
                     $api->get('setting', 'B2b\TrackingController@getSettings');
                     $api->post('employee-setting', 'B2b\TrackingController@employeeTrackingAction');
-                    $api->post('employee-lists', 'B2b\TrackingController@employeeLists');
+                    $api->get('employee-lists', 'B2b\TrackingController@employeeLists');
                     $api->get('logs', 'B2b\TrackingController@getChangesLogs');
                     $api->group(['prefix' => '{id}'], function ($api) {
                         $api->get('/', 'B2b\TrackingController@getTrackingDetails');
