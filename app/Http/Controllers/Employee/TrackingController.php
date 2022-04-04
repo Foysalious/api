@@ -4,13 +4,15 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use App\Models\TrackingLocation;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Transformers\CustomSerializer;
+use App\Transformers\Employee\LiveTrackingLocationList;
 use Carbon\Carbon;
-use DateTime;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Location\Geo;
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Throwable;
 
 class TrackingController extends Controller
@@ -52,9 +54,15 @@ class TrackingController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         if (!$request->date) return api_response($request, null, 404);
-        $tracking_location = $business_member->liveLocationFilterByDate($request->date);
+        $tracking_locations = $business_member->liveLocationFilterByDate($request->date);
 
-        return api_response($request, null, 200);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($tracking_locations, new LiveTrackingLocationList());
+        $tracking_locations = $manager->createData($resource)->toArray()['data'];
+
+
+        return api_response($request, null, 200, ['tracking_locations' => $tracking_locations]);
     }
 
     /**
