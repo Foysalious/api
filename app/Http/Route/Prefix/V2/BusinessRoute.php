@@ -44,7 +44,6 @@ class BusinessRoute
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
                 $api->get('/salary-alert', 'B2b\BusinessesController@salaryAlert');
 
-
                 $api->group(['prefix' => 'departments'], function ($api) {
                     $api->post('/', 'B2b\DepartmentController@store');
                     $api->get('/', 'B2b\DepartmentController@index');
@@ -92,7 +91,6 @@ class BusinessRoute
                         $api->delete('/', 'B2b\AttendanceController@destroy');
                     });
                 });
-
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
@@ -377,10 +375,10 @@ class BusinessRoute
                 $api->group(['prefix' => 'pay-run'], function ($api) {
                     $api->post('/update', 'B2b\PayRunController@bulkUpdate');
                     $api->post('/disburse/{summary_id}', 'B2b\PayRunController@disburse');
-                    $api->get('/pending-months','B2b\PayRunController@pendingMonths');
+                    $api->get('/pending-months', 'B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
-                    $api->get('/bkash-salary-report/{id}','B2b\PayReportController@bkashSalaryReport');
+                    $api->get('/bkash-salary-report/{id}', 'B2b\PayReportController@bkashSalaryReport');
                     $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');
 
@@ -412,13 +410,13 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'live-tracking'], function ($api) {
                     $api->post('setting', 'B2b\TrackingController@settingsAction');
+                    $api->get('setting', 'B2b\TrackingController@getSettings');
                     $api->post('employee-setting', 'B2b\TrackingController@employeeTrackingAction');
                     $api->get('logs', 'B2b\TrackingController@getChangesLogs');
-                    $api->group(['prefix' => '{$id}'], function ($api) {
+                    $api->group(['prefix' => '{id}'], function ($api) {
                         $api->get('/', 'B2b\TrackingController@getTrackingDetails');
                     });
                 });
-
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
