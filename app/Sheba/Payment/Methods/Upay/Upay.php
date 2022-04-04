@@ -32,6 +32,10 @@ class Upay extends PaymentMethod
     const INIT_URL     = 'payment/merchant-payment-init/';
     const VALIDATE_URL = 'payment/single-payment-status/';
     const NAME         = 'upay';
+    /**
+     * @var UpayApiResponse
+     */
+    private $loginResponse;
 
 
     public function setStore(UpayStore $store): Upay
@@ -43,17 +47,18 @@ class Upay extends PaymentMethod
 
     private function setHeader()
     {
-        $this->headers = ['Authorization' => "UPAY $this->login_token"];
+        $this->headers = ["Authorization:UPAY $this->login_token"];
     }
 
     /**
      * @return void
      * @throws UpayApiCallException
      */
-    private function login(): void
+    private function login()
     {
         $payload = ['merchant_id' => $this->config->merchant_id, 'merchant_key' => $this->config->merchant_key];
         $res     = (new UpayClient())->setUrl(self::LOGIN_URL)->setPayload($payload)->call();
+        $this->loginResponse=$res;
         if ($res->hasError()) {
             throw new UpayApiCallException("Upay Merchant Login Failed");
         }
@@ -129,9 +134,14 @@ class Upay extends PaymentMethod
      */
     public function validate(Payment $payment): Payment
     {
-        $this->login();
-        $url = self::VALIDATE_URL . '' . $payment->gateway_transaction_id;
+
+        $url = self::VALIDATE_URL . '' . $payment->gateway_transaction_id.'/';
         $this->paymentLogRepo->setPayment($payment);
+        try{
+            $this->login();
+        }catch (UpayApiCallException $e){
+            return $this->onValidateFailed($payment, $this->loginResponse);
+        }
         $res = (new UpayClient())->setHeaders($this->headers)->setMethod('GET')->setUrl($url)->call();
         if ($res->hasError()) {
             return $this->onValidateFailed($payment, $res);
