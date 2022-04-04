@@ -73,11 +73,11 @@ class Shurjopay extends PaymentStore
 
     public function getConfiguration()
     {
-        $data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
-        $storeAccount = $this->getStoreAccount();
-        $storedConfiguration = $storeAccount ? $storeAccount->configuration : "";
-        $dynamicSslConfiguration = (new DynamicSslStoreConfiguration($storedConfiguration))->getConfiguration();
-        return $this->buildData($data, $dynamicSslConfiguration);
+        $data                    = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
+        $storeAccount            = $this->getStoreAccount();
+        $storedConfiguration     = $storeAccount ? $storeAccount->configuration : "";
+        $configuration           = $this->getDynamicStoredConfiguration($storedConfiguration);
+        return self::buildData($data, $configuration);
     }
 
     public function buildData($static_data, $dynamic_configuration)
