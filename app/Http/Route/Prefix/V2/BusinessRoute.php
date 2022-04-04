@@ -408,6 +408,7 @@ class BusinessRoute
                     $api->get('my-visits', 'B2b\VisitController@getMyVisits');
                     $api->get('/{id}', 'B2b\VisitController@show');
                 });
+
                 $api->group(['prefix' => 'live-tracking'], function ($api) {
                     $api->post('setting', 'B2b\TrackingController@settingsAction');
                     $api->get('setting', 'B2b\TrackingController@getSettings');
