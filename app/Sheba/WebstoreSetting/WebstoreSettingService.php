@@ -23,6 +23,7 @@ class WebstoreSettingService
     private $type;
     private $bannerId;
     private $description;
+    private $bannerImageLink;
 
     public function __construct(WebstoreSettingServerClient $client)
     {
@@ -111,6 +112,12 @@ class WebstoreSettingService
     public function setBannerId($bannerId)
     {
         $this->bannerId = $bannerId;
+        return $this;
+    }
+
+    public function setBannerImageLink($bannerImageLink)
+    {
+        $this->bannerImageLink = $bannerImageLink;
         return $this;
     }
 
@@ -267,9 +274,11 @@ class WebstoreSettingService
             "banner_id" => $this->bannerId ?? null,
             "title" => $this->title ?? null,
             "description" => $this->description ?? null,
+            "banner_image_link" => $this->bannerImageLink ?? null,
         ];
-
     }
+
+
 
 
 }

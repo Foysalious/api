@@ -5,10 +5,17 @@ namespace App\Http\Controllers;
 
 use App\Sheba\WebstoreSetting\WebstoreSettingService;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
+use Sheba\ModificationFields;
 
 
 class WebstoreSettingController extends Controller
 {
+
+    use ModificationFields, FileManager, CdnFileManager;
+
     public function __construct(WebstoreSettingService $webstoreSettingService)
     {
         $this->webstoreSettingService = $webstoreSettingService;
@@ -142,10 +149,27 @@ class WebstoreSettingController extends Controller
 
     public function storePageSettings(Request $request)
     {
+        $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image']);
         $partner = $request->auth_user->getPartner();
-        $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->setBannerId($request->banner_id)->setTitle($request->title)->setDescription($request->description)->storePageSettings();
+        $banner_image_link = null;
+        if ($request->file('image')) $banner_image_link = $this->createBannerForPageSettings($request->file('image'), $request->title);
+        $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->setBannerId($request->banner_id)->setTitle($request->title)->setDescription($request->description)->setBannerImageLink($banner_image_link)->storePageSettings();
         return http_response($request, null, 200, ['message' => 'Successful']);
     }
+    public function createBannerForPageSettings($file, $filename)
+    {
+        /** @var UploadedFile $avatar */
+        /** @var string $avatar_filename */
+        list($avatar, $avatar_filename) = $this->makeWebstoreBanner($file, $filename);
+        return $this->saveFileToCDN($avatar, getWebstoreBannerFolder(), $avatar_filename);
+    }
+
+    protected function makeWebstoreBanner($file, $name): array
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        return [$file, $filename];
+    }
+
 
 
 
