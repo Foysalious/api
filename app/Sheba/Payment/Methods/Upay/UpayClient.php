@@ -37,9 +37,10 @@ class UpayClient
      */
     public function call(): UpayApiResponse
     {
+        $methods=['GET'=>TPRequest::METHOD_GET,'POST'=>TPRequest::METHOD_POST];
         try {
             $request=new TPRequest();
-            $request->setHeaders($this->headers)->setMethod($this->method)->setInput($this->payload)->setTimeout(self::TIMEOUT)->setUrl($this->getUrl());
+            $request->setHeaders($this->headers)->setMethod($methods[$this->method])->setInput($this->payload)->setTimeout(self::TIMEOUT)->setUrl($this->getUrl());
             $res = $this->client->call($request);
             return (new UpayApiResponse())->setServerResponse($res);
         } catch (TPProxyServerError $e) {
