@@ -175,5 +175,9 @@ return [
     'notification_services_app_key' => env('SHEBA_NOTIFICATION_SERVICES_APP_KEY', 'sheba1234'),
     'notification_services_app_secret' => env('SHEBA_NOTIFICATION_SERVICES_APP_SECRET', 'sheba1234'),
     'category_vat_in_percentage' => 5,
-    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
+    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME',''),
+    'ios_app_name' => env('IOS_APP_NAME'),
+    'ios_app_store_id' => env('IOS_APP_STORE_ID'),
+    'android_app_name' => env('ANDROID_APP_NAME'),
+    'android_app_store_id' => env('ANDROID_APP_STORE_ID'),
 ];
