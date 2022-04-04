@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Models\Business;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
+use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
 
 class DashboardController extends Controller
 {
@@ -26,6 +27,8 @@ class DashboardController extends Controller
         $business = $this->getBusiness($request);
         /** @var PayrollSetting $payroll_setting */
         $payroll_setting = $business->payrollSetting;
+        /** @var  LiveTrackingSettings $live_tracking_settings */
+        $live_tracking_settings = $business->liveTrackingSettings;
 
         $is_enable_employee_visit = $business->is_enable_employee_visit;
 
@@ -90,7 +93,7 @@ class DashboardController extends Controller
 
         if (!$payroll_setting->is_enable) $dashboard->forget(7);#Payslip
         if (!$is_enable_employee_visit) $dashboard->forget(8);#Visit
-        if (!$is_manager) $dashboard->forget(9);#Tracking
+        if (!$live_tracking_settings->is_enable || !$is_manager) $dashboard->forget(9);#Tracking
         if (!$is_manager) $dashboard->forget(10);#My Team
 
         return api_response($request, $dashboard, 200, ['dashboard' => $dashboard->values()]);
