@@ -35,6 +35,7 @@ class BusinessRoute
                     $api->post('unpaid-leave-policy', 'B2b\AttendanceController@createUnpaidLeavePolicy');
                     $api->get('checkin-checkout-policy', 'B2b\AttendanceController@getLateCheckinEarlyCheckoutPolicy');
                     $api->get('changes-logs', 'B2b\AttendanceController@getOfficeSettingChangesLogs');
+                    $api->get('office-locations', 'B2b\AttendanceController@getOfficeLocations');
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->group(['prefix' => 'prorate'], function ($api) {
@@ -43,6 +44,15 @@ class BusinessRoute
                             $api->get('/employee-info', 'B2b\ProrateController@employeeInfo');
                             $api->get('/employee-prorate-logs', 'B2b\ProrateController@employeeLeaveProrateLog');
                         });
+                    });
+                });
+                $api->group(['prefix' => 'announcements'], function ($api) {
+                    $api->get('/', 'B2b\AnnouncementV2Controller@index');
+                    $api->post('/', 'B2b\AnnouncementV2Controller@store');
+                    $api->group(['prefix' => '{announcement}'], function ($api) {
+                        $api->post('/', 'B2b\AnnouncementV2Controller@update');
+                        $api->get('/', 'B2b\AnnouncementV2Controller@show');
+                        $api->get('notification', 'B2b\AnnouncementV2Controller@notificationCount');
                     });
                 });
             });

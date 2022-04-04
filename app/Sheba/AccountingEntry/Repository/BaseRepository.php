@@ -118,11 +118,12 @@ class BaseRepository
      */
     public function isMigratedToAccounting($userId): bool
     {
-        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
-        /** @var UserMigrationRepository $userMigrationRepo */
-        $userMigrationRepo = app(UserMigrationRepository::class);
-        $userStatus = $userMigrationRepo->userStatus($userId);
-        if (in_array($userStatus, $arr)) return false;
         return true;
+//        $arr = [self::NOT_ELIGIBLE, UserStatus::PENDING, UserStatus::UPGRADING, UserStatus::FAILED];
+//        /** @var UserMigrationRepository $userMigrationRepo */
+//        $userMigrationRepo = app(UserMigrationRepository::class);
+//        $userStatus = $userMigrationRepo->userStatus($userId);
+//        if (in_array($userStatus, $arr)) return false;
+//        return true;
     }
 }

@@ -4,6 +4,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
+use App\Sheba\Business\Attendance\Setting\GeoLocationCreator;
+use App\Sheba\Business\Attendance\Setting\GeoLocationDeleter;
+use App\Sheba\Business\Attendance\Setting\GeoLocationUpdater;
+use App\Sheba\Business\Attendance\Setting\OfficeLocationFormatter;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\OfficeSetting\PolicyRuleRequester;
 use App\Sheba\Business\OfficeSetting\PolicyRuleUpdater;
@@ -610,19 +614,23 @@ class AttendanceController extends Controller
             'weekends' => $weekend_days,
             'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
             'business_attendance_types' => $attendance_setting_data["attendance_types"],
-            'business_offices' => $attendance_setting_data["business_offices"]
+            'business_offices' => $attendance_setting_data["business_offices"],
+            'business_office_locations' => $attendance_setting_data["business_geo_locations"]
         ];
 
         return api_response($request, null, 200, ['office_settings_operational' => $data]);
     }
 
     public function updateOperationalOfficeSettings($business, Request $request, TypeUpdater $type_updater,
-                                                                    SettingCreator $setting_creator, SettingUpdater $setting_updater,
-                                                                    SettingDeleter $setting_deleter, OperationalSetting $operational_setting_updater)
+                                                    SettingCreator $setting_creator, SettingUpdater $setting_updater,
+                                                    SettingDeleter $setting_deleter, OperationalSetting $operational_setting_updater,
+                                                    GeoLocationCreator $geo_location_creator, GeoLocationUpdater $geo_location_updater,
+                                                    GeoLocationDeleter $geo_location_deleter)
     {
         $this->validate($request, [
             'attendance_types' => 'required|string',
-            'business_offices' => 'required|string'
+            'business_offices' => 'required|string',
+            'business_geo_locations' => 'required|string'
         ]);
 
         $business_member = $request->business_member;
@@ -649,7 +657,7 @@ class AttendanceController extends Controller
         }
 
         $business_offices = json_decode($request->business_offices);
-
+        $business_geo_location = json_decode($request->business_geo_locations);
         if (!is_null($business_offices)) {
             $offices = collect($business_offices);
             $deleted_offices = $offices->where('action', ActionType::DELETE);
@@ -693,6 +701,38 @@ class AttendanceController extends Controller
             if ($this->isFailedToUpdateAllSettings($errors, $business_offices)) return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
             return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
         }
+
+        if (!is_null($business_geo_location)) {
+            $geo_offices = collect($business_geo_location);
+
+            $added_geo_offices = $geo_offices->where('action', ActionType::ADD);
+            $added_geo_offices->each(function ($added_geo_office) use ($geo_location_creator, $business, &$errors) {
+                //$this->officeSettingChangesLogsRequester->setOfficeName($added_office->office_name)->setOfficeIp($added_office->ip);
+                $geo_location_creator->setBusiness($business)->setName($added_geo_office->office_name)->setLat($added_geo_office->lat)->setLng($added_geo_office->lng)->setRadius($added_geo_office->radius);
+                $geo_location_creator->create();
+                //$this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createCreatedOfficeIpLogs();
+            });
+
+            $edited_geo_offices = $geo_offices->where('action', ActionType::EDIT);
+            $edited_geo_offices->each(function ($edited_geo_office) use ($geo_location_updater, $business, &$errors) {
+
+                //$previous_office_ip = $this->businessOfficeRepo->builder()->withTrashed()->find($edited_office->id);
+                //$this->officeSettingChangesLogsRequester->setPreviousOfficeIp($previous_office_ip)->setOfficeName($edited_office->office_name)->setOfficeIp($edited_office->ip);
+                $geo_location_updater->setBusinessOfficeId($edited_geo_office->id)->setName($edited_geo_office->office_name)->setLat($edited_geo_office->lat)->setLng($edited_geo_office->lng)->setRadius($edited_geo_office->radius);
+                $geo_location_updater->update();
+                //$this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createEditedOfficeIpLogs();
+            });
+
+            $deleted_geo_offices = $geo_offices->where('action', ActionType::DELETE);
+            $deleted_geo_offices->each(function ($deleted_geo_office) use ($geo_location_deleter) {
+                //$this->officeSettingChangesLogsRequester->setOfficeName($deleted_office->office_name)->setOfficeIp($deleted_office->ip);
+                $geo_location_deleter->setBusinessOfficeId($deleted_geo_office->id);
+                $geo_location_deleter->delete();
+                //$this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createDeleteOfficeIpLogs();
+            });
+        }
+
+
         $business_weekend = $this->businessWeekendRepo->getAllByBusiness($business)->pluck('weekday_name')->toArray();
         $business_office = $business->officeHour;
         $previous_working_days_type = $business_office->type;
@@ -888,6 +928,19 @@ class AttendanceController extends Controller
         $resource = new Collection($operational_changes_logs, new ChangesLogsTransformer());
         $operational_changes_logs = $manager->createData($resource)->toArray()['data'];
         return api_response($request, $operational_changes_logs, 200, ['office_setting_changes_logs' => $operational_changes_logs]);
+    }
+
+    public function getOfficeLocations(Request $request, BusinessOfficeRepoInterface $business_office_repo)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        $office_id = $request->office_id;
+        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $office_locations = (new OfficeLocationFormatter($business_offices))->get($office_id);
+        return api_response($request, $office_locations, 200, ['office_locations' => $office_locations]);
     }
 
     private function attendanceSortOnDate($attendances, $sort = 'asc')

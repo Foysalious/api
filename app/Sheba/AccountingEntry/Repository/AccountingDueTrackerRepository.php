@@ -16,6 +16,8 @@ use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\RequestIdentification;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
+use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
+
 
 class AccountingDueTrackerRepository extends BaseRepository
 {
@@ -55,7 +57,6 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
         return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
-        // if type deposit then auto reconcile happen. for that we have to reconcile pos order.
     }
 
     /**
@@ -114,32 +115,43 @@ class AccountingDueTrackerRepository extends BaseRepository
         $url = "api/due-list/" . $customerId . "?";
         $url = $this->updateRequestParam($request, $url);
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        $due_list = collect($result['list']);
+        $due_list = $result['list'];
+        $pos_orders = [];
+        $orders = [];
+        foreach ($due_list as $key => $item) {
+            if ($item["attachments"]) {
+                $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
+            }
+            $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
+            $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS) {
+                $pos_orders[] =  $item['source_id'];
+            }
+            $due_list[$key]['partner_wise_order_id']= null;
+        }
+        if (count($pos_orders) > 0) {
+            $orders = $this->getPartnerWise($pos_orders)['orders'];
+        }
 
-        $list = $due_list->map(
-            function ($item) {
-                if ($item["attachments"]) {
-                    $item["attachments"] = is_array($item["attachments"]) ? $item["attachments"] : json_decode($item["attachments"]);
-                }
-                $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
-                $item['entry_at'] = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-                $pos_order = $item['source_id'] && $item['source_type'] == EntryTypes::POS ? $this->posOrderByOrderId($item['source_id']): null;
-                $item['partner_wise_order_id'] = isset($pos_order) ? $pos_order->partner_wise_order_id : null;
-                if ($pos_order) {
-                    $item['source_type'] = 'PosOrder';
-                    $item['head'] = 'POS sales';
-                    $item['head_bn'] = 'সেলস';
-                    if ($pos_order->sales_channel == SalesChannels::WEBSTORE) {
-                        $item['source_type'] = 'Webstore Order';
-                        $item['head'] = 'Webstore sales';
-                        $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+        foreach ($due_list as $key => $val) {
+            if ($val['source_id'] && $val['source_type'] == EntryTypes::POS && count($orders) > 0) {
+                if (isset($orders[$val['source_id']])) {
+                    $order = $orders[$val['source_id']];
+                    $due_list[$key]['partner_wise_order_id'] = $order['partner_wise_order_id'];
+                    $due_list[$key]['source_type'] = 'PosOrder';
+                    $due_list[$key]['head'] = 'POS sales';
+                    $due_list[$key]['head_bn'] = 'সেলস';
+                    if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
+                        $due_list[$key]['source_type'] = 'Webstore Order';
+                        $due_list[$key]['head'] = 'Webstore sales';
+                        $due_list[$key]['head_bn'] = 'ওয়েবস্টোর সেলস';
                     }
                 }
-                return $item;
+
             }
-        );
+        }
         return [
-            'list' => $list
+            'list' => $due_list
         ];
     }
 
@@ -247,10 +259,11 @@ class AccountingDueTrackerRepository extends BaseRepository
         $data['note'] = $request->note ?? null;
         $data['debit_account_key'] = $type === EntryTypes::DUE ? $request->customer_id : $request->account_key;
         $data['credit_account_key'] = $type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $request->customer_id;
-        $data['customer_id'] = $request->customer_id;
-        $data['customer_name'] = $request->customer_name;
-        $data['customer_mobile'] = $request->customer_mobile;
-        $data['customer_pro_pic'] = $request->pro_pic;
+        $data['customer_id'] = $request->customer_id ?? null;
+        $data['customer_name'] = $request->customer_name ?? null;
+        $data['customer_mobile'] = $request->customer_mobile ?? null;
+        $data['customer_pro_pic'] = $request->customer_pro_pic ?? null;
+        $data['customer_is_supplier'] = $request->customer_is_supplier ?? null;
         $data['source_id'] = $request->source_id;
         $data['entry_at'] = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] =$withUpdate?$this->updateAttachments($request): $this->uploadAttachments($request);
@@ -312,5 +325,13 @@ class AccountingDueTrackerRepository extends BaseRepository
     {
         $url = "api/due-list/due-date-wise-customer-list";
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
+    private function getPartnerWise($pos_orders)
+    {
+        /** @var OrderServiceAlias $orderService */
+        $orderService= app(OrderServiceAlias::class);
+        return $orderService->getPartnerWiseOrderIds('[' . implode(",",$pos_orders) . ']' ,0,count($pos_orders));
+
     }
 }

@@ -3,12 +3,10 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Transformers\Business\ExpenseTransformer;
+use App\Sheba\Business\Expense\ExpenseReportDetailsExcel;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use League\Fractal\Manager;
-use League\Fractal\Resource\Collection;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Business\Expense\ExpenseExcel;
 use Sheba\Employee\ExpensePdf;
@@ -211,5 +209,33 @@ class ExpenseController extends Controller
             return api_response($request, null, 500);
         }
 
+    }
+
+    public function downloadExpenseReport(Request $request, ExpenseReportDetailsExcel $expense_report_details_excel)
+    {
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        /** @var Business $business */
+        $business = $request->business;
+        $business_members = $business->getAccessibleBusinessMember();
+        if ($request->has('department_id')) {
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department_id);
+                });
+            });
+        }
+        $business_members_ids = $business_members->pluck('id')->toArray();
+        $expenses = $this->expense_repo->getDetailExpenseByBusinessMember($business_members_ids);
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
+        if ($request->has('date')) {
+            $dates = $this->getStartDateEndDate($request->date);
+            $start_date = $dates['start_date'];
+            $end_date = $dates['end_date'];
+        }
+        $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59'])->orderBy('created_at', 'DESC');
+        $expense_report_details_excel->setData($expenses->get())->download();
+        return api_response($request, null, 200);
     }
 }

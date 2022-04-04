@@ -112,25 +112,7 @@ class TaxHistoryList
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $tax_history_list = new Collection($this->taxHistoryList, new TaxHistoryListTransformer($profiles));
-        $tax_history_list = collect($manager->createData($tax_history_list)->toArray()['data']);
-
-        if ($this->search) $tax_history_list = $this->searchEmployee($tax_history_list);
-        if ($this->sort && $this->sortColumn) $tax_history_list = $this->sortByColumn($tax_history_list, $this->sortColumn, $this->sort)->values();
-        return $tax_history_list;
-    }
-
-    /**
-     * @param $data
-     * @param $column
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByColumn($data, $column, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($data)->$sort_by(function ($item) use ($column) {
-            return strtoupper($item[$column]);
-        });
+        return collect($manager->createData($tax_history_list)->toArray()['data']);
     }
 
     /**
@@ -146,27 +128,6 @@ class TaxHistoryList
                 });
             });
         });
-    }
-
-    /**
-     * @param $data
-     * @return \Illuminate\Support\Collection
-     */
-    private function searchEmployee($data)
-    {
-        $data = $data->toArray();
-        $employee_ids = array_filter($data, function ($value) {
-            return str_contains($value['employee_id'], $this->search);
-        });
-        $employee_names = array_filter($data, function ($value) {
-            return str_contains(strtoupper($value['employee_name']), strtoupper($this->search));
-        });
-
-        $searched_employees = collect(array_merge($employee_ids, $employee_names));
-        $searched_employees = $searched_employees->unique(function ($employee) {
-            return $employee['id'];
-        });
-        return $searched_employees->values();
     }
 
     private function getBusinessMembersProfileName()

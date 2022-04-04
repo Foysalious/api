@@ -42,34 +42,30 @@ class FaceVerificationController extends Controller
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo, ProfileRepository $profileRepository, UserAgentInformation $userAgentInformation): JsonResponse
+    public function faceVerification(Request $request, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo,
+                                     ProfileRepository $profileRepository, UserAgentInformation $userAgentInformation
+    ): JsonResponse
     {
         try {
             $this->validate($request, Statics::faceVerificationValidate());
-            $this->nidFaceVerification->updateLivelinessCount($request, $profileNIDSubmissionRepo);
-            $userAgentInformation->setRequest($request);
+            $avatar = $request->auth_user->getAvatar();
+            $this->nidFaceVerification->updateLivelinessCount($request, $avatar, $profileNIDSubmissionRepo);
             $profile = $request->auth_user->getProfile();
+            $userAgentInformation->setRequest($request);
             $userAgent = $userAgentInformation->getUserAgent();
             $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
             $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
-            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->nidFaceVerification->beforePorichoyCallChanges($profile, $avatar);
             $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
-            $faceVerificationData = $this->client->post($this->api, $requestedData);
-            $status = ($faceVerificationData['data']['status']);
-            if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
-                $status = Statics::VERIFIED;
-                $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
-            } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
-            $this->nidFaceVerification->storeData($request, $faceVerificationData, $profileNIDSubmissionRepo);
-            return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $profile->nid_verification_request_count, $faceVerificationData['data']['message'])]);
+            $data = $this->getFaceVerificationDataFromEkyc($request, $avatar, $requestedData, $profileNIDSubmissionRepo);
+            return api_response($request, null, 200, $data);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (EKycException $e) {
-            return api_response($request, null, $e->getCode() >= 400 ? $e->getCode() : 400, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            return api_response($request, null, $e->getCode() >= 400 ? $e->getCode() : 400, ['message' => $e->getMessage()]);
+            return api_response($request, null, $e->getCode() >= 400 ? $e->getCode() : 400,
+                ['message' => $e->getMessage()]);
         }
     }
 
@@ -116,6 +112,8 @@ class FaceVerificationController extends Controller
         try {
             $profileNIDSubmissionLog = ProfileNIDSubmissionLog::find($id);
             $profile = Profile::find($profileNIDSubmissionLog->profile_id);
+            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
             $photoLink = $profile->pro_pic;
             $this->resubmit_url .= "/".$profileNIDSubmissionLog->nid_no;
             $faceVerificationData = $this->client->post($this->resubmit_url, null);
@@ -126,7 +124,9 @@ class FaceVerificationController extends Controller
             } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $profileNIDSubmissionLog->nid_no);
             $this->nidFaceVerification->storeResubmitData($faceVerificationData, $profileNIDSubmissionLog);
-            return api_response($request, null, 200, ['data' => Statics::faceVerificationResponse($status, $faceVerificationData['data']['message'])]);
+            $data = ['data' => Statics::faceVerificationResponse($status, $profile->nid_verification_request_count,
+                $faceVerificationData['data']['message'])];
+            return api_response($request, null, 200, $data);
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
@@ -144,7 +144,31 @@ class FaceVerificationController extends Controller
     {
         $verification_req_count = $profile->nid_verification_request_count;
         if($verification_req_count > Statics::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
-            throw new EKycException(Statics::PENDING_MESSAGE, 400);
+            throw new EKycException(Statics::PENDING_MESSAGE, 403);
+        }
+    }
+
+    private function getFaceVerificationDataFromEkyc($request, $avatar, $requestedData, $profileNIDSubmissionRepo): array
+    {
+        $profile = $request->auth_user->getProfile();
+        try {
+            $faceVerificationData = $this->client->post($this->api, $requestedData);
+            $status = ($faceVerificationData['data']['status']);
+            if($status === Statics::ALREADY_VERIFIED || $status === Statics::VERIFIED) {
+                $status = Statics::VERIFIED;
+                $this->nidFaceVerification->verifiedChanges($faceVerificationData['data'], $profile);
+            } elseif($status === Statics::UNVERIFIED) $this->nidFaceVerification->unverifiedChanges($profile);
+            $this->nidFaceVerification->storeData($request, $avatar, $faceVerificationData, $profileNIDSubmissionRepo);
+            return ['data' => Statics::faceVerificationResponse($status, $profile->nid_verification_request_count,
+                $faceVerificationData['data']['message'], $avatar)];
+        } catch (EKycException $e) {
+            $this->nidFaceVerification->unverifiedChanges($profile);
+            $this->nidFaceVerification->storeData($request, $avatar, null, $profileNIDSubmissionRepo);
+            return ['data' => Statics::faceVerificationResponse(Statics::PENDING, $request->auth_user
+                ->getProfile()->nid_verification_request_count, $e->getMessage(), $avatar)];
+        } catch (\Throwable $e) {
+            logError($e);
+            return ['message' => $e->getMessage()];
         }
     }
 }

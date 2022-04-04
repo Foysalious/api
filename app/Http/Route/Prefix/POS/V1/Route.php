@@ -40,6 +40,14 @@ class Route
              */
 
             /**
+             * App Secret Authentication
+             */
+            $api->get('partner-wise-order-ids', 'PosOrder\OrderController@getPartnerWiseOrderIds');
+            /**
+             * End of App Secret Authentication
+             */
+
+            /**
              * IP Whitelist Middleware
              */
             $api->group(['middleware' => ['ip.whitelist']], function ($api) {
@@ -69,8 +77,9 @@ class Route
                     $api->get('/', 'Inventory\CollectionController@index');
                     $api->post('/', 'Inventory\CollectionController@store');
                     $api->get('/{collection}', 'Inventory\CollectionController@show');
-                    $api->put('/{collection}', 'Inventory\CollectionController@update');
+                    $api->put('/{collection}', 'Inventory\CollectionController@update')->where('collection', '[0-9]+');
                     $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+                    $api->put('/change-status', 'Inventory\CollectionController@changeStatus');
                 });
                 $api->group(['prefix' => 'customers'], function ($api) {
                     $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@show');
@@ -158,7 +167,9 @@ class Route
                 $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboardV2');
                 $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivationV2');
                 $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerListV2');
-                $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
+                $api->get('webstore/banners', 'Partner\Webstore\WebstoreSettingsController@getBanners');
+                $api->post('webstore/banners/{id}', 'Partner\Webstore\WebstoreSettingsController@updateBannerV3');
+                $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@store');
                 $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBannerV2');
                 $api->get('/settings', 'Pos\SettingController@getSettingsV2');
                 $api->post('/settings', 'Pos\SettingController@storePosSettingV2');
@@ -199,7 +210,7 @@ class Route
                 $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformationV2');
             });
             /**
-             * End jwtAccessToken Middleware
+             * End sdelivery route
              */
         });
     }
