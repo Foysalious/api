@@ -143,6 +143,13 @@ if (!function_exists('en2bnNumber')) {
         return str_replace($search_array, $replace_array, $number);
     }
 }
+if (!function_exists('b2EnDateFormatter')){
+    function b2EnDateFormatter($date){
+        $replace_array  = [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ".", ",","-",":" ];
+        $search_array = [ "১", "২", "৩", "৪", "৫", "৬", "৭", "৮", "৯", "০", ".", ",","-",":" ];
+        return str_replace($search_array, $replace_array, $date);
+    }
+}
 
 if (!function_exists('ordinal')) {
     /**
