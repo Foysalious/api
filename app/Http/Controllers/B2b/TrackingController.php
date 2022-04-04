@@ -5,12 +5,14 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
 use App\Transformers\CustomSerializer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\LiveTracking\ChangeLogs\Creator as ChangeLogsCreator;
 use Sheba\Business\LiveTracking\Employee\Updater as EmployeeSettingUpdater;
 use Sheba\Business\LiveTracking\Updater as SettingsUpdater;
+use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
 use Sheba\ModificationFields;
 
 class TrackingController extends Controller
@@ -42,11 +44,28 @@ class TrackingController extends Controller
         return api_response($request, null, 200);
     }
 
-    private function getSettings(Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getSettings(Request $request)
     {
-        
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var  LiveTrackingSettings $live_tracking_settings */
+        $live_tracking_settings = $business->liveTrackingSettings;
+        $tracking_settings = [
+            'is_tracking_enable' => $live_tracking_settings->is_enable,
+            'location_fetch_interval_in_minutes' => $live_tracking_settings->location_fetch_interval_in_minutes
+        ];
+        return api_response($request, null, 200, ['tracking_settings'=>$tracking_settings]);
     }
 
+    /**
+     * @param Request $request
+     * @param EmployeeSettingUpdater $employee_setting_updater
+     * @return JsonResponse
+     */
     public function employeeTrackingAction(Request $request, EmployeeSettingUpdater $employee_setting_updater)
     {
         /** @var Business $business */

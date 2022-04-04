@@ -157,7 +157,8 @@ class AttendanceController extends Controller
             'checkout_time' => $attendance ? $attendance->checkout_time : null,
             'is_geo_required' => $is_remote_enable ? 1 : 0,
             'is_remote_enable' => $is_remote_enable,
-            'is_geo_location_enable' => $is_geo_location_enable
+            'is_geo_location_enable' => $is_geo_location_enable,
+            'is_live_track_enable' => $business_member->is_live_track_enable
         ];
         return api_response($request, null, 200, ['attendance' => $data]);
     }
