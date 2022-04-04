@@ -42,6 +42,11 @@ class TrackingController extends Controller
         return api_response($request, null, 200);
     }
 
+    private function getSettings(Request $request)
+    {
+        
+    }
+
     public function employeeTrackingAction(Request $request, EmployeeSettingUpdater $employee_setting_updater)
     {
         /** @var Business $business */
