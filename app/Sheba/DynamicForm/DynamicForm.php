@@ -171,12 +171,28 @@ class DynamicForm
     public function typeData($request)
     {
         if ($this->type == "division") {
-            return Division::get();
+            $division = Division::get();
+            $division = (new CollectionFormatter())->setData($division)->formatCollection();
+            $data = [
+                'division' => ['list' => $division]
+            ];
+            return $data['division'];
         }
         if ($this->type == "district") {
-            if ($request->division)
-                return District::where('division_id', $request->division)->get();
-            return District::get();
+            if ($request->division) {
+                $district = District::where('division_id', $request->division)->get();
+                $district = (new CollectionFormatter())->setData($district)->formatCollection();
+                $data = [
+                    'district' => ['list' => $district]
+                ];
+                return $data['district'];
+            }
+            $district = District::get();
+            $district = (new CollectionFormatter())->setData($district)->formatCollection();
+            $data = [
+                'district' => ['list' => $district]
+            ];
+            return $data['district'];
         }
         if ($this->type == "tradeLicenseExists") {
             return config('trade_license.data');
