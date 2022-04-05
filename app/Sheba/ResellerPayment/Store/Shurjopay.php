@@ -77,10 +77,10 @@ class Shurjopay extends PaymentStore
         $storeAccount = $this->getStoreAccount();
         $storedConfiguration = $storeAccount ? $storeAccount->configuration : "";
         $configuration = $this->getDynamicStoredConfiguration($storedConfiguration);
-        return self::buildData($data, $configuration);
+        return Shurjopay::buildData($data, $configuration);
     }
 
-    public function buildData($static_data, $dynamic_configuration)
+    public static function buildData($static_data, $dynamic_configuration)
     {
         foreach ($static_data as &$data) {
             $field_name = $data["id"];
