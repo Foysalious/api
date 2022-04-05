@@ -35,6 +35,7 @@ use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumbe
 use Sheba\TopUp\Listeners\TopUpRequestOfBlockedNumber;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Profile\Listeners\ProfilePasswordUpdatedListener;
+use Sheba\UserAgentInformation;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -43,44 +44,45 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array
      */
-    protected $listen = [
-        PartnerPosCustomerCreatedEvent::class => [
-            PartnerPosCustomerCreateListener::class
-        ],
-        PartnerPosCustomerUpdatedEvent::class => [
-            PartnerPosCustomerUpdateListener::class
-        ],
-        TopUpRequestOfBlockedNumberEvent::class => [
-            TopUpRequestOfBlockedNumber::class
-        ],
-        WebstoreBannerUpdate::class => [
-            WebstoreBannerListener::class
-        ],
-        ProfilePasswordUpdated::class => [
-            ProfilePasswordUpdatedListener::class
-        ],
-        BusinessMemberCreated::class => [
-            BusinessMemberCreatedListener::class
-        ],
-        BusinessMemberUpdated::class => [
-            BusinessMemberUpdatedListener::class
-        ],
-        BusinessMemberDeleted::class => [
-            BusinessMemberDeletedListener::class
-        ],
-        PartnerUpdatedEvent::class => [
-            PartnerUpdatedListener::class,
-        ],
-        PosSettingCreatedEvent::class => [
-            PosSettingCreatedListener::class
-        ],
-        PosSettingUpdatedEvent::class => [
-            PosSettingUpdatedListener::class
-        ],
-        UserMigrationStatusUpdatedByHookEvent::class => [
-            UserMigrationStatusUpdatedByHookListener::class
-        ],
-    ];
+    protected $listen
+        = [
+            PartnerPosCustomerCreatedEvent::class        => [
+                PartnerPosCustomerCreateListener::class
+            ],
+            PartnerPosCustomerUpdatedEvent::class        => [
+                PartnerPosCustomerUpdateListener::class
+            ],
+            TopUpRequestOfBlockedNumberEvent::class      => [
+                TopUpRequestOfBlockedNumber::class
+            ],
+            WebstoreBannerUpdate::class                  => [
+                WebstoreBannerListener::class
+            ],
+            ProfilePasswordUpdated::class                => [
+                ProfilePasswordUpdatedListener::class
+            ],
+            BusinessMemberCreated::class                 => [
+                BusinessMemberCreatedListener::class
+            ],
+            BusinessMemberUpdated::class                 => [
+                BusinessMemberUpdatedListener::class
+            ],
+            BusinessMemberDeleted::class                 => [
+                BusinessMemberDeletedListener::class
+            ],
+            PartnerUpdatedEvent::class                   => [
+                PartnerUpdatedListener::class,
+            ],
+            PosSettingCreatedEvent::class                => [
+                PosSettingCreatedListener::class
+            ],
+            PosSettingUpdatedEvent::class                => [
+                PosSettingUpdatedListener::class
+            ],
+            UserMigrationStatusUpdatedByHookEvent::class => [
+                UserMigrationStatusUpdatedByHookListener::class
+            ],
+        ];
 
     /**
      * Register any other events for your application.
@@ -91,8 +93,21 @@ class EventServiceProvider extends ServiceProvider
     public function boot(DispatcherContract $events)
     {
         parent::boot($events);
-        $events->listen("kernel.handled", function(Request $request,Response $response){
-            \Log::info($request->getClientIps(),$response->getContent());
+        $events->listen("kernel.handled", function (Request $request, Response $response) {
+            try {
+                $agent = new UserAgentInformation();
+                $agent->setRequest($request);
+                $ip      = $agent->getIp();
+                $payload = json_encode($request->all());
+                $headers=$request->headers;
+                $device  = $agent->getUserAgent();
+                $response_=$response->getContent();
+                $response_data=json_decode($response_,true);
+                $status_code=array_key_exists('code', $response_data)?$response_data['code']:$response->getStatusCode();
+                \Log::info("REQUEST IP :$ip,PAYLOAD: $payload,DEVICE: $device,RESPONSE: $response_ ,STATUS_CODE:$status_code");
+            } catch (\Throwable $e) {
+                \Log::error($e->getMessage());
+            }
         });
         //
     }
