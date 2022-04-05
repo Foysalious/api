@@ -192,6 +192,7 @@ class DeliveryService
         $data['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 : 0;
         $data['delivery_charge'] = (double) $this->getDeliveryCharge($this->partner);
         $data['products_without_weight'] = $this->countProductWithoutWeight();
+        $data['is_shop_address_exists'] = 0;
         return $data;
     }
 
