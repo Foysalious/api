@@ -376,6 +376,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $resource->profile->mobile;
     }
 
+    public function getTinNumber()
+    {
+        $resource = $this->getFirstAdminResource();
+        if (!$resource) return null;
+        return $resource->profile->tin_no;
+    }
+
     public function getContactResourceProPic()
     {
         $resource = $this->getContactResource();
