@@ -36,8 +36,11 @@ class ApiLogger
             $agent = new UserAgentInformation();
             $agent->setRequest($this->request);
             $ip            = $agent->getIp();
-            $payload       = json_encode($this->request->all());
-            $headers       = json_encode($this->request->header());
+            $payload       = json_encode($this->request->except(['password']));
+
+            $headers=$this->request->header();
+            $headers=array_except($headers, ['authorization']);
+            $headers       = json_encode($headers);
             $userAgent     = $agent->getUserAgent();
             $response_     = $this->response->getContent();
             $response_data = json_decode($response_, true);
