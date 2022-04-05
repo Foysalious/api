@@ -21,6 +21,7 @@ use Sheba\PushNotificationHandler;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
+use Sheba\ResellerPayment\Statics\ResellerPaymentGeneralStatic;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;
@@ -349,7 +350,8 @@ class PaymentService
             'type'   => "qr",
             'completion' => $completion == 1 ? 98 : null,
             'icon' => $qrGateway->icon,
-            'status' => "pending"
+            'status' => "pending",
+            'base_url' => ResellerPaymentGeneralStatic::NEW_BASE_URL
         ];
     }
 
@@ -375,7 +377,8 @@ class PaymentService
             'type' => 'pgw',
             'completion' => $completion == 1 ? $completionData->getOverallCompletion()['en'] : null,
             'icon' => $pgwStore->icon,
-            'status' => $status
+            'status' => $status,
+            'base_url' => $pgwStore->key === 'ssl' ? ResellerPaymentGeneralStatic::OLD_BASE_URL : ResellerPaymentGeneralStatic::NEW_BASE_URL
         ];
     }
 
