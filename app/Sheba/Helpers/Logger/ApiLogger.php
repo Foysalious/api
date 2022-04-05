@@ -48,7 +48,7 @@ class ApiLogger
             }
             $logger = new Logger("api_logger");
             $logger->pushHandler((new StreamHandler("$logPath"))->setFormatter(new JsonFormatter()), Logger::INFO);
-            $logger->info("requestINFO", ['uri' => $api_url, "headers" => $headers, "status_code" => $status_code, "payload" => $payload, "agent" => $userAgent, "response" => $response_, "ip" => $ip, "app_version" => $agent->getApp(), "portal" => $agent->getPortalName()]);
+            $logger->info("requestINFO", ['uri' => $api_url, "headers" => $headers, "status_code" => $status_code, "payload" => $payload, "agent" => $userAgent, "response" => $response_, "ip" => $ip, "app_version" => $this->request->header('version-code'), "portal" => $agent->getPortalName()]);
         } catch (\Throwable $e) {
             \Log::error($e->getMessage());
         }
