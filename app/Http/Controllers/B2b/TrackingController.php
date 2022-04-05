@@ -9,6 +9,7 @@ use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\Business\LiveTrackingEmployeeListsTransformer;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
@@ -164,6 +165,20 @@ class TrackingController extends Controller
         return api_response($request, null, 404);
     }
 
+    public function lastTrackedDate($business_id, $business_member_id, Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $last_tracked = TrackingLocation::where('business_member_id', intval($business_member_id))->orderBy('created_at', 'DESC')->first();
+        if (!$last_tracked)  return api_response($request, null, 404);
+        $last_tracked_date = $last_tracked->date;
+        $date_dropdown = $this->getDateDropDown($last_tracked_date);
+        return api_response($request, null, 200, ['last-tracked' => $last_tracked_date, 'date-dropdown' => $date_dropdown]);
+    }
+
     /**
      * @param Request $request
      * @param $limit
@@ -174,6 +189,17 @@ class TrackingController extends Controller
     {
         if ($request->has('limit') && $request->limit == 'all') return $total_employees;
         return $limit;
+    }
+
+    private function getDateDropDown($date)
+    {
+        $data = [];
+        $date = Carbon::parse($date);
+        for ($day = 1; $day <= 6; $day++)
+        {
+            $data[] = $date->subDay()->toDateString();
+        }
+        return $data;
     }
 
 }

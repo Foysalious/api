@@ -418,6 +418,7 @@ class BusinessRoute
                     $api->get('/', 'B2b\TrackingController@index');
                     $api->group(['prefix' => '{id}'], function ($api) {
                         $api->get('/', 'B2b\TrackingController@getTrackingDetails');
+                        $api->get('last-track', 'B2b\TrackingController@lastTrackedDate');
                     });
                 });
             });
