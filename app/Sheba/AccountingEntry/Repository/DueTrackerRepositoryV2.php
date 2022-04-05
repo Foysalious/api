@@ -114,4 +114,9 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($partner_id)->get($url);
     }
 
+    public function getReport($url_param){
+        $url = "api/v2/due-tracker/report/mobile?".$url_param;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
 }
