@@ -12,16 +12,16 @@ class OrderAdvanceWithdrawalRequestService
         'approval_pending' => 'Approval Pending',
     ];
     private $statusColors = [
-        'pending' => '#0FBD20',
-        'approval_pending' => '#0FBD20',
-        'approved' => '#0FBD20',
-        'rejected' => '#0FBD20',
+        'pending' => '#D2762A',
+        'approval_pending' => '#E5AB14',
+        'approved' => '#1969E1',
+        'rejected' => '#000000',
         'completed' => '#0FBD20',
-        'failed' => '#0FBD20',
-        'expired' => '#0FBD20',
-        'cancelled' => '#0FBD20',
+        'failed' => '#F31515',
+        'expired' => '#B609F2',
+        'cancelled' => '#DB29BE',
     ];
-    private $defaultColor = '#0FBD21';
+    private $defaultColor = '#000000';
 
     private $orderAdvanceWithdrawalRequestRepository;
 
