@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'data' => [
+    'list' => [
         [
             'key' => 1,
             'name' => 'YES',
