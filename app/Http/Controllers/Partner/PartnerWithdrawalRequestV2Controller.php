@@ -20,6 +20,7 @@ use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\OrderAdvanceWithdrawalRequest\OrderAdvanceWithdrawalRequestService;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWithdrawal\PartnerWithdrawalService;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
@@ -80,6 +81,52 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getOrderWithdrawals($partner, $order, Request $request, OrderAdvanceWithdrawalRequestRepositoryInterface $orderAdvanceWithdrawalRequestRepository,  OrderAdvanceWithdrawalRequestService $orderAdvanceWithdrawalRequestService)
+    {
+        $partner_order = $request->partner_order;
+        $is_partner_blacklisted = false;
+        $withdrawable_amount = 0;
+        if ($partner_order->order->is_credit_limit_adjustable && $partner_order->sheba_collection > 0) {
+            $activeWithdrawalAmount = $orderAdvanceWithdrawalRequestService->activeRequestAgainstPartnerOrderAmount($partner_order);
+            $activeWithdrawalAmount += $orderAdvanceWithdrawalRequestRepository->getTotalPendingAmountForPartnerOrder($partner_order);
+
+            if ($partner_order->sheba_collection > $activeWithdrawalAmount) {
+                $withdrawable_amount = $partner_order->sheba_collection - $activeWithdrawalAmount;
+            }
+        }
+        $bank_information = ($this->getBankInformation($request->partner));
+        $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
+        $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
+        $withdraw_limit = [
+            'bkash' => [
+                'min' => $limitBkash['min'],
+                'max' => $limitBkash['max']
+            ],
+            'bank' => [
+                'min' => $limitBank['min'],
+                'max' => $limitBank['max']
+            ]
+        ];
+
+
+        if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
+            $error_message = 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।';
+            $is_partner_blacklisted = true;
+        }
+        return api_response($request,
+            null,
+            200,
+            [
+                'wallet' => $request->partner->wallet,
+                'withdrawable_amount' => $withdrawable_amount,
+                'bank_info' => $bank_information ,
+                'withdraw_limit' => $withdraw_limit,
+                'status_message' => $error_message,
+                'is_black_listed' => $is_partner_blacklisted
+            ]
+        );
     }
 
     /**
@@ -149,7 +196,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         return api_response($request, $new_withdrawal, 200);
     }
 
-    public function withdrawalRequestForOrder($partner, Request $request, PartnerWithdrawalService $partnerWithdrawalService, OrderAdvanceWithdrawalRequestRepositoryInterface $orderAdvanceWithdrawalRequestRepository)
+    public function withdrawalRequestForOrder($partner, Request $request, PartnerWithdrawalService $partnerWithdrawalService, OrderAdvanceWithdrawalRequestRepositoryInterface $orderAdvanceWithdrawalRequestRepository, OrderAdvanceWithdrawalRequestService $orderAdvanceWithdrawalRequestService)
     {
         $this->validate($request, [
             'order_id'       => 'required|integer',
@@ -178,7 +225,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             return api_response($request, null, 400, ['message' => $doesExceedWithdrawalLimit['msg']]);
 
         $partnerOrder->calculate(true);
-        if ($partnerWithdrawalService->doesExceedWithdrawalAmountForOrder((double)$request->amount, $partnerOrder))
+        if ($orderAdvanceWithdrawalRequestService->doesExceedWithdrawalAmountForOrder((double)$request->amount, $partnerOrder))
             return api_response($request, null, 402, ['message' => 'Withdrawal amount can not be greater than sheba collection amount']);
 
         $data = array_merge((new UserRequestInformation($request))->getInformationArray(), [
