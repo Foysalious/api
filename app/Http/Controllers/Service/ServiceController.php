@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
+use Sheba\LocationService\StartPriceCalculation;
 use Sheba\Dal\LocationService\LocationService;
+use Sheba\LocationService\PriceCalculation;
 use Sheba\Dal\Service\Service;
 use App\Transformers\Service\ServiceTransformer;
 use Illuminate\Http\JsonResponse;
@@ -22,17 +24,22 @@ class ServiceController extends Controller
      * @param ServiceTransformer $service_transformer
      * @return JsonResponse
      */
-    public function show($service, Request $request, ServiceTransformer $service_transformer)
+    public function show($service, Request $request, ServiceTransformer $service_transformer, PriceCalculation $priceCalculation)
     {
         $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
 
+        $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+        if (is_null($hyper_location)) return api_response($request, null, 404);
+
         /** @var Service $service */
-        $service = Service::find($service);
+        $service = Service::with(['locationServices' => function($q) use ($hyper_location){
+            $q->where('location_id', $hyper_location->location_id);
+        }])->find($service);
+
         if (!$service) return api_response($request, null, 404);
 
-        $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+        $location_service = $service->locationServices->first();
 
-        $location_service = $hyper_location ? LocationService::where('location_id', $hyper_location->location_id)->where('service_id', $service->id)->first() : null;
         $date_start = Carbon::now()->subMonth(6);
 
         $service_orders = JobService::join('jobs as j1','j1.id', '=', 'job_id')
@@ -44,8 +51,10 @@ class ServiceController extends Controller
         $fractal = new Manager();
         if($location_service) $service_transformer->setLocationService($location_service);
         else return api_response($request, null, 404);
+
         $resource = new Item($service, $service_transformer);
         $data = $fractal->createData($resource)->toArray()['data'];
+        $data['start_price'] = app()->make(StartPriceCalculation::class)->getStartPrice($service);
         $data['order_count'] = $service_orders;
 
         return api_response($request, $data, 200, ['service' => $data]);
