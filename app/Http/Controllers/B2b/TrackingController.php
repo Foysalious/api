@@ -116,6 +116,7 @@ class TrackingController extends Controller
 
     public function getTrackingDetails(Request $request)
     {
+        //$date = $request->date;
         $data = [
             'date' => '2022-04-05',
             'employee' => [
@@ -127,18 +128,19 @@ class TrackingController extends Controller
             'timeline' => [
                 [
                     'time' => '9:10 AM',
+                    'address' => 'Sheba.xyz',
                     'location' => [
                         'lat' => 23.2929292,
                         'lng' => 90.8787484,
-                        'address' => 'Sheba.xyz'
+
                     ]
                 ],
                 [
                     'time' => '9:10 AM',
+                    'address' => 'Sheba.xyz',
                     'location' => [
                         'lat' => 23.2929292,
                         'lng' => 90.8787484,
-                        'address' => 'Sheba.xyz'
                     ]
                 ]
             ]
