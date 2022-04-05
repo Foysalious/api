@@ -25,6 +25,10 @@ use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Monolog\Formatter\JsonFormatter;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Psy\Util\Json;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
@@ -94,17 +98,25 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot($events);
         $events->listen("kernel.handled", function (Request $request, Response $response) {
+            $logPath = storage_path() . '/logs/api.log';
             try {
                 $agent = new UserAgentInformation();
                 $agent->setRequest($request);
-                $ip      = $agent->getIp();
-                $payload = json_encode($request->all());
-                $headers=$request->headers;
-                $device  = $agent->getUserAgent();
-                $response_=$response->getContent();
-                $response_data=json_decode($response_,true);
-                $status_code=array_key_exists('code', $response_data)?$response_data['code']:$response->getStatusCode();
-                \Log::info("REQUEST IP :$ip,PAYLOAD: $payload,DEVICE: $device,RESPONSE: $response_ ,STATUS_CODE:$status_code");
+                $ip            = $agent->getIp();
+                $payload       = json_encode($request->all());
+                $headers       = json_encode($request->header());
+                $userAgent     = $agent->getUserAgent();
+                $response_     = $response->getContent();
+                $response_data = json_decode($response_, true);
+                $status_code   = $response_data && array_key_exists('code', $response_data) ? $response_data['code'] : $response->getStatusCode();
+                $api_url       = $request->getUri();
+                $len           = mb_strlen($response_, '8bit');
+                if ($len > 10000) {
+                    $response_ = mb_strcut($response_, 0, 10000);
+                }
+                $logger = new Logger("api_logger");
+                $logger->pushHandler((new StreamHandler("$logPath"))->setFormatter(new JsonFormatter()), Logger::INFO);
+                $logger->info("requestINFO", ['uri' => $api_url, "headers" => $headers, "status_code" => $status_code, "payload" => $payload, "agent" => $userAgent, "response" => $response_, "ip" => $ip, "app_version" => $agent->getApp(), "portal" => $agent->getPortalName()]);
             } catch (\Throwable $e) {
                 \Log::error($e->getMessage());
             }
