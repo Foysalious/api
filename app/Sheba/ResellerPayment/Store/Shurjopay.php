@@ -9,6 +9,8 @@ use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\ResellerPayment\EncryptionAndDecryption;
 use Sheba\ResellerPayment\Statics\StoreConfigurationStatic;
 use Sheba\TPProxy\TPProxyServerError;
+use Sheba\Dal\GatewayAccount\Contract as PgwGatewayAccountRepo;
+use Sheba\Dal\PgwStoreAccount\Contract as PgwStoreAccountRepo;
 
 class Shurjopay extends PaymentStore
 {
@@ -23,18 +25,15 @@ class Shurjopay extends PaymentStore
      */
     public function postConfiguration()
     {
-//        $data = $this->makeStore();
-//            $this->test();
-//        $this->saveStore($data);
         $data = $this->makeStoreAccountData();
-        dd($data);
         $this->test();
-        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
-        if (isset($storeAccount)) {
+        $storeAccount = $this->partner->pgwStoreAccounts()->where("gateway_type_id", $this->gateway_id)->first();
+        if(isset($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];
             $storeAccount->save();
         } else {
-            $pgw_store_repo = app()->make(PgwStoreAccountRepo::class);
+//            $pgw_store_repo = app()->make(PgwStoreAccountRepo::class); //for live
+            $pgw_store_repo = app()->make(PgwGatewayAccountRepo::class); //for dev
             $pgw_store_repo->create($data);
         }
     }
@@ -47,8 +46,7 @@ class Shurjopay extends PaymentStore
     {
         /** @var \Sheba\Payment\Methods\ShurjoPay\ShurjoPay $method */
         $method = app()->make(\Sheba\Payment\Methods\ShurjoPay\ShurjoPay::class);
-        $storeCredentials = ($this->store->getAuth()->toArray());
-        $method->testInit($storeCredentials);
+        $method->testInit((array)$this->data);
     }
 
     /**
@@ -59,16 +57,6 @@ class Shurjopay extends PaymentStore
     {
         $auth = (new ShurjopayDynamicStore())->setPartner($this->partner)->setAuthFromEncryptedConfig($storedConfig)->getAuth();
         return (object)$auth->toArray();
-    }
-
-    private function makeStore(): array
-    {
-        dd($this->data);
-        $this->data->configuration_data->password = htmlspecialchars_decode($this->data->configuration_data->password);
-        $this->data->configuration_data->storeId = htmlspecialchars_decode($this->data->configuration_data->storeId);
-        $this->store = (new ShurjopayDynamicStore())->setPartner($this->partner)->setAuthFromConfig((array)$this->data->configuration_data);
-        $auth = $this->store->getAuth();
-        return $this->getAndSetConfiguration(json_encode($auth->toArray()));
     }
 
     public function getConfiguration()
@@ -98,8 +86,8 @@ class Shurjopay extends PaymentStore
 
     public function saveStore($data)
     {
-        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first(); //for live
-//        $storeAccount = $this->partner->pgwStoreAccounts()->where("gateway_type_id", $this->gateway_id)->first(); //for dev
+//        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first(); //for live
+        $storeAccount = $this->partner->pgwStoreAccounts()->where("gateway_type_id", $this->gateway_id)->first(); //for dev
         if (!empty($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];
             if (isset($data['status'])) {
@@ -123,10 +111,11 @@ class Shurjopay extends PaymentStore
         $configuration = json_encode($this->makeAndGetConfigurationData());
         $this->conn_data = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
         return [
-            "pgw_store_id" => (int)$this->gateway_id,
-            "user_id" => $this->partner->id,
-            "user_type" => get_class($this->partner),
-            "name" => "dynamic_ssl",
+//            "pgw_store_id"  => (int)$this->gateway_id,    //for live
+            "gateway_type_id"  => (int)$this->gateway_id,   //for dev
+            "user_id"       => $this->partner->id,
+            "user_type"     => class_basename($this->partner),
+            "name"          => "dynamic_shurjopay",
             "configuration" => $this->conn_data
         ];
     }
