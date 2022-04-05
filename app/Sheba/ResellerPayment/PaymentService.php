@@ -2,6 +2,8 @@
 
 use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Models\Partner;
+use App\Sheba\MTB\MtbConstants;
+use App\Sheba\MTB\Validation\ApplyValidation;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
@@ -341,6 +343,10 @@ class PaymentService
 
     private function makeQRGatewayData($qrGateway, $completion): array
     {
+        if($completion == 1)
+            $completion = (new ApplyValidation())->setPartner($this->partner)->setForm($qrGateway->id)->getFormSections();
+        else
+            $completion = null;
         return [
             'id' => $qrGateway->id,
             'name' => $qrGateway->name,
@@ -348,7 +354,7 @@ class PaymentService
             'name_bn' => $qrGateway->name_bn,
             'header' => null,
             'type'   => "qr",
-            'completion' => $completion == 1 ? 98 : null,
+            'completion' => $completion,
             'icon' => $qrGateway->icon,
             'status' => "pending",
             'base_url' => ResellerPaymentGeneralStatic::NEW_BASE_URL
