@@ -27,7 +27,8 @@ class Shurjopay extends PaymentStore
     {
         $data = $this->makeStoreAccountData();
         $this->test();
-        $storeAccount = $this->partner->pgwStoreAccounts()->where("gateway_type_id", $this->gateway_id)->first();
+//        $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first(); // for live
+        $storeAccount = $this->partner->pgwGatewayAccounts()->where("gateway_type_id", $this->gateway_id)->first(); // for dev
         if(isset($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];
             $storeAccount->save();
