@@ -195,7 +195,7 @@ class DynamicForm
             return $data['district'];
         }
         if ($this->type == "tradeLicenseExists") {
-            return config('trade_license.data');
+            return config('trade_license');
         }
     }
 
