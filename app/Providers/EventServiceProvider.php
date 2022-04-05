@@ -22,6 +22,8 @@ use App\Sheba\WebstoreBanner\Events\WebstoreBannerUpdate;
 use App\Sheba\WebstoreBanner\Listeners\WebstoreBannerListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
@@ -80,4 +82,19 @@ class EventServiceProvider extends ServiceProvider
             UserMigrationStatusUpdatedByHookListener::class
         ],
     ];
+
+    /**
+     * Register any other events for your application.
+     *
+     * @param DispatcherContract $events
+     * @return void
+     */
+    public function boot(DispatcherContract $events)
+    {
+        parent::boot($events);
+        $events->listen("kernel.handled", function(Request $request,Response $response){
+            \Log::info($request->getClientIps(),$response->getContent());
+        });
+        //
+    }
 }
