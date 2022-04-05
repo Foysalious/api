@@ -377,15 +377,11 @@ class DueTrackerService
 
     /**
      * @return array
-     * @throws AccountingEntryServerError
      */
-    public function report(): array
+    public function getReport(): array
     {
         $queryString = $this->generateQueryString();
-        $dueListData = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
-        $dueListBalance = $this->dueTrackerRepo->setPartner($this->partner)->getDueListBalance($queryString);
-
-        return array_merge($dueListData, $dueListBalance);
+        return $this->dueTrackerRepo->setPartner($this->partner)->getReport($queryString);
     }
 
     /**

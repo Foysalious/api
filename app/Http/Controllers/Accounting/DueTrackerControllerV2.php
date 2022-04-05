@@ -137,22 +137,6 @@ class DueTrackerControllerV2 extends Controller
      * @param Request $request
      * @return JsonResponse
      * @throws AccountingEntryServerError
-     */
-    public function getReport(Request $request): JsonResponse
-    {
-        $data = $this->dueTrackerService
-            ->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->setStartDate($request->start_date)
-            ->setEndDate($request->end_date)
-            ->report();
-        return http_response($request, null, 200, ['data' => $data]);
-    }
-
-    /**
-     * @param Request $request
-     * @return JsonResponse
-     * @throws AccountingEntryServerError
      * @throws MpdfException
      * @throws InvalidPartnerPosCustomer
      * @throws NotAssociativeArray
@@ -169,7 +153,14 @@ class DueTrackerControllerV2 extends Controller
             ->downloadPDF($request);
         return http_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
     }
-    public function publicReport(Request $request){
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws AccountingEntryServerError
+     */
+    public function publicReport(Request $request): JsonResponse
+    {
         $data = $this->dueTrackerService
             ->setPartnerId($request->partner_id)
             ->setContactType($request->contact_type)
@@ -177,4 +168,21 @@ class DueTrackerControllerV2 extends Controller
             ->generatePublicReport();
         return http_response($request, null, 200, ['data' => $data]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getReport(Request $request): JsonResponse
+    {
+        $data = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contactId)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->getReport();
+        return http_response($request, null, 200, ['data' => $data]);
+    }
+
 }
