@@ -3,6 +3,8 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Models\TrackingLocation;
+use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\Business\LiveTrackingEmployeeListsTransformer;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
 use App\Transformers\CustomSerializer;
@@ -10,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Business\LiveTracking\ChangeLogs\Creator as ChangeLogsCreator;
 use Sheba\Business\LiveTracking\Employee\Updater as EmployeeSettingUpdater;
 use Sheba\Business\LiveTracking\Updater as SettingsUpdater;
@@ -19,6 +22,21 @@ use Sheba\ModificationFields;
 class TrackingController extends Controller
 {
     use ModificationFields;
+
+    public function index(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $tracking_locations = TrackingLocation::select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')->where('business_id', $business->id)->groupBy('business_member_id')->orderBy('created_at', 'DESC')->get();
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($tracking_locations, new LiveTrackingListTransformer());
+        $tracking_locations = $manager->createData($resource)->toArray()['data'];
+        return api_response($request, $tracking_locations, 200, ['tracking_locations' => $tracking_locations]);
+    }
 
     public function settingsAction(Request $request, SettingsUpdater $updater, ChangeLogsCreator $change_logs_creator)
     {
@@ -59,7 +77,7 @@ class TrackingController extends Controller
             'is_tracking_enable' => $live_tracking_settings->is_enable,
             'location_fetch_interval_in_minutes' => $live_tracking_settings->location_fetch_interval_in_minutes
         ];
-        return api_response($request, null, 200, ['tracking_settings'=>$tracking_settings]);
+        return api_response($request, null, 200, ['tracking_settings' => $tracking_settings]);
     }
 
     /**
@@ -98,6 +116,7 @@ class TrackingController extends Controller
 
     public function getTrackingDetails(Request $request)
     {
+        //$date = $request->date;
         $data = [
             'date' => '2022-04-05',
             'employee' => [
@@ -109,18 +128,19 @@ class TrackingController extends Controller
             'timeline' => [
                 [
                     'time' => '9:10 AM',
+                    'address' => 'Sheba.xyz',
                     'location' => [
                         'lat' => 23.2929292,
                         'lng' => 90.8787484,
-                        'address' => 'Sheba.xyz'
+
                     ]
                 ],
                 [
                     'time' => '9:10 AM',
+                    'address' => 'Sheba.xyz',
                     'location' => [
                         'lat' => 23.2929292,
                         'lng' => 90.8787484,
-                        'address' => 'Sheba.xyz'
                     ]
                 ]
             ]
@@ -130,20 +150,46 @@ class TrackingController extends Controller
 
     /**
      * @param Request $request
+     * @param CoWorkerInfoFilter $co_worker_info_filter
      * @return JsonResponse
      */
-    public function employeeLists(Request $request)
+    public function employeeLists(Request $request, CoWorkerInfoFilter $co_worker_info_filter)
     {
         /** @var Business $business */
         $business = $request->business;
         $business_members = $business->getActiveBusinessMember();
+        list($offset, $limit) = calculatePagination($request);
+
+        if ($request->has('department')) $business_members = $co_worker_info_filter->filterByDepartment($business_members, $request);
+        if ($request->has('status')) $business_members = $business_members->where('is_live_track_enable', $request->status);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($business_members->get(), new LiveTrackingEmployeeListsTransformer());
-        $live_tracking_employees = $manager->createData($resource)->toArray()['data'];
+        $employees = $manager->createData($resource)->toArray()['data'];
 
-        return api_response($request, $live_tracking_employees, 200, ['live_tracking_employees' => $live_tracking_employees]);
+        $total_employees = count($employees);
+        $limit = $this->getLimit($request, $limit, $total_employees);
+        $employees = collect($employees)->splice($offset, $limit);
+
+
+        if (count($employees) > 0) return api_response($request, $employees, 200, [
+            'employees' => $employees,
+            'total_employees' => $total_employees
+        ]);
+        return api_response($request, null, 404);
+    }
+
+    /**
+     * @param Request $request
+     * @param $limit
+     * @param $total_employees
+     * @return mixed
+     */
+    private function getLimit(Request $request, $limit, $total_employees)
+    {
+        if ($request->has('limit') && $request->limit == 'all') return $total_employees;
+        return $limit;
     }
 
 }
