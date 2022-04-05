@@ -23,6 +23,8 @@ use App\Sheba\Customer\Listeners\PartnerPosCustomerCreateListener;
 use App\Sheba\Customer\Listeners\PartnerPosCustomerUpdateListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
@@ -89,7 +91,9 @@ class EventServiceProvider extends ServiceProvider
     public function boot(DispatcherContract $events)
     {
         parent::boot($events);
-
+        $events->listen("kernel.handled", function(Request $request,Response $response){
+            \Log::info($request->getClientIps(),$response->getContent());
+        });
         //
     }
 }
