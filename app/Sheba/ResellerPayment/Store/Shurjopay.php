@@ -12,10 +12,10 @@ use Sheba\TPProxy\TPProxyServerError;
 
 class Shurjopay extends PaymentStore
 {
-    protected $key='shurjopay';
+    protected $key = 'shurjopay';
     private $store;
 
-    private $conn_data;
+    protected $conn_data;
 
     /**
      * @return void
@@ -30,7 +30,7 @@ class Shurjopay extends PaymentStore
         dd($data);
         $this->test();
         $storeAccount = $this->partner->pgwStoreAccounts()->where("pgw_store_id", $this->gateway_id)->first();
-        if(isset($storeAccount)) {
+        if (isset($storeAccount)) {
             $storeAccount->configuration = $data["configuration"];
             $storeAccount->save();
         } else {
@@ -73,10 +73,10 @@ class Shurjopay extends PaymentStore
 
     public function getConfiguration()
     {
-        $data                    = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
-        $storeAccount            = $this->getStoreAccount();
-        $storedConfiguration     = $storeAccount ? $storeAccount->configuration : "";
-        $configuration           = $this->getDynamicStoredConfiguration($storedConfiguration);
+        $data = (new StoreConfigurationStatic())->getStoreConfiguration($this->key);
+        $storeAccount = $this->getStoreAccount();
+        $storedConfiguration = $storeAccount ? $storeAccount->configuration : "";
+        $configuration = $this->getDynamicStoredConfiguration($storedConfiguration);
         return self::buildData($data, $configuration);
     }
 
@@ -84,7 +84,7 @@ class Shurjopay extends PaymentStore
     {
         foreach ($static_data as &$data) {
             $field_name = $data["id"];
-            if($data["input_type"] === "password") continue;
+            if ($data["input_type"] === "password") continue;
             $data["data"] = $dynamic_configuration ? $dynamic_configuration->$field_name : "";
         }
 
@@ -123,10 +123,10 @@ class Shurjopay extends PaymentStore
         $configuration = json_encode($this->makeAndGetConfigurationData());
         $this->conn_data = (new EncryptionAndDecryption())->setData($configuration)->getEncryptedData();
         return [
-            "pgw_store_id"  => (int)$this->gateway_id,
-            "user_id"       => $this->partner->id,
-            "user_type"     => get_class($this->partner),
-            "name"          => "dynamic_ssl",
+            "pgw_store_id" => (int)$this->gateway_id,
+            "user_id" => $this->partner->id,
+            "user_type" => get_class($this->partner),
+            "name" => "dynamic_ssl",
             "configuration" => $this->conn_data
         ];
     }
