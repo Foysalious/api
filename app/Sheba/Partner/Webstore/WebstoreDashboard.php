@@ -172,6 +172,7 @@ class WebstoreDashboard
         $stats['is_inventory_empty'] = !$product_stats['total_products'] ? 1 : 0;
         $stats['is_registered_for_delivery'] = $this->partner->deliveryInformation ? 1 :0;
         $stats['delivery_charge'] = $this->partner->delivery_charge;
+        $stats['is_shop_address_exists'] = 0;
         return $stats;
     }
 
