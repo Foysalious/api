@@ -100,6 +100,8 @@ class EventServiceProvider extends ServiceProvider
         $events->listen("kernel.handled", function (Request $request, Response $response) {
             $logPath = storage_path() . '/logs/api.log';
             try {
+                $api_url       = $request->getUri();
+                if ($api_url=="http://127.0.0.1/") return;
                 $agent = new UserAgentInformation();
                 $agent->setRequest($request);
                 $ip            = $agent->getIp();
@@ -109,7 +111,6 @@ class EventServiceProvider extends ServiceProvider
                 $response_     = $response->getContent();
                 $response_data = json_decode($response_, true);
                 $status_code   = $response_data && array_key_exists('code', $response_data) ? $response_data['code'] : $response->getStatusCode();
-                $api_url       = $request->getUri();
                 $len           = mb_strlen($response_, '8bit');
                 if ($len > 10000) {
                     $response_ = mb_strcut($response_, 0, 10000);
