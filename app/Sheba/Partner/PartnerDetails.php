@@ -86,6 +86,8 @@ class PartnerDetails
     {
         // $this->loadPartnerRelations();
         $partner = $this->partner;
+        $tradeLicense = $partner->basicInformations->trade_license ?? null;
+        $tinNumber = $partner->getTinNumber() ?? null;
         $info    = collect($partner)->only([
             'id',
             'name',
@@ -103,6 +105,8 @@ class PartnerDetails
         $info->put('delivery_method', $this->getDeliveryMethod());
         $can_use_webstore = $partner->isMigrated(Modules::POS) ? 1 : 0;
         $info->put('can_use_webstore', $can_use_webstore);
+        $info->put('trade_license', $tradeLicense);
+        $info->put('tin_no', $tinNumber);
         // $this->calculateWorkingDaysInfo();
         // $info->put('working_days', $this->workingInfo);
         // $info->put('is_available', $this->isOpenToday() ? 1 : 0);
