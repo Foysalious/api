@@ -288,6 +288,7 @@ class IndexRoute
                 $api->get('/', 'Partner\\PartnerWithdrawalRequestV2Controller@index');
                 $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store')->middleware(['apiRequestLog', 'partner.status']);
                 $api->post('/order', 'Partner\\PartnerWithdrawalRequestV2Controller@withdrawalRequestForOrder')->middleware(['apiRequestLog', 'partner.status']);
+                $api->get('/partner-order/{order}', 'Partner\\PartnerWithdrawalRequestV2Controller@getOrderWithdrawals')->middleware('partner_order.auth');
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');

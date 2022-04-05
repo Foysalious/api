@@ -60,24 +60,4 @@ class PartnerWithdrawalService
 
         return ['status' => false];
     }
-
-    public function doesExceedWithdrawalAmountForOrder($amount, $partnerOrder): bool
-    {
-        $minAmount = min([$partnerOrder->sheba_collection, $partnerOrder->grossAmountWithLogistic]);
-        return $partnerOrder->sheba_collection == 0 || (($this->activeRequestAgainstPartnerOrderAmount($partnerOrder) + $amount) > $minAmount);
-    }
-
-    public function activeRequestAgainstPartnerOrderAmount($partner_order)
-    {
-        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))
-            ->active()
-            ->where('order_id', $partner_order->order_id)
-            ->where('requester_type', 'partner')
-            ->where('requester_id', $partner_order->partner_id)
-            ->first();
-
-        $totalAmount = $withdrawalRequest->total_amount ?? 0;
-        $totalAmount += app()->make(OrderAdvanceWithdrawalRequestRepositoryInterface::class)->getTotalPendingAmountForPartnerOrder($partner_order);
-        return $totalAmount;
-    }
 }
