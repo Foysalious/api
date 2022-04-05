@@ -315,6 +315,6 @@ class BusinessMember extends Model
 
     public function liveLocationFilterByDate($date)
     {
-        return $this->tackingLocations()->where('date', $date)->get();
+        return $this->tackingLocations()->where('date', $date)->orderBy('created_at', 'desc')->get();
     }
 }
