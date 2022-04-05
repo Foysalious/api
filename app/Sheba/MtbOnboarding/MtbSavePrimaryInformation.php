@@ -125,8 +125,8 @@ class MtbSavePrimaryInformation
     public function storePrimaryInformationToMtb($request): JsonResponse
     {
         $data = (new ApplyValidation())->setPartner($this->partner)->setForm(MtbConstants::MTB_FORM_ID)->getFormSections();
-        if ($data['total_percentage'] != 100)
-            return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data['total_percentage'] . " completed"]);
+        if ($data != 100)
+            return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data . " completed"]);
         $data = $this->makePrimaryInformation();
         $response = $this->client->post('api/acctOpen/savePrimaryInformation', $data, AuthTypes::BARER_TOKEN);
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
