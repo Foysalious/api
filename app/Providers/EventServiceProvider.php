@@ -35,6 +35,7 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberCreatedListener;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberUpdatedListener;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberDeletedListener;
+use Sheba\Helpers\Logger\ApiLogger;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumberEvent;
 use Sheba\TopUp\Listeners\TopUpRequestOfBlockedNumber;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
@@ -98,29 +99,7 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot($events);
         $events->listen("kernel.handled", function (Request $request, Response $response) {
-            $logPath = storage_path() . '/logs/api.log';
-            try {
-                $api_url       = $request->getUri();
-                if ($api_url=="http://127.0.0.1/") return;
-                $agent = new UserAgentInformation();
-                $agent->setRequest($request);
-                $ip            = $agent->getIp();
-                $payload       = json_encode($request->all());
-                $headers       = json_encode($request->header());
-                $userAgent     = $agent->getUserAgent();
-                $response_     = $response->getContent();
-                $response_data = json_decode($response_, true);
-                $status_code   = $response_data && array_key_exists('code', $response_data) ? $response_data['code'] : $response->getStatusCode();
-                $len           = mb_strlen($response_, '8bit');
-                if ($len > 10000) {
-                    $response_ = mb_strcut($response_, 0, 10000);
-                }
-                $logger = new Logger("api_logger");
-                $logger->pushHandler((new StreamHandler("$logPath"))->setFormatter(new JsonFormatter()), Logger::INFO);
-                $logger->info("requestINFO", ['uri' => $api_url, "headers" => $headers, "status_code" => $status_code, "payload" => $payload, "agent" => $userAgent, "response" => $response_, "ip" => $ip, "app_version" => $agent->getApp(), "portal" => $agent->getPortalName()]);
-            } catch (\Throwable $e) {
-                \Log::error($e->getMessage());
-            }
+            (new ApiLogger($request, $response))->log();
         });
         //
     }
