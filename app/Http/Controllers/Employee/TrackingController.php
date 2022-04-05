@@ -7,6 +7,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Employee\LiveTrackingLocationList;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -47,6 +48,10 @@ class TrackingController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getTrackingLocation(Request $request)
     {
         /** @var BusinessMember $business_member */
@@ -61,7 +66,6 @@ class TrackingController extends Controller
         $resource = new Collection($tracking_locations, new LiveTrackingLocationList());
         $tracking_locations = $manager->createData($resource)->toArray()['data'];
 
-
         return api_response($request, null, 200, ['tracking_locations' => $tracking_locations]);
     }
 
@@ -74,7 +78,6 @@ class TrackingController extends Controller
         $seconds = $timestamp / 1000;
         return Carbon::createFromTimestamp($seconds);
     }
-
 
     /**
      * @return Geo|null
