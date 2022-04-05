@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\TrackingLocation;
+use App\Repositories\BusinessMemberRepository;
 use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\Business\LiveTrackingEmployeeListsTransformer;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
@@ -14,6 +15,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Business\LiveTracking\ChangeLogs\Creator as ChangeLogsCreator;
+use Sheba\Business\LiveTracking\Employee\LiveTrackingDetails;
 use Sheba\Business\LiveTracking\Employee\Updater as EmployeeSettingUpdater;
 use Sheba\Business\LiveTracking\Updater as SettingsUpdater;
 use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
@@ -114,38 +116,20 @@ class TrackingController extends Controller
         return api_response($request, $tracking_logs, 200, ['live_tracking_setting_changes_logs' => $tracking_logs]);
     }
 
-    public function getTrackingDetails(Request $request)
+    public function getTrackingDetails($business_id, $business_member_id, Request $request)
     {
-        //$date = $request->date;
-        $data = [
-            'date' => '2022-04-05',
-            'employee' => [
-                'name' => 'Asad Ahmed',
-                'employee_id' => "737",
-                'department' => "IT",
-                'designation' => "Software Engineer"
-            ],
-            'timeline' => [
-                [
-                    'time' => '9:10 AM',
-                    'address' => 'Sheba.xyz',
-                    'location' => [
-                        'lat' => 23.2929292,
-                        'lng' => 90.8787484,
-
-                    ]
-                ],
-                [
-                    'time' => '9:10 AM',
-                    'address' => 'Sheba.xyz',
-                    'location' => [
-                        'lat' => 23.2929292,
-                        'lng' => 90.8787484,
-                    ]
-                ]
-            ]
-        ];
-        return api_response($request, $data, 200, ['live_tracking_details' => $data]);
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $date = $request->date;
+        $tracking_locations = TrackingLocation::where('business_member_id', intval($business_member_id))->where('date', $date)->orderBy('created_at', 'DESC')->get();
+        if (!$tracking_locations) return api_response($request, null, 404);
+        $employee = BusinessMember::find($business_member_id);
+        $tracking_locations_details = (new LiveTrackingDetails($employee, $tracking_locations))->get();
+        $tracking_locations_details['date'] = $date;
+        return api_response($request, $tracking_locations_details, 200, ['live_tracking_details' => $tracking_locations_details]);
     }
 
     /**

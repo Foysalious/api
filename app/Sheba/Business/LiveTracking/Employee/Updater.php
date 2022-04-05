@@ -16,6 +16,7 @@ class Updater
     /*** @var ChangeLogsCreator */
     private $changeLogsCreator;
     private $business;
+    private $liveTrackingSetting;
 
     public function __construct()
     {
