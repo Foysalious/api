@@ -59,7 +59,7 @@ class TrackingController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         if (!$request->date) return api_response($request, null, 404);
-        $tracking_locations = $business_member->liveLocationFilterByDate($request->date);
+        $tracking_locations = $business_member->liveLocationFilterByDate($request->date)->get();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());

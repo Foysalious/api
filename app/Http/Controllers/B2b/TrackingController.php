@@ -117,6 +117,10 @@ class TrackingController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getChangesLogs(Request $request)
     {
         /** @var Business $business */
@@ -134,17 +138,24 @@ class TrackingController extends Controller
         return api_response($request, $tracking_logs, 200, ['live_tracking_setting_changes_logs' => $tracking_logs]);
     }
 
+    /**
+     * @param $business_id
+     * @param $business_member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getTrackingDetails($business_id, $business_member_id, Request $request)
     {
-        /** @var Business $business */
-        $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
+
+        /** @var BusinessMember $employee */
+        $employee = BusinessMember::find((int)$business_member_id);
         $date = $request->date;
-        $tracking_locations = TrackingLocation::where('business_member_id', intval($business_member_id))->where('date', $date)->orderBy('created_at', 'DESC')->get();
+        $tracking_locations = $employee->liveLocationFilterByDate($date)->get();
         if (!$tracking_locations) return api_response($request, null, 404);
-        $employee = BusinessMember::find($business_member_id);
+
         $tracking_locations_details = (new LiveTrackingDetails($employee, $tracking_locations))->get();
         $tracking_locations_details['date'] = $date;
         return api_response($request, $tracking_locations_details, 200, ['live_tracking_details' => $tracking_locations_details]);
@@ -170,6 +181,9 @@ class TrackingController extends Controller
         $resource = new Collection($business_members->get(), new LiveTrackingEmployeeListsTransformer());
         $employees = $manager->createData($resource)->toArray()['data'];
 
+        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
+
+
         $total_employees = count($employees);
         $limit = $this->getLimit($request, $limit, $total_employees);
         $employees = collect($employees)->splice($offset, $limit);
@@ -182,15 +196,35 @@ class TrackingController extends Controller
         return api_response($request, null, 404);
     }
 
+    /**
+     * @param $employees
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchEmployee($employees, Request $request)
+    {
+        return $employees->filter(function ($employee) use ($request) {
+            return str_contains(strtoupper($employee['name']), strtoupper($request->search));
+        });
+    }
+
+    /**
+     * @param $business_id
+     * @param $business_member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function lastTrackedDate($business_id, $business_member_id, Request $request)
     {
-        /** @var Business $business */
-        $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $last_tracked = TrackingLocation::where('business_member_id', intval($business_member_id))->orderBy('created_at', 'DESC')->first();
-        if (!$last_tracked)  return api_response($request, null, 404);
+
+        /** @var BusinessMember $employee */
+        $employee = BusinessMember::find((int)$business_member_id);
+        $last_tracked = $employee->liveLocationFilterByDate()->first();
+
+        if (!$last_tracked) return api_response($request, null, 404);
         $last_tracked_date = $last_tracked->date;
         $date_dropdown = $this->getDateDropDown($last_tracked_date);
         return api_response($request, null, 200, ['last-tracked' => $last_tracked_date, 'date-dropdown' => $date_dropdown]);
@@ -212,8 +246,7 @@ class TrackingController extends Controller
     {
         $data = [];
         $date = Carbon::parse($date);
-        for ($day = 1; $day <= 6; $day++)
-        {
+        for ($day = 1; $day <= 6; $day++) {
             $data[] = $date->subDay()->toDateString();
         }
         return $data;
