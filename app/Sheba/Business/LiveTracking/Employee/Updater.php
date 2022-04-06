@@ -34,7 +34,7 @@ class Updater
     public function setBusinessMember($business_members)
     {
         $business_members = json_decode($business_members);
-        $this->businessMembers = $this->businessMemberRepo->builder()->select('id', 'member_id', 'is_live_track_accessible')->whereIn('id', $business_members)->get();
+        $this->businessMembers = $this->businessMemberRepo->builder()->select('id', 'member_id', 'is_live_track_enable')->whereIn('id', $business_members)->get();
         return $this;
     }
 
@@ -47,7 +47,7 @@ class Updater
     public function update()
     {
         $this->businessMembers->each(function ($employee){
-            $employee->update($this->withUpdateModificationField(['is_live_track_accessible' => $this->isEnable]));
+            $employee->update($this->withUpdateModificationField(['is_live_track_enable' => $this->isEnable]));
             $this->createLogs($employee);
             $this->sendPushNotification($employee->member_id);
         });
