@@ -61,27 +61,27 @@ class MtbDocumentUpload
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
-                'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
-                'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->nominee_nid)),
+                'docRefId' => strval($this->partner->id),
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partnerMefInformation->partner_information)->nominee_nid)),
                 'docType' => MtbConstants::NOMINEE_NID_FRONT,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
-                'docRefId' => $this->partner->getFirstAdminResource()->profile->nominee->nid_no,
-                'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->nominee_nid_image_back)),
+                'docRefId' => strval($this->partner->id),
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partnerMefInformation->partner_information)->nominee_nid_image_back)),
                 'docType' => MtbConstants::NOMINEE_NID_BACK,
             ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
-                'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->customer_signature)),
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partnerMefInformation->partner_information)->customer_signature)),
                 'docType' => MtbConstants::CUSTOMER_SIGNATURE,
             ]);
-        if ($this->partnerMefInformation->tradeLicenseExists == 'y') {
+        if (json_decode($this->partnerMefInformation->partner_information)->tradeLicenseExists == 'হ্যা') {
             $data[] = [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
-                'docImage' => base64_encode(file_get_contents($this->partnerMefInformation->trade_license)),
+                'docImage' => base64_encode(file_get_contents(json_decode($this->partnerMefInformation->partner_information)->trade_license)),
                 'docType' => MtbConstants::TRADE_LICENSE,
             ];
         }
