@@ -40,7 +40,7 @@ class ApiLogger
             $agent->setRequest($this->request);
             $app = $agent->getApp();
 
-            $payload = json_encode($this->request->except(['password', 'secret','token']));
+            $payload = json_encode($this->request->except(['password', 'secret', 'token']));
 
             $headers = $this->request->header();
             $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id']);
@@ -54,7 +54,7 @@ class ApiLogger
             if (mb_strlen($response_, '8bit') > 10000) {
                 $response_ = mb_strcut($response_, 0, 10000);
             }
-            $profile_id      = $this->getUser();
+            $profile_id = $this->getUser();
 
             $logger = new Logger("api_logger");
             $logger->pushHandler((new RotatingFileHandler("$logPath", 2))->setFormatter(new JsonFormatter()), Logger::INFO);
@@ -68,7 +68,8 @@ class ApiLogger
                 "ip"          => $agent->getIp(),
                 "app_version" => $app ? $app->getVersionCode() : $this->request->header('version-code'),
                 "portal"      => $agent->getPortalName(),
-                "user_info"     => $profile_id
+                "user_info"   => $profile_id,
+                "method"      => $this->request->getMethod()
             ]);
         } catch (\Throwable $e) {
             \Log::error($e->getMessage());
@@ -78,11 +79,11 @@ class ApiLogger
     private function getUser()
     {
 
-        try{
-            return array_only(AuthUser::create()->toArray(),['profile','resource','partner','member','business_member','member','affiliate','avatar']);
-        }catch (\Throwable $e){
+        try {
+            return array_only(AuthUser::create()->toArray(), ['profile', 'resource', 'partner', 'member', 'business_member', 'member', 'affiliate', 'avatar']);
+        } catch (\Throwable $e) {
             preg_match('/(partners)\/([0-9]+.)\/|(affiliates)\/([0-9]+.)\/|(customers)\|([0-9]+.)\/|(member)\/([0-9]+.)\/|(resources)\/([0-9]+.)\//',
-                $this->request->getUri(),$match);
+                $this->request->getUri(), $match);
             return $match;
         }
     }
