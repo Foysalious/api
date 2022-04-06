@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
+use Sheba\OAuth2\AuthUser;
 use Sheba\UserAgentInformation;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -19,10 +20,11 @@ class ApiLogger
      */
     private $request;
     /**
-     * @var Response  */
+     * @var Response
+     */
     private $response;
 
-    public function __construct( $request, $response)
+    public function __construct($request, $response)
     {
         $this->request  = $request;
         $this->response = $response;
@@ -36,11 +38,12 @@ class ApiLogger
             if ($api_url == "http://127.0.0.1/") return;
             $agent = new UserAgentInformation();
             $agent->setRequest($this->request);
+            $app = $agent->getApp();
 
-            $payload = json_encode($this->request->except(['password']));
+            $payload = json_encode($this->request->except(['password', 'secret','token']));
 
             $headers = $this->request->header();
-            $headers = array_except($headers, ['authorization']);
+            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id']);
             $headers = json_encode($headers);
 
             $response_     = $this->response->getContent();
@@ -51,15 +54,10 @@ class ApiLogger
             if (mb_strlen($response_, '8bit') > 10000) {
                 $response_ = mb_strcut($response_, 0, 10000);
             }
-            $user      = $this->getUser();
-            $user_type = null;
-            $user_id   = null;
-            if ($user) {
-                $user_id   = is_string($user) ? $user : $user->id;
-                $user_type = is_string($user) ? null : class_basename($user);
-            }
+            $profile_id      = $this->getUser();
+
             $logger = new Logger("api_logger");
-            $logger->pushHandler((new RotatingFileHandler("$logPath",2))->setFormatter(new JsonFormatter()), Logger::INFO);
+            $logger->pushHandler((new RotatingFileHandler("$logPath", 2))->setFormatter(new JsonFormatter()), Logger::INFO);
             $logger->info("requestINFO", [
                 'uri'         => $api_url,
                 "headers"     => $headers,
@@ -68,10 +66,9 @@ class ApiLogger
                 "agent"       => $agent->getUserAgent(),
                 "response"    => $response_,
                 "ip"          => $agent->getIp(),
-                "app_version" => $agent->getApp()->getVersionCode(),
+                "app_version" => $app ? $app->getVersionCode() : $this->request->header('version-code'),
                 "portal"      => $agent->getPortalName(),
-                "user_type"   => $user_type,
-                "user_id"     => $user_id
+                "user_info"     => $profile_id
             ]);
         } catch (\Throwable $e) {
             \Log::error($e->getMessage());
@@ -80,11 +77,13 @@ class ApiLogger
 
     private function getUser()
     {
-        if ($this->request->affiliate) return $this->request->affiliate;
-        elseif ($this->request->customer) return $this->request->customer;
-        elseif ($this->request->partner) return $this->request->partner;
-        elseif ($this->request->vendor) return $this->request->vendor;
-        elseif ($this->request->business) return $this->request->business;
-        else return null;
+
+        try{
+            return array_only(AuthUser::create()->toArray(),['profile','resource','partner','member','business_member','member','affiliate','avatar']);
+        }catch (\Throwable $e){
+            preg_match('/(partners)\/([0-9]+.)\/|(affiliates)\/([0-9]+.)\/|(customers)\|([0-9]+.)\/|(member)\/([0-9]+.)\/|(resources)\/([0-9]+.)\//',
+                $this->request->getUri(),$match);
+            return $match;
+        }
     }
 }

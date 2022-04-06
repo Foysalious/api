@@ -101,7 +101,9 @@ class EventServiceProvider extends ServiceProvider
         $events->listen("kernel.handled", function ( $request,  $response) {
             try{
                 (new ApiLogger($request, $response))->log();
-            }catch (\Throwable $e){}
+            }catch (\Throwable $e){
+                \Log::error($e->getMessage());
+            }
         });
         //
     }
