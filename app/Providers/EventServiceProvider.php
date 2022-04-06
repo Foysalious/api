@@ -24,7 +24,6 @@ use App\Sheba\Customer\Listeners\PartnerPosCustomerUpdateListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Monolog\Formatter\JsonFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -41,6 +40,7 @@ use Sheba\TopUp\Listeners\TopUpRequestOfBlockedNumber;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Profile\Listeners\ProfilePasswordUpdatedListener;
 use Sheba\UserAgentInformation;
+use Symfony\Component\HttpFoundation\Response;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -99,9 +99,9 @@ class EventServiceProvider extends ServiceProvider
     {
         parent::boot($events);
         $events->listen("kernel.handled", function ( $request,  $response) {
-           if ($response instanceof Response&&$request instanceof Request){
-               (new ApiLogger($request, $response))->log();
-           }
+            try{
+                (new ApiLogger($request, $response))->log();
+            }catch (\Throwable $e){}
         });
         //
     }

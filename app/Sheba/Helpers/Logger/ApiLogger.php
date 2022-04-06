@@ -3,12 +3,14 @@
 namespace Sheba\Helpers\Logger;
 
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Monolog\Formatter\JsonFormatter;
-use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
 use Sheba\UserAgentInformation;
+use Symfony\Component\HttpFoundation\Response;
 
 class ApiLogger
 {
@@ -17,11 +19,10 @@ class ApiLogger
      */
     private $request;
     /**
-     * @var Response
-     */
+     * @var Response  */
     private $response;
 
-    public function __construct(Request $request, Response $response)
+    public function __construct( $request, $response)
     {
         $this->request  = $request;
         $this->response = $response;
@@ -58,7 +59,7 @@ class ApiLogger
                 $user_type = is_string($user) ? null : class_basename($user);
             }
             $logger = new Logger("api_logger");
-            $logger->pushHandler((new StreamHandler("$logPath"))->setFormatter(new JsonFormatter()), Logger::INFO);
+            $logger->pushHandler((new RotatingFileHandler("$logPath",2))->setFormatter(new JsonFormatter()), Logger::INFO);
             $logger->info("requestINFO", [
                 'uri'         => $api_url,
                 "headers"     => $headers,
