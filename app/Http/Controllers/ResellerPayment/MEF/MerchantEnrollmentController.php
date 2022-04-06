@@ -108,6 +108,7 @@ class MerchantEnrollmentController extends Controller
     public function requiredDocuments(Request $request): JsonResponse
     {
         try {
+            if($request->key)
             $this->validate($request, MEFGeneralStatics::payment_gateway_key_validation());
             $data = $this->merchantEnrollment->setKey($request->key)->getRequiredDocuments();
             return api_response($request, $data, 200, ['data' => $data]);
