@@ -12,7 +12,7 @@ class MEFGeneralStatics
 
     public static function payment_gateway_keys()
     {
-        return PgwStore::query()->publishedForMEF()->pluck('key')->toArray();
+        return config('reseller_payment.available_payment_gateway_keys');
     }
 
     public static function payment_gateway_key_validation(): array
