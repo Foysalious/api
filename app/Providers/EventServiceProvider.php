@@ -98,8 +98,10 @@ class EventServiceProvider extends ServiceProvider
     public function boot(DispatcherContract $events)
     {
         parent::boot($events);
-        $events->listen("kernel.handled", function (Request $request, Response $response) {
-            (new ApiLogger($request, $response))->log();
+        $events->listen("kernel.handled", function ( $request,  $response) {
+           if ($response instanceof Response&&$request instanceof Request){
+               (new ApiLogger($request, $response))->log();
+           }
         });
         //
     }
