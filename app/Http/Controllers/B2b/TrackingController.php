@@ -53,7 +53,7 @@ class TrackingController extends Controller
         $resource = new Collection($tracking_locations, new LiveTrackingListTransformer());
         $tracking_locations = $manager->createData($resource)->toArray()['data'];
         if ($request->has('search')) $tracking_locations = $this->searchWithEmployeeName(collect($tracking_locations), $request->search)->values();
-        $total_count = $tracking_locations->count();
+        $total_count = count($tracking_locations);
         $tracking_locations = collect($tracking_locations)->splice($offset, $limit);
         return api_response($request, $tracking_locations, 200, ['total' => $total_count, 'tracking_locations' => $tracking_locations]);
     }
