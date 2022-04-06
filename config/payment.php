@@ -87,5 +87,22 @@ return [
     ],
     'ebl' => [
         'auth_token' => env('EBL_APP_AUTH_TOKEN')
+    ],
+    'upay'        => [
+        'stores'       => [
+            'default' => [
+                'merchant_id'               => env('UPAY_DEFAULT_MERCHANT_ID', '1110101010000002'),
+                'merchant_key'              => env('UPAY_DEFAULT_MERCHANT_KEY', 'sdf7jk23489889234'),
+                'merchant_name'             => env('UPAY_DEFAULT_MERCHANT_NAME', 'TEST5'),
+                'merchant_country_code'     => 'BD',
+                'merchant_city'             => 'Dhaka',
+                'merchant_category_code'    => env('UPAY_DEFAULT_MERCHANT_CATEGORY_CODE', 'Merchant'),
+                'merchant_code'    => env('UPAY_DEFAULT_MERCHANT_CODE', 'TEST5'),
+                'merchant_mobile'           => env('UPAY_DEFAULT_MERCHANT_MOBILE', '01912586163'),
+                'transaction_currency_code' => 'BDT',
+                'redirect_url'             => env('SHEBA_API_URL') . '/v2/payments/upay'
+            ]
+        ],
+        'base_url'     => env('UPAY_BASE_URL', 'https://uat-pg.upay.systems')
     ]
 ];
