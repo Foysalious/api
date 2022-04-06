@@ -350,8 +350,14 @@ class BusinessMember extends Model
         return false;
     }
 
-    public function liveLocationFilterByDate($date)
+    /**
+     * @param $date
+     * @return mixed
+     */
+    public function liveLocationFilterByDate($date = null)
     {
-        return $this->tackingLocations()->where('date', $date)->get();
+        $tracking_locations = $this->tackingLocations()->orderBy('created_at', 'desc');
+        if ($date) return $tracking_locations->where('date', $date);
+        return $tracking_locations;
     }
 }
