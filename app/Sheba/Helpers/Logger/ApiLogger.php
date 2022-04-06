@@ -35,26 +35,55 @@ class ApiLogger
             if ($api_url == "http://127.0.0.1/") return;
             $agent = new UserAgentInformation();
             $agent->setRequest($this->request);
-            $ip            = $agent->getIp();
-            $payload       = json_encode($this->request->except(['password']));
 
-            $headers=$this->request->header();
-            $headers=array_except($headers, ['authorization']);
-            $headers       = json_encode($headers);
-            $userAgent     = $agent->getUserAgent();
+            $payload = json_encode($this->request->except(['password']));
+
+            $headers = $this->request->header();
+            $headers = array_except($headers, ['authorization']);
+            $headers = json_encode($headers);
+
             $response_     = $this->response->getContent();
             $response_data = json_decode($response_, true);
-            $status_code   = $response_data && array_key_exists('code', $response_data) ? $response_data['code'] : $this->response->getStatusCode();
-            $len           = mb_strlen($response_, '8bit');
-            if ($len > 10000) {
+
+            $status_code = $response_data && array_key_exists('code', $response_data) ? $response_data['code'] : $this->response->getStatusCode();
+
+            if (mb_strlen($response_, '8bit') > 10000) {
                 $response_ = mb_strcut($response_, 0, 10000);
+            }
+            $user      = $this->getUser();
+            $user_type = null;
+            $user_id   = null;
+            if ($user) {
+                $user_id   = is_string($user) ? $user : $user->id;
+                $user_type = is_string($user) ? null : class_basename($user);
             }
             $logger = new Logger("api_logger");
             $logger->pushHandler((new StreamHandler("$logPath"))->setFormatter(new JsonFormatter()), Logger::INFO);
-            $logger->info("requestINFO", ['uri' => $api_url, "headers" => $headers, "status_code" => $status_code, "payload" => $payload, "agent" => $userAgent, "response" => $response_, "ip" => $ip, "app_version" => $this->request->header('version-code'), "portal" => $agent->getPortalName()]);
+            $logger->info("requestINFO", [
+                'uri'         => $api_url,
+                "headers"     => $headers,
+                "status_code" => $status_code,
+                "payload"     => $payload,
+                "agent"       => $agent->getUserAgent(),
+                "response"    => $response_,
+                "ip"          => $agent->getIp(),
+                "app_version" => $agent->getApp()->getVersionCode(),
+                "portal"      => $agent->getPortalName(),
+                "user_type"   => $user_type,
+                "user_id"     => $user_id
+            ]);
         } catch (\Throwable $e) {
             \Log::error($e->getMessage());
         }
     }
 
+    private function getUser()
+    {
+        if ($this->request->affiliate) return $this->request->affiliate;
+        elseif ($this->request->customer) return $this->request->customer;
+        elseif ($this->request->partner) return $this->request->partner;
+        elseif ($this->request->vendor) return $this->request->vendor;
+        elseif ($this->request->business) return $this->request->business;
+        else return null;
+    }
 }
