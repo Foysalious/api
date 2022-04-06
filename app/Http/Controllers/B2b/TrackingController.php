@@ -33,12 +33,29 @@ class TrackingController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $tracking_locations = TrackingLocation::select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')->where('business_id', $business->id)->groupBy('business_member_id')->orderBy('created_at', 'DESC')->get();
+        list($offset, $limit) = calculatePagination($request);
+        $tracking_locations = TrackingLocation::select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')
+                            ->where('business_id', $business->id)
+                            ->groupBy('business_member_id')
+                            ->orderBy('created_at', 'DESC');
+        if ($request->has('department')){
+            $business_members = $business->getTrackLocationActiveBusinessMember();
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department);
+                });
+            })->pluck('id')->toArray();
+            $tracking_locations = $tracking_locations->whereIn('business_member_id', $business_members);
+        }
+        $tracking_locations = $tracking_locations->get();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($tracking_locations, new LiveTrackingListTransformer());
         $tracking_locations = $manager->createData($resource)->toArray()['data'];
-        return api_response($request, $tracking_locations, 200, ['tracking_locations' => $tracking_locations]);
+        if ($request->has('search')) $tracking_locations = $this->searchWithEmployeeName(collect($tracking_locations), $request->search)->values();
+        $total_count = $tracking_locations->count();
+        $tracking_locations = collect($tracking_locations)->splice($offset, $limit);
+        return api_response($request, $tracking_locations, 200, ['total' => $total_count, 'tracking_locations' => $tracking_locations]);
     }
 
     public function settingsAction(Request $request, SettingsUpdater $updater, ChangeLogsCreator $change_logs_creator)
@@ -200,6 +217,13 @@ class TrackingController extends Controller
             $data[] = $date->subDay()->toDateString();
         }
         return $data;
+    }
+
+    private function searchWithEmployeeName($tracking_locations, $search_value)
+    {
+        return $tracking_locations->filter(function ($tracking_location) use ($search_value) {
+            return str_contains(strtoupper($tracking_location['employee']['employee_name']), strtoupper($search_value));
+        });
     }
 
 }
