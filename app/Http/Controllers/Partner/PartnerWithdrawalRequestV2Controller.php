@@ -114,6 +114,8 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
             $error_message = 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।';
             $is_partner_blacklisted = true;
+        } else {
+            $error_message = "আপনি " . convertNumbersToBangla($withdrawable_amount) . " টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।";
         }
         return api_response($request,
             null,
