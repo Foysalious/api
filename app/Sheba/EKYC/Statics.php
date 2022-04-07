@@ -17,7 +17,7 @@ class Statics
     CONST FINAL_FAIL_MESSAGE = "আপনি সর্বোচ্চ সংখ্যকবার NID ভেরিফিকেশনের জন্য চেষ্টা করেছেন। %s কর্তৃপক্ষ আপনার NID ভেরিফিকেশন নিয়ে কাজ করছে। আগামী ৩ কার্যদিবসের মধ্যে আপনাকে ফলাফল জানানো হবে। বিস্তারিত জানতে চাইলে 16516 এ কল করুন।";
     CONST PENDING_MESSAGE  = "আপনার NID ভেরিফিকেশন প্রক্রিয়াধীন রয়েছে। ভেরিফিকেশন প্রক্রিয়া দ্রুত করতে চাইলে 16516-এ কল করুন।";
     CONST BONDHU_FAIL_MESSAGE = "আপনার NID ভেরিফিকেশন সম্পন্ন হয়নি। NID-এর তথ্য দিন।";
-    CONST MAX_PORICHOY_VERIFICATION_ATTEMPT = 3;
+    CONST MAX_NID_VERIFICATION_ATTEMPT = 3;
     public static function faceVerificationValidate(): array
     {
         return [
