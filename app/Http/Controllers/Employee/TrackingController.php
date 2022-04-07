@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use App\Models\TrackingLocation;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Employee\LiveTrackingLocationList;
 use Carbon\Carbon;
@@ -99,5 +100,20 @@ class TrackingController extends Controller
         } catch (Throwable $exception) {
             return "";
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getManagerSubordinateList(Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member, true, true);
+        $departments = array_keys($managers_data);
+
+        return api_response($request, null, 200, ['employee_list' => $managers_data, 'departments' => $departments]);
     }
 }

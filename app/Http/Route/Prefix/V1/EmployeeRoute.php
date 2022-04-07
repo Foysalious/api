@@ -4,6 +4,7 @@ class EmployeeRoute
 {
     public function set($api)
     {
+        $api->get('employee/business-sign-up', 'B2b\BusinessesController@getSignUpPage');
         $api->post('employee/login', 'Employee\EmployeeController@login');
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
 
@@ -15,6 +16,9 @@ class EmployeeRoute
             $api->group(['prefix' => 'payroll'], function ($api) {
                 $api->get('payslip', 'Employee\PayrollController@downloadPayslip');
                 $api->get('disbursed-month', 'Employee\PayrollController@disbursedMonth');
+                $api->get('grace-policy', 'Employee\PayrollController@getGracePolicy');
+                $api->get('checkin-checkout-policy', 'Employee\PayrollController@getCheckinCheckoutPolicy');
+                $api->get('unpaid-leave-policy', 'Employee\PayrollController@getUnpaidLeavePolicy');
             });
             $api->group(['prefix' => 'profile'], function ($api) {
                 $api->group(['prefix' => '{business_member}'], function ($api) {
@@ -47,6 +51,7 @@ class EmployeeRoute
             $api->group(['prefix' => 'live-tracking'], function ($api) {
                 $api->post('/', 'Employee\TrackingController@insertLocation');
                 $api->get('/', 'Employee\TrackingController@getTrackingLocation');
+                $api->get('subordinate-list', 'Employee\TrackingController@getManagerSubordinateList');
             });
 
             $api->group(['prefix' => 'my-team'], function ($api) {
@@ -63,6 +68,7 @@ class EmployeeRoute
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount')->middleware('throttle:400');
             $api->get('test-notification', 'Employee\NotificationController@test');
             $api->post('notifications/seen', 'Employee\NotificationController@seen');
+            $api->post('notifications/history/update', 'Employee\NotificationHistoryController@changeStatus');
             $api->group(['prefix' => 'supports'], function ($api) {
                 $api->get('/', 'Employee\SupportController@index');
                 $api->group(['prefix' => '{support}'], function ($api) {
@@ -102,6 +108,7 @@ class EmployeeRoute
                 $api->get('/settings', 'Employee\LeaveController@getLeaveSettings');
                 $api->post('/', 'Employee\LeaveController@store');
                 $api->get('/reject-reasons', 'Employee\LeaveController@rejectReasons');
+                $api->get('policy-settings', 'Employee\LeaveController@getPolicySettings');
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
@@ -111,12 +118,14 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'approval-requests'], function ($api) {
                 $api->get('/', 'Employee\ApprovalRequestController@index');
+                $api->get('/approvers', 'Employee\ApprovalRequestController@getApprovers');
                 $api->get('/leaves/{business_member}', 'Employee\ApprovalRequestController@leaveHistory');
                 $api->get('/{approval_request}', 'Employee\ApprovalRequestController@show');
                 $api->post('/status', 'Employee\ApprovalRequestController@updateStatus');
             });
             $api->group(['prefix' => 'holidays'], function ($api) {
                 $api->get('/', 'Employee\HolidayController@getHolidays');
+                $api->get('/monthly', 'Employee\HolidayController@getMonthlyLeavesHolidays');
             });
             $api->group(['prefix' => 'departments'], function ($api) {
                 $api->get('/', 'Employee\DepartmentController@index');
