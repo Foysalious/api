@@ -61,6 +61,6 @@ class PaymentMethodStatics
 
     public static function dynamicCompletionPageMessage($key): array
     {
-        return config('reseller_payment.completion_message')[$key];
+        return isset(config('reseller_payment.completion_message')[$key]) ? config('reseller_payment.completion_message')[$key] : [];
     }
 }
