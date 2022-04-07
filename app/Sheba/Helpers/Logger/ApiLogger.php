@@ -62,13 +62,13 @@ class ApiLogger
             $logger->pushHandler((new RotatingFileHandler("$logPath", 2))->setFormatter(new JsonFormatter()), Logger::INFO);
             $logger->info("requestINFO", [
                 'uri'         => $api_url,
-                "headers"     => $headers,
+                "headers"     => json_encode($headers),
                 "status_code" => $status_code,
                 "payload"     => $payload,
                 "agent"       => $agent->getUserAgent(),
                 "response"    => $response_,
                 "ip"          => $agent->getIp(),
-                "app_version" => $app ? $app->getVersionCode() : $this->request->header('version-code'),
+                "app_version" => $app ? $app->getVersionCode() : 0,
                 "portal"      => $agent->getPortalName(),
                 "user_info"   => $profile_id,
                 "method"      => $this->request->getMethod()
