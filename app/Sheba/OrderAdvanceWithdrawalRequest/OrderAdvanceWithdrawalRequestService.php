@@ -63,17 +63,26 @@ class OrderAdvanceWithdrawalRequestService
         return $partnerOrder->sheba_collection == 0 || (($this->activeRequestAgainstPartnerOrderAmount($partnerOrder) + $amount) > $minAmount);
     }
 
+    public function doesExceedWithdrawalAmountForSbuApproval($orderAdvanceWithdrawalRequest, $partnerOrder): bool
+    {
+        return $this->getActiveFinWithdrawalAmount($partnerOrder) + $orderAdvanceWithdrawalRequest->amount > $partnerOrder->sheba_collection;
+    }
+
     public function activeRequestAgainstPartnerOrderAmount($partner_order)
     {
-        $withdrawalRequest = WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))
+        $totalAmount = $this->getActiveFinWithdrawalAmount($partner_order) ?? 0;
+        $totalAmount += $this->orderAdvanceWithdrawalRequestRepository->getTotalPendingAmountForPartnerOrder($partner_order);
+        return $totalAmount;
+    }
+
+    public function getActiveFinWithdrawalAmount($partner_order)
+    {
+        return WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))
             ->active()
             ->where('order_id', $partner_order->order_id)
             ->where('requester_type', 'partner')
             ->where('requester_id', $partner_order->partner_id)
-            ->first();
-
-        $totalAmount = $withdrawalRequest->total_amount ?? 0;
-        $totalAmount += $this->orderAdvanceWithdrawalRequestRepository->getTotalPendingAmountForPartnerOrder($partner_order);
-        return $totalAmount;
+            ->first()
+            ->total_amount;
     }
 }
