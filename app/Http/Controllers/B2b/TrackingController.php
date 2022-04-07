@@ -222,7 +222,7 @@ class TrackingController extends Controller
         $last_tracked = $employee->liveLocationFilterByDate()->first();
 
         if (!$last_tracked) return api_response($request, null, 404);
-        $last_tracked_date = $last_tracked->date;
+        $last_tracked_date = $last_tracked->date->toDateString();
         $date_dropdown = $this->getDateDropDown($last_tracked_date);
         return api_response($request, null, 200, ['last_tracked' => $last_tracked_date, 'date_dropdown' => $date_dropdown]);
     }
