@@ -3,8 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Models\TrackingLocation;
-use App\Repositories\BusinessMemberRepository;
+use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\Business\LiveTrackingEmployeeListsTransformer;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
@@ -20,11 +19,20 @@ use Sheba\Business\LiveTracking\Employee\LiveTrackingDetails;
 use Sheba\Business\LiveTracking\Employee\Updater as EmployeeSettingUpdater;
 use Sheba\Business\LiveTracking\Updater as SettingsUpdater;
 use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
+use Sheba\Dal\TrackingLocation\TrackingLocationRepository;
 use Sheba\ModificationFields;
 
 class TrackingController extends Controller
 {
     use ModificationFields;
+
+    /*** @var TrackingLocationRepository */
+    private $trackingLocationRepo;
+
+    public function __construct()
+    {
+        $this->trackingLocationRepo = app(TrackingLocationRepository::class);
+    }
 
     public function index(Request $request)
     {
@@ -33,11 +41,13 @@ class TrackingController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
+        $employee_lists = collect((new ManagerSubordinateEmployeeList())->getManager($business_member->id));
+        $employee_lists = $employee_lists->map(function ($employee) {
+            return $employee->id;
+        })->toArray();
         list($offset, $limit) = calculatePagination($request);
-        $tracking_locations = TrackingLocation::select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')
-                            ->where('business_id', $business->id)
-                            ->groupBy('business_member_id')
-                            ->orderBy('created_at', 'DESC');
+        $tracking_locations = $this->trackingLocationRepo->builder()->select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')->where('business_id', $business->id);
+        if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $employee_lists);
         if ($request->has('department')){
             $business_members = $business->getTrackLocationActiveBusinessMember();
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -47,6 +57,7 @@ class TrackingController extends Controller
             })->pluck('id')->toArray();
             $tracking_locations = $tracking_locations->whereIn('business_member_id', $business_members);
         }
+        $tracking_locations = $tracking_locations->groupBy('business_member_id')->orderBy('created_at', 'DESC');
         $tracking_locations = $tracking_locations->get();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -195,18 +206,6 @@ class TrackingController extends Controller
     }
 
     /**
-     * @param $employees
-     * @param Request $request
-     * @return \Illuminate\Support\Collection
-     */
-    private function searchEmployee($employees, Request $request)
-    {
-        return collect($employees)->filter(function ($employee) use ($request) {
-            return str_contains(strtoupper($employee['name']), strtoupper($request->search));
-        });
-    }
-
-    /**
      * @param $business_id
      * @param $business_member_id
      * @param Request $request
@@ -225,7 +224,20 @@ class TrackingController extends Controller
         if (!$last_tracked) return api_response($request, null, 404);
         $last_tracked_date = $last_tracked->date;
         $date_dropdown = $this->getDateDropDown($last_tracked_date);
-        return api_response($request, null, 200, ['last-tracked' => $last_tracked_date, 'date-dropdown' => $date_dropdown]);
+        return api_response($request, null, 200, ['last_tracked' => $last_tracked_date, 'date_dropdown' => $date_dropdown]);
+    }
+
+    public function downloadLiveTrackingReport($business_id, $business_member_id, Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        /** @var BusinessMember $employee */
+        $employee = BusinessMember::find((int)$business_member_id);
+        $from_date = $request->from;
+        $to_date = $request->to;
+        $tracking_locations = $employee->liveLocationForADateRange($from_date, $to_date)->get();
     }
 
     /**
@@ -244,6 +256,7 @@ class TrackingController extends Controller
     {
         $data = [];
         $date = Carbon::parse($date);
+        $data[] = $date->toDateString();
         for ($day = 1; $day <= 6; $day++) {
             $data[] = $date->subDay()->toDateString();
         }
@@ -254,6 +267,18 @@ class TrackingController extends Controller
     {
         return $tracking_locations->filter(function ($tracking_location) use ($search_value) {
             return str_contains(strtoupper($tracking_location['employee']['employee_name']), strtoupper($search_value));
+        });
+    }
+
+    /**
+     * @param $employees
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchEmployee($employees, Request $request)
+    {
+        return $employees->filter(function ($employee) use ($request) {
+            return str_contains(strtoupper($employee['name']), strtoupper($request->search));
         });
     }
 

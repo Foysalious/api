@@ -34,7 +34,7 @@ class ManagerSubordinateEmployeeList
         return $managers_data;
     }
 
-    private function getManager($business_member_id): array
+    public function getManager($business_member_id): array
     {
         $manager_data = [];
         $managers = $this->getCoWorkersUnderSpecificManager($business_member_id);

@@ -360,4 +360,13 @@ class BusinessMember extends Model
         if ($date) return $tracking_locations->where('date', $date);
         return $tracking_locations;
     }
+
+    public function liveLocationForADateRange($from_date, $to_date)
+    {
+        $tracking_locations = $this->tackingLocations()->where(function ($query) use ($from_date, $to_date){
+            $query->where('date', '>=', $from_date);
+            $query->where('date', '<=', $to_date);
+        });
+        return $tracking_locations->orderBy('created_at', 'desc');
+    }
 }
