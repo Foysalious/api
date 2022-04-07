@@ -43,8 +43,7 @@ class ApiLogger
             $payload = json_encode($this->request->except(['password', 'secret','token']));
 
             $headers = $this->request->header();
-            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id']);
-            $headers = json_encode($headers);
+            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id','lat','lng']);
 
             $response_     = $this->response->getContent();
             $response_data = json_decode($response_, true);
