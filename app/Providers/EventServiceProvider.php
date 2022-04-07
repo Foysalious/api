@@ -89,22 +89,22 @@ class EventServiceProvider extends ServiceProvider
         ],
     ];
 
-    /**
-     * Register any other events for your application.
-     *
-     * @param DispatcherContract $events
-     * @return void
-     */
-    public function boot(DispatcherContract $events)
-    {
-        parent::boot($events);
-        $events->listen("kernel.handled", function ( $request,  $response) {
-            try{
-                (new ApiLogger($request, $response))->log();
-            }catch (\Throwable $e){
-                \Log::error($e->getMessage());
-            }
-        });
-        //
-    }
+//    /**
+//     * Register any other events for your application.
+//     *
+//     * @param DispatcherContract $events
+//     * @return void
+//     */
+//    public function boot(DispatcherContract $events)
+//    {
+//        parent::boot($events);
+//        $events->listen("kernel.handled", function ( $request,  $response) {
+//            try{
+//                (new ApiLogger($request, $response))->log();
+//            }catch (\Throwable $e){
+//                \Log::error($e->getMessage());
+//            }
+//        });
+//        //
+//    }
 }
