@@ -96,4 +96,15 @@ class DueTrackerReminderController extends Controller
             ->delete();
         return http_response($request, null, 200, ['data' => $response]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function reminderNotificationWebhook(Request $request): JsonResponse
+    {
+        $reminder = $request->data;
+        $response = $this->dueTrackerReminderService->sendReminderPush($reminder);
+        return http_response($request, null, 200, ['data' => $response]);
+    }
 }

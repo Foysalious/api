@@ -24,7 +24,7 @@ class ReminderNotificationHandler
         $sound = config('sheba.push_notification_sound.manager');
         $data = [
             "title" => 'Due Tracker Reminder',
-            "message" => "",
+            "message" => "No message has been given",
             "sound" => $sound,
             "event_type" => 'DueTrackerReminder',
             "event_id" => (string)$this->reminder['id']
