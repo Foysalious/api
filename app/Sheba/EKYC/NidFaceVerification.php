@@ -89,7 +89,7 @@ class NidFaceVerification
         }
     }
 
-    public function beforePorichoyCallChanges($profile, $avatar = null)
+    public function beforeNidVerificationCallChanges($profile, $avatar = null)
     {
         $this->profileRepo->increase_verification_request_count($profile);
         if($avatar instanceof Partner) {

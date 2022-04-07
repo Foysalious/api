@@ -56,7 +56,7 @@ class FaceVerificationController extends Controller
             $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
             $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
-            $this->nidFaceVerification->beforePorichoyCallChanges($profile, $avatar);
+            $this->nidFaceVerification->beforeNidVerificationCallChanges($profile, $avatar);
             $this->stopIfNotEligibleForNidVerificationFurther($profile);
             $data = $this->getFaceVerificationDataFromEkyc($request, $avatar, $requestedData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, $data);
@@ -112,7 +112,7 @@ class FaceVerificationController extends Controller
         try {
             $profileNIDSubmissionLog = ProfileNIDSubmissionLog::find($id);
             $profile = Profile::find($profileNIDSubmissionLog->profile_id);
-            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
+            $this->nidFaceVerification->beforeNidVerificationCallChanges($profile);
             $this->stopIfNotEligibleForNidVerificationFurther($profile);
             $photoLink = $profile->pro_pic;
             $this->resubmit_url .= "/".$profileNIDSubmissionLog->nid_no;
