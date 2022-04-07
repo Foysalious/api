@@ -2,9 +2,12 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Models\TrackingLocation;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
+use App\Transformers\Business\EmployeeLiveTrackingListTransformer;
+use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Employee\LiveTrackingLocationList;
 use Carbon\Carbon;
@@ -12,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Location\Geo;
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
@@ -104,16 +108,49 @@ class TrackingController extends Controller
 
     /**
      * @param Request $request
+     * @param CoWorkerInfoFilter $co_worker_info_filter
      * @return JsonResponse
      */
-    public function getManagerSubordinateList(Request $request)
+    public function getManagerSubordinateList(Request $request, CoWorkerInfoFilter $co_worker_info_filter)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member, true, true);
-        $departments = array_keys($managers_data);
+        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
+        $business_members = BusinessMember::whereIn('id', $managers_data);
 
-        return api_response($request, null, 200, ['employee_list' => $managers_data, 'departments' => $departments]);
+        if ($request->has('department')) $business_members = $co_worker_info_filter->filterByDepartment($business_members, $request);
+        $data = [];
+        foreach ($business_members->get() as $business_member) {
+            $tracking_location = $business_member->liveLocationFilterByDate()->first();
+            if (!$tracking_location) continue;
+
+            $location = $tracking_location->location;
+            $profile = $business_member->profile();
+            /** @var BusinessRole $role */
+            $role = $business_member->role;
+            $data[] = [
+                'business_member_id' => $business_member->id,
+                'employee_id' => $business_member->employee_id,
+                'business_id' => $tracking_location->business_id,
+                'department_id' => $role ? $role->businessDepartment->id : null,
+                'department' => $role ? $role->businessDepartment->name : null,
+
+                'designation' => $role ? $role->name : null,
+                'profile' => [
+                    'id' => $profile->id,
+                    'name' => $profile->name ?: null,
+                    'pro_pic' => $profile->pro_pic
+                ],
+                'time' => Carbon::parse($tracking_location->time)->format('h:i a'),
+                'location' => [
+                    'lat' => $location->lat,
+                    'lng' => $location->lng,
+                    'address' => $location->address,
+                ]
+            ];
+        }
+
+        return api_response($request, null, 200, ['employee_list' => $data]);
     }
 }
