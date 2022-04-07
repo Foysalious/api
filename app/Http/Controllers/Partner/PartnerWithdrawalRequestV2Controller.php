@@ -121,6 +121,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             null,
             200,
             [
+                'order_id' => $partner_order->order_id,
                 'wallet' => $request->partner->wallet,
                 'withdrawable_amount' => $withdrawable_amount,
                 'bank_info' => $bank_information ,
