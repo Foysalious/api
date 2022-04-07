@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
 use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\Business\LiveTrackingEmployeeListsTransformer;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
@@ -26,11 +27,11 @@ class TrackingController extends Controller
     use ModificationFields;
 
     /*** @var TrackingLocationRepository */
-    private $trackingLocation;
+    private $trackingLocationRepo;
 
     public function __construct()
     {
-        $this->trackingLocation = app(TrackingLocationRepository::class);
+        $this->trackingLocationRepo = app(TrackingLocationRepository::class);
     }
 
     public function index(Request $request)
@@ -40,11 +41,13 @@ class TrackingController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
+        $employee_lists = collect((new ManagerSubordinateEmployeeList())->getManager($business_member->id));
+        $employee_lists = $employee_lists->map(function ($employee) {
+            return $employee->id;
+        })->toArray();
         list($offset, $limit) = calculatePagination($request);
-        $tracking_locations = $this->trackingLocation->select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')
-                            ->where('business_id', $business->id)
-                            ->groupBy('business_member_id')
-                            ->orderBy('created_at', 'DESC');
+        $tracking_locations = $this->trackingLocationRepo->builder()->select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')->where('business_id', $business->id);
+        if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $employee_lists);
         if ($request->has('department')){
             $business_members = $business->getTrackLocationActiveBusinessMember();
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -54,6 +57,7 @@ class TrackingController extends Controller
             })->pluck('id')->toArray();
             $tracking_locations = $tracking_locations->whereIn('business_member_id', $business_members);
         }
+        $tracking_locations = $tracking_locations->groupBy('business_member_id')->orderBy('created_at', 'DESC');
         $tracking_locations = $tracking_locations->get();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
