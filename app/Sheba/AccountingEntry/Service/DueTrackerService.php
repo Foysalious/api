@@ -421,7 +421,7 @@ class DueTrackerService
      */
     public function generatePublicReport(){
         $queryString = $this->generateQueryString();
-        $data = $this->dueTrackerRepo->reportForWeb($this->partner_id, $this->contact_id , $queryString);
+        $data = $this->dueTrackerRepo->reportForWeb($this->partner_id, $queryString);
 
         $data['stats']['receivable_bn'] = NumberLanguageConverter::en2bn($data['stats']['receivable']);
         $data['stats']['payable_bn'] = NumberLanguageConverter::en2bn($data['stats']['payable']);
