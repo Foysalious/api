@@ -48,7 +48,7 @@ class EmployeeRoute
                 });
             });
 
-            $api->group(['prefix' => 'live-track'], function ($api) {
+            $api->group(['prefix' => 'live-tracking'], function ($api) {
                 $api->post('/', 'Employee\TrackingController@insertLocation');
                 $api->get('/', 'Employee\TrackingController@getTrackingLocation');
             });

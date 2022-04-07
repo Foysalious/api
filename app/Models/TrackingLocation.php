@@ -5,8 +5,8 @@ use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 class TrackingLocation extends Eloquent
 {
     protected $connection = 'mongodb';
-    protected $collection = 'tracking_locations';
-    protected $table = 'tracking_locations';
+    public $timestamps = true;
+    protected $dates = ['date', 'created_at'];
 
     protected $fillable = [
         'business_id', 'business_member_id', 'location', 'log', 'date', 'time', 'created_at'

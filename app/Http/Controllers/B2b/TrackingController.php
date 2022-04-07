@@ -183,11 +183,9 @@ class TrackingController extends Controller
 
         if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
 
-
         $total_employees = count($employees);
         $limit = $this->getLimit($request, $limit, $total_employees);
         $employees = collect($employees)->splice($offset, $limit);
-
 
         if (count($employees) > 0) return api_response($request, $employees, 200, [
             'employees' => $employees,
@@ -199,11 +197,11 @@ class TrackingController extends Controller
     /**
      * @param $employees
      * @param Request $request
-     * @return mixed
+     * @return \Illuminate\Support\Collection
      */
     private function searchEmployee($employees, Request $request)
     {
-        return $employees->filter(function ($employee) use ($request) {
+        return collect($employees)->filter(function ($employee) use ($request) {
             return str_contains(strtoupper($employee['name']), strtoupper($request->search));
         });
     }
