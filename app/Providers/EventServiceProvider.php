@@ -1,4 +1,4 @@
-<?php
+<?php namespace App\Providers;
 
 
 use App\Jobs\WebstoreSettingsSyncJob;
@@ -89,12 +89,12 @@ class EventServiceProvider extends ServiceProvider
         ],
     ];
 
-//    /**
-//     * Register any other events for your application.
-//     *
-//     * @param DispatcherContract $events
-//     * @return void
-//     */
+    /**
+     * Register any other events for your application.
+     *
+     * @param DispatcherContract $events
+     * @return void
+     */
 //    public function boot(DispatcherContract $events)
 //    {
 //        parent::boot($events);
