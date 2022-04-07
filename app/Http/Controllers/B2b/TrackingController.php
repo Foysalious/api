@@ -224,7 +224,7 @@ class TrackingController extends Controller
         if (!$last_tracked) return api_response($request, null, 404);
         $last_tracked_date = $last_tracked->date;
         $date_dropdown = $this->getDateDropDown($last_tracked_date);
-        return api_response($request, null, 200, ['last-tracked' => $last_tracked_date, 'date-dropdown' => $date_dropdown]);
+        return api_response($request, null, 200, ['last_tracked' => $last_tracked_date, 'date_dropdown' => $date_dropdown]);
     }
 
     public function downloadLiveTrackingReport($business_id, $business_member_id, Request $request)
@@ -256,6 +256,7 @@ class TrackingController extends Controller
     {
         $data = [];
         $date = Carbon::parse($date);
+        $data[] = $date->toDateString();
         for ($day = 1; $day <= 6; $day++) {
             $data[] = $date->subDay()->toDateString();
         }
