@@ -56,8 +56,8 @@ class FaceVerificationController extends Controller
             $photoLink = $this->nidFaceVerification->getPersonPhotoLink($request, $profile);
             $requestedData = $this->nidFaceVerification->formatToData($request, $userAgent, $photoLink);
             $this->nidFaceVerification->makeProfileAdjustment($photoLink, $profile, $request->nid);
-            $this->nidFaceVerification->beforePorichoyCallChanges($profile, $avatar);
-            $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
+            $this->nidFaceVerification->beforeNidVerificationCallChanges($profile, $avatar);
+            $this->stopIfNotEligibleForNidVerificationFurther($profile);
             $data = $this->getFaceVerificationDataFromEkyc($request, $avatar, $requestedData, $profileNIDSubmissionRepo);
             return api_response($request, null, 200, $data);
         } catch (ValidationException $exception) {
@@ -107,13 +107,13 @@ class FaceVerificationController extends Controller
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function resubmitToPorichoy(Request $request, $id, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
+    public function resubmitForNidVerification(Request $request, $id, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
     {
         try {
             $profileNIDSubmissionLog = ProfileNIDSubmissionLog::find($id);
             $profile = Profile::find($profileNIDSubmissionLog->profile_id);
-            $this->nidFaceVerification->beforePorichoyCallChanges($profile);
-            $this->stopIfNotEligibleForPorichoyVerificationFurther($profile);
+            $this->nidFaceVerification->beforeNidVerificationCallChanges($profile);
+            $this->stopIfNotEligibleForNidVerificationFurther($profile);
             $photoLink = $profile->pro_pic;
             $this->resubmit_url .= "/".$profileNIDSubmissionLog->nid_no;
             $faceVerificationData = $this->client->post($this->resubmit_url, null);
@@ -140,10 +140,10 @@ class FaceVerificationController extends Controller
     /**
      * @throws EKycException
      */
-    private function stopIfNotEligibleForPorichoyVerificationFurther($profile)
+    private function stopIfNotEligibleForNidVerificationFurther($profile)
     {
         $verification_req_count = $profile->nid_verification_request_count;
-        if($verification_req_count > Statics::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
+        if($verification_req_count > Statics::MAX_NID_VERIFICATION_ATTEMPT) {
             throw new EKycException(Statics::PENDING_MESSAGE, 403);
         }
     }

@@ -1,4 +1,4 @@
-<?php namespace App\Providers;
+<?php
 
 
 use App\Jobs\WebstoreSettingsSyncJob;
@@ -24,6 +24,10 @@ use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Monolog\Formatter\JsonFormatter;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Psy\Util\Json;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
@@ -36,6 +40,8 @@ use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumbe
 use Sheba\TopUp\Listeners\TopUpRequestOfBlockedNumber;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Profile\Listeners\ProfilePasswordUpdatedListener;
+use Sheba\UserAgentInformation;
+use Sheba\Helpers\Logger\ApiLogger;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -83,4 +89,22 @@ class EventServiceProvider extends ServiceProvider
         ],
     ];
 
+    /**
+     * Register any other events for your application.
+     *
+     * @param DispatcherContract $events
+     * @return void
+     */
+    public function boot(DispatcherContract $events)
+    {
+        parent::boot($events);
+        $events->listen("kernel.handled", function ( $request,  $response) {
+            try{
+                (new ApiLogger($request, $response))->log();
+            }catch (\Throwable $e){
+                \Log::error($e->getMessage());
+            }
+        });
+        //
+    }
 }

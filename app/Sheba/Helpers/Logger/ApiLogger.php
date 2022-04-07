@@ -3,12 +3,15 @@
 namespace Sheba\Helpers\Logger;
 
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Monolog\Formatter\JsonFormatter;
-use Monolog\Handler\StreamHandler;
+use Monolog\Handler\RotatingFileHandler;
 use Monolog\Logger;
+use Sheba\OAuth2\AuthUser;
 use Sheba\UserAgentInformation;
+use Symfony\Component\HttpFoundation\Response;
 
 class ApiLogger
 {
@@ -21,7 +24,7 @@ class ApiLogger
      */
     private $response;
 
-    public function __construct(Request $request, Response $response)
+    public function __construct($request, $response)
     {
         $this->request  = $request;
         $this->response = $response;
@@ -35,26 +38,53 @@ class ApiLogger
             if ($api_url == "http://127.0.0.1/") return;
             $agent = new UserAgentInformation();
             $agent->setRequest($this->request);
-            $ip            = $agent->getIp();
-            $payload       = json_encode($this->request->except(['password']));
+            $app = $agent->getApp();
 
-            $headers=$this->request->header();
-            $headers=array_except($headers, ['authorization']);
-            $headers       = json_encode($headers);
-            $userAgent     = $agent->getUserAgent();
+            $payload = json_encode($this->request->except(['password', 'secret', 'token']));
+
+            $headers = $this->request->header();
+            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id']);
+            $headers = json_encode($headers);
+
             $response_     = $this->response->getContent();
             $response_data = json_decode($response_, true);
-            $status_code   = $response_data && array_key_exists('code', $response_data) ? $response_data['code'] : $this->response->getStatusCode();
-            $len           = mb_strlen($response_, '8bit');
-            if ($len > 10000) {
+
+            $status_code = $response_data && array_key_exists('code', $response_data) ? $response_data['code'] : $this->response->getStatusCode();
+
+            if (mb_strlen($response_, '8bit') > 10000) {
                 $response_ = mb_strcut($response_, 0, 10000);
             }
+            $profile_id = $this->getUser();
+
             $logger = new Logger("api_logger");
-            $logger->pushHandler((new StreamHandler("$logPath"))->setFormatter(new JsonFormatter()), Logger::INFO);
-            $logger->info("requestINFO", ['uri' => $api_url, "headers" => $headers, "status_code" => $status_code, "payload" => $payload, "agent" => $userAgent, "response" => $response_, "ip" => $ip, "app_version" => $this->request->header('version-code'), "portal" => $agent->getPortalName()]);
+            $logger->pushHandler((new RotatingFileHandler("$logPath", 2))->setFormatter(new JsonFormatter()), Logger::INFO);
+            $logger->info("requestINFO", [
+                'uri'         => $api_url,
+                "headers"     => $headers,
+                "status_code" => $status_code,
+                "payload"     => $payload,
+                "agent"       => $agent->getUserAgent(),
+                "response"    => $response_,
+                "ip"          => $agent->getIp(),
+                "app_version" => $app ? $app->getVersionCode() : $this->request->header('version-code'),
+                "portal"      => $agent->getPortalName(),
+                "user_info"   => $profile_id,
+                "method"      => $this->request->getMethod()
+            ]);
         } catch (\Throwable $e) {
             \Log::error($e->getMessage());
         }
     }
 
+    private function getUser()
+    {
+
+        try {
+            return array_only(AuthUser::create()->toArray(), ['profile', 'resource', 'partner', 'member', 'business_member', 'member', 'affiliate', 'avatar']);
+        } catch (\Throwable $e) {
+            preg_match('/(partners)\/([0-9]+.)\/|(affiliates)\/([0-9]+.)\/|(customers)\|([0-9]+.)\/|(member)\/([0-9]+.)\/|(resources)\/([0-9]+.)\//',
+                $this->request->getUri(), $match);
+            return $match;
+        }
+    }
 }
