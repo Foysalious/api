@@ -107,7 +107,7 @@ class FaceVerificationController extends Controller
      * @return JsonResponse
      * @throws GuzzleException
      */
-    public function resubmitToPorichoy(Request $request, $id, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
+    public function resubmitForNidVerification(Request $request, $id, ProfileNIDSubmissionRepo $profileNIDSubmissionRepo): JsonResponse
     {
         try {
             $profileNIDSubmissionLog = ProfileNIDSubmissionLog::find($id);
