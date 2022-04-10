@@ -7,6 +7,7 @@ use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
+use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 
@@ -132,6 +133,7 @@ class MtbSavePrimaryInformation
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
         $this->applyMtb();
-        return http_response($request, null, 200, ['message' => 'Successful']);
+        $bannerMtb = (new PaymentService())->setPartner($this->partner)->getBannerForMtb();
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
     }
 }
