@@ -27,7 +27,7 @@ class SendLiveTrackingPushNotificationToEmployee extends BusinessQueue
             $sound  = config('sheba.push_notification_sound.employee');
             $notification_data = [
                 "title" => 'Live Location Tracking '.self::STATUS[$this->isEnabled],
-                "message" => "Your live location tracking has been '.self::STATUS[$this->isEnabled].' according to your company policy",
+                "message" => "Your live location tracking has been ".self::STATUS[$this->isEnabled]." according to your company policy",
                 "event_type" => 'live_tracking',
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
