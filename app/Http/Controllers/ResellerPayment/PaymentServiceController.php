@@ -119,7 +119,12 @@ class PaymentServiceController extends Controller
         return api_response($request, null, 200, ['data' => $data]);
     }
 
-    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService)
+    /**
+     * @param Request $request
+     * @param PaymentService $paymentService
+     * @return JsonResponse
+     */
+    public function getPaymentGatewayDetails(Request $request, PaymentService $paymentService): JsonResponse
     {
         $this->validate($request, [
             'key' => 'required|in:'.implode(',', config('reseller_payment.available_payment_gateway_keys'))

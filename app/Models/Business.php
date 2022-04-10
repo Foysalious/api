@@ -37,7 +37,12 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function offices()
     {
-        return $this->hasMany(BusinessOffice::class);
+        return $this->hasMany(BusinessOffice::class)->where('is_location', 0);
+    }
+
+    public function geoOffices()
+    {
+        return $this->hasMany(BusinessOffice::class)->where('is_location', 1);
     }
 
     public function announcements()
@@ -99,7 +104,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
             'member' => function ($q) {
                 $q->select('members.id', 'profile_id')->with([
                     'profile' => function ($q) {
-                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic', 'dob', 'address', 'nationality', 'nid_no', 'tin_no');
                     }
                 ]);
             }, 'role' => function ($q) {
@@ -390,9 +395,14 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray());
     }
 
+    public function isGeoLocationAttendanceEnable()
+    {
+        return in_array(AttendanceTypes::GEO_LOCATION_BASED, $this->attendanceTypes->pluck('attendance_type')->toArray());
+    }
+
     public function isShebaTech($business_member_id)
     {
-        $sheba_tech = [574, 586, 847, 922, 1031, 4493, 6885, 7102];
+        $sheba_tech = [574, 586, 847, 922, 1031, 4493, 6885, 7102, 2111];
         return in_array($business_member_id, $sheba_tech);
     }
 

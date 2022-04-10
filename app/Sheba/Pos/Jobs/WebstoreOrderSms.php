@@ -45,13 +45,17 @@ class WebstoreOrderSms extends Job implements ShouldQueue
     public function handle(SmsHandler $handler)
     {
         if ($this->attempts() > 2) return;
-        $this->resolvePosOrder();
-        $this->generateCommonData();
-        if (!$this->partner->isMigrated(Modules::POS))
-            $this->generateDataForOldWebstoreSms();
-        else
-            $this->generateDataForNewWebstoreSms();
-        $handler->setPartner($this->partner)->setData($this->data)->handle();
+        try {
+            $this->resolvePosOrder();
+            $this->generateCommonData();
+            if (!$this->partner->isMigrated(Modules::POS))
+                $this->generateDataForOldWebstoreSms();
+            else
+                $this->generateDataForNewWebstoreSms();
+            $handler->setPartner($this->partner)->setData($this->data)->handle();
+        } catch (Exception $e) {
+            app('sentry')->captureException($e);
+        }
     }
 
     private function resolvePosOrder()
@@ -67,7 +71,7 @@ class WebstoreOrderSms extends Job implements ShouldQueue
     {
         /** @var OrderService $orderService */
         $orderService = app(OrderService::class);
-        return $orderService->setPartnerId($this->partner->id)->setOrderId($this->orderId)->getDetails()['order'];
+        return $orderService->setPartnerId($this->partner->id)->setOrderId($this->orderId)->getDetailsWithInvoice()['order'];
     }
 
     private function generateCommonData()
