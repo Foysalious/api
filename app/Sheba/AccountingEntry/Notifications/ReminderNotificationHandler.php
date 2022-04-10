@@ -2,7 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Notifications;
 
-use Sheba\PushNotification\PushNotificationHandler as PusNotificationService;
+use Sheba\PushNotificationHandler;
 
 class ReminderNotificationHandler
 {
@@ -20,6 +20,7 @@ class ReminderNotificationHandler
     public function handler()
     {
         $topic = config('sheba.push_notification_topic_name.manager_new') . $this->reminder['partner_id'];
+        $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
         $data = [
             "title" => 'Due Tracker Reminder',
@@ -28,7 +29,6 @@ class ReminderNotificationHandler
             "event_type" => 'DueTrackerReminder',
             "event_id" => (string)$this->reminder['id']
         ];
-        (new PusNotificationService())->send($topic, null, $data);
+        (new PushNotificationHandler())->send($data, $topic, $channel, $sound);
     }
-
 }
