@@ -51,4 +51,12 @@ abstract class QRGeneration
 
     public abstract function generateQRId();
 
+    /**
+     * @return mixed
+     */
+    public function getQrId()
+    {
+        return $this->qr_id;
+    }
+
 }

@@ -90,13 +90,12 @@ class QRPayableGenerator implements QrPayableAdapter
     private function generateQR()
     {
         $qr_code_generate = (new QRGenerationFactory())->setPaymentMethod($this->data->payment_method)->get();
-        $qr_id = $qr_code_generate->generateQrId();
-        $this->setQrId($qr_id);
         $partner_finance_information = $this->partner->financialInformations;
         if (!isset($partner_finance_information)) throw new FinancialInformationNotFoundException();
-        $qr_string = $qr_code_generate->setQrId($this->qr_id)
-            ->setFinancialInformation($partner_finance_information)->setPayable($this->payable)->qrCodeString();
+        $qr_string = $qr_code_generate->setFinancialInformation($partner_finance_information)
+            ->setPayable($this->payable)->qrCodeString();
         $this->setQrString($qr_string);
+        $this->setQrId($qr_code_generate->getQrId());
     }
 
     private function storeQRPayable()

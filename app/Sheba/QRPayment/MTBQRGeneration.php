@@ -2,8 +2,8 @@
 
 namespace App\Sheba\QRPayment;
 
+use App\Sheba\QRPayment\Methods\MTB\MtbQr;
 use Exception;
-use Sheba\EmvQR\EmvQR;
 
 class MTBQRGeneration extends QRGeneration
 {
@@ -23,10 +23,11 @@ class MTBQRGeneration extends QRGeneration
      */
     public function qrCodeString(): string
     {
-        return (new EmvQR())->setQrId($this->qr_id)->setAmount($this->payable->amount)->setMerchantId($this->financial_information->mtb_merchant_id)
-            ->setMasterCard($this->financial_information->master_card_number)->setUnionPayCard($this->financial_information->union_pay)
-            ->setVisaCard($this->financial_information->visa_card_number)->setQrName($this->method_name)->setMerchantCategory('5814')
-            ->generateQrString();
+        /** @var MtbQr $mtbQr */
+        $mtbQr = app(MtbQr::class);
+        $mtbQr->setMerchantId($this->financial_information->mtb_merchant_id)->setAmount($this->payable->amount)->getMTBQRString();
+        $this->qr_id = $mtbQr->getRefId();
+        return $mtbQr->getQrString();
     }
 
 }
