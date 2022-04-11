@@ -84,11 +84,11 @@ class ApiLogger
         try {
             $data = array_only((array)AuthUser::create()->toArray(), ['profile', 'resource', 'partner', 'member', 'business_member', 'member', 'affiliate', 'avatar', 'customers']);
             if (!array_key_exists('avatar', $data) || empty($data['avatar'])) {
-                if (array_key_exists('affiliate', $data)) {
+                if (array_key_exists('affiliate', $data)&&!empty($data['affiliate'])) {
                     $data['avatar'] = ['type' => 'affiliate', 'type_id' => $data['affiliate']['id']];
-                } elseif (array_key_exists('business_member', $data)) {
+                } elseif (array_key_exists('business_member', $data)&&!empty($data['business_member'])) {
                     $data['avatar'] = ['type' => 'employee', 'type_id' => $data['business_member']['id']];
-                }elseif (array_key_exists('customer', $data)) {
+                }elseif (array_key_exists('customer', $data)&&!empty($data['customer'])) {
                     $data['avatar'] = ['type' => 'customer', 'type_id' => $data['customer']['id']];
                 }
             }
