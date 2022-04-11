@@ -11,6 +11,7 @@ class LiveTrackingListTransformer extends TransformerAbstract
             'employee' => $this->getEmployeeDetails($business_member),
             'business_member_id' => $tracking_locations->business_member_id,
             'business_id' => $tracking_locations->business_id,
+            'last_activity_raw' => $tracking_locations->created_at,
             'last_activity' => $tracking_locations->created_at->format('h:i A, jS F'),
             'last_location_lat' => $tracking_locations->location->lat,
             'last_location_lng' => $tracking_locations->location->lng,
