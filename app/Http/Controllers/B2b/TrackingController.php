@@ -67,7 +67,7 @@ class TrackingController extends Controller
         if ($request->has('no_activity')) $tracking_locations = $this->getEmployeeOfNoActivityForCertainHour(collect($tracking_locations), $request->no_activity)->values();
         $total_count = count($tracking_locations);
         $tracking_locations = collect($tracking_locations)->splice($offset, $limit);
-        return api_response($request, $tracking_locations, 200, ['total' => $total_count, 'tracking_locations' => $tracking_locations]);
+        return api_response($request, $tracking_locations, 200, ['is_live_tracking_active' => $business->liveTrackingSettings->is_enable, 'total' => $total_count, 'tracking_locations' => $tracking_locations]);
     }
 
     public function settingsAction(Request $request, SettingsUpdater $updater, ChangeLogsCreator $change_logs_creator)
