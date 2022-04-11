@@ -3,11 +3,9 @@
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
-use App\Models\TrackingLocation;
+use Sheba\Dal\TrackingLocation\TrackingLocation;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
-use App\Transformers\Business\EmployeeLiveTrackingListTransformer;
-use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Employee\LiveTrackingLocationList;
 use Carbon\Carbon;
