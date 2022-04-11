@@ -2,7 +2,9 @@
 
 use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Models\Partner;
+use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbConstants;
+use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
@@ -26,6 +28,7 @@ use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;
+use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 
 class PaymentService
 {
@@ -39,6 +42,15 @@ class PaymentService
     private $pgwMerchantId;
     private $newStatus;
     private $type;
+    /**
+     * @var MtbServerClient
+     */
+    private $client;
+
+    public function __construct(MtbServerClient $client)
+    {
+        $this->client = $client;
+    }
 
     /**
      * @param mixed $partner
@@ -81,6 +93,11 @@ class PaymentService
      */
     private function getQRGatewayDetails(): array
     {
+
+        if ($this->key == 'mtb') {
+            $mtb_status = $this->getMtbAccountStatus();
+            if ($mtb_status) $this->status = $mtb_status;
+        }
         $qr_gateway = QRGateway::where('method_name', $this->key)->first();
         if (!$qr_gateway) throw new InvalidQRKeyException();
         $this->getResellerPaymentStatus(true);
@@ -98,6 +115,16 @@ class PaymentService
             ]
         ];
 
+    }
+
+    private function getMtbAccountStatus()
+    {
+        $mtb_status = $this->partner->partnerMefInformation::where('partner_id', $this->partner->id)->first();
+        $response = $this->client->get('api/Enquiry/getAccountOpenStatus/' . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
+        if (json_decode($mtb_status->mtb_account_status)->Status != $response["Status"]) {
+            $this->partner->partnerMefInformation->mtb_account_status = json_encode($response);
+        }
+        return $response["Status"];
     }
 
     /**
