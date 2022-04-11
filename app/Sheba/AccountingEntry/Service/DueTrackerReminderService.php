@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Service;
 
+use App\Sheba\AccountingEntry\Notifications\ReminderNotificationHandler;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
@@ -40,6 +41,7 @@ class DueTrackerReminderService
         $this->reminder_id = $reminder_id;
         return $this;
     }
+
     /**
      * @param mixed $contact_type
      * @return DueTrackerReminderService
@@ -49,6 +51,7 @@ class DueTrackerReminderService
         $this->contact_type = $contact_type;
         return $this;
     }
+
     /**
      * @param $contact_id
      * @return $this
@@ -58,6 +61,7 @@ class DueTrackerReminderService
         $this->contact_id = $contact_id;
         return $this;
     }
+
     /**
      * @param mixed $partner
      * @return DueTrackerReminderService
@@ -67,6 +71,7 @@ class DueTrackerReminderService
         $this->partner = $partner;
         return $this;
     }
+
     /**
      * @param $sms
      * @return $this
@@ -116,6 +121,7 @@ class DueTrackerReminderService
         $this->order_by = $order_by;
         return $this;
     }
+
     /**
      * @param mixed $limit
      * @return $this
@@ -163,7 +169,7 @@ class DueTrackerReminderService
     public function createReminder()
     {
         $data = $this->makeDataForReminderCreate();
-        return $this->dueTrackerReminderRepo->createReminder($this->partner,$data);
+        return $this->dueTrackerReminderRepo->createReminder($this->partner, $data);
     }
 
     /**
@@ -173,7 +179,7 @@ class DueTrackerReminderService
     public function getReminders(): array
     {
         $query_string = $this->generateQueryString();
-        return $this->dueTrackerReminderRepo->getReminders($this->partner,$query_string);
+        return $this->dueTrackerReminderRepo->getReminders($this->partner, $query_string);
     }
 
     /**
@@ -183,7 +189,7 @@ class DueTrackerReminderService
     public function update()
     {
         $data = $this->makeDataForReminderUpdate();
-        return $this->dueTrackerReminderRepo->updateReminder($this->partner,$data);
+        return $this->dueTrackerReminderRepo->updateReminder($this->partner, $data);
     }
 
     /**
@@ -192,7 +198,7 @@ class DueTrackerReminderService
      */
     public function delete()
     {
-        return $this->dueTrackerReminderRepo->deleteReminder($this->partner,$this->reminder_id);
+        return $this->dueTrackerReminderRepo->deleteReminder($this->partner, $this->reminder_id);
     }
 
     /**
@@ -200,10 +206,10 @@ class DueTrackerReminderService
      */
     private function makeDataForReminderCreate(): array
     {
-        $data['contact_type']= $this->contact_type;
-        $data['contact_id']= $this->contact_id;
-        $data['should_send_sms']= $this->sms;
-        $data['reminder_at']= $this->reminder_date;
+        $data['contact_type'] = $this->contact_type;
+        $data['contact_id'] = $this->contact_id;
+        $data['should_send_sms'] = $this->sms;
+        $data['reminder_at'] = $this->reminder_date;
         return $data;
     }
 
@@ -212,18 +218,18 @@ class DueTrackerReminderService
      */
     private function makeDataForReminderUpdate(): array
     {
-        $data['reminder_id']= $this->reminder_id;
-        if($this->sms == 0){
-            $data['should_send_sms']= false;
+        $data['reminder_id'] = $this->reminder_id;
+        if ($this->sms == 0) {
+            $data['should_send_sms'] = false;
+        } else {
+            $data['should_send_sms'] = true;
         }
-        else{
-            $data['should_send_sms']= true;
-        }
-        $data['reminder_at']= $this->reminder_date;
-        $data['reminder_status']= $this->reminder_status;
-        $data['sms_status']= $this->sms_status;
+        $data['reminder_at'] = $this->reminder_date;
+        $data['reminder_status'] = $this->reminder_status;
+        $data['sms_status'] = $this->sms_status;
         return $data;
     }
+
     /**
      * @return string
      */
@@ -245,11 +251,21 @@ class DueTrackerReminderService
         if (isset($this->contact_type)) {
             $query_strings [] = "contact_type=" . strtolower($this->contact_type);
         }
-        if(isset($this->reminder_status)){
+        if (isset($this->reminder_status)) {
             $query_strings [] = "reminder_status=" . $this->reminder_status;
         }
 
         return implode('&', $query_strings);
+    }
+
+    /**
+     * @param array $reminder
+     * @return bool
+     */
+    public function sendReminderPush(array $reminder): bool
+    {
+        (new ReminderNotificationHandler())->setReminder($reminder)->handler();
+        return true;
     }
 
 }

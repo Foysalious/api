@@ -12,7 +12,8 @@ class DueTrackerReminderController extends Controller
 {
     protected $dueTrackerReminderService;
 
-    public function __construct(DueTrackerReminderService $dueTrackerReminderService){
+    public function __construct(DueTrackerReminderService $dueTrackerReminderService)
+    {
         $this->dueTrackerReminderService = $dueTrackerReminderService;
     }
 
@@ -94,6 +95,27 @@ class DueTrackerReminderController extends Controller
             ->setPartner($request->partner)
             ->setReminderId($request->reminder_id)
             ->delete();
+        return http_response($request, null, 200, ['data' => $response]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function reminderNotificationWebhook(Request $request): JsonResponse
+    {
+        if ($request->api_key != 'sheba_xyz_acc_key') {
+            return http_response($request, null, 400, ['message' => 'Invalid Request!']);
+        }
+        $reminder['id'] = $request->id;
+        $reminder['partner_id'] = $request->partner_id;
+        $reminder['contact_info'] = $request->contact_info;
+        $reminder['reminder_at'] = $request->reminder_at;
+        $reminder['should_send_sms'] = $request->should_send_sms;
+        $reminder['reminder_status'] = $request->reminder_status;
+        $reminder['sms_status'] = $request->sms_status;
+
+        $response = $this->dueTrackerReminderService->sendReminderPush($reminder);
         return http_response($request, null, 200, ['data' => $response]);
     }
 }
