@@ -2,7 +2,7 @@
 
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
-use App\Models\TrackingLocation;
+use Sheba\Dal\TrackingLocation\TrackingLocation;
 
 class LiveTrackingLocationList extends TransformerAbstract
 {
