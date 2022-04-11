@@ -539,4 +539,9 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         ]);
     }
 
+    public function currentIntervalSetting()
+    {
+        return $this->liveTrackingSettings->intervalSettingLogs()->where('end_date', null)->latest()->first();
+    }
+
 }
