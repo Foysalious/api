@@ -40,12 +40,14 @@ class ApiLogger
             $agent->setRequest($this->request);
             $app = $agent->getApp();
 
-            $payload = json_encode($this->request->except(['password', 'secret', 'token']));
-
             $headers = $this->request->header();
-            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id']);
-            $headers = json_encode($headers);
+            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id','lat','lng']);
 
+            $payload = json_encode($this->request->except(['password', 'secret','token']));
+            if ($this->request->has('lat')&&$this->request->has('long')){
+                $headers['lat']=$this->request->lat;
+                $headers['lng']=$this->request->long;
+            }
             $response_     = $this->response->getContent();
             $response_data = json_decode($response_, true);
 
@@ -60,13 +62,13 @@ class ApiLogger
             $logger->pushHandler((new RotatingFileHandler("$logPath", 2))->setFormatter(new JsonFormatter()), Logger::INFO);
             $logger->info("requestINFO", [
                 'uri'         => $api_url,
-                "headers"     => $headers,
+                "headers"     => json_encode($headers),
                 "status_code" => $status_code,
                 "payload"     => $payload,
                 "agent"       => $agent->getUserAgent(),
                 "response"    => $response_,
                 "ip"          => $agent->getIp(),
-                "app_version" => $app ? $app->getVersionCode() : $this->request->header('version-code'),
+                "app_version" => $app ? $app->getVersionCode() : 0,
                 "portal"      => $agent->getPortalName(),
                 "user_info"   => $profile_id,
                 "method"      => $this->request->getMethod()
@@ -79,11 +81,24 @@ class ApiLogger
     private function getUser()
     {
 
-        try {
-            return array_only(AuthUser::create()->toArray(), ['profile', 'resource', 'partner', 'member', 'business_member', 'member', 'affiliate', 'avatar']);
-        } catch (\Throwable $e) {
-            preg_match('/(partners)\/([0-9]+.)\/|(affiliates)\/([0-9]+.)\/|(customers)\|([0-9]+.)\/|(member)\/([0-9]+.)\/|(resources)\/([0-9]+.)\//',
-                $this->request->getUri(), $match);
+        try{
+            $data= array_only((array)AuthUser::create()->toArray(),['profile','resource','partner','member','business_member','member','affiliate','avatar','customers']);
+            if (!empty($data['affiliate'])){
+                $data['avatar']=['type'=>'affiliate','type_id'=>$data['affiliate']['id']];
+            }
+            return $data;
+        }catch (\Throwable $e){
+            preg_match('/(partners|resources|vendor|affiliates|member|customers)\/([0-9]+.)\//',
+                $this->request->getUri(),$match);
+            $map=['partners'=>'partner','affiliates'=>'affiliate','resources'=>'resource','members'=>'member','customers'=>'customer','vendor'=>'vendor'];
+            if (count($match)>2){
+                   return [
+                       'avatar'=>[
+                           'type'=>$map[$match[1]],
+                           'type_id'=>$match[2]
+                       ]
+                   ];
+            }
             return $match;
         }
     }

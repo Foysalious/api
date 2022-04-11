@@ -125,6 +125,7 @@ class JobController extends Controller
             if ($jobService->service->is_inspection_service) $has_inspection_service = 1;
             break;
         }
+        $job_complains = $job->complains()->whereIn('accessor_id',[1,2])->get();
 
         $job_complains = Complain::where('job_id', $job->id)->whereIn('accessor_id',[1,2])->get();
 
