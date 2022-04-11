@@ -124,4 +124,15 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         $url = "api/v2/due-tracker/report/mobile?" . $url_param;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
+
+    /**
+     * @param $queryString
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function downloadPdfByContact($queryString){
+        $url = "api/v2/due-tracker/report/pdf?".$queryString;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
 }
