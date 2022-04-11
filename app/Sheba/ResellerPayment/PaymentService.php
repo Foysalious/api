@@ -177,7 +177,8 @@ class PaymentService
         return [
             'banner' => $this->getBanner(),
             'info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
-            "title" => "আবেদন সফল হয়েছে!"
+            "title" => "আবেদন সফল হয়েছে!",
+            "body" => "আবেদন যাচাই করতে ১০ কার্যদিবস সময় লাগতে পারে অনুগ্রহ করে অপেক্ষা করুন।"
         ];
     }
 
