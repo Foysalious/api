@@ -6,6 +6,8 @@ class QRPaymentStatics
 {
     const MTB_VALIDATE_URL = "retailfinqr/wqr/api/gettxndata?";
 
+    const MTB_QR_GENERATE_URL = "retailfinqr/wqr/api/generateqrstring?";
+
     public static function gatewayVisibleKeys(): array
     {
         return ['name', 'name_bn', 'asset', 'method_name', 'icon'];
