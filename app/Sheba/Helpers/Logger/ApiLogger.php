@@ -88,9 +88,9 @@ class ApiLogger
             }
             return $data;
         }catch (\Throwable $e){
-            preg_match('/(partners|resources|vendor|affiliates|member|customers)\/([0-9]+.)\//',
+            preg_match('/(partners|resources|vendor|affiliates|member|customers|businesses)\/([0-9]+.)\//',
                 $this->request->getUri(),$match);
-            $map=['partners'=>'partner','affiliates'=>'affiliate','resources'=>'resource','members'=>'member','customers'=>'customer','vendor'=>'vendor'];
+            $map=['partners'=>'partner','affiliates'=>'affiliate','resources'=>'resource','members'=>'member','customers'=>'customer','vendor'=>'vendor','businesses'=>'business'];
             if (count($match)>2){
                    return [
                        'avatar'=>[
