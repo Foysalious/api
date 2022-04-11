@@ -177,7 +177,8 @@ class PaymentService
     {
         return [
             'banner' => $this->getBanner(),
-            'info_link' => PaymentLinkStatics::payment_setup_faq_webview()
+            'info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
+            "title" => "আবেদন সফল হয়েছে!"
         ];
     }
 
