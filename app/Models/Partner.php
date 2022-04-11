@@ -23,6 +23,7 @@ use Sheba\Dal\PartnerDeliveryInformation\Model as PartnerDeliveryInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\PartnerWebstoreDomainInfo\PartnerWebstoreDomainInfo;
 use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\Dal\UserMigration\UserStatus;
@@ -286,6 +287,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function leaves()
     {
         return $this->hasMany(PartnerLeave::class);
+    }
+
+    public function webstoreDomain()
+    {
+        return $this->hasOne(PartnerWebstoreDomainInfo::class);
     }
 
     public function shebaCredit()
