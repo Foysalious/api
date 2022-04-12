@@ -41,12 +41,12 @@ class ApiLogger
             $app = $agent->getApp();
 
             $headers = $this->request->header();
-            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id','lat','lng']);
+            $headers = array_only($headers, ['x-real-ip', 'x-forwarded-for', 'custom-headers', 'platform-name', 'user-id', 'lat', 'lng']);
 
-            $payload = json_encode($this->request->except(['password', 'secret','token']));
-            if ($this->request->has('lat')&&$this->request->has('long')){
-                $headers['lat']=$this->request->lat;
-                $headers['lng']=$this->request->long;
+            $payload = json_encode($this->request->except(['password', 'secret', 'token']));
+            if ($this->request->has('lat') && $this->request->has('long')) {
+                $headers['lat'] = $this->request->lat;
+                $headers['lng'] = $this->request->long;
             }
             $response_     = $this->response->getContent();
             $response_data = json_decode($response_, true);
@@ -56,7 +56,7 @@ class ApiLogger
             if (mb_strlen($response_, '8bit') > 10000) {
                 $response_ = mb_strcut($response_, 0, 10000);
             }
-            $profile_id = $this->getUser();
+            $profile_id = $this->getUser($agent->getPortalName());
 
             $logger = new Logger("api_logger");
             $logger->pushHandler((new RotatingFileHandler("$logPath", 2))->setFormatter(new JsonFormatter()), Logger::INFO);
@@ -68,7 +68,7 @@ class ApiLogger
                 "agent"       => $agent->getUserAgent(),
                 "response"    => $response_,
                 "ip"          => $agent->getIp(),
-                "app_version" => $app ? $app->getVersionCode() : 0,
+                "app_version" => $app ? (int)$app->getVersionCode() : 0,
                 "portal"      => $agent->getPortalName(),
                 "user_info"   => $profile_id,
                 "method"      => $this->request->getMethod()
@@ -78,26 +78,35 @@ class ApiLogger
         }
     }
 
-    private function getUser()
+    private function getUser($portal)
     {
 
-        try{
-            $data= array_only((array)AuthUser::create()->toArray(),['profile','resource','partner','member','business_member','member','affiliate','avatar','customers']);
-            if (!empty($data['affiliate'])){
-                $data['avatar']=['type'=>'affiliate','type_id'=>$data['affiliate']['id']];
+        try {
+            $data = array_only((array)AuthUser::create()->toArray(), ['profile', 'resource', 'partner', 'member', 'business_member', 'member', 'affiliate', 'avatar', 'customers']);
+            if (!array_key_exists('avatar', $data) || empty($data['avatar'])) {
+                if ($portal == 'bondhu-app' && (array_key_exists('affiliate', $data) && !empty($data['affiliate']))) {
+                    $data['avatar'] = ['type' => 'affiliate', 'type_id' => $data['affiliate']['id']];
+                } elseif ($portal == 'employee-app' && (array_key_exists('business_member', $data) && !empty($data['business_member']))) {
+                    $data['avatar'] = ['type' => 'employee', 'type_id' => $data['business_member']['id']];
+                } elseif ($portal == 'customer-app' && (array_key_exists('customer', $data) && !empty($data['customer']))) {
+                    $data['avatar'] = ['type' => 'customer', 'type_id' => $data['customer']['id']];
+                } elseif ($portal == 'manager-app' && (array_key_exists('resource', $data) && !empty($data['resource']))) {
+                    $data['avatar'] = ['type' => 'partner', 'type_id' => $data['resource']['partner']['id']];
+                }
             }
             return $data;
-        }catch (\Throwable $e){
-            preg_match('/(partners|resources|vendor|affiliates|member|customers)\/([0-9]+.)\//',
-                $this->request->getUri(),$match);
-            $map=['partners'=>'partner','affiliates'=>'affiliate','resources'=>'resource','members'=>'member','customers'=>'customer','vendor'=>'vendor'];
-            if (count($match)>2){
-                   return [
-                       'avatar'=>[
-                           'type'=>$map[$match[1]],
-                           'type_id'=>$match[2]
-                       ]
-                   ];
+        } catch (\Throwable $e) {
+            \Log::error($e->getMessage());
+            preg_match('/(partners|resources|vendor|affiliates|member|customers|businesses)\/([0-9]+.)\//',
+                $this->request->getUri(), $match);
+            $map = ['partners' => 'partner', 'affiliates' => 'affiliate', 'resources' => 'resource', 'members' => 'member', 'customers' => 'customer', 'vendor' => 'vendor', 'businesses' => 'business'];
+            if (count($match) > 2) {
+                return [
+                    'avatar' => [
+                        'type'    => $map[$match[1]],
+                        'type_id' => $match[2]
+                    ]
+                ];
             }
             return $match;
         }

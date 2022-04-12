@@ -102,6 +102,9 @@ class Route
                     $api->get('/{customer_id}/orders', 'PosCustomer\PosCustomerController@orders');
                     $api->delete('/{customer_id}', 'PosCustomer\PosCustomerController@delete');
                 });
+                $api->group(['prefix' => 'suppliers'], function ($api) {
+                    $api->post('/', 'PosCustomer\PosCustomerController@storeSupplier');
+                });
                 $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
                 $api->get('/partner-categories', 'Inventory\CategoryController@getPartnerCategory');
                 $api->group(['prefix' => 'products'], function ($api) {

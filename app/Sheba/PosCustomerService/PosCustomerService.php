@@ -233,11 +233,15 @@ class PosCustomerService
         return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id . '/pos-users', $data);
     }
 
+    public function storeSupplier()
+    {
+        $data = $this->makeSupplierCreateData();
+        return $this->smanagerUserServerClient->post('api/v1/partners/' . $this->partner->id . '/suppliers', $data);
+    }
+
     public function makeUpdateData()
     {
-
         $data = [];
-
         if (isset($this->pic)) $data['pro_pic'] = $this->pic;
         if (isset($this->dob)) $data['dob'] = $this->dob;
         if (isset($this->bloodGroup)) $data['blood_group'] = $this->bloodGroup;
@@ -250,8 +254,24 @@ class PosCustomerService
         if (isset($this->note)) $data['note'] = $this->note;
         if (isset($this->email)) $data['email'] = $this->email;
         if (isset($this->supplier)) $data['is_supplier'] = $this->supplier;
+        return $data;
+    }
 
-
+    public function makeSupplierCreateData(): array
+    {
+        $data = [];
+        if (isset($this->pic)) $data['pro_pic'] = $this->pic;
+        if (isset($this->dob)) $data['dob'] = $this->dob;
+        if (isset($this->bloodGroup)) $data['blood_group'] = $this->bloodGroup;
+        if (isset($this->gender)) $data['gender'] = $this->gender;
+        if (isset($this->address)) $data['address'] = $this->address;
+        if (isset($this->email)) $data['email'] = $this->email;
+        if (isset($this->bnName)) $data['bn_name'] = $this->bnName;
+        if (isset($this->mobile)) $data['mobile'] = $this->mobile;
+        if (isset($this->name)) $data['name'] = $this->name;
+        if (isset($this->note)) $data['note'] = $this->note;
+        if (isset($this->email)) $data['email'] = $this->email;
+        if (isset($this->company_name)) $data['company_name'] = $this->company_name;
         return $data;
     }
 
