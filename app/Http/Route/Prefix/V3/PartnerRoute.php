@@ -13,6 +13,7 @@ class PartnerRoute
             $api->post('top-up-otf', 'TopUpController@topUpOTF');
             $api->post('top-up-otf-details', 'TopUpController@topUpOTFDetails');
             $api->get('new-dashboard','Partner\DashboardController@getV3dashboard');
+            $api->get('business-types', 'PartnerController@getBusinessTypes');
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['jwtGlobalAuth']], function ($api) {
             $api->get('setting-updated-at', 'Partner\DashboardController@settingLastUpdatedDetails')->name('partner.setting-updated-at');
