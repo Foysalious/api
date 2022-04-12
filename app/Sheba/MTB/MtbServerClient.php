@@ -2,9 +2,11 @@
 
 use App\Exceptions\NotFoundAndDoNotReportException;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
+use App\Sheba\QRPayment\QRPaymentStatics;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
+use Mpdf\Tag\Q;
 use Sheba\ModificationFields;
 
 class MtbServerClient
@@ -68,7 +70,7 @@ class MtbServerClient
 
     private function generateMtbBearerToken()
     {
-        return $this->post('api/token', ['username' => config('mtb.mtb_username'),
+        return $this->post(QRPaymentStatics::MTB_TOKEN_GENERATE, ['username' => config('mtb.mtb_username'),
             'password' => config('mtb.mtb_password'), 'grant_type' => config('mtb.mtb_grant_type')], AuthTypes::NO_AUTH);
     }
 
