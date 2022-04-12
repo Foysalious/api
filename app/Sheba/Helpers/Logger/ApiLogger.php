@@ -91,7 +91,7 @@ class ApiLogger
                 } elseif ($portal == 'customer-app' && (array_key_exists('customer', $data) && !empty($data['customer']))) {
                     $data['avatar'] = ['type' => 'customer', 'type_id' => $data['customer']['id']];
                 } elseif ($portal == 'manager-app' && (array_key_exists('resource', $data) && !empty($data['resource']))) {
-                    $data['avatar'] = ['type' => 'partner', 'id' => $data['resource']['partner']['id']];
+                    $data['avatar'] = ['type' => 'partner', 'type_id' => $data['resource']['partner']['id']];
                 }
             }
             return $data;
