@@ -17,6 +17,8 @@ class FormFieldBuilder
 
     private $firstAdminProfile;
 
+    private $basicInformation;
+
     /**
      * @param mixed $field
      * @return FormFieldBuilder
@@ -77,6 +79,11 @@ class FormFieldBuilder
     public function setFirstAdminProfile()
     {
         $this->firstAdminProfile = $this->partner->getFirstAdminResource()->profile;
+    }
+
+    public function setBasicInformation()
+    {
+        $this->basicInformation = $this->partner->basicInformations;
     }
 
 }
