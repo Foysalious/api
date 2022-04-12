@@ -93,7 +93,6 @@ class PaymentService
      */
     private function getQRGatewayDetails(): array
     {
-
         if ($this->key == 'mtb') {
             $mtb_status = $this->getMtbAccountStatus();
             if ($mtb_status) $this->status = $mtb_status;
