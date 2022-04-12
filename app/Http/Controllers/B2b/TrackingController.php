@@ -11,11 +11,13 @@ use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Business\LiveTracking\ChangeLogs\Creator as ChangeLogsCreator;
 use Sheba\Business\LiveTracking\Employee\LiveTrackingDetails;
+use Sheba\Business\LiveTracking\Employee\LiveTrackingDetailsReport;
 use Sheba\Business\LiveTracking\Employee\Updater as EmployeeSettingUpdater;
 use Sheba\Business\LiveTracking\Updater as SettingsUpdater;
 use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
@@ -230,6 +232,8 @@ class TrackingController extends Controller
 
     public function downloadLiveTrackingReport($business_id, $business_member_id, Request $request)
     {
+        /** @var Business $business */
+        $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
@@ -239,6 +243,12 @@ class TrackingController extends Controller
         $from_date = $request->from;
         $to_date = $request->to;
         $tracking_locations = $employee->liveLocationForADateRange($from_date, $to_date)->get();
+        $tracking_locations = (new LiveTrackingDetailsReport($employee, $tracking_locations))->get();
+        $company = [
+            'name' =>   $business->name,
+            'logo' => $business->logo
+        ];
+        return App::make('dompdf.wrapper')->loadView('pdfs.live_tracking_report', compact('tracking_locations', 'company', 'from_date', 'to_date'))->download("Tracking_history_report.pdf");
     }
 
     /**
