@@ -8,6 +8,7 @@ use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
+use Illuminate\Support\Facades\App;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\Dal\GatewayAccount\Model as GatewayAccount;
@@ -43,15 +44,6 @@ class PaymentService
     private $pgwMerchantId;
     private $newStatus;
     private $type;
-    /**
-     * @var MtbServerClient
-     */
-    private $client;
-
-    public function __construct(MtbServerClient $client)
-    {
-        $this->client = $client;
-    }
 
     /**
      * @param mixed $partner
@@ -120,7 +112,7 @@ class PaymentService
     private function getMtbAccountStatus()
     {
         $mtb_status = $this->partner->partnerMefInformation::where('partner_id', $this->partner->id)->first();
-        $response = $this->client->get(QRPaymentStatics::MTB_ACCOUNT_STATUS . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
+        $response = (App::make(MtbServerClient::class))->get(QRPaymentStatics::MTB_ACCOUNT_STATUS . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
         if (json_decode($mtb_status->mtb_account_status)->Status != $response["Status"]) {
             $this->partner->partnerMefInformation->mtb_account_status = json_encode($response);
         }
