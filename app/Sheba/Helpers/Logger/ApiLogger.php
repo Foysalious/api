@@ -96,6 +96,7 @@ class ApiLogger
             }
             return $data;
         } catch (\Throwable $e) {
+            \Log::error($e->getMessage());
             preg_match('/(partners|resources|vendor|affiliates|member|customers|businesses)\/([0-9]+.)\//',
                 $this->request->getUri(), $match);
             $map = ['partners' => 'partner', 'affiliates' => 'affiliate', 'resources' => 'resource', 'members' => 'member', 'customers' => 'customer', 'vendor' => 'vendor', 'businesses' => 'business'];
