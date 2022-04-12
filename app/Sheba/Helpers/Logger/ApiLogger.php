@@ -56,7 +56,7 @@ class ApiLogger
             if (mb_strlen($response_, '8bit') > 10000) {
                 $response_ = mb_strcut($response_, 0, 10000);
             }
-            $profile_id = $this->getUser();
+            $profile_id = $this->getUser($agent->getPortalName());
 
             $logger = new Logger("api_logger");
             $logger->pushHandler((new RotatingFileHandler("$logPath", 2))->setFormatter(new JsonFormatter()), Logger::INFO);
@@ -78,18 +78,20 @@ class ApiLogger
         }
     }
 
-    private function getUser()
+    private function getUser($portal)
     {
 
         try {
             $data = array_only((array)AuthUser::create()->toArray(), ['profile', 'resource', 'partner', 'member', 'business_member', 'member', 'affiliate', 'avatar', 'customers']);
             if (!array_key_exists('avatar', $data) || empty($data['avatar'])) {
-                if (array_key_exists('affiliate', $data)&&!empty($data['affiliate'])) {
+                if ($portal == 'bondhu-app' && (array_key_exists('affiliate', $data) && !empty($data['affiliate']))) {
                     $data['avatar'] = ['type' => 'affiliate', 'type_id' => $data['affiliate']['id']];
-                } elseif (array_key_exists('business_member', $data)&&!empty($data['business_member'])) {
+                } elseif ($portal == 'employee-app' && (array_key_exists('business_member', $data) && !empty($data['business_member']))) {
                     $data['avatar'] = ['type' => 'employee', 'type_id' => $data['business_member']['id']];
-                }elseif (array_key_exists('customer', $data)&&!empty($data['customer'])) {
+                } elseif ($portal == 'customer-app' && (array_key_exists('customer', $data) && !empty($data['customer']))) {
                     $data['avatar'] = ['type' => 'customer', 'type_id' => $data['customer']['id']];
+                } elseif ($portal == 'manager-app' && (array_key_exists('resource', $data) && !empty($data['resource']))) {
+                    $data['avatar'] = ['type' => 'partner', 'id' => $data['resource']['partner']['id']];
                 }
             }
             return $data;
