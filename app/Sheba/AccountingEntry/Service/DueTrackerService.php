@@ -505,7 +505,7 @@ class DueTrackerService
      * @param $partner
      * @return array
      */
-    private function getPartnerInfo($partner): array
+    public function getPartnerInfo($partner): array
     {
         return [
             'name' => $partner->name,

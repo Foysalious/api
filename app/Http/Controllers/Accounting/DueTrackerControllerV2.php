@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
+use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,10 +16,12 @@ class DueTrackerControllerV2 extends Controller
 {
     /** @var DueTrackerService */
     protected $dueTrackerService;
+    protected $dueTrackerSmsService;
 
-    public function __construct(DueTrackerService $dueTrackerService)
+    public function __construct(DueTrackerService $dueTrackerService, DueTrackerSmsService $dueTrackerSmsService)
     {
         $this->dueTrackerService = $dueTrackerService;
+        $this->dueTrackerSmsService = $dueTrackerSmsService;
     }
 
     /**
@@ -185,4 +188,13 @@ class DueTrackerControllerV2 extends Controller
         return http_response($request, null, 200, ['data' => $data]);
     }
 
+    public function getSmsContent(Request $request): JsonResponse
+    {
+        $response =  $this->dueTrackerSmsService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->getSmsContentForTagada();
+        return http_response($request, null, 200, ['data' => $response]);
+    }
 }
