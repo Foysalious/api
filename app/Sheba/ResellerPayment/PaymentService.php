@@ -6,6 +6,7 @@ use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
+use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Sheba\Dal\DigitalCollectionSetting\Model as DigitalCollectionSetting;
 use Sheba\Dal\PgwStore\Model as PgwStore;
@@ -119,7 +120,7 @@ class PaymentService
     private function getMtbAccountStatus()
     {
         $mtb_status = $this->partner->partnerMefInformation::where('partner_id', $this->partner->id)->first();
-        $response = $this->client->get('api/Enquiry/getAccountOpenStatus/' . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
+        $response = $this->client->get(QRPaymentStatics::MTB_ACCOUNT_STATUS . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
         if (json_decode($mtb_status->mtb_account_status)->Status != $response["Status"]) {
             $this->partner->partnerMefInformation->mtb_account_status = json_encode($response);
         }
