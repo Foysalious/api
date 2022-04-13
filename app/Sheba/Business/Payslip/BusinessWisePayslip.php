@@ -106,7 +106,7 @@ class BusinessWisePayslip
 
     public function calculate()
     {
-        $last_pay_day = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period)->subMonth()->toDateString() : $this->payrollSetting->last_pay_day;
+        $last_pay_day = $this->payrollSetting->last_pay_day;
         $start_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $end_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $business_payslip_data = [
