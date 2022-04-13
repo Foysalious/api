@@ -10,7 +10,7 @@ class MTBQRGeneration extends QRGeneration
 
     protected $method_name = "mtb";
 
-    protected $qr_id;
+    protected $qrId;
 
     public function generateQrId(): string
     {
@@ -26,7 +26,7 @@ class MTBQRGeneration extends QRGeneration
         /** @var MtbQr $mtbQr */
         $mtbQr = app(MtbQr::class);
         $mtbQr->setMerchantId($this->financial_information->mtb_merchant_id)->setAmount($this->payable->amount)->getMTBQRString();
-        $this->qr_id = $mtbQr->getRefId();
+        $this->setQrId($mtbQr->getRefId());
         return $mtbQr->getQrString();
     }
 
