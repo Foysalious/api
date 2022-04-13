@@ -130,7 +130,7 @@ class PaymentLinkController extends Controller
                         || !(int)$link->getIsActive() || $link->getIsDefault())
                         return api_response($request, $link, 203, ['info' => $link->partialInfo()]);
                     $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($receiver);
-                    if(!count($available_methods))
+                    if (!count($available_methods))
                         return api_response($request, $link, 404, ['message' => "No active payment method found"]);
 
                 }
@@ -408,6 +408,21 @@ class PaymentLinkController extends Controller
     {
         try {
             $data = $this->paymentLinkRepo->getPaymentList($request);
+            if ($data) {
+                return api_response($request, null, 200, ['data' => $data]);
+            } else {
+                return api_response($request, null, 200, ['data' => []]);
+            }
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function transactionListV3(Request $request, Payable $payable)
+    {
+        try {
+            $data = $this->paymentLinkRepo->getPaymentListV3($request);
             if ($data) {
                 return api_response($request, null, 200, ['data' => $data]);
             } else {
