@@ -188,6 +188,10 @@ class DueTrackerControllerV2 extends Controller
         return http_response($request, null, 200, ['data' => $data]);
     }
 
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
     public function getSmsContent(Request $request): JsonResponse
     {
         $response =  $this->dueTrackerSmsService
@@ -195,6 +199,7 @@ class DueTrackerControllerV2 extends Controller
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
             ->getSmsContentForTagada();
+
         return http_response($request, null, 200, ['data' => $response]);
     }
 }

@@ -1,6 +1,8 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 
 class DueTrackerSmsService
 {
@@ -44,16 +46,25 @@ class DueTrackerSmsService
     }
 
 
-
-
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
     public function getSmsContentForTagada()
     {
-        $content = $this->dueTrackerRepo
+        $contact_balance = $this->dueTrackerService
+            ->setContactType($this->contact_type)
+            ->setContactId($this->contact_id)
             ->setPartner($this->partner)
-            ->getSmsContentForTagada($this->contact_type, $this->contact_id);
+            ->getBalanceByContact();
+        $content = [
+            'balance' => $contact_balance['stats']['balance'],
+            'balance_type' => $contact_balance['stats']['type'],
+            'contact_name' => $contact_balance['contact_details']['name']
+        ];
         $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
         $content['partner_name'] = $partner_info['name'];
-        $content['web_view_link'] = 'www.google.com';
+        $content['web_report_link'] = 'www.google.com';
         return $content;
     }
 }

@@ -135,13 +135,4 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
-    /**
-     * @throws AccountingEntryServerError
-     */
-    public function getSmsContentForTagada($contact_type, $contact_id)
-    {
-        $url = "api/v2/due-tracker/sms-content/$contact_type/$contact_id";
-        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-    }
-
 }
