@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
+use App\Sheba\Business\LiveTracking\DateDropDown;
 use App\Transformers\Business\LiveTrackingListTransformer;
 use App\Transformers\Business\LiveTrackingEmployeeListsTransformer;
 use App\Transformers\Business\LiveTrackingSettingChangeLogsTransformer;
@@ -23,6 +24,7 @@ use Sheba\Business\LiveTracking\Updater as SettingsUpdater;
 use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
 use Sheba\Dal\TrackingLocation\TrackingLocationRepository;
 use Sheba\ModificationFields;
+use Sheba\Reports\PartnerTransaction\Getters\DateRange;
 
 class TrackingController extends Controller
 {
@@ -48,9 +50,9 @@ class TrackingController extends Controller
             return $employee->id;
         })->toArray();
         list($offset, $limit) = calculatePagination($request);
-        $tracking_locations = $this->trackingLocationRepo->builder()->select('business_id', 'business_member_id', 'location', 'log', 'date', 'time','created_at')->where('business_id', $business->id);
+        $tracking_locations = $this->trackingLocationRepo->builder()->select('business_id', 'business_member_id', 'location', 'log', 'date', 'time', 'created_at')->where('business_id', $business->id);
         if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $employee_lists);
-        if ($request->has('department')){
+        if ($request->has('department')) {
             $business_members = $business->getTrackLocationActiveBusinessMember();
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
                 $q->whereHas('businessDepartment', function ($q) use ($request) {
@@ -212,9 +214,10 @@ class TrackingController extends Controller
      * @param $business_id
      * @param $business_member_id
      * @param Request $request
+     * @param DateDropDown $date_drop_down
      * @return JsonResponse
      */
-    public function lastTrackedDate($business_id, $business_member_id, Request $request)
+    public function lastTrackedDate($business_id, $business_member_id, Request $request, DateDropDown $date_drop_down)
     {
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -222,11 +225,10 @@ class TrackingController extends Controller
 
         /** @var BusinessMember $employee */
         $employee = BusinessMember::find((int)$business_member_id);
-        $last_tracked = $employee->liveLocationFilterByDate()->first();
+        $last_tracked_location = $employee->liveLocationFilterByDate()->first();
+        if (!$last_tracked_location) return api_response($request, null, 404);
 
-        if (!$last_tracked) return api_response($request, null, 404);
-        $last_tracked_date = $last_tracked->date->toDateString();
-        $date_dropdown = $this->getDateDropDown($last_tracked_date);
+        list($last_tracked_date, $date_dropdown) = $date_drop_down->getDateDropDown($last_tracked_location);
         return api_response($request, null, 200, ['last_tracked' => $last_tracked_date, 'date_dropdown' => $date_dropdown]);
     }
 
@@ -245,7 +247,7 @@ class TrackingController extends Controller
         $tracking_locations = $employee->liveLocationForADateRange($from_date, $to_date)->get();
         $tracking_locations = (new LiveTrackingDetailsReport($employee, $tracking_locations))->get();
         $company = [
-            'name' =>   $business->name,
+            'name' => $business->name,
             'logo' => $business->logo
         ];
         return App::make('dompdf.wrapper')->loadView('pdfs.live_tracking_report', compact('tracking_locations', 'company', 'from_date', 'to_date'))->download("Tracking_history_report.pdf");
@@ -261,17 +263,6 @@ class TrackingController extends Controller
     {
         if ($request->has('limit') && $request->limit == 'all') return $total_employees;
         return $limit;
-    }
-
-    private function getDateDropDown($date)
-    {
-        $data = [];
-        $date = Carbon::parse($date);
-        $data[] = $date->toDateString();
-        for ($day = 1; $day <= 6; $day++) {
-            $data[] = $date->subDay()->toDateString();
-        }
-        return $data;
     }
 
     private function searchWithEmployeeName($tracking_locations, $search_value)

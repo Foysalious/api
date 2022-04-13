@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
+use App\Sheba\Business\LiveTracking\DateDropDown;
 use Sheba\Dal\TrackingLocation\TrackingLocation;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
@@ -131,6 +132,24 @@ class TrackingController extends Controller
         }
 
         return api_response($request, null, 200, ['employee_list' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param DateDropDown $date_drop_down
+     * @return JsonResponse
+     */
+    public function lastTrackedDate(Request $request, DateDropDown $date_drop_down)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $last_tracked_location = $business_member->liveLocationFilterByDate()->first();
+        if (!$last_tracked_location) return api_response($request, null, 404);
+
+        list($last_tracked_date, $date_dropdown) = $date_drop_down->getDateDropDown($last_tracked_location);
+        return api_response($request, null, 200, ['last_tracked' => $last_tracked_date, 'date_dropdown' => $date_dropdown]);
     }
 
     /**
