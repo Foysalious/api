@@ -43,7 +43,7 @@ class LiveTrackingDetailsReport
             $location = $tracking_location->location;
             $data[$tracking_location->date->toDateString()][] = [
                 'time' => Carbon::parse($tracking_location->time)->format('h:i A'),
-                'address' => $location->address,
+                'address' => $location? $location->address : $tracking_location->log,
                 'location' => $location ? [
                     'lat' => $location->lat,
                     'lng' => $location->lng
