@@ -124,4 +124,16 @@ class PosCustomerController extends Controller
         return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $customer]);
     }
 
+    /**
+     * @param Request $request
+     * @param $customerId
+     * @return JsonResponse
+     */
+    public function supplierDetails(Request $request, $customerId): JsonResponse
+    {
+        $partner = $request->auth_user->getPartner();
+        $supplier = $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->getSupplierDetails();
+        return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $supplier]);
+    }
+
 }
