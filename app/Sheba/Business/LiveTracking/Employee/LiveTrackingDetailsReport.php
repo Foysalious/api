@@ -44,10 +44,11 @@ class LiveTrackingDetailsReport
             $data[$tracking_location->date->toDateString()][] = [
                 'time' => Carbon::parse($tracking_location->time)->format('h:i A'),
                 'address' => $location->address,
-                'location' => [
+                'location' => $location ? [
                     'lat' => $location->lat,
                     'lng' => $location->lng
-                ]
+                ] : null,
+                'log' => $tracking_location->log
             ];
         }
         return $data;
