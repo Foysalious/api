@@ -13,6 +13,8 @@ use Sheba\QRPayment\Exceptions\QRException;
 
 class MtbQr extends QRPaymentMethod
 {
+    const QR_GENERATE_SUCCESS_CODE = "001";
+
     private $mtbClient;
 
     private $qrString;
@@ -65,12 +67,10 @@ class MtbQr extends QRPaymentMethod
 
         $response = $this->mtbClient->get($url, AuthTypes::BASIC_AUTH_TYPE);
 
-        if(isset($response["respCode"])) {
-            if($response["respCode"] === "001") {
-                $this->qrString = base64_decode(strrev($response["QRString"]));
-                $this->refId = $response["RefNo"];
-                return $this;
-            }
+        if(isset($response["respCode"]) && $response["respCode"] === self::QR_GENERATE_SUCCESS_CODE) {
+            $this->qrString = base64_decode(strrev($response["QRString"]));
+            $this->refId = $response["RefNo"];
+            return $this;
         }
 
         throw new QRException("Qr generation failed");

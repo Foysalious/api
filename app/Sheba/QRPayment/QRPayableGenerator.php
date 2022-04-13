@@ -7,6 +7,7 @@ use App\Models\Payable;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\QRPayment\DTO\QRGeneratePayload;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\QRPayable\Model as QRPayable;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
@@ -22,6 +23,10 @@ class QRPayableGenerator implements QrPayableAdapter
     private $data;
     /** @var Payable */
     private $payable;
+
+    private $qrId;
+
+    private $qrString;
 
     /**
      * @param mixed $partner
@@ -44,22 +49,22 @@ class QRPayableGenerator implements QrPayableAdapter
     }
 
     /**
-     * @param mixed $qr_id
+     * @param mixed $qrId
      * @return QRPayableGenerator
      */
-    public function setQrId($qr_id): QRPayableGenerator
+    public function setQrId($qrId): QRPayableGenerator
     {
-        $this->qr_id = $qr_id;
+        $this->qrId = $qrId;
         return $this;
     }
 
     /**
-     * @param mixed $qr_string
+     * @param mixed $qrString
      * @return QRPayableGenerator
      */
-    public function setQrString($qr_string): QRPayableGenerator
+    public function setQrString($qrString): QRPayableGenerator
     {
-        $this->qr_string = $qr_string;
+        $this->qrString = $qrString;
         return $this;
     }
 
@@ -108,8 +113,8 @@ class QRPayableGenerator implements QrPayableAdapter
     {
         return [
             "payable_id" => $this->payable->id,
-            "qr_string" => $this->qr_string,
-            "qr_id" => $this->qr_id,
+            "qr_string" => $this->qrString,
+            "qr_id" => $this->qrId,
         ];
     }
 
@@ -162,9 +167,12 @@ class QRPayableGenerator implements QrPayableAdapter
      */
     public function getQrPayable(): QRPayable
     {
-        $this->storePayable();
-        $this->generateQR();
-        $this->storeQRPayable();
+        DB::transaction(function () {
+            $this->storePayable();
+            $this->generateQR();
+            $this->storeQRPayable();
+        });
+
         return $this->getPayable()->qrPayable;
     }
 

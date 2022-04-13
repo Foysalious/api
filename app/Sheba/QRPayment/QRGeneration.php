@@ -11,7 +11,7 @@ abstract class QRGeneration
 
     protected $payable;
 
-    protected $qr_id;
+    protected $qrId;
 
     /*** @var PartnerFinancialInformation */
     protected $financial_information;
@@ -27,12 +27,12 @@ abstract class QRGeneration
     }
 
     /**
-     * @param $qr_id
+     * @param $qrId
      * @return $this
      */
-    public function setQrId($qr_id): QRGeneration
+    public function setQrId($qrId): QRGeneration
     {
-        $this->qr_id = $qr_id;
+        $this->qrId = $qrId;
         return $this;
     }
 
@@ -56,7 +56,7 @@ abstract class QRGeneration
      */
     public function getQrId()
     {
-        return $this->qr_id;
+        return $this->qrId;
     }
 
 }
