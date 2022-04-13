@@ -1120,12 +1120,25 @@ class PartnerController extends Controller
         try {
             $business_types = [];
             collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types) {
-                array_push($business_types,
-                    [
-                        'type_en' => $type['en'],
-                        'type_bn' => $type['bn']
-                    ]
-                );
+                array_push($business_types, $type['bn']);
+            });
+            return api_response($request, null, 200, ['partner_business_types' => $business_types]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBusinessTypesNewList(Request $request)
+    {
+        try {
+            $business_types = [];
+            collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types) {
+                array_push($business_types, $type);
             });
             return api_response($request, null, 200, ['partner_business_types' => $business_types]);
         } catch (Throwable $e) {

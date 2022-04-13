@@ -18,7 +18,7 @@ class PartnerRoute
             $api->get('setting-updated-at', 'Partner\DashboardController@settingLastUpdatedDetails')->name('partner.setting-updated-at');
         });
         $api->group(['prefix' => 'partners'], function ($api) {
-            $api->get('business-types', 'PartnerController@getBusinessTypes');
+            $api->get('business-types', 'PartnerController@getBusinessTypesNewList');
         });
     }
 }
