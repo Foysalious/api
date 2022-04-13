@@ -188,7 +188,7 @@ class TrackingController extends Controller
         list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('department')) $business_members = $co_worker_info_filter->filterByDepartment($business_members, $request);
-        if ($request->has('status')) $business_members = $business_members->where('is_live_track_enable', $request->status);
+        if ($request->has('status') && $request->status != 'all') $business_members = $business_members->where('is_live_track_enable', $request->status);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
