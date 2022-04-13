@@ -13,6 +13,7 @@ class PaymentDetailTransformer extends TransformerAbstract
             'payment_type' => $payment_detail->readableMethod,
             'id' => $payment->id,
             'payment_code' => '#' . $payment->id,
+            'payment_status' => $payment->status,
             'amount' => $payment->payable->amount,
             'description' => $payment->payable->description,
             'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
