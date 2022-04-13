@@ -42,11 +42,12 @@ class LiveTrackingDetails
             $location = $tracking_location->location;
             $data[] = [
                 'time' => Carbon::parse($tracking_location->time)->format('h:i A'),
-                'address' => $location->address,
-                'location' => [
+                'address' => $location  ? $location->address : null,
+                'location' => $location ? [
                     'lat' => $location->lat,
                     'lng' => $location->lng
-                ]
+                ] : null,
+                'log' => $tracking_location->log
             ];
         }
         return $data;

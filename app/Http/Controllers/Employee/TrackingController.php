@@ -122,11 +122,11 @@ class TrackingController extends Controller
                     'pro_pic' => $profile->pro_pic
                 ],
                 'time' => Carbon::parse($tracking_location->time)->format('h:i a'),
-                'location' => [
+                'location' => $location ? [
                     'lat' => $location->lat,
                     'lng' => $location->lng,
                     'address' => $location->address,
-                ]
+                ] : null
             ];
         }
 
