@@ -7,11 +7,11 @@ class Activity
     use ConstGetter;
 
     const All = 'all';
-    const ONE_HOUR = 60;
-    const TWO_HOURS = 120;
-    const FOUR_HOURS = 240;
-    const SIX_HOURS = 360;
-    const EIGHT_HOURS = 480;
+    const ONE_HOUR = '60';
+    const TWO_HOURS = '120';
+    const FOUR_HOURS = '240';
+    const SIX_HOURS = '360';
+    const EIGHT_HOURS = '480';
 
     public function getActivity()
     {
