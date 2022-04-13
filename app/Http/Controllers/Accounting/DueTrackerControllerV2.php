@@ -202,4 +202,15 @@ class DueTrackerControllerV2 extends Controller
 
         return http_response($request, null, 200, ['data' => $response]);
     }
+
+    public function sendSingleSmsToContact(Request $request)
+    {
+        $response =  $this->dueTrackerSmsService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->sendSingleSmsToContact();
+
+        return http_response($request, null, 200, ['data' => $response]);
+    }
 }
