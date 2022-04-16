@@ -106,12 +106,12 @@ class BusinessWisePayslip
 
     public function calculate()
     {
-        $last_pay_day = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period)->subMonth()->toDateString() : $this->payrollSetting->last_pay_day;
+        $last_pay_day = $this->payrollSetting->last_pay_day;
         $start_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $end_date = $this->className === self::MANUALLY_GENERATED_PAYSLIP ? Carbon::parse($this->period) : null;
         $business_payslip_data = [
-            'payroll_setting_id' => $this->payrollSetting->id,
-            'schedule_date' => Carbon::now()->toDateString(),
+            'business_id' => $this->business->id,
+            'schedule_date' => $this->className === self::MANUALLY_GENERATED_PAYSLIP ? $this->period : Carbon::now()->toDateString(),
             'cycle_start_date' => $start_date ? Carbon::parse($start_date)->subMonth()->format('Y-m-d') : ($last_pay_day ? Carbon::parse($last_pay_day)->format('Y-m-d') : Carbon::now()->subMonth()->format('Y-m-d')),
             'cycle_end_date' => $end_date ? Carbon::parse($end_date)->subDay()->format('Y-m-d') : Carbon::now()->subDay()->format('Y-m-d'),
             'status' => Status::PENDING,

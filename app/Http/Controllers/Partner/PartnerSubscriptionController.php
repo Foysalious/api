@@ -36,9 +36,9 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             /** @var Partner $partner */
-            $partner = $request->partner;
+            $partner                       = $request->partner;
             $partner_subscription_packages = $this->generateSubscriptionRelatedData($partner);
-            $data = (new PartnerSubscription())->allPackagesData($partner, $partner_subscription_packages);
+            $data                          = (new PartnerSubscription())->allPackagesData($partner, $partner_subscription_packages);
             return api_response($request, null, 200, $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -50,10 +50,10 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             /** @var Partner $partner */
-            $partner = $request->partner;
+            $partner                       = $request->partner;
             $partner_subscription_packages = $this->generateSubscriptionData($partner);
-            $data = (new PartnerSubscription())->allPackagesData($partner, $partner_subscription_packages);
-            return api_response($request, null, 200, [ "data" => $data]);
+            $data                          = (new PartnerSubscription())->allPackagesData($partner, $partner_subscription_packages);
+            return api_response($request, null, 200, ["data" => $data]);
         } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
@@ -69,9 +69,9 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             /** @var Partner $partner */
-            $partner = $request->partner;
+            $partner                      = $request->partner;
             $partner_subscription_package = $this->generateSubscriptionData(null, $partner->subscription->id);
-            $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
+            $data                         = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
             return api_response($request, null, 200, ["data" => $data]);
         } catch (Throwable $e) {
             logError($e);
@@ -274,7 +274,7 @@ class PartnerSubscriptionController extends Controller
     /**
      * @param Request $request
      * @param         $partner
-     * @param bool    $inside
+     * @param bool $inside
      * @return JsonResponse
      */
     public function purchase(Request $request, $partner, $inside = false)
@@ -330,13 +330,11 @@ class PartnerSubscriptionController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }
-        catch (WalletDebitForbiddenException $e) {
+        } catch (WalletDebitForbiddenException $e) {
             $message = $e->getMessage() ?? null;
-            $code = $e->getCode() ?? 500;
+            $code    = $e->getCode() ?? 500;
             return api_response($request, $message, $code, ['message' => $message]);
-        }
-        catch (Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -348,13 +346,13 @@ class PartnerSubscriptionController extends Controller
         try {
             $this->validate($request,
                 [
-                    'auto_billing_activated' => 'boolean',
+                    'auto_billing_activated'       => 'boolean',
                     'subscription_renewal_warning' => 'boolean',
-                    'renewal_warning_days' => 'numeric|min:0'
+                    'renewal_warning_days'         => 'numeric|min:0'
                 ]
             );
             /** @var Partner $partner */
-            $partner = $request->partner;
+            $partner       = $request->partner;
             $updatePartner = $partnerSubscription->updateRenewSubscription($request->all(), $partner);
             if ($updatePartner) {
                 $message = 'Subscription auto renewal updated';
@@ -368,18 +366,18 @@ class PartnerSubscriptionController extends Controller
 
     private function createSubscriptionRequest(PartnerSubscriptionPackage $requested_package)
     {
-        $request = \request();
-        $partner = $request->partner;
+        $request          = \request();
+        $partner          = $request->partner;
         $running_discount = $requested_package->runningDiscount($request->billing_type);
         $this->setModifier($request->manager_resource);
         $update_request_data = $this->withCreateModificationField(
             [
-                'partner_id' => $partner->id,
-                'old_package_id' => $partner->package_id ?: 1,
-                'new_package_id' => $request->package_id,
+                'partner_id'       => $partner->id,
+                'old_package_id'   => $partner->package_id ?: 1,
+                'new_package_id'   => $request->package_id,
                 'old_billing_type' => $partner->billing_type ?: BillingType::MONTHLY,
                 'new_billing_type' => $request->billing_type,
-                'discount_id' => $running_discount ? $running_discount->id : null
+                'discount_id'      => $running_discount ? $running_discount->id : null, 'status' => 'Approved'
             ]
         );
         return PartnerSubscriptionUpdateRequest::create($update_request_data);
@@ -402,10 +400,10 @@ class PartnerSubscriptionController extends Controller
     {
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->where('id', '>', 0);
         if ($package) {
-            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
+            $partner_subscription_packages = $partner_subscription_packages->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
             (new PartnerSubscription())->dataFormat($partner_subscription_packages, $partner, true);
         } else {
-            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->orderBy('sort_order')->get();
+            $partner_subscription_packages = $partner_subscription_packages->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->orderBy('sort_order')->get();
             foreach ($partner_subscription_packages as $package)
                 (new PartnerSubscription())->dataFormat($package, $partner);
 
@@ -415,21 +413,21 @@ class PartnerSubscriptionController extends Controller
 
     private function generateSubscriptionRelatedData(Partner $partner = null)
     {
-        $featured_package_id = config('partner.subscription_featured_package_id');
+        $featured_package_id           = config('partner.subscription_featured_package_id');
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
             ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
             ->whereIn('id', constants('PARTNER_SHOWABLE_PACKAGE'))
             ->get();
 
         foreach ($partner_subscription_packages as $package) {
-            $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
+            $package['rules']        = $this->calculateDiscount(json_decode($package->rules, 1), $package);
             $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
-            $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
-            $package['features'] = $package->features ? json_decode($package->features) : [];
-            $package['is_featured'] = in_array($package->id, $featured_package_id);
+            $package['usps']         = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
+            $package['features']     = $package->features ? json_decode($package->features) : [];
+            $package['is_featured']  = in_array($package->id, $featured_package_id);
 
             if ($partner) {
-                $package['is_subscribed'] = (int)($partner->package_id == $package->id);
+                $package['is_subscribed']     = (int)($partner->package_id == $package->id);
                 $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
             }
             removeRelationsAndFields($package);

@@ -33,6 +33,8 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
+use Sheba\EKYC\Statics;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\ModificationFields;
 use Sheba\Reports\ExcelHandler;
@@ -131,6 +133,23 @@ class AffiliateController extends Controller
         ];
         $affiliate->update(["last_login" => Carbon::now()]);
         return api_response($request, $info, 200, ['info' => $info]);
+    }
+
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getDashboardMessage($affiliate, Request $request)
+    {
+        /** @var Affiliate $affiliate */
+        $profile = Affiliate::find($affiliate)->profile;
+
+        $status = $profile->nid_verified ==  1 ? "verified" : "unverified";
+        $count = $profile->nid_verification_request_count;
+        $data = Statics::faceVerificationResponse($status, $count, $message = null, null, $user = "affiliate");
+
+        return api_response($request, $data, 200, ['data' => $data]);
     }
 
     public function updateProfilePic(Request $request)

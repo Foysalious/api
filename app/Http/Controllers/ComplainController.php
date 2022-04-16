@@ -197,7 +197,7 @@ class ComplainController extends Controller
             (new ComplainNotification($complain))->notifyOnCreate();
             $response = $complain->preset->response;
 
-            return api_response($request, $complain, 200, ['response' => $response]);
+            return api_response($request, $complain, 200, ['response' => $response, 'complain_id' => $complain->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

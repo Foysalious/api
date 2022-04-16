@@ -10,6 +10,8 @@ class InstitutionInformation extends PartnerAllInformation
 {
     use ModificationFields;
 
+    protected $first_admin_profile;
+
     public function institution_get(): array
     {
         return $this->getFormFieldValues();
@@ -20,6 +22,7 @@ class InstitutionInformation extends PartnerAllInformation
         $this->partner = $partner;
         $this->partner_basic_information = $this->partner->basicInformations;
         $this->partner_bank_information  = $this->partner->bankInformations()->first();
+        $this->setFirstAdminProfile();
         return $this;
     }
 
@@ -32,6 +35,7 @@ class InstitutionInformation extends PartnerAllInformation
         $this->partner_basic_information->additional_information = $data;
         $this->partner_basic_information->save();
         $this->partner_bank_information->save();
+        $this->first_admin_profile->save();
     }
 
     /**
@@ -78,5 +82,10 @@ class InstitutionInformation extends PartnerAllInformation
 
         return ($this->additional_information && count($this->additional_information)) ?
             json_encode(array_merge($this->additional_information, $json_data)) : json_encode($json_data);
+    }
+
+    private function setFirstAdminProfile()
+    {
+        $this->first_admin_profile = $this->partner->getFirstAdminResource()->profile;
     }
 }
