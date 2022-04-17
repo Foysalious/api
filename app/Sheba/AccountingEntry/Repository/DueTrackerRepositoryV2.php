@@ -3,8 +3,13 @@
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
+use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
+use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 
 class DueTrackerRepositoryV2 extends AccountingRepository
 {
@@ -133,6 +138,23 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     public function downloadPdfByContact($queryString){
         $url = "api/v2/due-tracker/report/pdf?".$queryString;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
+    /**
+     * @throws AccountingEntryServerError
+     * @throws InvalidSourceException
+     * @throws KeyNotFoundException
+     */
+    public function storeJournalForSmsSending($partner, $transaction)
+    {
+        (new JournalCreateRepository())->setTypeId($partner->id)
+            ->setSource($transaction)
+            ->setAmount($transaction->amount)
+            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
+            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
+            ->setDetails("Due tracker sms sent charge")
+            ->setReference("")
+            ->store();
     }
 
 }
