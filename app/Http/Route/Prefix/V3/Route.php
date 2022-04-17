@@ -72,6 +72,7 @@ class Route
             });
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
             $api->get('emi-info', 'ShebaController@getEmiInfoV3');
+            $api->get('slider-details', 'PartnerController@getSliderDetails');
         });
     }
 }
