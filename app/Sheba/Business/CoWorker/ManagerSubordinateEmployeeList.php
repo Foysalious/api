@@ -27,33 +27,26 @@ class ManagerSubordinateEmployeeList
      */
     public function get($business_member, $department = null, $is_employee_active = null): array
     {
-        $managers = $this->getManager($business_member->id);
+        $managers = [];
+        $this->getManager($business_member->id, $managers, $business_member->id);
         $managers_data = [];
         foreach ($managers as $manager) $managers_data[] = $this->formatSubordinateList($manager);
-        $managers_data = $this->uniqueManagerData($managers_data);
         if ($department) return $this->filterEmployeeByDepartment($business_member, $managers_data, $is_employee_active);
         return $managers_data;
     }
 
     /**
      * @param $business_member_id
-     * @return array
+     * @param $managers
      */
-    public function getManager($business_member_id): array
+    public function getManager($business_member_id, &$managers, $root_manager_id)
     {
-        $manager_data = [];
-        $managers = $this->getCoWorkersUnderSpecificManager($business_member_id);
-        foreach ($managers as $manager) {
-            $manager_data[] = $manager;
-           /*if (in_array($manager->id, $managers->pluck('id')->toArray())) {
-               break;
-           }*/
-            foreach ($this->getManager($manager->id) as $next_manager) {
-                $manager_data[] = $next_manager;
-            }
+        $sub_ordinates = $this->getCoWorkersUnderSpecificManager($business_member_id);
+        foreach ($sub_ordinates as $sub_ordinate) {
+            if (array_key_exists($sub_ordinate->id, $managers) || $sub_ordinate->id == $root_manager_id) continue;
+            $managers[$sub_ordinate->id] = $sub_ordinate;
+            $this->getManager($sub_ordinate->id, $managers, $root_manager_id);
         }
-
-        return $manager_data;
     }
 
     /**
@@ -112,7 +105,6 @@ class ManagerSubordinateEmployeeList
 
     private function formatSubordinateList($business_member)
     {
-        return $business_member->id;
         /** @var Member $member */
         $member = $business_member->member;
         /** @var Profile $profile */

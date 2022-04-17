@@ -50,12 +50,12 @@ class TrackingController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $managers_subordinates = (new ManagerSubordinateEmployeeList())->getManager($business_member->id);
-        $managers_subordinate_ids = Arr::pluck($managers_subordinates, 'id');
-
+        $employee_lists = [];
+        (new ManagerSubordinateEmployeeList())->getManager($business_member->id, $employee_lists, $business_member->id);
+        $employee_lists = array_keys($employee_lists);
         list($offset, $limit) = calculatePagination($request);
         $tracking_locations = $this->trackingLocationRepo->builder()->select('business_id', 'business_member_id', 'location', 'log', 'date', 'time', 'created_at')->where('business_id', $business->id);
-        if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $managers_subordinate_ids);
+        if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $employee_lists);
         if ($request->has('department')) {
             $business_members = $business->getTrackLocationActiveBusinessMember();
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
