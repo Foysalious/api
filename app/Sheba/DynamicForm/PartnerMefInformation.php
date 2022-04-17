@@ -30,6 +30,7 @@ class PartnerMefInformation implements Arrayable
     private $nominee_nid_image_back;
     private $customer_signature;
     private $trade_license;
+    private $userDesignation;
 
 
     public function setProperty($input): PartnerMefInformation
