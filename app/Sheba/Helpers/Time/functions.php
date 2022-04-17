@@ -1,6 +1,7 @@
 <?php
 
 use Carbon\Carbon;
+use Sheba\Helpers\Converters\NumberLanguageConverter;
 use Sheba\Helpers\Time\TimeAgoCalculator;
 use Sheba\Helpers\TimeFrame;
 
@@ -325,5 +326,31 @@ if (!function_exists('banglaMonth')) {
         if ($month > 0) $month -= 1;
 
         return getMonthsNameInBangla()[$month];
+    }
+}
+
+if (!function_exists('dayTimeConvertBn')) {
+    /**
+     * @param $time
+     * @return string
+     */
+    function dayTimeConvertBn($time): string
+    {
+        $time = date_create($time);
+        $hour = date_format($time,"H");
+        if($hour >= 0 && $hour <= 5)
+            $dayOfTime = "রাত";
+        else if($hour > 5 && $hour < 12)
+            $dayOfTime = "সকাল";
+        else if($hour >= 12 && $hour <= 15)
+            $dayOfTime = "দুপুর";
+        else if($hour >= 16 && $hour <= 17)
+            $dayOfTime = "বিকাল";
+        else if($hour >= 18 && $hour <= 19)
+            $dayOfTime = "সন্ধ্যা";
+        else if($hour >= 20 && $hour <= 24)
+            $dayOfTime = "রাত";
+
+        return $dayOfTime." ".NumberLanguageConverter::en2bn(date_format($time,"H")).':'.NumberLanguageConverter::en2bn((date_format($time,"i")));
     }
 }

@@ -29,7 +29,7 @@ class ReminderNotificationHandler
             "event_type" => 'DueTrackerReminder',
             "event_id" => (string)$this->reminder['id']
         ];
-        (new PusNotificationService())->send($topic, null, $data);
+        return (new PusNotificationService())->send($topic, null, $data);
 
 //                $topic = config('sheba.push_notification_topic_name.manager_new') . $this->reminder['partner_id'];
 //        $channel = config('sheba.push_notification_channel_name.manager');

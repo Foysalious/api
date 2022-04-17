@@ -101,6 +101,7 @@ class DueTrackerReminderController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function reminderNotificationWebhook(Request $request): JsonResponse
     {

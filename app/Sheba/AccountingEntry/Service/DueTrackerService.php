@@ -7,6 +7,7 @@ use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
+use App\Sheba\Reports\DueTracker\AccountingPdfHandler;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Illuminate\Support\Collection;
@@ -275,6 +276,21 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
+    public function badDebts(){
+        $queryString = $this->generateQueryString();
+        $balance = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
+
+        if($balance['stats']['type'] == 'receivable') {
+            $this->amount = $balance['stats']['balance'];
+            $data = $this->makeDataForEntry();
+            return $this->dueTrackerRepo->createEntry($data);
+        }
+        return "Balance is Already Positive.";
+    }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function getDueListBalance(): array
     {
         $queryString = $this->generateQueryString();
@@ -338,7 +354,6 @@ class DueTrackerService
     /**
      * @return array
      * @throws AccountingEntryServerError
-     * @throws PosOrderServiceServerError
      */
     public function dueListByContact(): array
     {
@@ -377,11 +392,12 @@ class DueTrackerService
 
     /**
      * @return array
+     * @throws AccountingEntryServerError
      */
     public function getReport(): array
     {
         $queryString = $this->generateQueryString();
-        return $this->dueTrackerRepo->setPartner($this->partner)->getReport($queryString);
+        return $this->dueTrackerRepo->setPartner($this->partner)->getReportForMobile($queryString);
     }
 
     /**
@@ -391,12 +407,22 @@ class DueTrackerService
      * @throws InvalidPartnerPosCustomer
      * @throws Throwable
      */
-    public function downloadPDF($request): string
+    public function downloadPDF(): string
     {
         $queryString = $this->generateQueryString();
         $data = [];
-        $data['start_date'] = $this->start_date ?? null;
-        $data['end_date'] = $this->end_date ?? null;
+
+        $start_date = date_create($this->start_date);
+        $end_date = date_create($this->end_date);
+
+        $data['data']['start_date'] = ($this->start_date != null) ? NumberLanguageConverter::en2bn(date_format($start_date,"d")).' '.banglaMonth(date_format($start_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($start_date,"Y")) : '';
+        $data['data']['end_date'] = ($this->end_date != null ? NumberLanguageConverter::en2bn(date_format($end_date,"d")).' '.banglaMonth(date_format($end_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($end_date,"Y")) : '');
+        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d H:i:s"));
+
+        $data['data']['partner']['name'] = $this->partner->name;
+        $data['data']['partner']['mobile'] = $this->partner->mobile;
+        $data['data']['partner']['logo'] = $this->partner->logo;
+
         if ($this->contact_id == null) {
             $list = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
             $data = array_merge($data, $list);
@@ -406,13 +432,17 @@ class DueTrackerService
             return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf";
             //return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
         }
-        $list = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
-        $data = array_merge($data, $list);
-        $balanceData = $this->setContactId($request->contact_id)->dueListBalanceByContact();
-        $data = array_merge($data, $balanceData);
-        //TODO: Will Change the Pdf Generation
-        return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220315_due_tracker_by_customer_report_1647338702.pdf";
-        //return (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
+        $data['data'] += $this->dueTrackerRepo->setPartner($this->partner)->downloadPdfByContact($queryString);
+        $data = $this->listBnForContactPdf($data);
+        $header =  view('reports.pdfs.dueTrackerPartials._header_duelist_single_contact', compact('data'))->render();
+        $footer = view('reports.pdfs.dueTrackerPartials._footer_duelist_single_contact')->render();
+
+        return (new AccountingPdfHandler())->setHeader($header)
+            ->setFooter($footer)
+            ->setName("due tracker by contact")
+            ->setData($data)
+            ->setViewFile('due_tracker_due_list_by_contact')
+            ->save(true,$header);
     }
 
     /**
@@ -421,7 +451,7 @@ class DueTrackerService
      */
     public function generatePublicReport(){
         $queryString = $this->generateQueryString();
-        $data = $this->dueTrackerRepo->reportForWeb($this->partner_id, $queryString);
+        $data = $this->dueTrackerRepo->reportForWeb($this->partner_id,$queryString);
 
         $data['stats']['receivable_bn'] = NumberLanguageConverter::en2bn($data['stats']['receivable']);
         $data['stats']['payable_bn'] = NumberLanguageConverter::en2bn($data['stats']['payable']);
@@ -556,6 +586,34 @@ class DueTrackerService
     private function getPartnerById(){
         $partner = Partner::where('id', $this->partner_id)->first();
         $this->setPartner($partner);
+    }
+
+    /**
+     * @param $data
+     * @return array
+     */
+    private function listBnForContactPdf($data): array
+    {
+        $list = array();
+        foreach($data['data']['due_list'] as $key => $value){
+            $split = explode("-",$key);
+            $keybn = banglaMonth($split[1]).' '.NumberLanguageConverter::en2bn($split[0]);
+            foreach($value['list'] as $key1 => $v){
+                $entry_at = date_create($data['data']['due_list'][$key]['list'][$key1]['entry_at']);
+                $created_at = date_create($data['data']['due_list'][$key]['list'][$key1]['created_at']);
+                $list[$keybn]['list'][$key1]['amount_bn'] = NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['list'][$key1]['amount']);
+                $list[$keybn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['list'][$key1]['balance']);
+                $list[$keybn]['list'][$key1]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($entry_at,"d")).'/'.NumberLanguageConverter::en2bn(date_format($entry_at,"m"));
+                $list[$keybn]['list'][$key1]['created_at_bn'] = NumberLanguageConverter::en2bn(date_format($created_at,"d")).' '.banglaMonth(date_format($created_at,"m")).' '.NumberLanguageConverter::en2bn(date_format($created_at,"Y")) ;
+                $list[$keybn]['list'][$key1]['note'] = $data['data']['due_list'][$key]['list'][$key1]['note'];
+                $list[$keybn]['list'][$key1]['account_type'] = $data['data']['due_list'][$key]['list'][$key1]['account_type'];
+            }
+            $list[$keybn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['receivable']);
+            $list[$keybn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['payable']);
+            $list[$keybn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['total_transactions']);
+        }
+        $data['data']['due_list_bn']=$list;
+        return $data;
     }
 
 
