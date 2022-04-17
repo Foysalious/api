@@ -25,6 +25,10 @@ class TrackingController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function insertLocation(Request $request)
     {
         $business_member = $this->getBusinessMember($request);
@@ -55,13 +59,15 @@ class TrackingController extends Controller
     }
 
     /**
+     * @param $business_member_id
      * @param Request $request
      * @return JsonResponse
      */
-    public function getTrackingLocation(Request $request)
+    public function trackingLocationDetails($business_member_id, Request $request)
     {
         /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
+        $business_member = BusinessMember::find((int)$business_member_id);
+
         if (!$business_member) return api_response($request, null, 404);
 
         if (!$request->date) return api_response($request, null, 404);
@@ -76,18 +82,6 @@ class TrackingController extends Controller
     }
 
     /**
-     * @return string
-     */
-    public function getAddress($geo)
-    {
-        try {
-            return (new BarikoiClient)->getAddressFromGeo($geo)->getAddress();
-        } catch (Throwable $exception) {
-            return "";
-        }
-    }
-
-    /**
      * @param Request $request
      * @param CoWorkerInfoFilter $co_worker_info_filter
      * @return JsonResponse
@@ -97,15 +91,15 @@ class TrackingController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $managers_data = (new ManagerSubordinateEmployeeList())->getManager($business_member->id);
-        $managers_ids = Arr::pluck($managers_data, 'id');
-        $business_members = BusinessMember::whereIn('id', $managers_ids);
+        $managers_subordinates = (new ManagerSubordinateEmployeeList())->getManager($business_member->id);
+        $managers_subordinate_ids = Arr::pluck($managers_subordinates, 'id');
+        $business_members = BusinessMember::whereIn('id', $managers_subordinate_ids);
+
         if ($request->has('department')) $business_members = $co_worker_info_filter->filterByDepartment($business_members, $request);
 
         $data = [];
         foreach ($business_members->get() as $business_member) {
             $tracking_location = $business_member->liveLocationFilterByDate()->first();
-
             if (!$tracking_location) continue;
 
             $location = $tracking_location->location;
@@ -118,7 +112,6 @@ class TrackingController extends Controller
                 'business_id' => $tracking_location->business_id,
                 'department_id' => $role ? $role->businessDepartment->id : null,
                 'department' => $role ? $role->businessDepartment->name : null,
-
                 'designation' => $role ? $role->name : null,
                 'profile' => [
                     'id' => $profile->id,
@@ -130,9 +123,12 @@ class TrackingController extends Controller
                     'lat' => $location->lat,
                     'lng' => $location->lng,
                     'address' => $location->address,
-                ] : null
+                ] : null,
+                'last_activity_raw' => $tracking_location->created_at
             ];
         }
+
+        if ($request->has('no_activity')) $data = $this->getEmployeeOfNoActivityForCertainHour($data, $request->no_activity);
 
         return api_response($request, null, 200, ['employee_list' => $data]);
     }
@@ -153,6 +149,18 @@ class TrackingController extends Controller
 
         list($last_tracked_date, $date_dropdown) = $date_drop_down->getDateDropDown($last_tracked_location);
         return api_response($request, null, 200, ['last_tracked' => $last_tracked_date, 'date_dropdown' => $date_dropdown]);
+    }
+
+    /**
+     * @return string
+     */
+    private function getAddress($geo)
+    {
+        try {
+            return (new BarikoiClient)->getAddressFromGeo($geo)->getAddress();
+        } catch (Throwable $exception) {
+            return "";
+        }
     }
 
     /**
@@ -209,5 +217,18 @@ class TrackingController extends Controller
     {
         $seconds = $timestamp / 1000;
         return Carbon::createFromTimestamp($seconds);
+    }
+
+    /**
+     * @param $tracking_locations
+     * @param $no_activity
+     * @return \Illuminate\Support\Collection
+     */
+    private function getEmployeeOfNoActivityForCertainHour($tracking_locations, $no_activity)
+    {
+        $from_time = Carbon::now()->subMinutes($no_activity);
+        return collect($tracking_locations)->filter(function ($tracking_location) use ($no_activity, $from_time) {
+            return $tracking_location['last_activity_raw'] <= $from_time;
+        });
     }
 }
