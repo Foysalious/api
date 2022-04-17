@@ -274,7 +274,12 @@ class DueTrackerReminderService
 //          TODO: send SMS
             $smsStatus = true;
         }
-        $this->setReminderId($reminder['id'])->setReminderStatus('success')->setSmsStatus($smsStatus)->update();
+        $this->setReminderId($reminder['id'])
+            ->setSms($reminder['should_send_sms'])
+            ->setReminderDate($reminder['reminder_date'])
+            ->setReminderStatus('success')
+            ->setSmsStatus($smsStatus)
+            ->update();
         return true;
     }
 
