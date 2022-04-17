@@ -49,7 +49,7 @@ class StatusChanger
     {
         return $this->update(Statuses::PENDING, [
             "transaction_id" => $transaction_id,
-            "transaction_details" => $transaction_details,
+            "transaction_details" => json_encode($transaction_details),
         ]);
     }
 
