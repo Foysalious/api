@@ -19,7 +19,7 @@ class LiveTrackingDetails
     {
         $employee_details = $this->getEmployeeDetails();
         $location_details = $this->getLocationDetails();
-        return ['employee' => $employee_details, 'timeline' => $location_details];
+        return ['employee' => $employee_details, 'timeline' => $location_details['timeline'], 'data_missing_count' => $location_details['data_missing_count']];
     }
 
     private function getEmployeeDetails()
@@ -38,8 +38,10 @@ class LiveTrackingDetails
     private function getLocationDetails()
     {
         $data = [];
+        $date_missing = 0;
         foreach ($this->trackingLocations as $tracking_location) {
             $location = $tracking_location->location;
+            if (!$location) $date_missing++;
             $data[] = [
                 'time' => Carbon::parse($tracking_location->time)->format('h:i A'),
                 'address' => $location  ? $location->address : null,
@@ -50,6 +52,8 @@ class LiveTrackingDetails
                 'log' => $tracking_location->log
             ];
         }
-        return $data;
+        $location_data['timeline'] = $data;
+        $location_data['data_missing_count'] = $date_missing;
+        return $location_data;
     }
 }

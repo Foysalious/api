@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Sheba\Business\LiveTracking\DateDropDown;
+use Illuminate\Support\Arr;
 use Sheba\Dal\TrackingLocation\TrackingLocation;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\CoWorker\ManagerSubordinateEmployeeList;
@@ -96,13 +97,15 @@ class TrackingController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member);
-        $business_members = BusinessMember::whereIn('id', $managers_data);
-
+        $managers_data = (new ManagerSubordinateEmployeeList())->getManager($business_member->id);
+        $managers_ids = Arr::pluck($managers_data, 'id');
+        $business_members = BusinessMember::whereIn('id', $managers_ids);
         if ($request->has('department')) $business_members = $co_worker_info_filter->filterByDepartment($business_members, $request);
+
         $data = [];
         foreach ($business_members->get() as $business_member) {
             $tracking_location = $business_member->liveLocationFilterByDate()->first();
+
             if (!$tracking_location) continue;
 
             $location = $tracking_location->location;

@@ -4,6 +4,7 @@ use App\Models\BusinessDepartment;
 use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Repositories\Business\BusinessMemberRepository;
@@ -34,15 +35,24 @@ class ManagerSubordinateEmployeeList
         return $managers_data;
     }
 
+    /**
+     * @param $business_member_id
+     * @return array
+     */
     public function getManager($business_member_id): array
     {
         $manager_data = [];
         $managers = $this->getCoWorkersUnderSpecificManager($business_member_id);
-        foreach ($managers as $manager)
-        {
+        foreach ($managers as $manager) {
             $manager_data[] = $manager;
-            foreach ($this->getManager($manager->id) as $next_manager) $manager_data[] = $next_manager;
+           /*if (in_array($manager->id, $managers->pluck('id')->toArray())) {
+               break;
+           }*/
+            foreach ($this->getManager($manager->id) as $next_manager) {
+                $manager_data[] = $next_manager;
+            }
         }
+
         return $manager_data;
     }
 
@@ -52,7 +62,9 @@ class ManagerSubordinateEmployeeList
      */
     private function getCoWorkersUnderSpecificManager($business_member_id)
     {
-        return $this->businessMemberRepository->where('manager_id', $business_member_id)->get();
+        return $this->businessMemberRepository->where('manager_id', $business_member_id)
+            ->where('status', 'active')
+            ->get();
     }
 
     /**
