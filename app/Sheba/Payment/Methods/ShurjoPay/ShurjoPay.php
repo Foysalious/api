@@ -2,6 +2,7 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Sheba\Payment\Exceptions\InvalidConfigurationException;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\ShurjoPay\Response\InitResponse;
@@ -9,6 +10,7 @@ use Sheba\Payment\Methods\ShurjoPay\Response\ValidationResponse;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\Payment\Statuses;
 use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPRequest;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 
@@ -99,12 +101,12 @@ class ShurjoPay extends PaymentMethod
         return $this->tpClient->call($request);
     }
 
-    private function getToken()
+    private function getToken($username = null, $password = null)
     {
         $request = (new TPRequest())->setUrl($this->baseUrl . '/get_token')
             ->setMethod(TPRequest::METHOD_POST)->setInput([
-                'username' => $this->configuration->getStoreId(),
-                'password' => $this->configuration->getPassword()
+                'username' => $username ?? $this->configuration->getStoreId(),
+                'password' => $password ?? $this->configuration->getPassword()
             ]);
         return $this->tpClient->call($request);
     }
@@ -153,5 +155,49 @@ class ShurjoPay extends PaymentMethod
     public function getCalculatedChargedAmount($transaction_details)
     {
         return 0;
+    }
+
+    /**
+     * @param $credentials
+     * @return bool
+     * @throws InvalidConfigurationException|TPProxyServerError
+     */
+    public function testInit($credentials): bool
+    {
+        $response = $this->getTestSession($credentials);
+        $init_response = new InitResponse();
+        $init_response->setResponse($response);
+        if ($init_response->hasSuccess()) return true;
+        throw new InvalidConfigurationException("Invalid credentials! Please try again.");
+    }
+
+    /**
+     * @param $credentials
+     * @return mixed
+     * @throws InvalidConfigurationException
+     * @throws TPProxyServerError
+     */
+    public function getTestSession($credentials)
+    {
+        $token = $this->getToken($credentials["storeId"], $credentials["password"]);
+        if (!isset($token->token))
+            throw new InvalidConfigurationException("Invalid credentials! Please try again.");
+        $request = (new TPRequest())->setUrl($this->baseUrl . '/secret-pay')
+            ->setMethod(TPRequest::METHOD_POST)->setInput([
+                'token' => $token->token,
+                'store_id' => $token->store_id,
+                'prefix' => 'sp',
+                'currency' => 'BDT',
+                'return_url' => 'https://api.dev-sheba.xyz/v2/shurjopay/validate',
+                'cancel_url' => 'https://api.dev-sheba.xyz/v2/shurjopay/validate',
+                'amount' => 10,
+                'order_id' => "123_" . time(),
+                'customer_name' => "test_customer_name",
+                'customer_phone' => "01774567890",
+                'customer_address' => 'Dhaka',
+                'customer_city' => 'Dhaka',
+                'client_ip' => getIp()
+            ]);
+        return $this->tpClient->call($request);
     }
 }

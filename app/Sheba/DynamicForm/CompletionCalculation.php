@@ -45,6 +45,8 @@ class CompletionCalculation
             $total +=($category['completion_percentage']['en']);
         }
 
+        if(count($categories) === 0) return 100;
+
         return round($total / count($categories), 2);
     }
 }

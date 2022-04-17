@@ -10,7 +10,7 @@ return [
         'client_id' => env('MOR_CLIENT_ID',1234),
         'client_secret' => env('MOR_CLIENT_SECRET','abcd')
     ],
-    "available_payment_gateway_keys" => [PaymentStrategy::SSL],
+    "available_payment_gateway_keys" => [PaymentStrategy::SSL,PaymentStrategy::SHURJOPAY],
 
     'category_list' => [
         'ssl' => [
@@ -179,6 +179,21 @@ return [
                 'mandatory'     => false,
                 'data_source'   => 'partner_basic_information',
                 'data_source_id'=> 'trade_license'
+            ],
+            [
+                'label'         => 'টিন নম্বর *',
+                'message'       => '',
+                'hint'          => 'টিন নম্বর লিখুন',
+                'id'            => 'tin_no',
+                'error'         => "টিন নম্বর পূরণ আবশ্যক",
+                'input_type'    => 'text',
+                'data'          => '',
+                "min_length"    => "",
+                "max_length"    => "",
+                'is_editable'   => true,
+                'mandatory'     => false,
+                'data_source'   => 'first_admin_profile',
+                'data_source_id'=> 'tin_no'
             ],
             [
                 'label'         => 'কোম্পানির টাইপ *',

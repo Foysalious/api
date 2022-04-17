@@ -28,6 +28,7 @@ use Sheba\PushNotificationHandler;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 use Sheba\Payment\Methods\Ssl\Stores\DynamicSslStoreConfiguration;
 use Sheba\ResellerPayment\Exceptions\ResellerPaymentException;
+use Sheba\ResellerPayment\Statics\ResellerPaymentGeneralStatic;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;

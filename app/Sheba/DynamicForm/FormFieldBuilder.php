@@ -13,6 +13,12 @@ class FormFieldBuilder
 
     private $partnerMefInformation;
 
+    private $partnerBasicInformation;
+
+    private $firstAdminProfile;
+
+    private $basicInformation;
+
     /**
      * @param mixed $field
      * @return FormFieldBuilder
@@ -63,6 +69,21 @@ class FormFieldBuilder
         }
 
         return $form_field;
+    }
+
+    public function setPartnerBasicInformation()
+    {
+        $this->partnerBasicInformation = json_decode($this->partner->basicInformations->additional_information);
+    }
+
+    public function setFirstAdminProfile()
+    {
+        $this->firstAdminProfile = $this->partner->getFirstAdminResource()->profile;
+    }
+
+    public function setBasicInformation()
+    {
+        $this->basicInformation = $this->partner->basicInformations;
     }
 
 }
