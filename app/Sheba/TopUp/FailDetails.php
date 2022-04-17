@@ -46,7 +46,7 @@ class FailDetails
     /**
      * @return string
      */
-    public function getReason(): string
+    public function getReason()
     {
         return $this->reason;
     }
@@ -54,7 +54,7 @@ class FailDetails
     /**
      * @return string
      */
-    public function getMessage(): string
+    public function getMessage()
     {
         return $this->message;
     }
@@ -62,7 +62,7 @@ class FailDetails
     /**
      * @return string
      */
-    public function getTransactionDetails(): string
+    public function getTransactionDetails()
     {
         return $this->transactionDetails;
     }
