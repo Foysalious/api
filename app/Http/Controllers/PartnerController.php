@@ -1202,6 +1202,12 @@ class PartnerController extends Controller
         return http_response($request, null, 200, ['data' => $data]);
     }
 
+    public function getSliderDetails(Request $request)
+    {
+        $data = $this->getSliderDetailsAndAccountTypesData();
+        return http_response($request, null, 200, ['data' => array_except($data, 'account_types')]);
+    }
+
     public function dashboardByToken(Request $request)
     {
         $this->validate($request, [

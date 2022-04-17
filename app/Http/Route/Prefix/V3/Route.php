@@ -84,6 +84,7 @@ class Route
             $api->group(['prefix' => 'spro', 'middleware' => 'resource.jwt.auth'], function ($api){
                 $api->get('service/{serviceId}/instructions', 'Service\ServiceController@instructions')->where('serviceId', '[0-9]+');
             });
+            $api->get('slider-details', 'PartnerController@getSliderDetails');
         });
     }
 }
