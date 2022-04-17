@@ -267,7 +267,6 @@ class DueTrackerReminderService
      */
     public function sendReminderPush(array $reminder): bool
     {
-
         $push = (new ReminderNotificationHandler())->setReminder($reminder)->handler();
         Log::info(['remidner push', $push, $reminder]);
         $smsStatus = false;
@@ -276,7 +275,6 @@ class DueTrackerReminderService
             $smsStatus = true;
         }
         $this->setReminderId($reminder['id'])->setReminderStatus('success')->setSmsStatus($smsStatus)->update();
-
         return true;
     }
 
