@@ -276,6 +276,21 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
+    public function badDebts(){
+        $queryString = $this->generateQueryString();
+        $balance = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
+
+        if($balance['stats']['type'] == 'receivable') {
+            $this->amount = $balance['stats']['balance'];
+            $data = $this->makeDataForEntry();
+            return $this->dueTrackerRepo->createEntry($data);
+        }
+        return "Balance is Already Positive.";
+    }
+
+    /**
+     * @throws AccountingEntryServerError
+     */
     public function getDueListBalance(): array
     {
         $queryString = $this->generateQueryString();
@@ -339,7 +354,6 @@ class DueTrackerService
     /**
      * @return array
      * @throws AccountingEntryServerError
-     * @throws PosOrderServiceServerError
      */
     public function dueListByContact(): array
     {
@@ -378,11 +392,12 @@ class DueTrackerService
 
     /**
      * @return array
+     * @throws AccountingEntryServerError
      */
     public function getReport(): array
     {
         $queryString = $this->generateQueryString();
-        return $this->dueTrackerRepo->setPartner($this->partner)->getReport($queryString);
+        return $this->dueTrackerRepo->setPartner($this->partner)->getReportForMobile($queryString);
     }
 
     /**
