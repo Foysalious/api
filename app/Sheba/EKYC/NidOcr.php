@@ -54,8 +54,7 @@ class NidOcr
             $submitted_by = get_class($request->auth_user->getAffiliate());
             $business_name = "sBondhu";
         }
-        $ocrData = $nid_ocr_data['data'];
-        $ocrData = json_encode(array_except($ocrData, ['id_front_name', 'id_back_name']));
+        $ocrData = json_encode($nid_ocr_data['data']);
         $log = "NID submitted by the user";
 
         $data = [

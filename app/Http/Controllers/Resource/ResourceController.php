@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Resource;
 
+use App\Models\OrderRescheduleReason;
 use App\Models\PartnerResource;
 use Sheba\Dal\Category\Category;
 use App\Models\Job;
@@ -44,7 +45,8 @@ class ResourceController extends Controller
         $slot->setPartner(Partner::find($job->partner_order->partner_id));
         $slot->setLimit(7);
         $dates = $slot->getSchedulesByResource($resource);
-        return api_response($request, $dates, 200, ['dates' => $dates]);
+        $reschedule_reasons = OrderRescheduleReason::pluck('name');
+        return api_response($request, $dates, 200, ['dates' => $dates, 'reschedule_reasons' => $reschedule_reasons]);
 
     }
 

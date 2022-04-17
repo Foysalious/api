@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbServerClient;
+use App\Sheba\QRPayment\QRPaymentStatics;
 
 class MtbAccountStatus
 {
@@ -24,7 +25,7 @@ class MtbAccountStatus
 
     public function checkAccountStatus()
     {
-        $response = $this->client->get('api/Enquiry/getAccountOpenStatus/' . $this->partner->partnerMefInformation->mtb_ticket_id, AuthTypes::BARER_TOKEN);
+        $response = $this->client->get(QRPaymentStatics::MTB_ACCOUNT_STATUS . $this->partner->partnerMefInformation->mtb_ticket_id, AuthTypes::BARER_TOKEN);
         $this->partner->partnerMefInformation->mtb_account_status = json_encode($response);
         return $this->partner->partnerMefInformation->save();
     }

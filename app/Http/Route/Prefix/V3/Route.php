@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V3;
 
+use App\Http\Route\Prefix\V3\PaymentLinkRoute;
+
 class Route
 {
     public function set($api)
@@ -12,6 +14,7 @@ class Route
             (new PartnerRoute())->set($api);
             (new EmiRoute())->set($api);
             (new UserMigrationRoute())->set($api);
+            (new PaymentLinkRoute())->set($api);
             (new AccountingRoute())->set($api);
 
             $api->group(['middleware' => 'terminate'], function ($api) {
@@ -81,6 +84,7 @@ class Route
             $api->group(['prefix' => 'spro', 'middleware' => 'resource.jwt.auth'], function ($api){
                 $api->get('service/{serviceId}/instructions', 'Service\ServiceController@instructions')->where('serviceId', '[0-9]+');
             });
+            $api->get('slider-details', 'PartnerController@getSliderDetails');
         });
     }
 }

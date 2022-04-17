@@ -1133,6 +1133,27 @@ class PartnerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+    public function getBusinessTypesNewList(Request $request)
+    {
+        try {
+            $business_types = [];
+            collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types) {
+                array_push($business_types, [
+                    'en' => $type['en'],
+                    'bn' => $type['bn']
+                ]);
+            });
+            return api_response($request, null, 200, ['partner_business_types' => $business_types]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getWalletBalance(Request $request)
     {
         $wallet_balance = $request->partner->wallet;
@@ -1178,6 +1199,21 @@ class PartnerController extends Controller
     public function getSliderDetailsAndAccountTypesV2(Request $request)
     {
         $data = $this->getSliderDetailsAndAccountTypesData();
+        return http_response($request, null, 200, ['data' => $data]);
+    }
+
+    public function getSliderDetails(Request $request)
+    {
+        $data = [
+            [
+                'id' => 1,
+                'slider_image' => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/home_v3/qr_banner_02.jpg"
+            ],
+            [
+                'id' => 2,
+                'slider_image' => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/home_v3/qr_banner_01.jpg"
+            ]
+        ];
         return http_response($request, null, 200, ['data' => $data]);
     }
 

@@ -1,7 +1,6 @@
 <?php namespace App\Providers;
 
 
-use App\Jobs\WebstoreSettingsSyncJob;
 use App\Sheba\InventoryService\Partner\Events\Updated as PartnerUpdatedEvent;
 use App\Sheba\InventoryService\Partner\Listeners\Updated as PartnerUpdatedListener;
 
@@ -51,37 +50,37 @@ class EventServiceProvider extends ServiceProvider
      * @var array
      */
     protected $listen = [
-        PartnerPosCustomerCreatedEvent::class => [
+        PartnerPosCustomerCreatedEvent::class        => [
             PartnerPosCustomerCreateListener::class
         ],
-        PartnerPosCustomerUpdatedEvent::class => [
+        PartnerPosCustomerUpdatedEvent::class        => [
             PartnerPosCustomerUpdateListener::class
         ],
-        TopUpRequestOfBlockedNumberEvent::class => [
+        TopUpRequestOfBlockedNumberEvent::class      => [
             TopUpRequestOfBlockedNumber::class
         ],
-        WebstoreBannerUpdate::class => [
+        WebstoreBannerUpdate::class                  => [
             WebstoreBannerListener::class
         ],
-        ProfilePasswordUpdated::class => [
+        ProfilePasswordUpdated::class                => [
             ProfilePasswordUpdatedListener::class
         ],
-        BusinessMemberCreated::class => [
+        BusinessMemberCreated::class                 => [
             BusinessMemberCreatedListener::class
         ],
-        BusinessMemberUpdated::class => [
+        BusinessMemberUpdated::class                 => [
             BusinessMemberUpdatedListener::class
         ],
-        BusinessMemberDeleted::class => [
+        BusinessMemberDeleted::class                 => [
             BusinessMemberDeletedListener::class
         ],
-        PartnerUpdatedEvent::class => [
+        PartnerUpdatedEvent::class                   => [
             PartnerUpdatedListener::class,
         ],
-        PosSettingCreatedEvent::class => [
+        PosSettingCreatedEvent::class                => [
             PosSettingCreatedListener::class
         ],
-        PosSettingUpdatedEvent::class => [
+        PosSettingUpdatedEvent::class                => [
             PosSettingUpdatedListener::class
         ],
         UserMigrationStatusUpdatedByHookEvent::class => [
@@ -92,19 +91,16 @@ class EventServiceProvider extends ServiceProvider
     /**
      * Register any other events for your application.
      *
-     * @param DispatcherContract $events
      * @return void
      */
-//    public function boot(DispatcherContract $events)
-//    {
-//        parent::boot($events);
-//        $events->listen("kernel.handled", function ( $request,  $response) {
-//            try{
-//                (new ApiLogger($request, $response))->log();
-//            }catch (\Throwable $e){
-//                \Log::error($e->getMessage());
-//            }
-//        });
-//        //
-//    }
+    /* public function boot()
+    {
+        Event::listen("kernel.handled", function ($request, $response) {
+            try {
+                (new ApiLogger($request, $response))->log();
+            } catch (\Throwable $e) {
+                \Log::error($e->getMessage());
+            }
+        });
+    }*/
 }

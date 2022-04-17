@@ -2,8 +2,11 @@
 
 namespace Sheba\OrderAdvanceWithdrawalRequest;
 
+use App\Models\Order;
 use App\Models\WithdrawalRequest;
 use Illuminate\Support\Facades\DB;
+use Sheba\CancelRequest\CancelRequestStatuses;
+use Sheba\Dal\JobCancelRequest\JobCancelRequest;
 use Sheba\Dal\OrderAdvanceWithdrawal\OrderAdvanceWithdrawalRequestRepositoryInterface;
 
 class OrderAdvanceWithdrawalRequestService
@@ -49,7 +52,6 @@ class OrderAdvanceWithdrawalRequestService
         if (!$partner_order->order->is_credit_limit_adjustable || $partner_order->sheba_collection <= 0)  return 0;
 
         $activeWithdrawalAmount = $this->activeRequestAgainstPartnerOrderAmount($partner_order);
-        $activeWithdrawalAmount += $this->orderAdvanceWithdrawalRequestRepository->getTotalPendingAmountForPartnerOrder($partner_order);
 
         if ($partner_order->sheba_collection > $activeWithdrawalAmount) {
             return $partner_order->sheba_collection - $activeWithdrawalAmount;
@@ -84,5 +86,13 @@ class OrderAdvanceWithdrawalRequestService
             ->where('requester_id', $partner_order->partner_id)
             ->first()
             ->total_amount;
+    }
+
+    public function hasPendingCancelRequest($order_id)
+    {
+        $order = Order::find($order_id);
+        $job = $order->lastJob();
+        $cancelRequest = JobCancelRequest::where('status', CancelRequestStatuses::PENDING)->where('job_id', $job->id)->first();
+        return !is_null($cancelRequest);
     }
 }

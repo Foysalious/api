@@ -53,6 +53,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $this->hasMany(Announcement::class);
     }
 
+    public function departments()
+    {
+        return $this->hasMany(BusinessDepartment::class);
+    }
+
     public function members()
     {
         return $this->belongsToMany(Member::class)->withTimestamps();
@@ -557,6 +562,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
                 ]);
             }
         ]);
+    }
+
+    public function currentIntervalSetting()
+    {
+        return $this->liveTrackingSettings->intervalSettingLogs()->where('end_date', null)->latest()->first();
     }
 
 }

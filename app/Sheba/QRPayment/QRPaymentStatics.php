@@ -5,6 +5,14 @@ namespace App\Sheba\QRPayment;
 class QRPaymentStatics
 {
     const MTB_VALIDATE_URL = "retailfinqr/wqr/api/gettxndata?";
+    const MTB_ACCOUNT_STATUS = "retailfin/api/Enquiry/getAccountOpenStatus/";
+    const MTB_SAVE_PRIMARY_INFORMATION = "retailfin/api/acctOpen/savePrimaryInformation";
+    const MTB_TOKEN_GENERATE = "retailfin/api/token";
+    const MTB_SAVE_TRANSACTION_INFORMATION = "retailfin/api/acctOpen/saveTransactionInformation";
+    const MTB_SAVE_NOMINEE_INFORMATION = "retailfin/api/acctOpen/saveNomineeInfo";
+    const MTB_DOCUMENT_UPLOAD = "retailfin/api/acctOpen/documentUpload";
+
+    const MTB_QR_GENERATE_URL = "retailfinqr/wqr/api/generateqrstring?";
 
     public static function gatewayVisibleKeys(): array
     {

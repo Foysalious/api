@@ -50,8 +50,11 @@ class EmployeeRoute
 
             $api->group(['prefix' => 'live-tracking'], function ($api) {
                 $api->post('/', 'Employee\TrackingController@insertLocation');
-                $api->get('/', 'Employee\TrackingController@getTrackingLocation');
+                $api->get('last-track', 'Employee\TrackingController@lastTrackedDate');
                 $api->get('subordinate-list', 'Employee\TrackingController@getManagerSubordinateList');
+                $api->group(['prefix' => '{id}'], function ($api) {
+                    $api->get('/', 'Employee\TrackingController@trackingLocationDetails');
+                });
             });
 
             $api->group(['prefix' => 'my-team'], function ($api) {

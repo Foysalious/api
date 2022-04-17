@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
+use App\Sheba\QRPayment\QRPaymentStatics;
 
 class MtbSaveTransaction
 {
@@ -44,7 +45,7 @@ class MtbSaveTransaction
     public function saveTransactionInformation()
     {
         $data = $this->makeData();
-        return $this->client->post('api/acctOpen/saveTransactionInformation', $data, AuthTypes::BARER_TOKEN);
+        return $this->client->post(QRPaymentStatics::MTB_SAVE_TRANSACTION_INFORMATION, $data, AuthTypes::BARER_TOKEN);
 
     }
 }

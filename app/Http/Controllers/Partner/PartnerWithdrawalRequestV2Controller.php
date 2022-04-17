@@ -222,7 +222,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         /** @var PartnerOrder $partnerOrder */
         $partnerOrder = $order->lastPartnerOrder();
-        if (!$order->is_credit_limit_adjustable || $order->isCancelled() || $partnerOrder->isClosed() || $partnerOrder->partner_id != $partner->id)
+        if (!$order->is_credit_limit_adjustable || $order->isCancelled() || $partnerOrder->isClosed() || $partnerOrder->partner_id != $partner->id || $orderAdvanceWithdrawalRequestService->hasPendingCancelRequest($partnerOrder->order_id))
             return api_response($request, null, 402, ['message' => 'You can not make withdrawal request against this order']);
 
         $doesExceedWithdrawalLimit = $partnerWithdrawalService->doesExceedWithdrawalLimit((double)$request->amount, $request->payment_method);

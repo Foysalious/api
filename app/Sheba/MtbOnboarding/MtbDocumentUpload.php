@@ -5,6 +5,7 @@ use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
+use App\Sheba\QRPayment\QRPaymentStatics;
 
 class MtbDocumentUpload
 {
@@ -95,7 +96,7 @@ class MtbDocumentUpload
     public function uploadDocument()
     {
         $data = $this->makeData();
-        return $this->client->post('api/acctOpen/documentUpload', $data, AuthTypes::BARER_TOKEN);
+        return $this->client->post(QRPaymentStatics::MTB_DOCUMENT_UPLOAD, $data, AuthTypes::BARER_TOKEN);
 
     }
 }

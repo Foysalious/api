@@ -204,8 +204,7 @@ class MemberController extends Controller
             'is_super' => $business_member ? $business_member->is_super : null,
             'is_essential_info_available_for_activate' => $this->isEssentialInfoAvailableForActivate($business_member, $profile),
             'is_payroll_enable' => $business_member ? $business_member->is_payroll_enable : null,
-            'is_employee_tracking_enable' => $business_member ? $business_member->is_live_track_enable : null,
-            'is_manager' => $is_manager,
+            'is_live_tracking_accessible' => $business_member ? $business_member->is_live_track_accessible : null,
             'remember_token' => $member->remember_token,
             'access' => [
                 'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
