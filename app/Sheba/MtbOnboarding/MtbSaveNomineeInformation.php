@@ -44,12 +44,17 @@ class MtbSaveNomineeInformation
         return [
             'RequestData' => [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
-                'nomNm' => $this->partnerMefInformation->nomineeName,
-                'nomFatherNm' => $this->partnerMefInformation->nomineeFatherName,
-                'nomMotherNm' => $this->partnerMefInformation->nomineeMotherName,
-                'nomDob' => date("Ymd", strtotime($this->partnerMefInformation->nomineeDOB)),
-                'nomMobileNum' => $this->partnerMefInformation->nomineePhone,
-                'nomRelation' => $this->partnerMefInformation->nomineeRelation
+                'nomNm' => json_decode($this->partnerMefInformation->partner_information)->nomineeName,
+                'nomFatherNm' => json_decode($this->partnerMefInformation->partner_information)->nomineeFatherName,
+                'nomMotherNm' => json_decode($this->partnerMefInformation->partner_information)->nomineeMotherName,
+                'nomDob' => date("Ymd", strtotime(json_decode($this->partnerMefInformation->partner_information)->nomineeDOB)),
+                'nomMobileNum' => json_decode($this->partnerMefInformation->partner_information)->nomineePhone,
+                'nomRelation' => json_decode($this->partnerMefInformation->partner_information)->nomineeRelation,
+                'nid' => json_decode($this->partnerMefInformation->partner_information)->nomineeNid,
+                'presentPostcode' => json_decode($this->partnerMefInformation->partner_information)->nomineePresentPostCode,
+                'presentAddress' => json_decode($this->partnerMefInformation->partner_information)->nomineePresentAddress,
+                'permanentPostCode' => json_decode($this->partnerMefInformation->partner_information)->nomineePermanentPostCode,
+                'permanentAddress' => json_decode($this->partnerMefInformation->partner_information)->nomineePermanentAddress
             ],
             'requestId' => strval($this->partner->id),
             'channelId' => MtbConstants::CHANNEL_ID

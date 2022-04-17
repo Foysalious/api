@@ -72,6 +72,7 @@ class MtbSavePrimaryInformation
     private function makePrimaryInformation(): array
     {
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
+
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
@@ -81,8 +82,8 @@ class MtbSavePrimaryInformation
                 'nid' => $this->partner->getFirstAdminResource()->profile->nid_no,
                 'dob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->dob)),
                 'gender' => $this->partner->getFirstAdminResource()->profile->gender,
-                'fatherName' => $this->partner->getFirstAdminResource()->profile->father_name,
-                'motherName' => $this->partner->getFirstAdminResource()->profile->mother_name,
+                'fatherName' => $this->partnerMefInformation->fatherName,
+                'motherName' => $this->partnerMefInformation->motherName,
                 "contactAddress" => MtbConstants::CONTACT_ADDRESS,
                 'custGrade' => MtbConstants::CUSTOMER_GRADE,
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
@@ -100,6 +101,11 @@ class MtbSavePrimaryInformation
                     'postCode' => $this->partnerMefInformation->permanentPostCode,
                     'country' => MtbConstants::COUNTRY,
                     'contactAddress' => $this->partnerMefInformation->presentAddress
+                ],
+                'ShopInfo' => [
+                    'shopOwnerNm' => $this->partnerMefInformation->shopOwnerName,
+                    'shopNm' => $this->partnerMefInformation->shopName,
+                    'shopClass' => $this->partnerMefInformation->shopClass
                 ]
             ],
             'requestId' => strval($this->partner->id)
@@ -113,7 +119,7 @@ class MtbSavePrimaryInformation
      */
     private function applyMtb()
     {
-        $this->mtbSaveNomineeInformation->setPartner($this->partner)->setPartnerMefInformation($this->partnerMefInformation)->storeNomineeInformation();
+        $this->mtbSaveNomineeInformation->setPartner($this->partner)->setPartnerMefInformation($this->partner->partnerMefInformation)->storeNomineeInformation();
         $this->mtbDocumentUpload->setPartner($this->partner)->setPartnerMefInformation($this->partner->partnerMefInformation)->uploadDocument();
         $this->mtbSaveTransaction->setPartner($this->partner)->saveTransactionInformation();
         $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();

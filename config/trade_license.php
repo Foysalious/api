@@ -3,12 +3,12 @@
 return [
     'list' => [
         [
-            'key' => 1,
+            'key' => "Y",
             'name' => 'YES',
             'value' => 'হ্যা',
         ],
         [
-            'key' => 0,
+            'key' => "N",
             'name' => 'No',
             'value' => 'না',
         ]

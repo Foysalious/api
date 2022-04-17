@@ -10,7 +10,7 @@ return [
         'client_id' => env('MOR_CLIENT_ID',1234),
         'client_secret' => env('MOR_CLIENT_SECRET','abcd')
     ],
-    "available_payment_gateway_keys" => [PaymentStrategy::SSL],
+    "available_payment_gateway_keys" => [PaymentStrategy::SSL,PaymentStrategy::SHURJOPAY],
 
     'category_list' => [
         'ssl' => [
