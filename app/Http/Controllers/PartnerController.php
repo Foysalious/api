@@ -1204,8 +1204,17 @@ class PartnerController extends Controller
 
     public function getSliderDetails(Request $request)
     {
-        $data = $this->getSliderDetailsAndAccountTypesData();
-        return http_response($request, null, 200, ['data' => array_except($data, 'account_types')]);
+        $data = [
+            [
+                'id' => 1,
+                'slider_image' => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/home_v3/qr_banner_02.jpg"
+            ],
+            [
+                'id' => 2,
+                'slider_image' => "https://cdn-shebadev.s3.ap-south-1.amazonaws.com/partner_assets/assets/images/home_v3/qr_banner_01.jpg"
+            ]
+        ];
+        return http_response($request, null, 200, ['data' => $data]);
     }
 
     public function dashboardByToken(Request $request)
