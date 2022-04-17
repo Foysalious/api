@@ -61,7 +61,7 @@ class StatusChanger
     public function successful($transaction_details, $transaction_id = null): TopUpOrder
     {
         $data = [
-            "transaction_details" => $transaction_details,
+            "transaction_details" => json_encode($transaction_details),
         ];
         if ($transaction_id) $data["transaction_id"] = $transaction_id;
 
@@ -69,15 +69,15 @@ class StatusChanger
     }
 
     /**
-     * @param $reason
-     * @param $transaction_details
+     * @param FailDetails $details
      * @return TopUpOrder
      */
-    public function failed($reason, $transaction_details): TopUpOrder
+    public function failed(FailDetails $details): TopUpOrder
     {
         return $this->update(Statuses::FAILED, [
-            "failed_reason" => $reason,
-            "transaction_details" => $transaction_details,
+            "failed_reason" => $details->getReason(),
+            "failed_message" => $details->getMessage(),
+            "transaction_details" => json_encode($details->getTransactionDetails()),
         ]);
     }
 
@@ -86,7 +86,7 @@ class StatusChanger
      */
     public function systemError(): TopUpOrder
     {
-        return $this->update( Statuses::SYSTEM_ERROR);
+        return $this->update(Statuses::SYSTEM_ERROR);
     }
 
     /**

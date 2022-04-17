@@ -32,17 +32,18 @@ class TopUpErrorResponse
         return $this->failedReason;
     }
 
-    public function toArray()
+    public function getErrorMessage()
     {
-        return [
-            'code' => $this->errorCode,
-            'message' => $this->errorMessage,
-            'response' => $this->errorResponse
-        ];
+        return $this->errorMessage;
     }
 
-    public function toJson()
+    public function getErrorCode()
     {
-        return json_encode($this->toArray());
+        return $this->errorMessage;
+    }
+
+    public function getErrorResponse()
+    {
+        return $this->errorResponse;
     }
 }

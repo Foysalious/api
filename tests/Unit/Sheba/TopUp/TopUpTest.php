@@ -41,6 +41,27 @@ class TopUpTest extends UnitTestCase
         $this->assertTrue($top_up->isNotSuccessful());
     }
 
+    public function testShouldStateErrorWithInvalidOrder()
+    {
+        $top_up = $this->tryToRechargeInvalidOrder();
+        $this->shouldNotThrowException(function () use ($top_up) {
+            $this->assertEquals($this->getError(), $top_up->getError());
+        });
+    }
+
+    public function testInvalidOrderShouldUpdateAsFailedOrder()
+    {
+        $this->tryToRechargeInvalidOrder();
+        $this->assertTrue($this->topUpOrder->isFailed());
+        $error = $this->getError();
+        $transaction_details = json_encode([
+            'code' => $error->getErrorCode(),
+            'message' => $error->getErrorMessage(),
+            'transaction_details' => $error->getErrorResponse(),
+        ]);
+        $this->assertEquals($transaction_details, $this->topUpOrder->transaction_details);
+    }
+
     /**
      * @return TopUpRechargeManager
      * @throws Exception
