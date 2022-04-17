@@ -82,7 +82,7 @@ class MtbDocumentUpload
             $data[] = [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => strval($this->partner->id),
-                'docImage' => base64_encode(file_get_contents(json_decode($this->partnerMefInformation->partner_information)->trade_license)),
+                'docImage' => base64_encode(file_get_contents($this->partner->basicInformations->trade_license_attachment)),
                 'docType' => MtbConstants::TRADE_LICENSE,
             ];
         }
