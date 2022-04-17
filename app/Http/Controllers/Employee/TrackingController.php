@@ -95,7 +95,13 @@ class TrackingController extends Controller
         $managers_subordinate_ids = Arr::pluck($managers_subordinates, 'id');
         $business_members = BusinessMember::whereIn('id', $managers_subordinate_ids);
 
-        if ($request->has('department')) $business_members = $co_worker_info_filter->filterByDepartment($business_members, $request);
+        if ($request->has('department')) {
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->whereIn('business_departments.id', json_decode($request->department));
+                });
+            });
+        }
 
         $data = [];
         foreach ($business_members->get() as $business_member) {
