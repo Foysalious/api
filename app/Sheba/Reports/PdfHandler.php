@@ -1,8 +1,10 @@
 <?php namespace Sheba\Reports;
 
+use App\Models\PartnerOrder;
 use Barryvdh\DomPDF\PDF;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -110,6 +112,43 @@ class PdfHandler extends Handler
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
         return $cdn;
+    }
+
+    public function saveInvoice($type, $mPdf = false, PartnerOrder $partner_order)
+    {
+        $this->data['type'] = $type;
+        $this->data['partner_order'] = $partner_order;
+        $filename = ucfirst(strtolower($type)) . '-' . $partner_order->code() . '.pdf';
+        $file = $this->getTempFolder() . $filename;
+        if ($mPdf) {
+            $mPDF=$this->getMpdf();
+            $mPDF->simpleTables = true;
+            $folder = $this->folder ?: $this->getTempFolder();
+            $mPDF->packTableData = true;
+            $mPDF->shrink_tables_to_fit = 1;
+            $data = view($this->viewFileName, $this->data)->render();
+            $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
+            $mPDF->Output($filename, "F");
+            $s3_invoice_link = $this->saveToCDN($file, $filename);
+            return [
+                'link' => $s3_invoice_link
+            ];
+        }
+    }
+
+    private function getTempFolder()
+    {
+        $temp_folder = public_path() . '/';
+        if (!is_dir($temp_folder)) {
+            mkdir($temp_folder, 0777, true);
+        }
+        return $temp_folder;
+    }
+
+    private function saveToCDN($file, $filename)
+    {
+        $s3_invoice_path = 'invoices/';
+        return $this->saveFileToCDN($file, $s3_invoice_path, $filename);
     }
 
     protected function getViewPath()
