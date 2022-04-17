@@ -12,6 +12,7 @@ use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -38,6 +39,10 @@ class TrackingController extends Controller
         $this->trackingLocationRepo = app(TrackingLocationRepository::class);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         /** @var Business $business */
@@ -45,13 +50,12 @@ class TrackingController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $employee_lists = collect((new ManagerSubordinateEmployeeList())->getManager($business_member->id));
-        $employee_lists = $employee_lists->map(function ($employee) {
-            return $employee->id;
-        })->toArray();
+        $managers_subordinates = (new ManagerSubordinateEmployeeList())->getManager($business_member->id);
+        $managers_subordinate_ids = Arr::pluck($managers_subordinates, 'id');
+
         list($offset, $limit) = calculatePagination($request);
         $tracking_locations = $this->trackingLocationRepo->builder()->select('business_id', 'business_member_id', 'location', 'log', 'date', 'time', 'created_at')->where('business_id', $business->id);
-        if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $employee_lists);
+        if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $managers_subordinate_ids);
         if ($request->has('department')) {
             $business_members = $business->getTrackLocationActiveBusinessMember();
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -74,6 +78,12 @@ class TrackingController extends Controller
         return api_response($request, $tracking_locations, 200, ['is_live_tracking_active' => $business->liveTrackingSettings->is_enable, 'total' => $total_count, 'tracking_locations' => $tracking_locations]);
     }
 
+    /**
+     * @param Request $request
+     * @param SettingsUpdater $updater
+     * @param ChangeLogsCreator $change_logs_creator
+     * @return JsonResponse
+     */
     public function settingsAction(Request $request, SettingsUpdater $updater, ChangeLogsCreator $change_logs_creator)
     {
         $this->validate($request, [
@@ -284,6 +294,11 @@ class TrackingController extends Controller
         });
     }
 
+    /**
+     * @param $tracking_locations
+     * @param $no_activity
+     * @return mixed
+     */
     private function getEmployeeOfNoActivityForCertainHour($tracking_locations, $no_activity)
     {
         $from_time = Carbon::now()->subMinutes($no_activity);
