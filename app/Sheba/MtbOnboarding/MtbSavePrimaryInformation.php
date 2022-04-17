@@ -72,7 +72,8 @@ class MtbSavePrimaryInformation
     private function makePrimaryInformation(): array
     {
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
-
+        if ($this->partnerMefInformation->tradeLicenseExists=="হ্যা") $tradeLicenseExist="Y";
+        else $tradeLicenseExist="N";
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
@@ -87,7 +88,7 @@ class MtbSavePrimaryInformation
                 "contactAddress" => MtbConstants::CONTACT_ADDRESS,
                 'custGrade' => MtbConstants::CUSTOMER_GRADE,
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
-                'tradeLicenseExists' => $this->partnerMefInformation->tradeLicenseExists,
+                'tradeLicenseExists' => $tradeLicenseExist,
                 'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
                 'presentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->presentAddress,
