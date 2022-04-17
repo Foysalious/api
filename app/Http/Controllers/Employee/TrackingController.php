@@ -59,13 +59,15 @@ class TrackingController extends Controller
     }
 
     /**
+     * @param $business_member_id
      * @param Request $request
      * @return JsonResponse
      */
-    public function getTrackingLocation(Request $request)
+    public function trackingLocationDetails($business_member_id, Request $request)
     {
         /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
+        $business_member = BusinessMember::find((int)$business_member_id);
+
         if (!$business_member) return api_response($request, null, 404);
 
         if (!$request->date) return api_response($request, null, 404);
@@ -77,18 +79,6 @@ class TrackingController extends Controller
         $tracking_locations = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['tracking_locations' => $tracking_locations]);
-    }
-
-    /**
-     * @return string
-     */
-    public function getAddress($geo)
-    {
-        try {
-            return (new BarikoiClient)->getAddressFromGeo($geo)->getAddress();
-        } catch (Throwable $exception) {
-            return "";
-        }
     }
 
     /**
@@ -143,7 +133,6 @@ class TrackingController extends Controller
         return api_response($request, null, 200, ['employee_list' => $data]);
     }
 
-
     /**
      * @param Request $request
      * @param DateDropDown $date_drop_down
@@ -160,6 +149,18 @@ class TrackingController extends Controller
 
         list($last_tracked_date, $date_dropdown) = $date_drop_down->getDateDropDown($last_tracked_location);
         return api_response($request, null, 200, ['last_tracked' => $last_tracked_date, 'date_dropdown' => $date_dropdown]);
+    }
+
+    /**
+     * @return string
+     */
+    private function getAddress($geo)
+    {
+        try {
+            return (new BarikoiClient)->getAddressFromGeo($geo)->getAddress();
+        } catch (Throwable $exception) {
+            return "";
+        }
     }
 
     /**
