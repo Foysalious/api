@@ -68,7 +68,16 @@ class FormSubmit
 
             }
         }
+
         $this->storePartnerMefInformation();
+        $this->partner->save();
+
+        if(isset($this->basicInformation))
+            $this->basicInformation->save();
+        if(isset($this->firstAdminProfile))
+            $this->firstAdminProfile->save();
+        if(isset($this->partnerBasicInformation))
+            $this->savePartnerBasicInformation();
     }
 
 
@@ -79,6 +88,12 @@ class FormSubmit
                 ->setProperty(json_decode($this->partner->partnerMefInformation->partner_information, 1));
         else
             $this->partnerMefInformation = new PartnerMefInformation();
+    }
+
+    private function savePartnerBasicInformation()
+    {
+        $this->partner->basicInformations->additional_information = (json_encode($this->partnerBasicInformation));
+        $this->partner->basicInformations->save();
     }
 
     /**

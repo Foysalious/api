@@ -39,6 +39,8 @@ class PartnerMefInformation implements Arrayable
     private $nomineePresentAddress;
     private $nomineePermanentPostCode;
     private $nomineePermanentAddress;
+    private $yearsInBusiness;
+    private $organizationPostalCode;
 
 
     public function setProperty($input): PartnerMefInformation
