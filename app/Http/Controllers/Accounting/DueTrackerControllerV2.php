@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\DueTracker\BulkSmsSendRequest;
 use App\Sheba\AccountingEntry\Constants\AccountKeyTypes;
+use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
@@ -246,5 +248,17 @@ class DueTrackerControllerV2 extends Controller
             ->getBulkSmsContactList();
 
         return http_response($request, null, 200, ['data' => $response]);
+    }
+
+    public function sendBulkSmsToContacts(Request $request)
+    {
+        $this->validate($request, [
+            'contact_type' => 'required|string|in:' . implode(',', ContactType::get()),
+            'contact_ids' => 'required|array'
+        ]);
+        $this->dueTrackerSmsService
+            ->setPartner($request->partner)
+            ->setContactIds($request->contact_ids)
+            ->sendBulkSmsToContacts();
     }
 }

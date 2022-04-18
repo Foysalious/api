@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
+use App\Jobs\Partner\DueTrackerBulkSmsSend;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\AccountingEntry\Constants\BalanceType;
 use App\Sheba\AccountingEntry\Constants\ContactType;
@@ -20,12 +21,13 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 class DueTrackerSmsService
 {
     protected $partner;
-    protected $contact_type;
-    protected $contact_id;
+    protected $contactType;
+    protected $contactId;
     protected $dueTrackerRepo;
     protected $dueTrackerService;
     protected $limit;
     protected $offset;
+    protected $contactIds;
 
     /**
      * @param mixed $limit
@@ -65,16 +67,14 @@ class DueTrackerSmsService
      */
     public function setContactType($contact_type)
     {
-        $this->contact_type = $contact_type;
+        $this->contactType = $contact_type;
         return $this;
     }
 
-    /**
-     * @param mixed $contact_id
-     */
-    public function setContactId($contact_id)
+
+    public function setContactIds($contact_ids)
     {
-        $this->contact_id = $contact_id;
+        $this->contactIds = $contact_ids;
         return $this;
     }
 
@@ -86,8 +86,8 @@ class DueTrackerSmsService
     public function getSmsContentForTagada(): array
     {
         $contact_balance = $this->dueTrackerService
-            ->setContactType($this->contact_type)
-            ->setContactId($this->contact_id)
+            ->setContactType($this->contactType)
+            ->setContactId($this->contactId)
             ->setPartner($this->partner)
             ->getBalanceByContact();
         $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
@@ -141,7 +141,7 @@ class DueTrackerSmsService
     public function getSmsHandler($data)
     {
         $log = ' BDT has been deducted for sending ';
-        $event_name = 'due-tracker-inform-' . $this->contact_type;
+        $event_name = 'due-tracker-inform-' . $this->contactType;
         if ($data['type'] == 'due') {
             $event_name .=   '-due';
             $log .= "due details";
@@ -167,7 +167,7 @@ class DueTrackerSmsService
             'web_report_link' => $sms_content['web_report_link'],
             'type' => $sms_content['balance_type'] == BalanceType::RECEIVABLE ? 'due' : 'deposit'
         ];
-        if ( $this->contact_type == ContactType::CUSTOMER) {
+        if ( $this->contactType == ContactType::CUSTOMER) {
             $data['customer_name'] =  $sms_content['contact_name'];
         } else {
             $data['supplier_name'] =  $sms_content['contact_name'];
@@ -197,7 +197,13 @@ class DueTrackerSmsService
 
     public function getBulkSmsContactList()
     {
-        $url_param = 'contact_type=' . $this->contact_type .'&limit=' .$this->limit .'&offset=' . $this->offset;
+        $url_param = 'contact_type=' . $this->contactType .'&limit=' .$this->limit .'&offset=' . $this->offset;
         return $this->dueTrackerRepo->setPartner($this->partner)->getBulkSmsContactList($url_param);
+    }
+
+    public function sendBulkSmsToContacts()
+    {
+        /* Todo need to check the wallet for sms charge calculation before job */
+        dispatchJobNow(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
     }
 }

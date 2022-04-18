@@ -17,6 +17,7 @@ class AccountingRoute
                 $api->post('/bad-debts', 'Accounting\\DueTrackerControllerV2@badDebts');
                 $api->get('/sms-content/','Accounting\\DueTrackerControllerV2@getSmsContent');
                 $api->post('/send-single-sms/','Accounting\\DueTrackerControllerV2@sendSingleSmsToContact');
+                $api->post('/send-bulk-sms/','Accounting\\DueTrackerControllerV2@sendBulkSmsToContacts');
                 $api->get('/bulk-sms-list/','Accounting\\DueTrackerControllerV2@getBulkSmsContactList');
 
                 $api->group(['prefix' => 'reminders'], function ($api) {
