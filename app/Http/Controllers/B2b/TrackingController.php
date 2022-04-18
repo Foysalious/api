@@ -116,8 +116,8 @@ class TrackingController extends Controller
         /** @var  LiveTrackingSettings $live_tracking_settings */
         $live_tracking_settings = $business->liveTrackingSettings;
         $tracking_settings = [
-            'is_tracking_enable' => $live_tracking_settings->is_enable,
-            'location_fetch_interval_in_minutes' => $live_tracking_settings->location_fetch_interval_in_minutes
+            'is_tracking_enable' => $live_tracking_settings ? $live_tracking_settings->is_enable : 0,
+            'location_fetch_interval_in_minutes' => $live_tracking_settings ? $live_tracking_settings->location_fetch_interval_in_minutes : 15
         ];
         return api_response($request, null, 200, ['tracking_settings' => $tracking_settings]);
     }
