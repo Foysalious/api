@@ -57,7 +57,7 @@ class Updater
                 'location_fetch_interval_in_minutes' => $this->intervalTime
             ]));
             $this->updateTrackIntervalTimeLog();
-            $this->createTrackIntervalTimeLog();
+            $this->createTrackIntervalTimeLog($this->liveTrackingSetting);
             return $this->liveTrackingSetting;
         }
         $tracking_settings = $this->liveTrackingSettingRepo->create($this->withCreateModificationField([
@@ -65,24 +65,22 @@ class Updater
             'is_enable' => $this->isEnable,
             'location_fetch_interval_in_minutes' => $this->intervalTime
         ]));
-        $this->createTrackIntervalTimeLog();
+        $this->createTrackIntervalTimeLog($tracking_settings);
         return $tracking_settings;
     }
 
     private function updateTrackIntervalTimeLog()
     {
         $tracking_interval_log = $this->business->currentIntervalSetting();
-        $tracking_interval_log->update($this->withUpdateModificationField([
-            'business_id' => $this->business->id,
-            'end_time' => Carbon::now()->toDateString(),
-        ]));
+        $tracking_interval_log->update($this->withUpdateModificationField(['end_date' => Carbon::now()->toDateString()]));
     }
 
-    private function createTrackIntervalTimeLog()
+    private function createTrackIntervalTimeLog($tracking_settings)
     {
         $this->liveTrackIntervalLogRepo->create($this->withCreateModificationField([
-            'business_id' => $this->business->id,
-            'start_time' => Carbon::now()->toDateString(),
+            'live_track_settings_id' => $tracking_settings->id,
+            'location_fetch_interval_in_minutes' => $this->intervalTime,
+            'start_date' => Carbon::now()->toDateString(),
         ]));
     }
 }
