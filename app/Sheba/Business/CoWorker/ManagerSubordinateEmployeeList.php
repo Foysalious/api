@@ -38,6 +38,7 @@ class ManagerSubordinateEmployeeList
     /**
      * @param $business_member_id
      * @param $managers
+     * @param $root_manager_id
      */
     public function getManager($business_member_id, &$managers, $root_manager_id)
     {

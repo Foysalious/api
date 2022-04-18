@@ -90,9 +90,9 @@ class TrackingController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-
-        $managers_subordinates = (new ManagerSubordinateEmployeeList())->getManager($business_member->id);
-        $managers_subordinate_ids = Arr::pluck($managers_subordinates, 'id');
+        $managers = [];
+        $managers_subordinates = (new ManagerSubordinateEmployeeList())->getManager($business_member->id, $managers,$business_member->id);
+        $managers_subordinate_ids = array_keys($managers);
         $business_members = BusinessMember::whereIn('id', $managers_subordinate_ids);
 
         if ($request->has('department')) {
