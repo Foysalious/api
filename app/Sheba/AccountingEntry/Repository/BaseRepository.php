@@ -100,22 +100,6 @@ class BaseRepository
         return Partner::find($partner_id);
     }
 
-    //TODO: should remove in next release (after pos rebuild)
-    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
-    {
-        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
-        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
-        $method_details = ['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png'];
-        $posOrderPaymentRepository->setMethodDetails($method_details)->createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method);
-    }
-
-    public function removePosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
-    {
-        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
-        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
-        $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $amount_cleared);
-    }
-
     /**
      * @param $userId
      * @return bool
