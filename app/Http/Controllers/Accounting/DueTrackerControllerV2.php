@@ -69,7 +69,7 @@ class DueTrackerControllerV2 extends Controller
             ->setAccountKey(AccountKeyTypes::CASH)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
-            ->setNote('Bad Debts')
+            ->setNote('অনাদায়ী পাওনা')
             ->badDebts();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
         return api_response($request, null, 200, ['data' => $response]);
@@ -116,7 +116,6 @@ class DueTrackerControllerV2 extends Controller
      * @param Request $request
      * @return JsonResponse
      * @throws AccountingEntryServerError
-     * @throws PosOrderServiceServerError
      */
     public function dueListByContact(Request $request): JsonResponse
     {
