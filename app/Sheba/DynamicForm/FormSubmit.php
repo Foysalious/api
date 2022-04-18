@@ -3,6 +3,8 @@
 namespace App\Sheba\DynamicForm;
 
 use App\Models\Partner;
+use App\Models\PartnerBasicInformation;
+use App\Models\Profile;
 use Sheba\Dal\MefFields\Model as MefFields;
 
 class FormSubmit
@@ -17,6 +19,14 @@ class FormSubmit
 
     /*** @var PartnerMefInformation */
     private $partnerMefInformation;
+
+    private $partnerBasicInformation;
+
+    /*** @var Profile */
+    private $firstAdminProfile;
+
+    /*** @var PartnerBasicInformation */
+    private $basicInformation;
 
     /**
      * @param mixed $fields
@@ -87,5 +97,20 @@ class FormSubmit
             $this->partner->partnerMefInformation->partner_information = json_encode($this->partnerMefInformation->getAvailable());
             $this->partner->partnerMefInformation->save();
         }
+    }
+
+    public function setPartnerBasicInformation()
+    {
+        $this->partnerBasicInformation = json_decode($this->partner->basicInformations->additional_information);
+    }
+
+    public function setFirstAdminProfile()
+    {
+        $this->firstAdminProfile = $this->partner->getFirstAdminResource()->profile;
+    }
+
+    public function setBasicInformation()
+    {
+        $this->basicInformation = $this->partner->basicInformations;
     }
 }
