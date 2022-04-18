@@ -1,23 +1,18 @@
 <?php $job = $partner_order->order->lastJob()->calculate(true); ?>
-<style>
-    .bangla-font-invoice{
-        font-family: Siyamrupali, sans-serif;
-    }
-</style>
 <thead>
-    <tr>
-        <th class="desc">SERVICE NAME</th>
-        <th class="qty" style="background-color: #DDDDDD;">QTY</th>
-        <th class="qty">UNIT PRICE</th>
-        <th class="unit">PRICE</th>
-    </tr>
+<tr>
+    <th class="desc">SERVICE NAME</th>
+    <th class="qty" style="background-color: #DDDDDD;">QTY</th>
+    <th class="qty">UNIT PRICE</th>
+    <th class="unit">PRICE</th>
+</tr>
 </thead>
 
 <tbody>
 @if($job->status != "Cancelled")
     @forelse($job->jobServices as $service)
         <tr>
-            <td class="bangla-font-invoice">
+            <td >
                 <h3>{{ $service->name }}</h3>
                 <span>
                     @foreach(json_decode($service->variables ) as $key => $serviceVariable)
@@ -47,63 +42,63 @@
 </tbody>
 
 <tfoot>
-    <tr>
-        <td colspan="2"></td>
-        <td class="text-left" colspan="1">TOTAL SERVICE PRICE</td>
-        <td class="s-price">{{ $job->servicePrice }}</td>
-    </tr>
+<tr>
+    <td colspan="2"></td>
+    <td class="text-left" colspan="1">TOTAL SERVICE PRICE</td>
+    <td class="s-price">{{ $job->servicePrice }}</td>
+</tr>
 
-    @if($job->materialPrice>0)
+@if($job->materialPrice>0)
     <tr>
         <td colspan="2"></td>
         <td class="text-left" colspan="1">TOTAL MATERIAL PRICE</td>
         <td class="s-price">{{ $job->materialPrice }}</td>
     </tr>
-    @endif
+@endif
 
-    @if($partner_order->totalDiscount > 0)
-        <tr>
-            <td colspan="2"></td>
-            <td class="text-left" colspan="1">DISCOUNT</td>
-            <td class="s-price">{{ $partner_order->totalDiscount }}</td>
-        </tr>
-    @endif
-
-    @if(!$job->first_logistic_order_id && !$job->last_logistic_order_id && $job->site == 'customer')
-        <tr>
-            <td colspan="2"></td>
-            <td class="text-left" colspan="1">DELIVERY CHARGE</td>
-            <td class="s-price">{{ $job->deliveryPrice }}</td>
-        </tr>
-    @elseif($job->logistic_charge)
-        <tr>
-            <td colspan="2"></td>
-            <td class="text-left" colspan="1">LOGISTIC CHARGE</td>
-            <td class="s-price">{{ number_format($partner_order->totalLogisticCharge, 2) }}</td>
-        </tr>
-    @endif
-
+@if($partner_order->totalDiscount > 0)
     <tr>
         <td colspan="2"></td>
-        <td class="text-left" colspan="1">SUBTOTAL</td>
-        <td class="s-price">{{ number_format($partner_order->totalPrice + $partner_order->totalLogisticCharge, 2) }}</td>
+        <td class="text-left" colspan="1">DISCOUNT</td>
+        <td class="s-price">{{ $partner_order->totalDiscount }}</td>
     </tr>
+@endif
 
-    @if($partner_order->roundingCutOff>0)
-        <tr>
-            <td colspan="2"></td>
-            <td class="text-left" colspan="1">ROUNDING CUT OFF</td>
-            <td class="s-price">{{ $partner_order->roundingCutOff }}</td>
-        </tr>
-    @endif
+@if(!$job->first_logistic_order_id && !$job->last_logistic_order_id && $job->site == 'customer')
+    <tr>
+        <td colspan="2"></td>
+        <td class="text-left" colspan="1">DELIVERY CHARGE</td>
+        <td class="s-price">{{ $job->deliveryPrice }}</td>
+    </tr>
+@elseif($job->logistic_charge)
+    <tr>
+        <td colspan="2"></td>
+        <td class="text-left" colspan="1">LOGISTIC CHARGE</td>
+        <td class="s-price">{{ number_format($partner_order->totalLogisticCharge, 2) }}</td>
+    </tr>
+@endif
 
-    @if($partner_order->due>0 && $type !== "QUOTATION")
-        <tr>
-            <td colspan="2"></td>
-            <td class="text-left" colspan="1">PAID</td>
-            <td class="s-price">{{ $partner_order->paid }}</td>
-        </tr>
-    @endif
+<tr>
+    <td colspan="2"></td>
+    <td class="text-left" colspan="1">SUBTOTAL</td>
+    <td class="s-price">{{ number_format($partner_order->totalPrice + $partner_order->totalLogisticCharge, 2) }}</td>
+</tr>
+
+@if($partner_order->roundingCutOff>0)
+    <tr>
+        <td colspan="2"></td>
+        <td class="text-left" colspan="1">ROUNDING CUT OFF</td>
+        <td class="s-price">{{ $partner_order->roundingCutOff }}</td>
+    </tr>
+@endif
+
+@if($partner_order->due>0 && $type !== "QUOTATION")
+    <tr>
+        <td colspan="2"></td>
+        <td class="text-left" colspan="1">PAID</td>
+        <td class="s-price">{{ $partner_order->paid }}</td>
+    </tr>
+@endif
 
     <tr>
         <td colspan="2"></td>

@@ -47,6 +47,7 @@ use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Reports\PdfHandler;
 use Sheba\Services\FormatServices;
 use Sheba\UserAgentInformation;
 use Sheba\Dal\PartnerOrderPayment;
@@ -817,7 +818,9 @@ class JobController extends Controller
                 'link' => $job->partnerOrder->invoice
             ];
         }
-        return (new InvoiceHandler($job->partnerOrder))->save('quotation');
+        $partner_order = $job->partnerOrder->calculate(true);
+        $invoice_data['partner_order'] = $partner_order;
+        return (new PdfHandler())->setData($invoice_data)->setViewFile('invoice')->saveInvoice('quotation', true);
     }
 
     public function rescheduleJob($customer, $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
