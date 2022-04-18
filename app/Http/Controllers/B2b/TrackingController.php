@@ -43,7 +43,7 @@ class TrackingController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request, CoWorkerInfoFilter $co_worker_info_filter)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -58,11 +58,7 @@ class TrackingController extends Controller
         if (!$business_member->isSuperAdmin()) $tracking_locations->whereIn('business_member_id', $employee_lists);
         if ($request->has('department')) {
             $business_members = $business->getTrackLocationActiveBusinessMember();
-            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
-                $q->whereHas('businessDepartment', function ($q) use ($request) {
-                    $q->where('business_departments.id', $request->department);
-                });
-            })->pluck('id')->toArray();
+            $business_members = $co_worker_info_filter->filterByDepartment($business_members, $request)->pluck('id')->toArray();
             $tracking_locations = $tracking_locations->whereIn('business_member_id', $business_members);
         }
         $tracking_locations = $tracking_locations->groupBy('business_member_id')->orderBy('created_at', 'DESC');
