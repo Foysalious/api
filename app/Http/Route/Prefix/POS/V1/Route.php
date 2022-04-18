@@ -105,6 +105,7 @@ class Route
                 $api->group(['prefix' => 'suppliers'], function ($api) {
                     $api->get('/{supplier_id}', 'PosCustomer\PosCustomerController@supplierDetails');
                     $api->post('/', 'PosCustomer\PosCustomerController@storeSupplier');
+                    $api->put('/{supplier_id}', 'PosCustomer\PosCustomerController@updateSupplier');
                 });
                 $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
                 $api->get('/partner-categories', 'Inventory\CategoryController@getPartnerCategory');
