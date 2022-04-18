@@ -164,6 +164,11 @@ class PosCustomerService
         return $customer_details;
     }
 
+    public function getSupplierDetails()
+    {
+        return $this->getSupplierInfoFromSmanagerUserService();
+    }
+
     public function getOrders()
     {
         return $this->posOrderServerClient->get('api/v1/partners/' . $this->partner->id . '/customers/' . $this->customerId . '/orders');
@@ -287,6 +292,14 @@ class PosCustomerService
     public function getCustomerInfoFromSmanagerUserService()
     {
         return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/pos-users/' . $this->customerId);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getSupplierInfoFromSmanagerUserService()
+    {
+        return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/suppliers/' . $this->customerId);
     }
 
     /**
