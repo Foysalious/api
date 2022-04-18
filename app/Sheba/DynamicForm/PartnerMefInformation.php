@@ -41,6 +41,12 @@ class PartnerMefInformation implements Arrayable
     private $nomineePermanentAddress;
     private $yearsInBusiness;
     private $organizationPostalCode;
+    private $accountHolderName;
+    private $bankName;
+    private $branchName;
+    private $bankAccountNumber;
+    private $bankRoutingNumber;
+    private $branchCode;
 
 
     public function setProperty($input): PartnerMefInformation
