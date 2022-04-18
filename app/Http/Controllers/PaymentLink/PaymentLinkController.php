@@ -404,24 +404,6 @@ class PaymentLinkController extends Controller
         }
     }
 
-    public function paymentLinkPaymentDetailsV3($link, $payment, Request $request)
-    {
-        try {
-            $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
-            $payment = $payment_link_payment_details ? $this->paymentLinkRepo->payment($payment) : null;
-            if ($payment && $payment_link_payment_details) {
-                $payment_detail = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
-                $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail, $payment_link_payment_details);
-                return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
-            } else {
-                return api_response($request, 1, 404);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function transactionList(Request $request, Payable $payable)
     {
         try {
