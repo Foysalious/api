@@ -122,6 +122,22 @@ class PosCustomerController extends Controller
         return http_response($request, null, 200, ['message' => 'Successful']);
     }
 
+    public function updateSupplier(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        $supplier_id = $request->supplier_id;
+        $image = null;
+        if ($request->input('pro_pic')) {
+            $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
+        }
+        $customer = $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
+            ->setEmail($request->email)->setAddress($request->address)->setGender($request->gender)->setSupplier($request->is_supplier)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)->setSupplierId($supplier_id)
+            ->setCompanyName($request->comapny_name)->updateSupplier();
+        $customer['id'] = $customer['_id'];
+        unset($customer['_id']);
+        return http_response($request, null, 200, ['message' => 'Successful', 'customer' => $customer]);
+    }
+
     /**
      * @param Request $request
      * @param $supplier_id
