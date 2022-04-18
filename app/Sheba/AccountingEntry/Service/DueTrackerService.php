@@ -402,25 +402,28 @@ class DueTrackerService
         $data['data']['start_date'] = ($this->start_date != null) ? NumberLanguageConverter::en2bn(date_format($start_date,"d")).' '.banglaMonth(date_format($start_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($start_date,"Y")) : '';
         $data['data']['end_date'] = ($this->end_date != null ? NumberLanguageConverter::en2bn(date_format($end_date,"d")).' '.banglaMonth(date_format($end_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($end_date,"Y")) : '');
         $data['data']['now'] = DayTimeConvertBn(date("Y-m-d H:i:s"));
+        $data['data']['contact_type'] = $this->contact_type;
 
         $data['data']['partner']['name'] = $this->partner->name;
         $data['data']['partner']['mobile'] = $this->partner->mobile;
         $data['data']['partner']['logo'] = $this->partner->logo;
 
         if ($this->contact_id == null) {
-            $list = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
-            $data = array_merge($data, $list);
-            $balanceData = $this->getDueListBalance();
-            $data = array_merge($data, $balanceData);
-            //TODO: Will Change the Pdf Generation
-            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf";
-            //return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
+            $data['data'] += $this->dueTrackerRepo->setPartner($this->partner)->downloadPdfByContact($queryString);
+            $data = $this->listBnForPdf($data);//dd($data);
+            $header =  view('reports.pdfs.dueTrackerPartials._header_duelist_single_contact', compact('data'))->render();
+            $footer = view('reports.pdfs.dueTrackerPartials._footer_duelist_single_contact')->render();
+            return (new AccountingPdfHandler())->setHeader($header)
+                ->setFooter($footer)
+                ->setName("due tracker by contact")
+                ->setData($data)
+                ->setViewFile('due_tracker_due_list_v2')
+                ->save(true,$header);
         }
         $data['data'] += $this->dueTrackerRepo->setPartner($this->partner)->downloadPdfByContact($queryString);
         $data = $this->listBnForContactPdf($data);
         $header =  view('reports.pdfs.dueTrackerPartials._header_duelist_single_contact', compact('data'))->render();
         $footer = view('reports.pdfs.dueTrackerPartials._footer_duelist_single_contact')->render();
-
         return (new AccountingPdfHandler())->setHeader($header)
             ->setFooter($footer)
             ->setName("due tracker by contact")
@@ -595,6 +598,32 @@ class DueTrackerService
             $list[$keybn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['receivable']);
             $list[$keybn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['payable']);
             $list[$keybn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['total_transactions']);
+        }
+        $data['data']['due_list_bn']=$list;
+        return $data;
+    }
+
+    /**
+     * @param $data
+     * @return array
+     */
+    private function listBnForPdf($data): array
+    {
+        $list = array();
+        foreach($data['data']['due_list'] as $key => $value){
+            $split = explode("-",$key);
+            $keybn = banglaMonth($split[1]).' '.NumberLanguageConverter::en2bn($split[0]);
+            foreach($value['list'] as $key1 => $v){
+                $entry_at = date_create($data['data']['due_list'][$key]['list'][$key1]['entry_at']);
+                $list[$keybn]['list'][$key1]['contact_name'] = $data['data']['due_list'][$key]['list'][$key1]['contact_name'];
+                $list[$keybn]['list'][$key1]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($entry_at,"d")).'/'.NumberLanguageConverter::en2bn(date_format($entry_at,"m"));
+                $list[$keybn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['list'][$key1]['balance']);
+                $list[$keybn]['list'][$key1]['balance_type'] = NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['list'][$key1]['balance_type']);
+            }
+            $list[$keybn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['total_transactions']);
+            $list[$keybn]['stats']['balance'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['balance']);
+            $list[$keybn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['receivable']);
+            $list[$keybn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['payable']);
         }
         $data['data']['due_list_bn']=$list;
         return $data;
