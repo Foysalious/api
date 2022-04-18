@@ -74,20 +74,18 @@
             <thead>
             <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
                 <th style="padding: 9px 16px; width: 150px">তারিখ</th>
-                <th style="text-align: left;">বিস্তারিত</th>
+                <th style="text-align: left;">নাম</th>
                 <th style="text-align: right;">বাকি</th>
                 <th style="text-align: right;">জমা</th>
-                <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
             </tr>
             </thead>
         @elseif($data['contact_type'] == 'supplier')
             <thead>
             <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
                 <th style="padding: 9px 16px; width: 150px">তারিখ</th>
-                <th style="text-align: left;">বিস্তারিত</th>
+                <th style="text-align: left;">নাম</th>
                 <th style="text-align: right;">বাকি ক্রয়</th>
                 <th style="text-align: right;">পেমেন্ট</th>
-                <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
             </tr>
             </thead>
         @endif
@@ -97,55 +95,52 @@
             <td>&nbsp;</td>
             <td style="text-align: center; ">&nbsp;</td>
             <td style="text-align: center; ">&nbsp;</td>
-            <td style="text-align: right; padding-right: 16px;">&nbsp;</td>
         </tr>
         @foreach($value['list'] as $key1 => $v)
             @if($data['contact_type'] == 'customer')
                 <tr style="border: 1px solid #EAECF0;">
                     <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
-                    <td>{{ $v['note'] }}</td>
-                    @if($v['account_type'] == 'receivable' )
-                        <td style="text-align: right; background: #F9EDEC;color: #C92236">৳ {{ $v['amount_bn'] }}</td>
+                    <td>{{ $v['contact_name'] }}</td>
+                    @if($v['balance_type'] == 'account_receivable' )
+                        <td style="text-align: right; background: #F9EDEC;color: #BF392B">৳ {{ $v['balance_bn'] }}</td>
                         <td style="text-align: right;  background: #EFF8F1;">&nbsp;</td>
-                        <td style="text-align: right; color: #C92236; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
-                    @elseif($v['account_type'] == 'payable' )
+                    @elseif($v['balance_type'] == 'account_payable' || $v['balance_type'] == 'cleared')
                         <td style="text-align: right; background: #F9EDEC;">&nbsp;</td>
-                        <td style="text-align: right; background: #EFF8F1; color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
-                        <td style="text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+                        <td style="text-align: right; background: #EFF8F1;color: #4FAF61">৳ {{ $v['balance_bn'] }}</td>
                     @endif()
-
                 </tr>
             @elseif($data['contact_type'] == 'supplier')
                 <tr style="border: 1px solid #EAECF0;">
                     <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
-                    <td>{{ $v['note'] }}</td>
-                    @if($v['account_type'] == 'receivable' )
-                        <td style="text-align: right; background: #EFF8F1; color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
+                    <td>{{ $v['contact_name'] }}</td>
+                    @if($v['balance_type'] == 'account_receivable' || $v['balance_type'] == 'cleared' )
+                        <td style="text-align: right; background: #EFF8F1;color: #4FAF61 ">৳ {{ $v['balance_bn'] }}</td>
                         <td style="text-align: right;  background: #F9EDEC;">&nbsp;</td>
-                        <td style="text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
-                    @elseif($v['account_type'] == 'payable' )
+                    @elseif($v['balance_type'] == 'account_payable' )
                         <td style="text-align: right; background: #EFF8F1;">&nbsp;</td>
-                        <td style="text-align: right; background: #F9EDEC; color: #C92236">৳ {{ $v['amount_bn'] }}</td>
-                        <td style="text-align: right; color: #C92236; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+                        <td style="text-align: right; background: #F9EDEC; color: #BF392B">৳ {{ $v['balance_bn'] }}</td>
                     @endif()
                 </tr>
             @endif
         @endforeach()
-
+                <tr style="border: 1px solid #EAECF0;">
+                    <td style="padding: 9px 16px;">মোট</td>
+                    <td>&nbsp;</td>
+                    <td style="text-align: right;  color: #bf392b ;">{{ $value['stats']['receivable_bn'] }}</td>
+                    <td style="text-align: right; color:#4faf61 ;">{{ $value['stats']['payable_bn'] }}</td>
+                </tr>
             <div style="margin-top: 30px;"></div>
         @endforeach()
     </table>
         <!-- Total calculation -->
         <div style="margin-top: 10px"></div>
-        <table style="table-layout: fixed;border-collapse: collapse; width: 100%;font-size: 12px;">
+        <table style="table-layout: fixed;width: 100%;border-collapse: collapse;font-size: 12px;">
             <tr style=" background: #f4f5f7">
                 <td style="padding: 9px 16px;width: 20% ;">সর্বমোট</td>
-                <td style="width: 25% "></td>
+                <td style="width: 22% "></td>
                 <td style="text-align: right; width: 18% ;color: #bf392b">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }}</td>
                 <td style="text-align: right; width: 18% ; color: #4faf61">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</td>
-                <td style="text-align: right;  font-size: 14px; color: #4faf61;">
-                    ৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}
-                </td>
+
             </tr>
         </table>
         <div style="margin-top: 10px"></div>

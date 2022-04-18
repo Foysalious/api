@@ -24,6 +24,26 @@ class DueTrackerSmsService
     protected $contact_id;
     protected $dueTrackerRepo;
     protected $dueTrackerService;
+    protected $limit;
+    protected $offset;
+
+    /**
+     * @param mixed $limit
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param mixed $offset
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo, DueTrackerService $dueTrackerService)
     {
@@ -172,5 +192,12 @@ class DueTrackerSmsService
             ->setSource(TransactionSources::SMS)
             ->store();
         $this->dueTrackerRepo->storeJournalForSmsSending($this->partner, $transaction);
+    }
+
+
+    public function getBulkSmsContactList()
+    {
+        $url_param = 'contact_type=' . $this->contact_type .'&limit=' .$this->limit .'&offset=' . $this->offset;
+        return $this->dueTrackerRepo->setPartner($this->partner)->getBulkSmsContactList($url_param);
     }
 }
