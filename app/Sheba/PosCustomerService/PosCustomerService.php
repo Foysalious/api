@@ -36,6 +36,8 @@ class PosCustomerService
     private $posCustomerRepository;
     private $partner;
     private $supplier;
+    private $supplierId;
+    private $companyName;
 
     public function __construct(SmanagerUserServerClient $smanagerUserServerClient, PosOrderServerClient $posOrderServerClient, PosCustomerRepository $posCustomerRepository)
     {
@@ -127,6 +129,26 @@ class PosCustomerService
     public function setCustomerId($customerId)
     {
         $this->customerId = $customerId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $supplierId
+     * @return PosCustomerService
+     */
+    public function setSupplierId($supplierId)
+    {
+        $this->supplierId = $supplierId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $companyName
+     * @return PosCustomerService
+     */
+    public function setCompanyName($companyName)
+    {
+        $this->companyName = $companyName;
         return $this;
     }
 
@@ -262,6 +284,24 @@ class PosCustomerService
         return $data;
     }
 
+    public function makeSupplierUpdateData()
+    {
+        $data = [];
+        if (isset($this->pic)) $data['pro_pic'] = $this->pic;
+        if (isset($this->dob)) $data['dob'] = $this->dob;
+        if (isset($this->bloodGroup)) $data['blood_group'] = $this->bloodGroup;
+        if (isset($this->gender)) $data['gender'] = $this->gender;
+        if (isset($this->address)) $data['address'] = $this->address;
+        if (isset($this->email)) $data['email'] = $this->email;
+        if (isset($this->bnName)) $data['bn_name'] = $this->bnName;
+        if (isset($this->mobile)) $data['mobile'] = $this->mobile;
+        if (isset($this->name)) $data['name'] = $this->name;
+        if (isset($this->note)) $data['note'] = $this->note;
+        if (isset($this->email)) $data['email'] = $this->email;
+        if (isset($this->companyName)) $data['company_name'] = $this->companyName;
+        return $data;
+    }
+
     public function makeSupplierCreateData(): array
     {
         $data = [];
@@ -276,7 +316,7 @@ class PosCustomerService
         if (isset($this->name)) $data['name'] = $this->name;
         if (isset($this->note)) $data['note'] = $this->note;
         if (isset($this->email)) $data['email'] = $this->email;
-        if (isset($this->company_name)) $data['company_name'] = $this->company_name;
+        if (isset($this->company_name)) $data['company_name'] = $this->companyName;
         return $data;
     }
 
@@ -284,6 +324,12 @@ class PosCustomerService
     {
         $data = $this->makeUpdateData();
         return $this->smanagerUserServerClient->put('api/v1/partners/' . $this->partner->id . '/pos-users/' . $this->customerId, $data);
+    }
+
+    public function updateSupplier()
+    {
+        $data = $this->makeSupplierUpdateData();
+        return $this->smanagerUserServerClient->put('api/v1/partners/' . $this->partner->id . '/suppliers/' . $this->supplierId, $data);
     }
 
     /**
