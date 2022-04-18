@@ -31,6 +31,14 @@ class PartnerMefInformation implements Arrayable
     private $customer_signature;
     private $trade_license;
     private $userDesignation;
+    private $shopOwnerName;
+    private $shopName;
+    private $shopClass;
+    private $nomineeNid;
+    private $nomineePresentPostCode;
+    private $nomineePresentAddress;
+    private $nomineePermanentPostCode;
+    private $nomineePermanentAddress;
 
 
     public function setProperty($input): PartnerMefInformation
