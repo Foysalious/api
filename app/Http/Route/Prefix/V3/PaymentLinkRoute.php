@@ -7,7 +7,6 @@ class PaymentLinkRoute
             'middleware' => ['paymentLink.auth']
         ], function ($api) {
             $api->get('/transactions', 'PaymentLink\PaymentLinkController@transactionListV3');
-            $api->get('/{link}/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetailsV3');
         });
     }
 }
