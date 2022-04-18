@@ -1,10 +1,7 @@
-<!DOCTYPE html>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@200&display=swap" rel="stylesheet">
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <title>{{ $type }}</title>
     <style>
         @font-face {
@@ -30,7 +27,7 @@
             margin: 0 auto;
             color: #555555;
             background: #FFFFFF;
-            font-family: Arial, sans-serif;
+            font-family: kalpurush, sans-serif;
             font-size: 14px;
             /*font-family: SourceSansPro;*/
         }
@@ -285,16 +282,16 @@
 
 <body>
 <header class="clearfix">
-{{--    <div>--}}
-{{--    <div id="logo">--}}
-{{--        <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">--}}
-{{--    </div>--}}
-{{--    <div id="company">--}}
-{{--        <h2 class="name">Sheba.xyz</h2>--}}
-{{--        <div>16516</div>--}}
-{{--        <div><a href="mailto:info@sheba.xyz">info@sheba.xyz</a></div>--}}
-{{--    </div>--}}
-{{--    </div>--}}
+    {{--    <div>--}}
+    {{--    <div id="logo">--}}
+    {{--        <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">--}}
+    {{--    </div>--}}
+    {{--    <div id="company">--}}
+    {{--        <h2 class="name">Sheba.xyz</h2>--}}
+    {{--        <div>16516</div>--}}
+    {{--        <div><a href="mailto:info@sheba.xyz">info@sheba.xyz</a></div>--}}
+    {{--    </div>--}}
+    {{--    </div>--}}
     <table width="100%">
         <tr>
             <td class="header-style">
@@ -308,7 +305,99 @@
     </table>
 </header>
 @include('pdfs._order_details')
+<main>
+    <div id="details" class="clearfix">
+        {{--        <div id="client">--}}
+        {{--            <div class="to">{{ $type }} TO:</div>--}}
+        {{--            <h2 class="name">{{ $partner_order->order->delivery_name }}</h2>--}}
+        {{--            <div class="address">{{ $partner_order->order->delivery_address }}</div>--}}
+        {{--            <div class="email">{{ $partner_order->order->delivery_mobile }}</div>--}}
+        {{--        </div>--}}
+        <div id="invoice">
+            {{--            <h1 style="text-transform: uppercase">{{ $type }} {{ $partner_order->id }}</h1>--}}
+            {{--            <div class="date">Generated on: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>--}}
+            <?php
+            $job = $partner_order->lastJob();
+            ?>
+            @if($job->status === 'Served')
+                <div class="date">Served Date: {{ $partner_order->closed_at->format('d/m/Y')  }}</div>
+            @endif
+        </div>
+    </div>
+    {{--    <div id="order">--}}
+    {{--        <div class="pull-left">--}}
+    {{--            ORDER NUMBER : {{ $partner_order->order->code() }}--}}
+    {{--        </div>--}}
+    {{--        <div class="text-right">--}}
+    {{--            RESOURCE :  {{ $job->resource?$job->resource->profile->name :"N\A"}}--}}
+    {{--        </div>--}}
+    {{--    </div>--}}
+    <table border="0" cellspacing="0" cellpadding="0">
+        @if($partner_order->order_id > config('sheba.last_order_id_for_old_version'))
+            @include('pdfs._invoice_v2')
+        @else
+            @include('pdfs._invoice_v1')
+        @endif
+    </table>
 
+    {{--Material goes here--}}
+    <?php
+    $materials_sl_no = 1;
+    $has_material = false;
+    foreach($partner_order->jobs as $job){
+        if(count($job->usedMaterials) > 0){
+            $has_material = true;
+            break;
+        }
+    }
+    ?>
+    @if($has_material)
+        <table class="materials-table">
+            <tr>
+                <th class="text-left">JOB CODE</th>
+                <th class="text-left">#</th>
+                <th class="material-name">ADDITIONAL</th>
+                <th class="text-right">PRICE</th>
+            </tr>
+            @forelse($partner_order->jobs as $job)
+                <?php $materials_sl_no = 0; ?>
+                @if(count($job->usedMaterials) > 0)
+                    @forelse($job->usedMaterials as $material)
+                        <?php $materials_sl_no++; ?>
+                        <tr>
+                            <td class="m-job-code" style="background-color: #f5f5f5;"> @if($materials_sl_no === 1) {{ $job->code() }} @endif </td>
+                            <td style="background-color: #f5f5f5;"> {{ $materials_sl_no }} </td>
+                            <td style="background-color: #f5f5f5;"> {{ $material->material_name }}</td>
+                            <td class="text-right" style="text-align: right; background-color: #f5f5f5;"> {{ $material->material_price }}</td>
+                        </tr>
+                    @empty
+                    @endforelse
+                    <tr class="total-job-material">
+                        <td colspan="2"></td>
+                        <td class="text-right"> Total additional cost for JOB #{{ $job->code() }}  </td>
+                        <td class="text-right" style="text-align: right;"> {{ $job->materialPrice }}</td>
+                    </tr>
+                @endif
+            @empty
+            @endforelse
+        </table>
+    @endif
+
+    {{--<div id="thanks">Thank you!</div>--}}
+    <div id="notices">
+        {{--<div>NOTICE:</div>--}}
+        <div class="notice">Seven (07) days service warranty.</div>
+        <div class="notice">"No Tips" policy applicable.</div>
+    </div>
+    {{--<div id="notices">--}}
+    {{--<div>NOTICE:</div>--}}
+    {{--<div class="notice">A finance charge of 1.5% will be made on unpaid balances after 30 days.</div>--}}
+    {{--</div>--}}
+    {{--    @if($job->status !== 'Served')--}}
+    {{--        <div class="quote">--}}
+    {{--            <br>*** Total cost may be changed due to the nature of the service.</div>--}}
+    {{--    @endif--}}
+</main>
 <footer>
     This is a system generated statement. No signature is required.
 </footer>

@@ -810,7 +810,8 @@ class JobController extends Controller
             ];
         }
         $partner_order = $job->partnerOrder->calculate(true);
-        return (new PdfHandler())->setViewFile('invoice')->saveInvoice('quotation', true, $partner_order);
+        $invoice_data['partner_order'] = $partner_order;
+        return (new PdfHandler())->setData($invoice_data)->setViewFile('invoice')->saveInvoice('quotation', true);
     }
 
     public function rescheduleJob($customer, $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)

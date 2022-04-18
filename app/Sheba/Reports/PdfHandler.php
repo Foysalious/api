@@ -1,10 +1,8 @@
 <?php namespace Sheba\Reports;
 
-use App\Models\PartnerOrder;
 use Barryvdh\DomPDF\PDF;
 
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
@@ -114,22 +112,21 @@ class PdfHandler extends Handler
         return $cdn;
     }
 
-    public function saveInvoice($type, $mPdf = false, PartnerOrder $partner_order)
+    public function saveInvoice($type, $mPdf = false)
     {
         $this->data['type'] = $type;
-        $this->data['partner_order'] = $partner_order;
-        $filename = ucfirst(strtolower($type)) . '-' . $partner_order->code() . '.pdf';
+        $filename = ucfirst(strtolower($type)) . '-' . $this->data['partner_order']->code() . '.pdf';
         $file = $this->getTempFolder() . $filename;
         if ($mPdf) {
             $mPDF=$this->getMpdf();
             $mPDF->simpleTables = true;
-            $folder = $this->folder ?: $this->getTempFolder();
             $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
             $data = view($this->viewFileName, $this->data)->render();
             $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
             $mPDF->Output($filename, "F");
             $s3_invoice_link = $this->saveToCDN($file, $filename);
+            File::delete($file);
             return [
                 'link' => $s3_invoice_link
             ];
