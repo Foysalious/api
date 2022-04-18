@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Repository;
 
+use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -161,6 +162,13 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     {
         $url = "api/v2/due-tracker/bulk-sms-eligible-list?" . $url_param;
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
+    public function getContactBalanceById($contact_id, $contact_type=ContactType::SUPPLIER)
+    {
+        $url = "api/v2/due-tracker/due-list/" . $contact_id . "/balance?" . "&contact_type={$contact_type}" ;
+        $response = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+        return $response['stats'];
     }
 
 }
