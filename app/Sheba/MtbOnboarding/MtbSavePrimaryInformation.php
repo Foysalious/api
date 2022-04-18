@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Sheba\DynamicForm\DynamicForm;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
+use App\Sheba\MTB\Exceptions\MtbServiceServerError;
 use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
@@ -133,11 +134,13 @@ class MtbSavePrimaryInformation
      */
     public function storePrimaryInformationToMtb($request): JsonResponse
     {
+
         $data = (new ApplyValidation())->setPartner($this->partner)->setForm(MtbConstants::MTB_FORM_ID)->getFormSections();
         if ($data != 100)
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data . " completed"]);
         $data = $this->makePrimaryInformation();
         $response = $this->client->post(QRPaymentStatics::MTB_SAVE_PRIMARY_INFORMATION, $data, AuthTypes::BARER_TOKEN);
+        if (!isset($response['ticketId'])) throw new MtbServiceServerError("MTB Account Creation Failed, Invalid Input");
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
         $this->applyMtb();
