@@ -90,7 +90,7 @@ class Route
                     $api->delete('/{customer_id}', 'PosCustomer\PosCustomerController@delete');
                 });
                 $api->group(['prefix' => 'suppliers'], function ($api) {
-                    $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@supplierDetails');
+                    $api->get('/{supplier_id}', 'PosCustomer\PosCustomerController@supplierDetails');
                     $api->post('/', 'PosCustomer\PosCustomerController@storeSupplier');
                 });
                 $api->get('/category-tree', 'Inventory\CategoryController@allCategory');

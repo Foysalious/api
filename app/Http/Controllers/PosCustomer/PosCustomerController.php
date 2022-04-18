@@ -116,23 +116,23 @@ class PosCustomerController extends Controller
         if ($request->input('pro_pic')) {
             $image = base64_encode(file_get_contents($request->file('pro_pic')->path()));
         }
-        $customer = $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
-            ->setEmail($request->email)->setAddress($request->address)->setSupplier($request->is_supplier)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)
-            ->storePosCustomer();
-        $customer['id'] = $customer['_id'];
-        unset($customer['_id']);
-        return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $customer]);
+        $this->posCustomerService->setPartner($partner)->setNote($request->note)->setName($request->name)->setBnName($request->bnName)->setMobile($request->mobile)
+            ->setEmail($request->email)->setAddress($request->address)->setGender($request->gender)->setBloodGroup($request->blood_group)->setDob($request->dob)->setproPic($image)
+            ->storeSupplier();
+        return http_response($request, null, 200, ['message' => 'Successful']);
     }
 
     /**
      * @param Request $request
-     * @param $customerId
+     * @param $supplier_id
      * @return JsonResponse
      */
-    public function supplierDetails(Request $request, $customerId): JsonResponse
+    public function supplierDetails(Request $request, $supplier_id): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
-        $supplier = $this->posCustomerService->setPartner($partner)->setCustomerId($customerId)->getSupplierDetails();
+        $supplier = $this->posCustomerService->setPartner($partner)->setCustomerId($supplier_id)->getSupplierDetails();
+        $supplier['id'] = $supplier['_id'];
+        unset($supplier['_id']);
         return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $supplier]);
     }
 
