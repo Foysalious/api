@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
 use App\Sheba\MTB\MtbConstants;
+use App\Sheba\MTB\MtbMappedAccountStatus;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
 use App\Sheba\QRPayment\QRPaymentStatics;
@@ -131,8 +132,10 @@ class PaymentService
                 $this->storeMtbAccountStatus($response);
             }
         }
-        return $response["Status"];
+        $mapped_status = (new MtbMappedAccountStatus())->setStatus($response["Status"])->mapMtbAccountStatus();
+        return $mapped_status['status'];
     }
+
 
     private function storeMtbAccountStatus($response)
     {
@@ -214,11 +217,12 @@ class PaymentService
      */
     public function getBannerForMtb(): array
     {
+        $description = (new MtbMappedAccountStatus())->setStatus(json_decode($this->partner->partnerMefinformation->mtb_account_status)->Status)->mapMtbAccountStatus();
         return [
             'banner' => $this->getBanner(),
             'info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
             "title" => "আবেদন সফল হয়েছে!",
-            "body" => "আবেদন যাচাই করতে ১০ কার্যদিবস সময় লাগতে পারে অনুগ্রহ করে অপেক্ষা করুন।"
+            "body" => $description['description']
         ];
     }
 
