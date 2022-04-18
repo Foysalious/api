@@ -316,36 +316,20 @@ class DueTrackerService
 
     /**
      * @return array
-     * @throws AccountingEntryServerError
-     * @throws InvalidPartnerPosCustomer
+     * @throws InvalidPartnerPosCustomer|AccountingEntryServerError
      */
     public function dueListBalanceByContact(): array
     {
-        $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
+        $contact_balance = $this->getBalanceByContact();
         try {
             $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
         }catch (Exception $e) {
             $reminder = [];
         }
-        $customer = $result['contact_details'];
-        if (is_null($result['contact_details'])) {
-            /** @var PosCustomerResolver $posCustomerResolver */
-            $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($this->contact_id)->setPartner($this->partner)->get();
-            if (empty($posCustomer)) {
-                throw new InvalidPartnerPosCustomer();
-            }
-            $customer['id'] = $posCustomer->id;
-            $customer['name'] = $posCustomer->name;
-            $customer['mobile'] = $posCustomer->mobile;
-            $customer['pro_pic'] = $posCustomer->pro_pic;
-        }
-
         return [
-            'contact_details' => $customer,
-            'stats' => $result['stats'],
-            'other_info' => $result['other_info'],
+            'contact_details' => $contact_balance['contact_details'],
+            'stats' => $contact_balance['stats'],
+            'other_info' => $contact_balance['other_info'],
             'reminder' => $reminder,
             'current_time' => Carbon::now()->format('Y-m-d H:i:s')
         ];
@@ -401,10 +385,10 @@ class DueTrackerService
     }
 
     /**
-     * @param $request
      * @return string
      * @throws AccountingEntryServerError
-     * @throws InvalidPartnerPosCustomer
+     * @throws MpdfException
+     * @throws NotAssociativeArray
      * @throws Throwable
      */
     public function downloadPDF(): string
@@ -520,7 +504,7 @@ class DueTrackerService
      * @param $partner
      * @return array
      */
-    private function getPartnerInfo($partner): array
+    public function getPartnerInfo($partner): array
     {
         return [
             'name' => $partner->name,
@@ -614,6 +598,34 @@ class DueTrackerService
         }
         $data['data']['due_list_bn']=$list;
         return $data;
+    }
+
+
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
+    public function getBalanceByContact()
+    {
+        $queryString = $this->generateQueryString();
+        $contact_balance =  $this->dueTrackerRepo
+            ->setPartner($this->partner)
+            ->dueListBalanceByContact($this->contact_id, $queryString);
+        $customer = $contact_balance['contact_details'];
+        if (is_null($customer)) {
+            /** @var PosCustomerResolver $posCustomerResolver */
+            $posCustomerResolver = app(PosCustomerResolver::class);
+            $posCustomer = $posCustomerResolver->setCustomerId($this->contact_id)->setPartner($this->partner)->get();
+            if (empty($posCustomer)) {
+                throw new InvalidPartnerPosCustomer();
+            }
+            $customer['id'] = $posCustomer->id;
+            $customer['name'] = $posCustomer->name;
+            $customer['mobile'] = $posCustomer->mobile;
+            $customer['pro_pic'] = $posCustomer->pro_pic;
+        }
+        $contact_balance['contact_details'] = $customer;
+        return $contact_balance;
     }
 
 
