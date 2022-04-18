@@ -2,8 +2,10 @@
 
 namespace App\Sheba\AccountingEntry\Service;
 
+use App\Models\Partner;
 use App\Sheba\AccountingEntry\Notifications\ReminderNotificationHandler;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
+use Illuminate\Support\Facades\Log;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerReminderService
@@ -261,10 +263,23 @@ class DueTrackerReminderService
     /**
      * @param array $reminder
      * @return bool
+     * @throws AccountingEntryServerError
      */
     public function sendReminderPush(array $reminder): bool
     {
-        (new ReminderNotificationHandler())->setReminder($reminder)->handler();
+        $push = (new ReminderNotificationHandler())->setReminder($reminder)->handler();
+        Log::info(['remidner push', $push, $reminder]);
+        $smsStatus = false;
+        if ($reminder['should_send_sms'] == 1) {
+//          TODO: send SMS
+            $smsStatus = true;
+        }
+        $this->setReminderId($reminder['id'])
+            ->setSms($reminder['should_send_sms'])
+            ->setReminderDate($reminder['reminder_date'])
+            ->setReminderStatus('success')
+            ->setSmsStatus($smsStatus)
+            ->update();
         return true;
     }
 

@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\AccountingEntry\Constants\AccountKeyTypes;
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
@@ -53,6 +55,25 @@ class DueTrackerControllerV2 extends Controller
             ->setAttachments($request->attachments)
             ->setNote($request->note)
             ->storeEntry();
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
+        return api_response($request, null, 200, ['data' => $response]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws AccountingEntryServerError
+     */
+    public function badDebts(Request $request): JsonResponse
+    {
+        $response = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setEntryType(EntryTypes::DEPOSIT)
+            ->setAccountKey(AccountKeyTypes::CASH)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setNote('Bad Debts')
+            ->badDebts();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
         return api_response($request, null, 200, ['data' => $response]);
     }
