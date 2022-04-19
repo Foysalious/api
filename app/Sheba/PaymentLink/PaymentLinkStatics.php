@@ -2,7 +2,7 @@
 
 class  PaymentLinkStatics
 {
-    const SERVICE_CHARGE = 2.0;
+    const SERVICE_CHARGE = 0;
 
     const TYPE_PGW = "pgw";
     const TYPE_QR = "qr";
