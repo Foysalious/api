@@ -285,7 +285,7 @@ class TrackingController extends Controller
      */
     private function searchEmployee($employees, Request $request)
     {
-        return $employees->filter(function ($employee) use ($request) {
+        return collect($employees)->filter(function ($employee) use ($request) {
             return str_contains(strtoupper($employee['name']), strtoupper($request->search));
         });
     }

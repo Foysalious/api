@@ -135,7 +135,7 @@ class TrackingController extends Controller
         }
 
         if ($request->has('no_activity')) $data = $this->getEmployeeOfNoActivityForCertainHour($data, $request->no_activity);
-        if ($request->has('search')) $data = $this->nameSearch($data, $request);
+        if ($request->has('search')) $data = $this->searchEmployee($data, $request);
 
         return api_response($request, null, 200, ['employee_list' => $data]);
     }
@@ -241,10 +241,10 @@ class TrackingController extends Controller
 
     /**
      * @param $all_data
-     * @param $request
+     * @param Request $request
      * @return \Illuminate\Support\Collection
      */
-    private function nameSearch($all_data, $request)
+    private function searchEmployee($all_data, Request $request)
     {
         return collect($all_data)->filter(function ($data) use ($request) {
             return str_contains(strtoupper($data['profile']['name']), strtoupper($request->search));
