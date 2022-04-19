@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\PosCustomerService\Exceptions\SmanagerUserServiceServerError;
 use App\Sheba\PosCustomerService\PosCustomerService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -145,7 +146,12 @@ class PosCustomerController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $supplier = $this->posCustomerService->setPartner($partner)->setCustomerId($supplier_id)->getSupplierDetails();
+        $created_at = isset($supplier['created_at']) ? Carbon::parse($supplier['created_at']) : null;
         $supplier['id'] = $supplier['_id'];
+        $supplier['created_at'] = isset($supplier['created_at']) ? convertTimezone($created_at)->format('Y-m-d H:i:s') : null;
+        $supplier['created_at'] =
+        $supplier['payable'] = 0.0;
+        $supplier['receivable'] = 0.0;
         unset($supplier['_id']);
         return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $supplier]);
     }
