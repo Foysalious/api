@@ -147,9 +147,10 @@ class PosCustomerController extends Controller
         $partner = $request->auth_user->getPartner();
         $supplier = $this->posCustomerService->setPartner($partner)->setCustomerId($supplier_id)->getSupplierDetails();
         $created_at = isset($supplier['created_at']) ? Carbon::parse($supplier['created_at']) : null;
+        $updated_at = isset($supplier['updated_at']) ? Carbon::parse($supplier['updated_at']) : null;
         $supplier['id'] = $supplier['_id'];
         $supplier['created_at'] = isset($supplier['created_at']) ? convertTimezone($created_at)->format('Y-m-d H:i:s') : null;
-        $supplier['created_at'] =
+        $supplier['updated_at'] = isset($supplier['updated_at']) ? convertTimezone($updated_at)->format('Y-m-d H:i:s') : null;
         $supplier['payable'] = 0.0;
         $supplier['receivable'] = 0.0;
         unset($supplier['_id']);
