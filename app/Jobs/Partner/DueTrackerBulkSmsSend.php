@@ -29,7 +29,7 @@ class DueTrackerBulkSmsSend extends Job implements ShouldQueue
     {
         $service = app()->make(DueTrackerSmsService::class);
         $service->setPartner($this->partner)->setContactIds($this->contactIds)
-            ->setContactType($this->contactType);
+            ->setContactType($this->contactType)->sendBulkSmsToContacts();
     }
 
 

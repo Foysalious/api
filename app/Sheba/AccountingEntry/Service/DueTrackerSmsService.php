@@ -78,6 +78,16 @@ class DueTrackerSmsService
         return $this;
     }
 
+    /**
+     * @param $contact_id
+     * @return DueTrackerSmsService
+     */
+    public function setContactId($contact_id)
+    {
+        $this->contactId = $contact_id;
+        return $this;
+    }
+
 
     /**
      * @throws InvalidPartnerPosCustomer
@@ -201,9 +211,14 @@ class DueTrackerSmsService
         return $this->dueTrackerRepo->setPartner($this->partner)->getBulkSmsContactList($url_param);
     }
 
+    public function sendBulkSmsThroughJob()
+    {
+        dispatchJobNow(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
+    }
+
     public function sendBulkSmsToContacts()
     {
         /* Todo need to check the wallet for sms charge calculation before job */
-        dispatchJobNow(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
+
     }
 }

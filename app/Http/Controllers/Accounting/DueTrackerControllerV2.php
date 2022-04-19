@@ -259,6 +259,6 @@ class DueTrackerControllerV2 extends Controller
         $this->dueTrackerSmsService
             ->setPartner($request->partner)
             ->setContactIds($request->contact_ids)
-            ->sendBulkSmsToContacts();
+            ->sendBulkSmsThroughJob();
     }
 }
