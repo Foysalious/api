@@ -73,11 +73,12 @@ class MtbSavePrimaryInformation
     private function makePrimaryInformation(): array
     {
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
-        if ($this->partnerMefInformation->tradeLicenseExists=="হ্যা") $tradeLicenseExist="Y";
-        else $tradeLicenseExist="N";
+        if ($this->partnerMefInformation->tradeLicenseExists == "হ্যা") $tradeLicenseExist = "Y";
+        else $tradeLicenseExist = "N";
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
+
                 'orgCode' => MtbConstants::CHANNEL_ID,
                 'name' => $this->partner->getFirstAdminResource()->profile->name,
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
@@ -107,7 +108,7 @@ class MtbSavePrimaryInformation
                 'ShopInfo' => [
                     'shopOwnerNm' => $this->partnerMefInformation->shopOwnerName,
                     'shopNm' => $this->partnerMefInformation->shopName,
-                    'shopClass' => $this->partnerMefInformation->shopClass
+                    'shopClass' => config("mtbmcc.{$this->partner->business_type}") ?? config("mtbmcc.অন্যান্য")
                 ]
             ],
             'requestId' => strval($this->partner->id)
