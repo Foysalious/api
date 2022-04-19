@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\PosCustomer;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\PosCustomerService\Exceptions\SmanagerUserServiceServerError;
 use App\Sheba\PosCustomerService\PosCustomerService;
 use Carbon\Carbon;
@@ -150,11 +152,14 @@ class PosCustomerController extends Controller
         $supplier = $this->posCustomerService->setPartner($partner)->setCustomerId($supplier_id)->getSupplierDetails();
         $created_at = isset($supplier['created_at']) ? Carbon::parse($supplier['created_at']) : null;
         $updated_at = isset($supplier['updated_at']) ? Carbon::parse($supplier['updated_at']) : null;
+        /** @var DueTrackerRepositoryV2 $accountingDueTrackerRepository */
+        $accountingDueTrackerRepository = app(DueTrackerRepositoryV2::class);
+        $balance = $accountingDueTrackerRepository->setPartner($partner)->getContactBalanceById($supplier_id);
         $supplier['id'] = $supplier['_id'];
         $supplier['created_at'] = isset($supplier['created_at']) ? convertTimezone($created_at)->format('Y-m-d H:i:s') : null;
         $supplier['updated_at'] = isset($supplier['updated_at']) ? convertTimezone($updated_at)->format('Y-m-d H:i:s') : null;
-        $supplier['payable'] = 0.0;
-        $supplier['receivable'] = 0.0;
+        $supplier['payable'] = isset($balance['stats']) && isset($balance['stats']['payable']) ? $balance['stats']['payable'] : 0.0;
+        $supplier['receivable'] = isset($balance['stats']) && isset($balance['stats']['receivable']) ? $balance['stats']['receivable'] : 0.0;
         unset($supplier['_id']);
         return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $supplier]);
     }
