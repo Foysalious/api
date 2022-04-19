@@ -81,6 +81,7 @@ class PaymentService
         $this->key = $key;
         return $this;
     }
+
     /**
      * @return array
      * @throws Exceptions\MORServiceServerError
@@ -157,6 +158,7 @@ class PaymentService
             return $this->getPGWDetails();
         }
     }
+
     /**
      * @return array
      * @throws Exceptions\MORServiceServerError
@@ -322,7 +324,7 @@ class PaymentService
             $this->status = 'ekyc_completed';
     }
 
-    public function getPgwStatusForHomePage()
+    public function getPgwStatusForHomePage(): PaymentService
     {
         $pgw_store_accounts = GatewayAccount::where('user_type', get_class($this->partner))->where('user_id', $this->partner->id)->get();
 
@@ -404,6 +406,8 @@ class PaymentService
             $completion = (new ApplyValidation())->setPartner($this->partner)->setForm($qrGateway->id)->getFormSections();
         else
             $completion = null;
+        $status = (new MtbMappedAccountStatus())->setStatus(json_decode($this->partner->partnerMefinformation->mtb_account_status)->Status)->mapMtbAccountStatus();
+
         return [
             'id' => $qrGateway->id,
             'name' => $qrGateway->name,
@@ -413,7 +417,7 @@ class PaymentService
             'type' => "qr",
             'completion' => $completion,
             'icon' => $qrGateway->icon,
-            'status' => "pending",
+            'status' => $status['status'],
             'base_url' => ResellerPaymentGeneralStatic::NEW_BASE_URL
         ];
     }
