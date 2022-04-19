@@ -18,6 +18,7 @@ use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use Sheba\Dal\Salary\Salary;
+use Sheba\Dal\TrackingLocation\TrackingLocation;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;

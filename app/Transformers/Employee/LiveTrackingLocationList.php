@@ -6,7 +6,7 @@ use Sheba\Dal\TrackingLocation\TrackingLocation;
 
 class LiveTrackingLocationList extends TransformerAbstract
 {
-    public function transform(TrackingLocation $tracking_location)
+    public function transform($tracking_location)
     {
         $location = $tracking_location->location;
         return [
