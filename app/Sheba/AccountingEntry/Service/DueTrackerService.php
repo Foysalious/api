@@ -640,6 +640,14 @@ class DueTrackerService
         $contact_balance =  $this->dueTrackerRepo
             ->setPartner($this->partner)
             ->dueListBalanceByContact($this->contact_id, $queryString);
+
+        if ( $this->contact_type == ContactType::SUPPLIER) {
+            $supplier_due = $this->dueTrackerRepo
+                ->setPartner($this->partner)
+                ->getSupplierMonthlyDue($this->contact_id);
+            $contact_balance['stats']['supplier_due'] = $supplier_due['due'];
+        }
+
         $customer = $contact_balance['contact_details'];
         if (is_null($customer)) {
             /** @var PosCustomerResolver $posCustomerResolver */
