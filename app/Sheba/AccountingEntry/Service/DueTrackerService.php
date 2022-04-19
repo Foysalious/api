@@ -410,7 +410,7 @@ class DueTrackerService
 
         if ($this->contact_id == null) {
             $data['data'] += $this->dueTrackerRepo->setPartner($this->partner)->downloadPdfByContact($queryString);
-            $data = $this->listBnForPdf($data);//dd($data);
+            $data = $this->listBnForPdf($data);
             $header =  view('reports.pdfs.dueTrackerPartials._header_duelist_single_contact', compact('data'))->render();
             $footer = view('reports.pdfs.dueTrackerPartials._footer_duelist_single_contact')->render();
             return (new AccountingPdfHandler())->setHeader($header)
