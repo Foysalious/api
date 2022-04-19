@@ -91,7 +91,7 @@ class TrackingController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $managers = [];
-        (new ManagerSubordinateEmployeeList())->getManager($business_member->id, $managers,$business_member->id);
+        (new ManagerSubordinateEmployeeList())->getManager($business_member->id, $managers, $business_member->id);
         $managers_subordinate_ids = array_keys($managers);
         $business_members = BusinessMember::whereIn('id', $managers_subordinate_ids);
 
@@ -135,6 +135,7 @@ class TrackingController extends Controller
         }
 
         if ($request->has('no_activity')) $data = $this->getEmployeeOfNoActivityForCertainHour($data, $request->no_activity);
+        if ($request->has('search')) $data = $this->nameSearch($data, $request);
 
         return api_response($request, null, 200, ['employee_list' => $data]);
     }
@@ -235,6 +236,18 @@ class TrackingController extends Controller
         $from_time = Carbon::now()->subMinutes($no_activity);
         return collect($tracking_locations)->filter(function ($tracking_location) use ($no_activity, $from_time) {
             return $tracking_location['last_activity_raw'] <= $from_time;
+        });
+    }
+
+    /**
+     * @param $all_data
+     * @param $request
+     * @return \Illuminate\Support\Collection
+     */
+    private function nameSearch($all_data, $request)
+    {
+        return collect($all_data)->filter(function ($data) use ($request) {
+            return str_contains(strtoupper($data['profile']['name']), strtoupper($request->search));
         });
     }
 }
