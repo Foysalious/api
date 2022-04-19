@@ -28,10 +28,11 @@ class QRPaymentController extends Controller
         $partner = $request->auth_user->getPartner();
         $data = array_only($request->all(), QRPaymentStatics::qrGenerateKeys());
         $data = new QRGeneratePayload($data);
-        $qr_payble = $QRPayableAdapter->setPartner($partner)->setData($data)->getQrPayable();
+        $qr_payable = $QRPayableAdapter->setPartner($partner)->setData($data)->getQrPayable();
+
         return http_response($request, null, 200, ["qr" => [
-            "qr_code" => $qr_payble->qr_string,
-            "qr_id" => $qr_payble->qr_id
+            "qr_code" => $qr_payable->getQRString(),
+            "qr_id" => $qr_payable->qr_id
         ]]);
     }
 
