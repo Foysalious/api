@@ -406,6 +406,8 @@ class PaymentService
             $completion = (new ApplyValidation())->setPartner($this->partner)->setForm($qrGateway->id)->getFormSections();
         else
             $completion = null;
+        $status = (new MtbMappedAccountStatus())->setStatus(json_decode($this->partner->partnerMefinformation->mtb_account_status)->Status)->mapMtbAccountStatus();
+
         return [
             'id' => $qrGateway->id,
             'name' => $qrGateway->name,
@@ -415,7 +417,7 @@ class PaymentService
             'type' => "qr",
             'completion' => $completion,
             'icon' => $qrGateway->icon,
-            'status' => "pending"
+            'status' => $status['status']
         ];
     }
 
