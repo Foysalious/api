@@ -68,7 +68,7 @@ class MtbQr extends QRPaymentMethod
         $response = $this->mtbClient->get($url, AuthTypes::BASIC_AUTH_TYPE);
 
         if(isset($response["respCode"]) && $response["respCode"] === self::QR_GENERATE_SUCCESS_CODE) {
-            $this->qrString = base64_decode(strrev($response["QRString"]));
+            $this->qrString = $response["QRString"];
             $this->refId = $response["RefNo"];
             return $this;
         }
