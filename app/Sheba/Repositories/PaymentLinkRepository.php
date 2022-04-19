@@ -164,7 +164,8 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
                 ->where('type', 'payment_link');
             if ($request->status)
                 $transactionQuery = $transactionQuery->where('status', $request->status);
-
+            else
+                $transactionQuery = $transactionQuery->where('status', Statuses::COMPLETED);
             $transactions = $transactionQuery->get();
             foreach ($transactions as $transaction) {
                 $payment = $this->payment($transaction->payment_id);
