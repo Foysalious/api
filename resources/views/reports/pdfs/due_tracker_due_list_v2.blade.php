@@ -22,7 +22,7 @@
     <table style="text-align: center;width: 100%">
         @if($data['contact_type'] == 'customer')
         <tr style="text-align: center; padding: 10px 0;">
-            @if($data['stats']['type'] = 'receivable')
+            @if($data['stats']['type'] == 'receivable')
                 <td style="text-align: center; padding: 16px;" colspan="3">ব্যালেন্স (বাকিতে বিক্রয়)
                     <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
                 </td>
@@ -34,7 +34,7 @@
         </tr>
         @elseif($data['contact_type'] == 'supplier')
             <tr style="text-align: center; padding: 10px 0;">
-                @if($data['stats']['type'] = 'receivable')
+                @if($data['stats']['type'] == 'receivable')
                     <td style="text-align: center; padding: 16px;" colspan="3">ব্যালেন্স (বাকিতে ক্রয়)
                         <span style="color: #4faf61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
                     </td>
@@ -146,7 +146,7 @@
         <div style="margin-top: 10px"></div>
         <table style="table-layout: fixed;width: 100%;border-collapse: collapse;font-size: 12px;">
             @if($data['contact_type'] == 'customer')
-                @if($data['stats']['type'] = 'receivable')
+                @if($data['stats']['type'] == 'receivable')
                     <tr style=" background: #f9edec">
                         <td style="padding: 9px 16px">মোট ব্যাল্যান্স (বাকিতে বিক্রয়)</td>
                         <!-- <td>&nbsp;</td> -->
@@ -166,7 +166,7 @@
                     </tr>
                 @endif
             @elseif($data['contact_type'] == 'supplier')
-                @if($data['stats']['type'] = 'receivable')
+                @if($data['stats']['type'] == 'receivable')
                     <tr style=" background: #EFF8F1">
                         <td style="padding: 9px 16px">মোট ব্যাল্যান্স (বাকিতে ক্রয়)</td>
                         <!-- <td>&nbsp;</td> -->

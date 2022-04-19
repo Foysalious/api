@@ -167,8 +167,7 @@ class DueTrackerRepositoryV2 extends AccountingRepository
     public function getContactBalanceById($contact_id, $contact_type=ContactType::SUPPLIER)
     {
         $url = "api/v2/due-tracker/due-list/" . $contact_id . "/balance?" . "&contact_type={$contact_type}" ;
-        $response = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        return $response['stats'];
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
 }
