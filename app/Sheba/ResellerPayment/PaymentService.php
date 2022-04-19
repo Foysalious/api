@@ -33,7 +33,7 @@ use Sheba\ResellerPayment\Statics\ResellerPaymentGeneralStatic;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;
-use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
+use Sheba\Dal\PartnerFinancialInformation\Model as PartnerFinancialInformation;
 
 class PaymentService
 {
@@ -134,7 +134,16 @@ class PaymentService
             }
         }
         $mapped_status = (new MtbMappedAccountStatus())->setStatus($response["Status"])->mapMtbAccountStatus();
+        if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
         return $mapped_status['status'];
+    }
+
+    private function savePartnerFinancialInformation($mid)
+    {
+        $partnerFinancialInformation= new PartnerFinancialInformation();
+        $partnerFinancialInformation->partner_id= $this->partner->id;
+        $partnerFinancialInformation->mtb_merchant_id= $mid;
+        $partnerFinancialInformation->save();
     }
 
 
