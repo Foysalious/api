@@ -293,4 +293,10 @@ class DueTrackerController extends Controller
         else $message = 'There is no Pos Order Payment';
         return api_response($request, true, 200, ['message' => $message]);
     }
+
+    public function getFaqsV2(Request $request, DueTrackerRepository $dueTrackerRepository)
+    {
+        $faqs = $dueTrackerRepository->getFaqs();
+        return http_response($request, $faqs, 200, ['faqs' => $faqs]);
+    }
 }

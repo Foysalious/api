@@ -64,10 +64,13 @@ class BaseRepository
         $attachments = $this->uploadFiles($request);
         return json_encode($attachments);
     }
-    private function uploadFiles($request){
+
+
+    private function uploadFiles($request): array
+    {
         $attachments=[];
-        if (isset($request->attachments) && !empty($request->attachments) && $request->hasFile('attachments')) {
-            foreach ($request->file('attachments') as $key => $file) {
+        if (isset($request->attachments) && !empty($request->attachments) && request()->hasFile('attachments')) {
+            foreach (request()->file('attachments') as $key => $file) {
                 if (!empty($file)) {
                     list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
                     $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);
@@ -76,6 +79,7 @@ class BaseRepository
         }
         return $attachments;
     }
+
     protected function updateAttachments($request){
         $attachments=$this->uploadFiles($request);
         $old_attachments = $request->old_attachments ?: [];
@@ -94,22 +98,6 @@ class BaseRepository
     {
         $partner_id = $request->partner->id ?? (int)$request->partner;
         return Partner::find($partner_id);
-    }
-
-    //TODO: should remove in next release (after pos rebuild)
-    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
-    {
-        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
-        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
-        $method_details = ['payment_method_en' => 'Cash', 'payment_method_bn' => ' নগদ গ্রহন', 'payment_method_icon' => config('s3.url') . 'pos/payment/cash_v2.png'];
-        $posOrderPaymentRepository->setMethodDetails($method_details)->createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method);
-    }
-
-    public function removePosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
-    {
-        /** @var PosOrderPaymentRepository $posOrderPaymentRepository */
-        $posOrderPaymentRepository = app(PosOrderPaymentRepository::class);
-        $posOrderPaymentRepository->removePosOrderPayment($pos_order_id, $amount_cleared);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use App\Sheba\Pos\Order\PosOrderObject;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
@@ -108,7 +109,7 @@ class AccountingDueTrackerRepository extends BaseRepository
      * @param $request
      * @param $customerId
      * @return array
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|PosOrderServiceServerError
      */
     public function getDueListByCustomer($request, $customerId): array
     {
@@ -170,7 +171,6 @@ class AccountingDueTrackerRepository extends BaseRepository
         }
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         $customer = [];
-
         if (is_null($result['customer'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
@@ -190,7 +190,7 @@ class AccountingDueTrackerRepository extends BaseRepository
             $customer['mobile'] = $result['customer']['mobile'];
             $customer['avatar'] = $result['customer']['proPic'];
             $customer['due_date_reminder'] = $result['customer']['dueDateReminder'];
-            $customer['is_supplier'] = $result['customer']['isSupplier'] ? 1 : 0;
+            $customer['is_supplier'] = 0;
         }
 
         $total_debit = $result['other_info']['total_debit'];
@@ -327,6 +327,11 @@ class AccountingDueTrackerRepository extends BaseRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
+    /**
+     * @param $pos_orders
+     * @return mixed
+     * @throws PosOrderServiceServerError
+     */
     private function getPartnerWise($pos_orders)
     {
         /** @var OrderServiceAlias $orderService */

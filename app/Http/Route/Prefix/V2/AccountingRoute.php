@@ -26,6 +26,7 @@ class AccountingRoute
                 $api->get('/due-list/{customerId}/balance', 'Accounting\\AccountingDueTrackerController@dueListBalanceByCustomer');
                 $api->post('/', 'Accounting\\AccountingDueTrackerController@store');
                 $api->post('/{entry_id}', 'Accounting\\AccountingDueTrackerController@update');
+                $api->get('/faqs', 'Pos\\DueTrackerController@getFaqsV2');
             });
             $api->group(['prefix' => 'home'], function ($api) {
                 $api->get('/asset-balance', 'Accounting\\HomepageController@getAssetAccountBalance');
