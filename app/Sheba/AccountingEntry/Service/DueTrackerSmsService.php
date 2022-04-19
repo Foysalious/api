@@ -220,5 +220,13 @@ class DueTrackerSmsService
     {
         /* Todo need to check the wallet for sms charge calculation before job */
 
+        $sms_sending_lists = $this->dueTrackerRepo
+            ->setPartner($this->partner)
+            ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
+        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
+        foreach ($sms_sending_lists as $each_sms) {
+            dd($each_sms);
+            $this->sendSMS($each_sms);
+        }
     }
 }

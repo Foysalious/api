@@ -163,4 +163,11 @@ class DueTrackerRepositoryV2 extends AccountingRepository
         return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
     }
 
+    public function getBulkSmsContactListByContactIds($contact_type, $contact_ids)
+    {
+        $url_param = 'contact_type=' . $contact_type .'&contact_ids=' . implode('&contact_ids=',$contact_ids);
+        $url = "api/v2/due-tracker/bulk-sms-contents?" . $url_param;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+    }
+
 }
