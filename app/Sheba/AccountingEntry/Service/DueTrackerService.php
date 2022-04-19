@@ -299,7 +299,7 @@ class DueTrackerService
         $return_data['current_time'] = Carbon::now()->format('Y-m-d H:i:s');
         if ($this->contact_type == ContactType::SUPPLIER) {
             $supplier_due = $this->dueTrackerRepo->setPartner($this->partner)->getSupplierMonthlyDue();
-            $return_data['supplier_due'] = $supplier_due['due'];
+            $return_data['supplier_current_month_due'] = $supplier_due['due'];
         }
         return $return_data;
     }
@@ -645,7 +645,7 @@ class DueTrackerService
             $supplier_due = $this->dueTrackerRepo
                 ->setPartner($this->partner)
                 ->getSupplierMonthlyDue($this->contact_id);
-            $contact_balance['stats']['supplier_due'] = $supplier_due['due'];
+            $contact_balance['stats']['supplier_current_month_due'] = $supplier_due['due'];
         }
 
         $customer = $contact_balance['contact_details'];
