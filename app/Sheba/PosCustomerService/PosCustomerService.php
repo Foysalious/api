@@ -386,8 +386,10 @@ class PosCustomerService
         return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/pos-users');
     }
 
-    public function getContactList()
+    public function getContactList($type)
     {
-        return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/contacts');
+        $url = 'api/v1/partners/' . $this->partner->id . '/contacts';
+        if($type) $url .= '?type=' . $type;
+        return $this->smanagerUserServerClient->get($url);
     }
 }
