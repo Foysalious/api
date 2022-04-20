@@ -46,10 +46,10 @@ class Statics
     public static function faceVerificationResponse($status, $nid_verification_request_count, $message = null, $avatar = null, $user = null): array
     {
         if($status === self::UNVERIFIED) $status = self::REJECTED;
-        $remaining_attempt = self::MAX_PORICHOY_VERIFICATION_ATTEMPT - $nid_verification_request_count;
+        $remaining_attempt = self::MAX_NID_VERIFICATION_ATTEMPT - $nid_verification_request_count;
         $serviceHolder = $avatar instanceof Partner ? "sManager" : "Bondhu";
 
-        if ($nid_verification_request_count < self::MAX_PORICHOY_VERIFICATION_ATTEMPT) {
+        if ($nid_verification_request_count < self::MAX_NID_VERIFICATION_ATTEMPT) {
             $fail_message = $user == 'affiliate' ? self::BONDHU_FAIL_MESSAGE : sprintf(self::FAIL_MESSAGE, $serviceHolder, convertNumbersToBangla($remaining_attempt, false));
         } else {
             $fail_message = $user == 'affiliate' ? $fail_message = self::PENDING_MESSAGE : sprintf(self::FINAL_FAIL_MESSAGE, $serviceHolder);
