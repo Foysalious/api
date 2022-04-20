@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
@@ -86,6 +88,11 @@ class HomePageSettingController extends Controller
         }
 
         $settings = $store->get($setting_key);
+        if (!$settings) {
+            $client = new Client();
+            $res = $client->request('GET', config('sheba.admin_url') . '/api/get-home-settings?key=' . $setting_key);
+            $settings = json_decode($res->getBody());
+        }
         if (!$settings) return api_response($request, null, 404);
 
         $settings = json_decode($settings);
