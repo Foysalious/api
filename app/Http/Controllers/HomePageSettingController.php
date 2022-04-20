@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
@@ -71,13 +73,13 @@ class HomePageSettingController extends Controller
             'lng' => 'numeric'
         ]);
         $setting_key = null;
-        $location = '';
-        if ($request->has('location')) {
-            $location = (int)$request->location;
-        } elseif ($request->has('lat') && $request->has('lng')) {
-            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-            if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
-        }
+        $location = '4';
+//        if ($request->has('location')) {
+//            $location = (int)$request->location;
+//        } elseif ($request->has('lat') && $request->has('lng')) {
+//            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+//            if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
+//        }
         if ($request->has('portal') && $request->has('screen')) {
             $platform = $this->getPlatform($request);
             $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . strtolower($platform) . "_" . $location;
@@ -86,6 +88,11 @@ class HomePageSettingController extends Controller
         }
 
         $settings = $store->get($setting_key);
+        if (!$settings) {
+            $client = new Client();
+            $res = $client->request('GET', config('sheba.admin_url') . '/api/get-home-settings?key=' . $setting_key);
+            $settings = json_decode($res->getBody());
+        }
         if (!$settings) return api_response($request, null, 404);
 
         $settings = json_decode($settings);
