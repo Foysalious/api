@@ -164,10 +164,10 @@ class PosCustomerController extends Controller
         return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $supplier]);
     }
 
-    public function supplierList(Request $request)
+    public function contactList(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $suppliers = $this->posCustomerService->setPartner($partner)->getSupplierList();
+        $suppliers = $this->posCustomerService->setPartner($partner)->getContactList();
         return http_response($request, null, 200, ['message' => 'Successful', 'suppliers' => $suppliers]);
     }
 
