@@ -35,6 +35,7 @@ class MtbSaveTransaction
                 'MonthlyExpense' => "0",
                 'LoanOutstanding' => "0",
                 'TotalIncome' => "0",
+                'monthlyIncome' => json_decode($this->partner->basicInformations->additional_information)->monthly_transaction_amount,
                 'MonthlyMercSale' => "0"
             ],
             'requestId' => strval($this->partner->id),
