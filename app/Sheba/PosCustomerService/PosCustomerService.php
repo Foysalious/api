@@ -208,9 +208,26 @@ class PosCustomerService
     /**
      * @throws Exceptions\SmanagerUserServiceServerError
      */
+    public function deleteSupplier(): bool
+    {
+        $this->deleteSupplierFromSmanagerUserService();
+        return true;
+    }
+
+    /**
+     * @throws Exceptions\SmanagerUserServiceServerError
+     */
     private function deleteCustomerFromSmanagerUserService()
     {
         $this->smanagerUserServerClient->delete('api/v1/partners/' . $this->partner->id . '/pos-users/' . $this->customerId);
+    }
+
+    /**
+     * @throws Exceptions\SmanagerUserServiceServerError
+     */
+    private function deleteSupplierFromSmanagerUserService()
+    {
+        $this->smanagerUserServerClient->delete('api/v1/partners/' . $this->partner->id . '/supplier/' . $this->supplierId);
     }
 
     private function deleteCustomerFromPosOrderService()

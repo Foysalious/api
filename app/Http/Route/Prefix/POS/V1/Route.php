@@ -93,6 +93,7 @@ class Route
                     $api->get('/{supplier_id}', 'PosCustomer\PosCustomerController@supplierDetails');
                     $api->post('/', 'PosCustomer\PosCustomerController@storeSupplier');
                     $api->put('/{supplier_id}', 'PosCustomer\PosCustomerController@updateSupplier');
+                    $api->delete('/{supplier_id}', 'PosCustomer\PosCustomerController@deleteSupplier');
                 });
                 $api->get('contacts', 'PosCustomer\PosCustomerController@contactList');
                 $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
