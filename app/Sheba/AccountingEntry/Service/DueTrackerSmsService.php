@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
+use App\Models\Partner;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\AccountingEntry\Constants\BalanceType;
 use App\Sheba\AccountingEntry\Constants\ContactType;
@@ -26,24 +27,8 @@ class DueTrackerSmsService
     protected $dueTrackerService;
     protected $limit;
     protected $offset;
+    protected $partnerId;
 
-    /**
-     * @param mixed $limit
-     */
-    public function setLimit($limit)
-    {
-        $this->limit = $limit;
-        return $this;
-    }
-
-    /**
-     * @param mixed $offset
-     */
-    public function setOffset($offset)
-    {
-        $this->offset = $offset;
-        return $this;
-    }
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo, DueTrackerService $dueTrackerService)
     {
@@ -53,6 +38,7 @@ class DueTrackerSmsService
 
     /**
      * @param mixed $partner
+     * @return DueTrackerSmsService
      */
     public function setPartner($partner)
     {
@@ -62,6 +48,7 @@ class DueTrackerSmsService
 
     /**
      * @param mixed $contact_type
+     * @return DueTrackerSmsService
      */
     public function setContactType($contact_type)
     {
@@ -71,6 +58,7 @@ class DueTrackerSmsService
 
     /**
      * @param mixed $contact_id
+     * @return DueTrackerSmsService
      */
     public function setContactId($contact_id)
     {
@@ -78,6 +66,35 @@ class DueTrackerSmsService
         return $this;
     }
 
+        /**
+     * @param mixed $limit
+     * @return DueTrackerSmsService
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param mixed $offset
+     * @return DueTrackerSmsService
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param mixed $partnerId
+     * @return DueTrackerSmsService
+     */
+    public function setPartnerId($partnerId)
+    {
+        $this->partnerId = $partnerId;
+        return $this;
+    }
 
     /**
      * @throws InvalidPartnerPosCustomer
@@ -199,5 +216,16 @@ class DueTrackerSmsService
     {
         $url_param = 'contact_type=' . $this->contact_type .'&limit=' .$this->limit .'&offset=' . $this->offset;
         return $this->dueTrackerRepo->setPartner($this->partner)->getBulkSmsContactList($url_param);
+    }
+
+    public function sendSmsForReminder(array $sms_content)
+    {
+        /* Todo need a partner resolver from id */
+        $this->partner = $partner = Partner::where('id', $this->partnerId)->first();
+        $sms_content['partner_name'] = $this->partner->name;
+        $sms_content['partner_mobile'] = $this->partner->mobile;
+        $sms_content['web_report_link'] = 'report';
+        $this->sendSMS($sms_content);
+        return true;
     }
 }

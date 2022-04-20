@@ -32,6 +32,7 @@ class AccountingRoute
             $api->group(['prefix' => 'due-tracker'], function ($api) {
                 $api->get('/public-report', 'Accounting\\DueTrackerControllerV2@publicReport');
                 $api->post('/reminder/notification', 'Accounting\\DueTrackerReminderController@reminderNotificationWebhook');
+                $api->post('/send-reminder-sms', 'Accounting\\DueTrackerSmsController@reminderSmsWebhook');
             });
         });
     }
