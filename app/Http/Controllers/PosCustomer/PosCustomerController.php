@@ -171,4 +171,14 @@ class PosCustomerController extends Controller
         return http_response($request, null, 200, ['message' => 'Successful', 'contacts' => $contacts]);
     }
 
+    /**
+     * @throws SmanagerUserServiceServerError
+     */
+    public function deleteSupplier(Request $request, $supplierId): JsonResponse
+    {
+        $partner = $request->auth_user->getPartner();
+        $this->posCustomerService->setPartner($partner)->setSupplierId($supplierId)->deleteSupplier();
+        return http_response($request, null, 200, ['message' => 'Supplier has been deleted successfully',]);
+    }
+
 }
