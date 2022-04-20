@@ -93,8 +93,8 @@ class Route
                     $api->get('/{supplier_id}', 'PosCustomer\PosCustomerController@supplierDetails');
                     $api->post('/', 'PosCustomer\PosCustomerController@storeSupplier');
                     $api->put('/{supplier_id}', 'PosCustomer\PosCustomerController@updateSupplier');
-                    $api->get('/', 'PosCustomer\PosCustomerController@supplierList');
                 });
+                $api->get('contacts', 'PosCustomer\PosCustomerController@contactList');
                 $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
                 $api->get('/partner-categories', 'Inventory\CategoryController@getPartnerCategory');
                 $api->group(['prefix' => 'products'], function ($api) {
