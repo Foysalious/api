@@ -47,7 +47,9 @@ class PartnerMefInformation implements Arrayable
     private $bankAccountNumber;
     private $bankRoutingNumber;
     private $branchCode;
-
+    private $userRecentPhoto;
+    private $bankChequePhoto;
+    private $businessVisitingCard;
 
     public function setProperty($input): PartnerMefInformation
     {

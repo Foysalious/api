@@ -28,11 +28,15 @@ class MerchantEnrollmentFileHandler
 
     public function uploadDocument($file, $form_field): MerchantEnrollmentFileHandler
     {
-        if(!empty($this->{$form_field['data_source']}->{$form_field['data_source_id']})) {
+        if (!empty($this->{$form_field['data_source']}->{$form_field['data_source_id']})) {
             $this->deleteFile($this->{$form_field['data_source']}->{$form_field['data_source_id']});
         }
-        list($file, $filename) = $this->makeAttachment($file, $form_field['data_source_id']."-".$this->partner->id);
-        $this->uploadedUrl = $this->saveFileToCDN($file, $form_field['upload_folder'](), $filename);
+        list($file, $filename) = $this->makeAttachment($file, $form_field['data_source_id'] . "-" . $this->partner->id);
+        if (!isset($form_field['upload_folder'])) {
+            $this->uploadedUrl = $this->saveFileToCDN($file, 'getPartnerDocumentsFolder', $filename);
+        } else {
+            $this->uploadedUrl = $this->saveFileToCDN($file, $form_field['upload_folder'](), $filename);
+        }
         return $this;
     }
 
