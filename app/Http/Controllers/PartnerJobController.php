@@ -216,7 +216,8 @@ class PartnerJobController extends Controller
             'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
             'preferred_time' => 'required_with:schedule_date|string',
             'resource_id' => 'string',
-            'status' => 'sometimes|required|in:' . $statuses
+            'status' => 'sometimes|required|in:' . $statuses,
+            'schedule_change_reason' => 'string'
         ]);
         if ($request->has('schedule_date') && $request->has('preferred_time')) {
             $job_time = new JobTime($request->day, $request->time);

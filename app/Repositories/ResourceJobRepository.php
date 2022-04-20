@@ -180,15 +180,17 @@ class ResourceJobRepository
     {
         try {
             $client = new Client();
+            $data = [
+                'resource_id' => $request->resource->id,
+                'remember_token' => $request->resource->remember_token,
+                'schedule_date' => $request->schedule_date,
+                'preferred_time' => $request->preferred_time,
+                'created_by_type' => $this->created_by_type,
+            ];
+            if ($request->has('schedule_change_reason')) $data['order_reschedule_reason'] = $request->schedule_change_reason;
             $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/reschedule',
                 [
-                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
-                        'resource_id' => $request->resource->id,
-                        'remember_token' => $request->resource->remember_token,
-                        'schedule_date' => $request->schedule_date,
-                        'preferred_time' => $request->preferred_time,
-                        'created_by_type' => $this->created_by_type,
-                    ])
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), $data)
                 ]);
             return json_decode($res->getBody());
         } catch (RequestException $e) {
