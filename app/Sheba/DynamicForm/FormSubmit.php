@@ -65,10 +65,41 @@ class FormSubmit
                 if(isset($this->postData[$source_id])) {
                     $this->$source->$source_id = trim($this->postData[$source_id]);
                 }
-
             }
         }
+
+        $this->storeData();
+    }
+
+    private function storeData()
+    {
         $this->storePartnerMefInformation();
+        $this->partner->save();
+
+        if(isset($this->basicInformation))
+            $this->basicInformation->save();
+        if(isset($this->firstAdminProfile))
+            $this->firstAdminProfile->save();
+        if(isset($this->partnerBasicInformation))
+            $this->savePartnerBasicInformation();
+    }
+
+    public function documentStore($data)
+    {
+        $fieldData = (new FormField())->setFormInput(json_decode($this->fields->data));
+        if(($fieldData->data_source) !== "") {
+            $source = $fieldData->data_source;
+            $source_id = $fieldData->data_source_id;
+            if(!isset($this->$source)) {
+                $setter = "set". ucfirst($source);
+                $this->$setter();
+            }
+            if(isset($data))
+                $this->$source->$source_id = trim($data);
+
+        }
+
+        $this->storeData();
     }
 
 
@@ -79,6 +110,12 @@ class FormSubmit
                 ->setProperty(json_decode($this->partner->partnerMefInformation->partner_information, 1));
         else
             $this->partnerMefInformation = new PartnerMefInformation();
+    }
+
+    private function savePartnerBasicInformation()
+    {
+        $this->partner->basicInformations->additional_information = (json_encode($this->partnerBasicInformation));
+        $this->partner->basicInformations->save();
     }
 
     /**
