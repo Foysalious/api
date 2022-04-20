@@ -385,4 +385,9 @@ class PosCustomerService
     {
         return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/pos-users');
     }
+
+    public function getSupplierList()
+    {
+        return $this->smanagerUserServerClient->get('api/v1/partners/' . $this->partner->id . '/suppliers');
+    }
 }
