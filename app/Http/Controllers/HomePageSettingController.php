@@ -73,13 +73,13 @@ class HomePageSettingController extends Controller
             'lng' => 'numeric'
         ]);
         $setting_key = null;
-        $location = '4';
-//        if ($request->has('location')) {
-//            $location = (int)$request->location;
-//        } elseif ($request->has('lat') && $request->has('lng')) {
-//            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-//            if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
-//        }
+        $location = '';
+        if ($request->has('location')) {
+            $location = (int)$request->location;
+        } elseif ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
+        }
         if ($request->has('portal') && $request->has('screen')) {
             $platform = $this->getPlatform($request);
             $setting_key = 'NewScreenSetting::' . snake_case(camel_case($request->portal)) . '_' . $request->screen . "_" . strtolower($platform) . "_" . $location;
