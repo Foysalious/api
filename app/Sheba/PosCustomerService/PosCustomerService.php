@@ -227,7 +227,7 @@ class PosCustomerService
      */
     private function deleteSupplierFromSmanagerUserService()
     {
-        $this->smanagerUserServerClient->delete('api/v1/partners/' . $this->partner->id . '/supplier/' . $this->supplierId);
+        $this->smanagerUserServerClient->delete('api/v1/partners/' . $this->partner->id . '/suppliers/' . $this->supplierId);
     }
 
     private function deleteCustomerFromPosOrderService()
