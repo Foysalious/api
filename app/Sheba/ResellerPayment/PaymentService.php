@@ -415,7 +415,8 @@ class PaymentService
             $completion = (new ApplyValidation())->setPartner($this->partner)->setForm($qrGateway->id)->getFormSections();
         else
             $completion = null;
-        $status = (new MtbMappedAccountStatus())->setStatus(json_decode($this->partner->partnerMefinformation->mtb_account_status)->Status)->mapMtbAccountStatus();
+        if(isset($this->partner->partnerMefinformation->mtb_account_status))
+            $status = (new MtbMappedAccountStatus())->setStatus(json_decode($this->partner->partnerMefinformation->mtb_account_status)->Status)->mapMtbAccountStatus();
 
         return [
             'id' => $qrGateway->id,
@@ -426,7 +427,7 @@ class PaymentService
             'type' => "qr",
             'completion' => $completion,
             'icon' => $qrGateway->icon,
-            'status' => $status['status'],
+            'status' => $status['status'] ?? null,
             'base_url' => ResellerPaymentGeneralStatic::NEW_BASE_URL
         ];
     }
