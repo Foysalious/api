@@ -1,5 +1,7 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
+use App\Jobs\Partner\DueTrackerBulkSmsSend;
+use App\Models\Partner;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\AccountingEntry\Constants\BalanceType;
 use App\Sheba\AccountingEntry\Constants\ContactType;
@@ -20,30 +22,15 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 class DueTrackerSmsService
 {
     protected $partner;
-    protected $contact_type;
-    protected $contact_id;
+    protected $contactType;
+    protected $contactId;
     protected $dueTrackerRepo;
     protected $dueTrackerService;
     protected $limit;
     protected $offset;
+    protected $partnerId;
+    protected $contactIds;
 
-    /**
-     * @param mixed $limit
-     */
-    public function setLimit($limit)
-    {
-        $this->limit = $limit;
-        return $this;
-    }
-
-    /**
-     * @param mixed $offset
-     */
-    public function setOffset($offset)
-    {
-        $this->offset = $offset;
-        return $this;
-    }
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo, DueTrackerService $dueTrackerService)
     {
@@ -53,6 +40,7 @@ class DueTrackerSmsService
 
     /**
      * @param mixed $partner
+     * @return DueTrackerSmsService
      */
     public function setPartner($partner)
     {
@@ -62,22 +50,60 @@ class DueTrackerSmsService
 
     /**
      * @param mixed $contact_type
+     * @return DueTrackerSmsService
      */
     public function setContactType($contact_type)
     {
-        $this->contact_type = $contact_type;
+        $this->contactType = $contact_type;
+        return $this;
+    }
+
+
+    public function setContactIds($contact_ids)
+    {
+        $this->contactIds = $contact_ids;
         return $this;
     }
 
     /**
-     * @param mixed $contact_id
+     * @param $contact_id
+     * @return DueTrackerSmsService
      */
     public function setContactId($contact_id)
     {
-        $this->contact_id = $contact_id;
+        $this->contactId = $contact_id;
         return $this;
     }
 
+        /**
+     * @param mixed $limit
+     * @return DueTrackerSmsService
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param mixed $offset
+     * @return DueTrackerSmsService
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param mixed $partnerId
+     * @return DueTrackerSmsService
+     */
+    public function setPartnerId($partnerId)
+    {
+        $this->partnerId = $partnerId;
+        return $this;
+    }
 
     /**
      * @throws InvalidPartnerPosCustomer
@@ -86,19 +112,17 @@ class DueTrackerSmsService
     public function getSmsContentForTagada(): array
     {
         $contact_balance = $this->dueTrackerService
-            ->setContactType($this->contact_type)
-            ->setContactId($this->contact_id)
+            ->setContactType($this->contactType)
+            ->setContactId($this->contactId)
             ->setPartner($this->partner)
             ->getBalanceByContact();
-        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
+
         return [
             'balance' => $contact_balance['stats']['balance'],
             'balance_type' => $contact_balance['stats']['type'],
             'contact_name' => $contact_balance['contact_details']['name'],
             'contact_mobile' => $contact_balance['contact_details']['mobile'],
-            'partner_name' => $partner_info['name'],
-            'partner_mobile' => $partner_info['mobile'],
-            'web_report_link' => 'www.google.com',
+            'web_report_link' => $this->getWebReportLink(),
         ];
     }
 
@@ -125,6 +149,7 @@ class DueTrackerSmsService
         $data = $this->generateSmsDataForContactType($sms_content);
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSmsHandler($data);
+        throw new InsufficientBalance();
         $sms_cost = $sms->estimateCharge();
         if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance();
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
@@ -141,7 +166,7 @@ class DueTrackerSmsService
     public function getSmsHandler($data)
     {
         $log = ' BDT has been deducted for sending ';
-        $event_name = 'due-tracker-inform-' . $this->contact_type;
+        $event_name = 'due-tracker-inform-' . $this->contactType;
         if ($data['type'] == 'due') {
             $event_name .=   '-due';
             $log .= "due details";
@@ -159,15 +184,16 @@ class DueTrackerSmsService
 
     private function generateSmsDataForContactType(array $sms_content)
     {
+        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
         $data =[
-            'partner_name' => $sms_content['partner_name'],
+            'partner_name' => $partner_info['name'],
+            'partner_mobile' => $partner_info['mobile'],
             'mobile' => $sms_content['contact_mobile'],
             'amount' => $sms_content['balance'],
-            'partner_mobile' => $sms_content['partner_mobile'],
             'web_report_link' => $sms_content['web_report_link'],
             'type' => $sms_content['balance_type'] == BalanceType::RECEIVABLE ? 'due' : 'deposit'
         ];
-        if ( $this->contact_type == ContactType::CUSTOMER) {
+        if ( $this->contactType == ContactType::CUSTOMER) {
             $data['customer_name'] =  $sms_content['contact_name'];
         } else {
             $data['supplier_name'] =  $sms_content['contact_name'];
@@ -197,7 +223,50 @@ class DueTrackerSmsService
 
     public function getBulkSmsContactList()
     {
-        $url_param = 'contact_type=' . $this->contact_type .'&limit=' .$this->limit .'&offset=' . $this->offset;
+        $url_param = 'contact_type=' . $this->contactType .'&limit=' .$this->limit .'&offset=' . $this->offset;
         return $this->dueTrackerRepo->setPartner($this->partner)->getBulkSmsContactList($url_param);
+    }
+
+    public function sendBulkSmsThroughJob()
+    {
+        dispatchJobNow(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
+    }
+
+    /**
+     * @throws WalletDebitForbiddenException
+     * @throws InsufficientBalance
+     */
+    public function sendBulkSmsToContacts()
+    {
+        /* Todo need to check the wallet for sms charge calculation before job */
+
+        $sms_sending_lists = $this->dueTrackerRepo
+            ->setPartner($this->partner)
+            ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
+        foreach ($sms_sending_lists as $each_sms) {
+            $each_sms['web_report_link'] = $this->getWebReportLink();
+            $this->sendSMS($each_sms);
+        }
+    }
+
+    public function getWebReportLink()
+    {
+        return  'www.google.com';
+    }
+
+    public function sendSmsForReminder(array $sms_content)
+    {
+        try {
+            /* Todo need a partner resolver from id */
+            $this->partner = Partner::where('id', $this->partnerId)->first();
+            $sms_content['partner_name'] = $this->partner->name;
+            $sms_content['partner_mobile'] = $this->partner->mobile;
+            $sms_content['web_report_link'] = $this->getWebReportLink();
+            $this->sendSMS($sms_content);
+            return true;
+        } catch (InsufficientBalance $e){
+            return false;
+        }
+
     }
 }
