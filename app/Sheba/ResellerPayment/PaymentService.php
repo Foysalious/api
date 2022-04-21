@@ -94,7 +94,7 @@ class PaymentService
             $mtb_information = $this->partner->partnerMefInformation::where('partner_id', $this->partner->id)->first();
             if ($mtb_information->mtb_ticket_id) {
                 $mtb_status = $this->getMtbAccountStatus($mtb_information);
-                if ($mtb_status) $this->status = $mtb_status;
+                if ($mtb_status) $this->status = $mtb_status['status'];
             }
         }
         $qr_gateway = QRGateway::where('method_name', $this->key)->first();
@@ -104,6 +104,7 @@ class PaymentService
             'banner' => PaymentMethodStatics::getMtbBannerURL(),
             'faq' => PaymentMethodStatics::detailsFAQ(),
             'status' => $this->status ?? null,
+            'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : '',
             'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
             'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
             'details' => [
@@ -118,7 +119,6 @@ class PaymentService
 
 
     /**
-     * @return mixed
      * @throws NotFoundAndDoNotReportException
      * @throws MtbServiceServerError
      */
@@ -134,8 +134,8 @@ class PaymentService
             }
         }
         $mapped_status = (new MtbMappedAccountStatus())->setStatus($response["Status"])->mapMtbAccountStatus();
-//        if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
-        return $mapped_status['status'];
+        //if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+        return $mapped_status;
     }
 
     private function savePartnerFinancialInformation($mid)
