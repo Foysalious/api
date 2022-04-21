@@ -79,6 +79,7 @@ class HomePageSettingController extends Controller
         } elseif ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
+            else return api_response($request, null, 404);
         }
         if ($request->filled('portal') && $request->filled('screen')) {
             $platform = $this->getPlatform($request);
