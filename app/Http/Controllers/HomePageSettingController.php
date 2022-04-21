@@ -140,6 +140,11 @@ class HomePageSettingController extends Controller
     public function getCarV3(Request $request)
     {
         $settings = json_decode(Redis::get('car_settings_v3'));
+        if (is_null($settings)) {
+            $client = new Client();
+            $res = $client->request('GET', config('sheba.admin_url') . '/api/get-car-settings');
+            $settings = json_decode($res->getBody());
+        }
         return api_response($request, $settings, 200, ['settings' => $settings]);
     }
 
