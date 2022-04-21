@@ -75,8 +75,8 @@
             <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
                 <th style="padding: 9px 16px; width: 150px">তারিখ</th>
                 <th style="text-align: left;">বিস্তারিত</th>
-                <th style="text-align: right;">বাকি</th>
-                <th style="text-align: right;">জমা</th>
+                <th style="text-align: right;width: 18% ;">বাকি</th>
+                <th style="text-align: right;width: 18% ;">জমা</th>
                 <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
             </tr>
             </thead>
@@ -85,8 +85,8 @@
             <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
                 <th style="padding: 9px 16px; width: 150px">তারিখ</th>
                 <th style="text-align: left;">বিস্তারিত</th>
-                <th style="text-align: right;">বাকি ক্রয়</th>
-                <th style="text-align: right;">পেমেন্ট</th>
+                <th style="text-align: right;width: 18% ;">বাকি ক্রয়</th>
+                <th style="text-align: right;width: 18% ;">পেমেন্ট</th>
                 <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
             </tr>
             </thead>
@@ -140,10 +140,10 @@
         <table style="table-layout: fixed;border-collapse: collapse; width: 100%;font-size: 12px;">
             <tr style=" background: #f4f5f7">
                 <td style="padding: 9px 16px;width: 20% ;">সর্বমোট</td>
-                <td style="width: 25% "></td>
+                <td style=""></td>
                 <td style="text-align: right; width: 18% ;color: #bf392b">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }}</td>
                 <td style="text-align: right; width: 18% ; color: #4faf61">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</td>
-                <td style="text-align: right;  font-size: 14px; color: #4faf61;">
+                <td style="text-align: right; width: 21.5% ; font-size: 14px; color: #4faf61;">
                     ৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}
                 </td>
             </tr>

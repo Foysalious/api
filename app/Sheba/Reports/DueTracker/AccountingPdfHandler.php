@@ -98,7 +98,7 @@ class AccountingPdfHandler extends Handler
                     'kalpurush' => [
                         'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
                     ]
-                ], 'default_font' => 'kalpurush'
+                ], 'default_font' => 'kalpurush',
         ]);
 
     }
