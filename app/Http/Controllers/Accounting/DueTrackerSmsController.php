@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Accounting;
 
 use App\Http\Controllers\Controller;
+use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 
 class DueTrackerSmsController extends Controller
 {
@@ -18,19 +24,61 @@ class DueTrackerSmsController extends Controller
         $this->dueTrackerService = $dueTrackerService;
     }
 
-    public function reminderSmsWebhook(Request $request)
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
+    public function getSmsContent(Request $request): JsonResponse
     {
-        if ($request->api_key != config('accounting_entry.api_key')) {
-            return http_response($request, null, 400, ['message' => 'Invalid Request!']);
-        }
-        $sms_content["balance"] = $request->balance;
-        $sms_content["balance_type"] = $request->balance_type;
-        $sms_content["contact_name"] = $request->contact_name;
-        $sms_content["contact_mobile"] = $request->contact_mobile;
-        $response = $this->dueTrackerSmsService->setPartnerId($request->partner_id)
+        $response =  $this->dueTrackerSmsService
+            ->setPartner($request->partner)
             ->setContactType($request->contact_type)
-            ->sendSmsForReminder($sms_content);
-        return http_response($request, null, 200, ['data' => $response]);
+            ->setContactId($request->contact_id)
+            ->getSmsContentForTagada();
 
+        return http_response($request, null, 200, ['data' => $response]);
+    }
+
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws WalletDebitForbiddenException
+     * @throws AccountingEntryServerError
+     * @throws InsufficientBalance
+     */
+    public function sendSingleSmsToContact(Request $request)
+    {
+        $response =  $this->dueTrackerSmsService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->sendSingleSmsToContact();
+
+        return http_response($request, null, 200, ['data' => $response]);
+    }
+
+    public function getBulkSmsContactList(Request $request)
+    {
+        $response =  $this->dueTrackerSmsService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setLimit($request->limit ?? 20)
+            ->setOffset($request->offset ?? 0)
+            ->getBulkSmsContactList();
+
+        return http_response($request, null, 200, ['data' => $response]);
+    }
+
+    public function sendBulkSmsToContacts(Request $request)
+    {
+        $this->validate($request, [
+            'contact_type' => 'required|string|in:' . implode(',', ContactType::get()),
+            'contact_ids' => 'required|array'
+        ]);
+        $this->dueTrackerSmsService
+            ->setPartner($request->partner)
+            ->setContactIds($request->contact_ids)
+            ->setContactType($request->contact_type)
+            ->sendBulkSmsThroughJob();
     }
 }

@@ -121,7 +121,6 @@ class DueTrackerControllerV2 extends Controller
      * @param Request $request
      * @return JsonResponse
      * @throws AccountingEntryServerError
-     * @throws PosOrderServiceServerError
      */
     public function dueListByContact(Request $request): JsonResponse
     {
@@ -198,6 +197,7 @@ class DueTrackerControllerV2 extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function getReport(Request $request): JsonResponse
     {
@@ -211,55 +211,4 @@ class DueTrackerControllerV2 extends Controller
         return http_response($request, null, 200, ['data' => $data]);
     }
 
-    /**
-     * @throws InvalidPartnerPosCustomer
-     * @throws AccountingEntryServerError
-     */
-    public function getSmsContent(Request $request): JsonResponse
-    {
-        $response =  $this->dueTrackerSmsService
-            ->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->setContactId($request->contact_id)
-            ->getSmsContentForTagada();
-
-        return http_response($request, null, 200, ['data' => $response]);
-    }
-
-    public function sendSingleSmsToContact(Request $request)
-    {
-        $response =  $this->dueTrackerSmsService
-            ->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->setContactId($request->contact_id)
-            ->sendSingleSmsToContact();
-
-        return http_response($request, null, 200, ['data' => $response]);
-    }
-
-    public function getBulkSmsContactList(Request $request)
-    {
-        $response =  $this->dueTrackerSmsService
-            ->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->setContactId($request->contact_id)
-            ->setLimit($request->limit ?? 20)
-            ->setOffset($request->offset ?? 0)
-            ->getBulkSmsContactList();
-
-        return http_response($request, null, 200, ['data' => $response]);
-    }
-
-    public function sendBulkSmsToContacts(Request $request)
-    {
-        $this->validate($request, [
-            'contact_type' => 'required|string|in:' . implode(',', ContactType::get()),
-            'contact_ids' => 'required|array'
-        ]);
-        $this->dueTrackerSmsService
-            ->setPartner($request->partner)
-            ->setContactIds($request->contact_ids)
-            ->setContactType($request->contact_type)
-            ->sendBulkSmsThroughJob();
-    }
 }

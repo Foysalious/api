@@ -15,10 +15,10 @@ class AccountingRoute
                 $api->get('/report','Accounting\\DueTrackerControllerV2@getReport');
                 $api->get('/report/{contactId}','Accounting\\DueTrackerControllerV2@getReport');
                 $api->post('/bad-debts', 'Accounting\\DueTrackerControllerV2@badDebts');
-                $api->get('/sms-content/','Accounting\\DueTrackerControllerV2@getSmsContent');
-                $api->post('/send-single-sms/','Accounting\\DueTrackerControllerV2@sendSingleSmsToContact');
-                $api->post('/send-bulk-sms/','Accounting\\DueTrackerControllerV2@sendBulkSmsToContacts');
-                $api->get('/bulk-sms-list/','Accounting\\DueTrackerControllerV2@getBulkSmsContactList');
+                $api->get('/sms-content/','Accounting\\DueTrackerSmsController@getSmsContent');
+                $api->post('/send-single-sms/','Accounting\\DueTrackerSmsController@sendSingleSmsToContact');
+                $api->post('/send-bulk-sms/','Accounting\\DueTrackerSmsController@sendBulkSmsToContacts');
+                $api->get('/bulk-sms-eligible-list/','Accounting\\DueTrackerSmsController@getBulkSmsContactList');
 
                 $api->group(['prefix' => 'reminders'], function ($api) {
                     $api->get('/', 'Accounting\\DueTrackerReminderController@reminders');
@@ -33,7 +33,6 @@ class AccountingRoute
             $api->group(['prefix' => 'due-tracker'], function ($api) {
                 $api->get('/public-report', 'Accounting\\DueTrackerControllerV2@publicReport');
                 $api->post('/reminder/notification', 'Accounting\\DueTrackerReminderController@reminderNotificationWebhook');
-                $api->post('/send-reminder-sms', 'Accounting\\DueTrackerSmsController@reminderSmsWebhook');
             });
         });
     }

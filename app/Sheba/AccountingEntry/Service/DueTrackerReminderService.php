@@ -272,6 +272,13 @@ class DueTrackerReminderService
         $smsStatus = false;
         if ($reminder['should_send_sms'] == 1) {
 //          TODO: send SMS
+//            $sms_content["balance"] = '';
+//            $sms_content["balance_type"] = '';
+//            $sms_content["contact_name"] = '';
+//            $sms_content["contact_mobile"] = '';
+//            $response = $this->dueTrackerSmsService->setPartnerId($partner_id)
+//                ->setContactType($contact_type)
+//                ->sendSmsForReminder($sms_content);
             $smsStatus = true;
         }
         $this->setReminderId($reminder['id'])

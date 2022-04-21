@@ -149,6 +149,7 @@ class DueTrackerSmsService
         $data = $this->generateSmsDataForContactType($sms_content);
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSmsHandler($data);
+        throw new InsufficientBalance();
         $sms_cost = $sms->estimateCharge();
         if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance();
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
@@ -231,6 +232,10 @@ class DueTrackerSmsService
         dispatchJobNow(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
     }
 
+    /**
+     * @throws WalletDebitForbiddenException
+     * @throws InsufficientBalance
+     */
     public function sendBulkSmsToContacts()
     {
         /* Todo need to check the wallet for sms charge calculation before job */
@@ -251,12 +256,17 @@ class DueTrackerSmsService
 
     public function sendSmsForReminder(array $sms_content)
     {
-        /* Todo need a partner resolver from id */
-        $this->partner = $partner = Partner::where('id', $this->partnerId)->first();
-        $sms_content['partner_name'] = $this->partner->name;
-        $sms_content['partner_mobile'] = $this->partner->mobile;
-        $sms_content['web_report_link'] = 'report';
-        $this->sendSMS($sms_content);
-        return true;
+        try {
+            /* Todo need a partner resolver from id */
+            $this->partner = Partner::where('id', $this->partnerId)->first();
+            $sms_content['partner_name'] = $this->partner->name;
+            $sms_content['partner_mobile'] = $this->partner->mobile;
+            $sms_content['web_report_link'] = $this->getWebReportLink();
+            $this->sendSMS($sms_content);
+            return true;
+        } catch (InsufficientBalance $e){
+            return false;
+        }
+
     }
 }
