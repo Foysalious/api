@@ -8,7 +8,7 @@
 <style>
 
 </style>
-<body style="width: 595px; margin: auto">
+<body style="width: 595px;    padding-right: 193px; margin: auto">
 <?php $gg = Sheba\Helpers\Converters\NumberLanguageConverter::en2bn("");?>
 
 
