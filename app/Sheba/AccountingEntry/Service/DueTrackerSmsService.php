@@ -100,15 +100,13 @@ class DueTrackerSmsService
             ->setContactId($this->contactId)
             ->setPartner($this->partner)
             ->getBalanceByContact();
-        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
+
         return [
             'balance' => $contact_balance['stats']['balance'],
             'balance_type' => $contact_balance['stats']['type'],
             'contact_name' => $contact_balance['contact_details']['name'],
             'contact_mobile' => $contact_balance['contact_details']['mobile'],
-            'partner_name' => $partner_info['name'],
-            'partner_mobile' => $partner_info['mobile'],
-            'web_report_link' => 'www.google.com',
+            'web_report_link' => $this->getWebReportLink(),
         ];
     }
 
@@ -169,11 +167,12 @@ class DueTrackerSmsService
 
     private function generateSmsDataForContactType(array $sms_content)
     {
+        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
         $data =[
-            'partner_name' => $sms_content['partner_name'],
+            'partner_name' => $partner_info['name'],
+            'partner_mobile' => $partner_info['mobile'],
             'mobile' => $sms_content['contact_mobile'],
             'amount' => $sms_content['balance'],
-            'partner_mobile' => $sms_content['partner_mobile'],
             'web_report_link' => $sms_content['web_report_link'],
             'type' => $sms_content['balance_type'] == BalanceType::RECEIVABLE ? 'due' : 'deposit'
         ];
@@ -223,10 +222,14 @@ class DueTrackerSmsService
         $sms_sending_lists = $this->dueTrackerRepo
             ->setPartner($this->partner)
             ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
-        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
         foreach ($sms_sending_lists as $each_sms) {
-            dd($each_sms);
+            $each_sms['web_report_link'] = $this->getWebReportLink();
             $this->sendSMS($each_sms);
         }
+    }
+
+    public function getWebReportLink()
+    {
+        return  'www.google.com';
     }
 }
