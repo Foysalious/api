@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Reward\ActionEventInitiator;
 use Sheba\Reward\CampaignEventInitiator;
 use \Sheba\Dal\RewardTargets\Model as RewardTargets;
@@ -135,5 +136,35 @@ class Reward extends Model
     public function getTerms()
     {
         return $this->terms && json_decode($this->terms) > 0 ? json_decode($this->terms) : [];
+    }
+
+
+    public function getUserFilters(): array
+    {
+        return json_decode($this->user_filters, 1);
+    }
+
+    public function getActiveStatusUserFilterTimeFrame()
+    {
+        $user_filters = $this->getUserFilters();
+        if (!array_key_exists("active_status", $user_filters)) return null;
+
+        if ($user_filters['active_status'] == 'last7') {
+            return (new TimeFrame())->for7DaysBefore($this->created_at);
+        } else if ($user_filters['active_status'] == 'last30') {
+            return (new TimeFrame())->for30DaysBefore($this->created_at);
+        }
+
+        return null;
+    }
+
+    public function getRegistrationWithinUserFilterTimeFrame()
+    {
+        $user_filters = $this->getUserFilters();
+        if (!array_key_exists("registration_within", $user_filters)) return null;
+
+        $start = $user_filters["registration_within"]['start'] . " 00:00:00";
+        $end = $user_filters["registration_within"]['end'] . " 23:59:59";
+        return new TimeFrame($start, $end);
     }
 }
