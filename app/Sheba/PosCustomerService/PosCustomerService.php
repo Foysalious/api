@@ -30,6 +30,7 @@ class PosCustomerService
     private $address;
     private $email;
     private $dob;
+    private $createdFrom;
     /**
      * @var PosCustomerRepository
      */
@@ -152,6 +153,15 @@ class PosCustomerService
         return $this;
     }
 
+    /**
+     * @param mixed $createdFrom
+     * @return PosCustomerService
+     */
+    public function setCreatedFrom($createdFrom)
+    {
+        $this->createdFrom = $createdFrom;
+        return $this;
+    }
 
     /**
      * @return array
@@ -267,7 +277,8 @@ class PosCustomerService
             'blood_group' => $this->bloodGroup,
             'dob' => $this->dob,
             'pro_pic' => $this->pic,
-            'is_supplier' => $this->supplier
+            'is_supplier' => $this->supplier,
+            'created_from' => $this->createdFrom ?: 'contact'
         ];
     }
 
@@ -334,6 +345,7 @@ class PosCustomerService
         if (isset($this->note)) $data['note'] = $this->note;
         if (isset($this->email)) $data['email'] = $this->email;
         if (isset($this->company_name)) $data['company_name'] = $this->companyName;
+        if (isset($this->createdFrom)) $data['created_from'] = $this->createdFrom;
         return $data;
     }
 
