@@ -164,6 +164,22 @@ class EventDataConverter
                     ]
                 ]
             ],
+            'consecutive_topup' => [
+                'name' => 'Consecutive Top Up Days',
+                'event_class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Rule::class,
+                'parameters' => [
+                    'last_usage' => [
+                        'type' => 'usage',
+                        'class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Parameter\LastUsage::class
+                    ],
+                    'target' => [
+                        'type' => 'number',
+                        'class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Parameter\Target::class,
+                        'min' => 0
+                    ]
+                ]
+            ]
         ];
     }
 

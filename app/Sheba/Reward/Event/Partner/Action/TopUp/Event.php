@@ -3,19 +3,23 @@
 namespace Sheba\Reward\Event\Partner\Action\TopUp;
 
 use App\Models\Partner;
+
 use App\Models\TopUpOrder;
 use Sheba\Reward\AmountCalculator;
 use Sheba\Reward\Event\Action;
+use Sheba\Reward\Event\Partner\Action\PartnerFilter;
 use Sheba\Reward\Event\Rule as BaseRule;
 use Sheba\Reward\Exception\RulesTypeMismatchException;
 
 class Event extends Action implements AmountCalculator
 {
+    use PartnerFilter;
+
     /** @var Partner $partner */
     private $partner;
 
-    /** @var TopUpOrder $topup_order */
-    private $topup_order;
+    /** @var TopUpOrder $topUpOrder */
+    private $topUpOrder;
 
     /**
      * @param BaseRule $rule
@@ -33,14 +37,17 @@ class Event extends Action implements AmountCalculator
     public function setParams(array $params)
     {
         parent::setParams($params);
-        $this->topup_order = $this->params[0];
-        if($this->topup_order->isAgentPartner())
-            $this->partner = Partner::find($this->topup_order->agent_id);
+        $this->topUpOrder = $this->params[0];
+        if($this->topUpOrder->isAgentPartner())
+            $this->partner = Partner::find($this->topUpOrder->agent_id);
     }
 
     public function isEligible(): bool
     {
-        return $this->rule->check($this->params) && $this->filterConstraints() && $this->filterTargets();
+        return $this->rule->check($this->params)
+            && $this->filterConstraints()
+            && $this->filterTargets()
+            && $this->filterByUserFilters();
     }
 
     /**
