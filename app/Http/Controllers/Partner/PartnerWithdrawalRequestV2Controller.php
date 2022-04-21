@@ -90,7 +90,6 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         $withdrawable_amount = 0;
         if ($partner_order->order->is_credit_limit_adjustable && $partner_order->sheba_collection > 0) {
             $activeWithdrawalAmount = $orderAdvanceWithdrawalRequestService->activeRequestAgainstPartnerOrderAmount($partner_order);
-            $activeWithdrawalAmount += $orderAdvanceWithdrawalRequestRepository->getTotalPendingAmountForPartnerOrder($partner_order);
 
             if ($partner_order->sheba_collection > $activeWithdrawalAmount) {
                 $withdrawable_amount = $partner_order->sheba_collection - $activeWithdrawalAmount;
