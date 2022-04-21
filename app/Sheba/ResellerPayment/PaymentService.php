@@ -134,7 +134,7 @@ class PaymentService
             }
         }
         $mapped_status = (new MtbMappedAccountStatus())->setStatus($response["Status"])->mapMtbAccountStatus();
-        if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+//        if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
         return $mapped_status['status'];
     }
 
