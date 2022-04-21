@@ -91,7 +91,7 @@ class HomePageSettingController extends Controller
         if (!$settings) {
             $client = new Client();
             $res = $client->request('GET', config('sheba.admin_url') . '/api/get-home-settings?key=' . $setting_key);
-            $settings = json_decode($res->getBody());
+            $settings = $res->getBody();
         }
         if (!$settings) return api_response($request, null, 404);
 
