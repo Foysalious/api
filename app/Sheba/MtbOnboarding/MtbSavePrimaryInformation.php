@@ -78,7 +78,6 @@ class MtbSavePrimaryInformation
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
-
                 'orgCode' => MtbConstants::CHANNEL_ID,
                 'name' => $this->partner->getFirstAdminResource()->profile->name,
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
@@ -89,6 +88,10 @@ class MtbSavePrimaryInformation
                 'motherName' => $this->partnerMefInformation->motherName,
                 "contactAddress" => MtbConstants::CONTACT_ADDRESS,
                 'custGrade' => MtbConstants::CUSTOMER_GRADE,
+                'EmailId' => $this->partner->getFirstAdminResource()->profile->email,
+                'Tin' => $this->partner->getFirstAdminResource()->profile->tin_no,
+                'SpouseName' => $this->partnerMefInformation->spouseName,
+                'branch' => '121212',
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
                 'tradeLicenseExists' => $tradeLicenseExist,
                 'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
