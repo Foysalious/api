@@ -28,7 +28,7 @@ class CompletionCalculation
         $total = 0;
         $filled = 0;
         foreach ($this->fields as $field) {
-            if($field['input_type'] !== self::HEADER) {
+            if($field['input_type'] !== self::HEADER && $field['id'] !== 'spouseName') {
                 $total++;
 
                 if (!empty($field["data"])) $filled++;
