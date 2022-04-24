@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Notifications;
 
+use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\PushNotification\PushNotificationHandler as PusNotificationService;
 use Sheba\PushNotificationHandler;
 
@@ -18,21 +19,12 @@ class ReminderNotificationHandler
         return $this;
     }
 
+    /**
+     * @throws InvalidOptionsException
+     */
     public function handler()
     {
-        $topic = config('sheba.push_notification_topic_name.manager_new') . $this->reminder['partner_id'];
-        $sound = config('sheba.push_notification_sound.manager');
-        $data = [
-            "title" => 'Due Tracker Reminder',
-            "message" => "No message has been given",
-            "sound" => $sound,
-            "event_type" => 'DueTrackerReminder',
-            "event_id" => (string)$this->reminder['id']
-        ];
-        return (new PusNotificationService())->send($topic, null, $data);
-
-//                $topic = config('sheba.push_notification_topic_name.manager_new') . $this->reminder['partner_id'];
-//        $channel = config('sheba.push_notification_channel_name.manager');
+//        $topic = config('sheba.push_notification_topic_name.manager_new') . $this->reminder['partner_id'];
 //        $sound = config('sheba.push_notification_sound.manager');
 //        $data = [
 //            "title" => 'Due Tracker Reminder',
@@ -41,6 +33,18 @@ class ReminderNotificationHandler
 //            "event_type" => 'DueTrackerReminder',
 //            "event_id" => (string)$this->reminder['id']
 //        ];
-//        (new PushNotificationHandler())->send($data, $topic, $channel, $sound);
+//        return (new PusNotificationService())->send($topic, null, $data);
+
+        $topic = config('sheba.push_notification_topic_name.manager_new') . $this->reminder['partner_id'];
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+        $data = [
+            "title" => 'Due Tracker Reminder',
+            "message" => "No message has been given",
+            "sound" => $sound,
+            "event_type" => 'DueTrackerReminder',
+            "event_id" => (string)$this->reminder['id']
+        ];
+        (new PushNotificationHandler())->send($data, $topic, $channel, $sound);
     }
 }
