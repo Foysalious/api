@@ -136,7 +136,7 @@ class TrackingController extends Controller
 
         if ($request->has('no_activity')) $data = $this->getEmployeeOfNoActivityForCertainHour($data, $request->no_activity);
         if ($request->has('search')) $data = $this->searchEmployee($data, $request);
-
+        $data = collect($data)->values();
         return api_response($request, null, 200, ['employee_list' => $data]);
     }
 
