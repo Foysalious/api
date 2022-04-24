@@ -211,20 +211,23 @@ class DueTrackerReminderService
     {
         $push = (new ReminderNotificationHandler())->setReminder($reminder)->handler();
         Log::info(['remidner push', $push, $reminder]);
-        $smsStatus = false;
+        $smsStatus = 'failed';
         if ($reminder['should_send_sms'] == 1) {
             $sms_content["balance"] = $reminder['balance'];
             $sms_content["balance_type"] = $reminder['balance_type'];
             $sms_content["contact_name"] = $reminder['contact_info']['name'];
             $sms_content["contact_mobile"] = $reminder['contact_info']['mobile'];
-//            $response = $this->dueTrackerSmsService->setPartnerId($partner_id)
-//                ->setContactType($contact_type)
-//                ->sendSmsForReminder($sms_content);
-            $smsStatus = true;
+            $dueTrackerSmsService = app()->make(DueTrackerSmsService::class);
+            $response = $dueTrackerSmsService->setPartnerId($reminder['partner_id'])
+                ->setContactType($reminder['contact_type'])
+                ->sendSmsForReminder($sms_content);
+            if($response){
+                $smsStatus = 'success';
+            }
         }
         $this->setReminderId($reminder['id'])
             ->setSms($reminder['should_send_sms'])
-            ->setReminderDate($reminder['reminder_date'])
+            ->setReminderDate($reminder['reminder_at'])
             ->setReminderStatus('success')
             ->setSmsStatus($smsStatus)
             ->update();

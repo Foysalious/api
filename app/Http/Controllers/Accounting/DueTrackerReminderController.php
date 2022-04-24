@@ -111,6 +111,7 @@ class DueTrackerReminderController extends Controller
         $reminder['id'] = $request->id;
         $reminder['partner_id'] = $request->partner_id;
         $reminder['contact_info'] = $request->contact_info;
+        $reminder['contact_type'] = $request->contact_type;
         $reminder['reminder_at'] = $request->reminder_at;
         $reminder['should_send_sms'] = $request->should_send_sms;
         $reminder['reminder_status'] = $request->reminder_status;
