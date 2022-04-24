@@ -111,7 +111,7 @@ class TopUpOrder extends BaseModel implements PayableType
 
     public function scopeStatus($query, $status)
     {
-        return $query->whereIn('status', $status);
+        return $query->where('status', $status);
     }
 
     public function scopeStatuses($query, $statuses)
