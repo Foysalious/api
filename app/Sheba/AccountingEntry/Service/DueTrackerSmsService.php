@@ -149,7 +149,6 @@ class DueTrackerSmsService
         $data = $this->generateSmsDataForContactType($sms_content);
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSmsHandler($data);
-        throw new InsufficientBalance();
         $sms_cost = $sms->estimateCharge();
         if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance();
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');

@@ -171,6 +171,7 @@ class AccountingDueTrackerRepository extends BaseRepository
             $url=$this->updateRequestParam($request, $url);
         }
         $result = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+        if(!is_array($result)) return [];
         $customer = [];
         if (is_null($result['customer'])) {
             /** @var PosCustomerResolver $posCustomerResolver */
