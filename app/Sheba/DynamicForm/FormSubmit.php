@@ -114,6 +114,7 @@ class FormSubmit
 
     private function savePartnerBasicInformation()
     {
+        unset($this->partnerBasicInformation->dummy_data);
         $this->partner->basicInformations->additional_information = (json_encode($this->partnerBasicInformation));
         $this->partner->basicInformations->save();
     }
@@ -139,6 +140,8 @@ class FormSubmit
     public function setPartnerBasicInformation()
     {
         $this->partnerBasicInformation = json_decode($this->partner->basicInformations->additional_information);
+        if(!isset($this->partnerBasicInformation))
+            $this->partnerBasicInformation = json_decode('{"dummy_data": "Partner"}');
     }
 
     public function setFirstAdminProfile()
