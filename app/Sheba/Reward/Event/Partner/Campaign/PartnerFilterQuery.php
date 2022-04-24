@@ -2,7 +2,6 @@
 
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerUsageHistory;
-use Sheba\Helpers\TimeFrame;
 
 trait PartnerFilterQuery
 {
@@ -11,6 +10,7 @@ trait PartnerFilterQuery
         $this->filterSubscription();
         $this->filterStatus();
         $this->filterActiveStatus();
+        $this->filterRegistrationWithin();
     }
 
     private function filterSubscription()
@@ -38,5 +38,14 @@ trait PartnerFilterQuery
 
         $active_partners = PartnerUsageHistory::whereBetween('created_at', $active_time_frame->getArray())->groupBy('partner_id')->pluck('partner_id');
         $this->query->where('partners.id', $active_partners);
+    }
+
+    private function filterRegistrationWithin()
+    {
+        $registration_within = $this->reward->getRegistrationWithinUserFilterTimeFrame();
+
+        if ($registration_within == null) return;
+
+        $this->query->whereBetween('partners.created_at', $registration_within->getArray());
     }
 }

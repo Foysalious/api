@@ -1,13 +1,12 @@
 <?php namespace Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp;
 
 use App\Models\Partner;
-use App\Models\PartnerSubscriptionPackage;
 use App\Models\TopUpOrder;
 use Illuminate\Support\Collection;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Reward\Event\Campaign;
 use Sheba\Reward\Event\ParticipatedCampaignUser;
-use Sheba\Reward\Event\Partner\Campaign\DueTrackerEntry\Rule;
+use Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Parameter\TopUpDayUsageCalculator;
 use Sheba\Reward\Event\Partner\Campaign\PartnerFilterQuery;
 use Sheba\Reward\Exception\RulesTypeMismatchException;
 use Sheba\Reward\Rewardable;
@@ -18,9 +17,15 @@ class Event extends Campaign
 
     private $query;
 
+    /** @var array */
+    private $partnerConsecutiveCount;
+
     private function initiateQuery()
     {
-        $this->query = TopUpOrder::select('topup_orders.agent_type', 'topup_orders.agent_id', \DB::raw('COUNT(*) as total_count'))
+        $this->partnerConsecutiveCount = (new TopUpDayUsageCalculator($this->timeFrame))->getPartnerIdsWithConsecutiveCount();
+        $this->rule->setPartnerConsecutiveCount($this->partnerConsecutiveCount);
+
+        $this->query = TopUpOrder::select('topup_orders.agent_type', 'topup_orders.agent_id')
             ->with('agent')
             ->join('partners', 'partners.id', '=', 'topup_orders.agent_id')
             ->where('topup_orders.agent_type', Partner::class)
@@ -66,24 +71,24 @@ class Event extends Campaign
     {
         $this->initiateQuery();
 
-        $this->filterConstraints();
-
         $this->rule->setValues();
 
         $this->rule->checkParticipation($this->query);
 
-        $partner_counts = $this->query->get();
+        $distinct_agents = $this->query->get();
 
-        if (count($partner_counts) == 0) return [];
+        if (count($distinct_agents) == 0) return [];
 
         $participated_users = [];
 
-        /** @var TopUpOrder $partner_wise_orders */
-        foreach ($partner_counts as $partner_wise_orders) {
+        /** @var TopUpOrder $distinct_agent */
+        foreach ($distinct_agents as $distinct_agent) {
+            $partner = $distinct_agent->agent;
+            $achieved = $this->partnerConsecutiveCount[$partner->id];
             $participated_users[] = (new ParticipatedCampaignUser())
-                ->setAchievedValue($partner_wise_orders->total_count)
-                ->setUser($partner_wise_orders->agent)
-                ->setIsTargetAchieved($this->rule->isTargetAchieved($partner_wise_orders->total_count));
+                ->setAchievedValue($achieved)
+                ->setUser($partner)
+                ->setIsTargetAchieved($this->rule->isTargetAchieved($achieved));
         }
         return $participated_users;
     }
@@ -94,25 +99,14 @@ class Event extends Campaign
         $this->rule->setValues();
         $this->rule->check($this->query);
         $this->filterPartner($rewardable);
-        $partner_count = $this->query->get();
-        if (count($partner_count) == 0) return 0;
-        return $partner_count[0]->total_count;
+        $partners = $this->query->get();
+        if (count($partners) == 0) return 0;
+        if (!array_key_exists($rewardable->id, $this->partnerConsecutiveCount)) return 0;
+        return $this->partnerConsecutiveCount[$rewardable->id];
     }
 
     private function filterPartner(Rewardable $rewardable)
     {
         $this->query->where('agent_id', $rewardable->id);
-    }
-
-    private function filterConstraints()
-    {
-        foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
-            $ids = $type->pluck('constraint_id')->toArray();
-
-            if ($key == PartnerSubscriptionPackage::class) {
-                $this->query->join('partners', 'partners.id', '=', 'partner_orders.partner_id')
-                    ->whereIn('partners.package_id', $ids);
-            }
-        }
     }
 }
