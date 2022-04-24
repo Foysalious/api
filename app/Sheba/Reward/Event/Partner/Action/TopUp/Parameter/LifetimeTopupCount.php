@@ -23,7 +23,7 @@ class LifetimeTopupCount extends ActionEventParameter
 
         /** @var Partner $agent */
         $agent = $topup_order->agent;
-        $lifetime_count = $agent->topUpOrders()->count();
+        $lifetime_count = $agent->topUpOrders()->successful()->count();
 
         return $lifetime_count == $this->value;
     }

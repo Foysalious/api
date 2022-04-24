@@ -4,6 +4,7 @@ namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
 
 use App\Models\Partner;
 use App\Models\TopUpOrder;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Reward\Event\ActionEventParameter;
 
 class TopupDayCount extends ActionEventParameter
@@ -25,6 +26,7 @@ class TopupDayCount extends ActionEventParameter
             ->selectRaw('COUNT(DISTINCT DATE(created_at)) as day_count')
             ->where('agent_type', Partner::class)
             ->where('agent_id', $topup_order->agent_id)
+            ->where('status', Statuses::SUCCESSFUL)
             ->get();
 
         return $result->day_count >= $this->value->min && $result->day_count <= $this->value->max;
