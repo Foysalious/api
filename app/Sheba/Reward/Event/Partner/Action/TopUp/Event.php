@@ -79,16 +79,12 @@ class Event extends Action implements AmountCalculator
     /**
      * @return float|int|mixed
      */
-
     public function calculateAmount()
     {
-        $topUpAmount = $this->params[0];
-        if ($this->reward->is_amount_percentage) {
-            $cap = $this->reward->cap ? : 0;
-            $amount = ($this->reward->amount * $topUpAmount->amount);
-            return  $amount > $cap ? $cap : $amount;
-        }
-        return $this->reward->amount;
+        if (!$this->reward->is_amount_percentage) return $this->reward->amount;
+
+        $amount = ($this->reward->amount * $this->topUpOrder->amount) / 100;
+        return $this->reward->cap ? min($amount, $this->reward->cap) : $amount;
     }
 
     public function getLogEvent()
