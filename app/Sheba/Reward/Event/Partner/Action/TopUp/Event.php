@@ -89,7 +89,7 @@ class Event extends Action implements AmountCalculator
 
     public function getLogEvent()
     {
-        $log = $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $this->partner->id;
+        $log = $this->calculateAmount() . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $this->partner->id;
         return $log;
     }
 }
