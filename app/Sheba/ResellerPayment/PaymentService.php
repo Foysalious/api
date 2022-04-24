@@ -47,6 +47,7 @@ class PaymentService
     private $pgwMerchantId;
     private $newStatus;
     private $type;
+    private $mtbStatus;
 
 
     /**
@@ -125,24 +126,27 @@ class PaymentService
     private function getMtbAccountStatus($mtb_information)
     {
         $mtb_status = $mtb_information;
-        if (json_decode($mtb_status->mtb_account_status)->Status != 'COMPLETED') {
+        if (json_decode($mtb_status->mtb_account_status)->Status != '19') {
             /** @var MtbServerClient $client */
             $client = App::make(MtbServerClient::class);
             $response = $client->get(QRPaymentStatics::MTB_ACCOUNT_STATUS . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
+            $this->mtbStatus = $response["Status"];
             if (json_decode($mtb_status->mtb_account_status)->Status != $response["Status"]) {
                 $this->storeMtbAccountStatus($response);
             }
         }
-        $mapped_status = (new MtbMappedAccountStatus())->setStatus($response["Status"])->mapMtbAccountStatus();
-        if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+        $mapped_status = (new MtbMappedAccountStatus())->setStatus($this->mtbStatus)->mapMtbAccountStatus();
+        if (isset($this->partner->partnerMefinformation->mtb_account_status)) {
+            if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+        }
         return $mapped_status;
     }
 
     private function savePartnerFinancialInformation($mid)
     {
-        $partnerFinancialInformation= new PartnerFinancialInformation();
-        $partnerFinancialInformation->partner_id= $this->partner->id;
-        $partnerFinancialInformation->mtb_merchant_id= $mid;
+        $partnerFinancialInformation = new PartnerFinancialInformation();
+        $partnerFinancialInformation->partner_id = $this->partner->id;
+        $partnerFinancialInformation->mtb_merchant_id = $mid;
         $partnerFinancialInformation->save();
     }
 
@@ -415,7 +419,7 @@ class PaymentService
             $completion = (new ApplyValidation())->setPartner($this->partner)->setForm($qrGateway->id)->getFormSections();
         else
             $completion = null;
-        if(isset($this->partner->partnerMefinformation->mtb_account_status))
+        if (isset($this->partner->partnerMefinformation->mtb_account_status))
             $status = (new MtbMappedAccountStatus())->setStatus(json_decode($this->partner->partnerMefinformation->mtb_account_status)->Status)->mapMtbAccountStatus();
 
         return [
