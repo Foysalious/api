@@ -12,13 +12,13 @@
 <?php $gg = Sheba\Helpers\Converters\NumberLanguageConverter::en2bn("");?>
 
 
-<div style="text-align: center; margin-top: 30px; line-height: 20px;">
-    <h4 style="margin: 0; padding: 0; color: #2F3137; font-size: 16px; font-weight: normal;">{{ $data['contact_details']['name'] }} এর রিপোর্ট</h4>
+<div style="text-align: center; margin-top: 30px; line-height: 20px;padding-top: 20px;">
+    <h4 style="margin: 0; padding: 0; color: #2F3137; font-size: 16px; font-weight: normal;">{{ $data['contact_details']['name'] }} রিপোর্ট</h4>
     <p style="margin: 0; padding: 0">{{ $data['start_date'] }} - {{ $data['end_date'] }}</p>
     <p style="margin: 0; padding: 0; color: #2F3137; font-size: 12px;">রিপোর্ট তৈরীর সময়: {{ $data['now'] }}</p>
 </div>
-
-<div style="border: 1px solid #E5E5E5; margin-top: 30px;text-align: center">
+<div style="padding-left:25px; padding-right:25px;">
+<div  style="border: 1px solid #E5E5E5; margin-top: 30px;text-align: center">
     <table style="text-align: center;width: 100%">
         @if($data['contact_type'] == 'customer')
         <tr style="text-align: center; padding: 10px 0;">
@@ -62,11 +62,11 @@
         @endif
     </table>
 </div>
-
+</div>
 <div style="margin-top: 30px;">
     <?php reset($data['due_list_bn']) ?>
-    <p style="margin: 0; padding: 0; font-size: 12px; ">লেনদেনের সংখ্যা: {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['due_list_bn'][key($data['due_list_bn'])]['stats']['total_transactions_bn'])  }}  (এই মাস)</p>
-    <div style="border: 1px solid #E5E5E5; margin-top: 30px;text-align: center">
+    <p style="margin: 0; padding: 0; padding-left:25px; padding-right:25px; font-size: 12px; ">লেনদেনের সংখ্যা: {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['due_list_bn'][key($data['due_list_bn'])]['stats']['total_transactions_bn'])  }}  (এই মাস)</p>
+    <div style="padding-left:25px; padding-right:25px;text-align: center">
     <table style="table-layout: fixed;
         width: 100%;
         border-collapse: collapse; font-size: 12px;">
@@ -138,8 +138,8 @@
             <tr style=" background: #f4f5f7">
                 <td style="padding: 9px 16px;width: 20% ;">সর্বমোট</td>
                 <td style="width: 22% "></td>
-                <td style="text-align: right; width: 18% ;color: #bf392b">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }}</td>
-                <td style="text-align: right; width: 18% ; color: #4faf61">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</td>
+                <td style="text-align: right; width: 19% ;color: #bf392b">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }}</td>
+                <td style="text-align: right; width: 19% ; color: #4faf61">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</td>
 
             </tr>
         </table>

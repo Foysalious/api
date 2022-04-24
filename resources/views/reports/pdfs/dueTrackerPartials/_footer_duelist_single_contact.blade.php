@@ -5,7 +5,6 @@
         background: #e0fbd8;
         display: inline-block;
         padding: 8px;
-        width: 665px;
       "
 >
     <table style="
