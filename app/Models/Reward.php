@@ -132,7 +132,7 @@ class Reward extends Model
 
     public function isCustomer()
     {
-        return $this->target_type == "App\\Models\\Customer";
+        return $this->target_type == Customer::class;
     }
 
     public function getTerms()
@@ -140,10 +140,9 @@ class Reward extends Model
         return $this->terms && json_decode($this->terms) > 0 ? json_decode($this->terms) : [];
     }
 
-
     public function getUserFilters(): array
     {
-        return json_decode($this->user_filters, 1);
+        return json_decode($this->user_filters, 1) ?: [];
     }
 
     public function getActiveStatusUserFilterTimeFrame()
