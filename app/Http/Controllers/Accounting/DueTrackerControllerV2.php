@@ -3,8 +3,9 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\AccountKeyTypes;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Service\DueTrackerReportService;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
-use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
+use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mpdf\MpdfException;
@@ -17,10 +18,14 @@ class DueTrackerControllerV2 extends Controller
 {
     /** @var DueTrackerService */
     protected $dueTrackerService;
+    protected $dueTrackerSmsService;
+    protected $dueTrackerReportService;
 
-    public function __construct(DueTrackerService $dueTrackerService)
+    public function __construct(DueTrackerService $dueTrackerService, DueTrackerSmsService $dueTrackerSmsService, DueTrackerReportService $dueTrackerReportService)
     {
         $this->dueTrackerService = $dueTrackerService;
+        $this->dueTrackerSmsService = $dueTrackerSmsService;
+        $this->dueTrackerReportService = $dueTrackerReportService;
     }
 
     /**
@@ -69,7 +74,7 @@ class DueTrackerControllerV2 extends Controller
             ->setAccountKey(AccountKeyTypes::CASH)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
-            ->setNote('Bad Debts')
+            ->setNote('অনাদায়ী পাওনা')
             ->badDebts();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
         return api_response($request, null, 200, ['data' => $response]);
@@ -116,7 +121,6 @@ class DueTrackerControllerV2 extends Controller
      * @param Request $request
      * @return JsonResponse
      * @throws AccountingEntryServerError
-     * @throws PosOrderServiceServerError
      */
     public function dueListByContact(Request $request): JsonResponse
     {
@@ -165,7 +169,7 @@ class DueTrackerControllerV2 extends Controller
      */
     public function downloadPdf(Request $request): JsonResponse
     {
-        $data=$this->dueTrackerService
+        $data=$this->dueTrackerReportService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
@@ -182,7 +186,7 @@ class DueTrackerControllerV2 extends Controller
      */
     public function publicReport(Request $request): JsonResponse
     {
-        $data = $this->dueTrackerService
+        $data = $this->dueTrackerReportService
             ->setPartnerId($request->partner_id)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
@@ -193,10 +197,11 @@ class DueTrackerControllerV2 extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function getReport(Request $request): JsonResponse
     {
-        $data = $this->dueTrackerService
+        $data = $this->dueTrackerReportService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
             ->setContactId($request->contactId)

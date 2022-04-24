@@ -90,7 +90,7 @@ class AccountingPdfHandler extends Handler
         $defaultFontConfig = (new FontVariables())->getDefaults();
         $fontData = $defaultFontConfig['fontdata'];
         return new Mpdf([
-            'mode' => 'utf-8',
+            'mode' => 'utf-8','format' => 'A4','margin_header' => 0,
             'tempDir' => storage_path('app/temp'),
             'fontDir' => array_merge($fontDirs, [
                 storage_path('fonts'),
@@ -98,7 +98,8 @@ class AccountingPdfHandler extends Handler
                     'kalpurush' => [
                         'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
                     ]
-                ], 'default_font' => 'kalpurush'
+                ], 'default_font' => 'kalpurush','margin_left' => 0,
+            'margin_right' => 0,
         ]);
 
     }

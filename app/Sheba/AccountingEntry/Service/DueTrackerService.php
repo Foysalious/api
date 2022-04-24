@@ -299,7 +299,7 @@ class DueTrackerService
         $return_data['current_time'] = Carbon::now()->format('Y-m-d H:i:s');
         if ($this->contact_type == ContactType::SUPPLIER) {
             $supplier_due = $this->dueTrackerRepo->setPartner($this->partner)->getSupplierMonthlyDue();
-            $return_data['supplier_due'] = $supplier_due['due'];
+            $return_data['supplier_current_month_due'] = $supplier_due['due'];
         }
         return $return_data;
     }
@@ -316,36 +316,20 @@ class DueTrackerService
 
     /**
      * @return array
-     * @throws AccountingEntryServerError
-     * @throws InvalidPartnerPosCustomer
+     * @throws InvalidPartnerPosCustomer|AccountingEntryServerError
      */
     public function dueListBalanceByContact(): array
     {
-        $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
+        $contact_balance = $this->getBalanceByContact();
         try {
             $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
         }catch (Exception $e) {
             $reminder = [];
         }
-        $customer = $result['contact_details'];
-        if (is_null($result['contact_details'])) {
-            /** @var PosCustomerResolver $posCustomerResolver */
-            $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($this->contact_id)->setPartner($this->partner)->get();
-            if (empty($posCustomer)) {
-                throw new InvalidPartnerPosCustomer();
-            }
-            $customer['id'] = $posCustomer->id;
-            $customer['name'] = $posCustomer->name;
-            $customer['mobile'] = $posCustomer->mobile;
-            $customer['pro_pic'] = $posCustomer->pro_pic;
-        }
-
         return [
-            'contact_details' => $customer,
-            'stats' => $result['stats'],
-            'other_info' => $result['other_info'],
+            'contact_details' => $contact_balance['contact_details'],
+            'stats' => $contact_balance['stats'],
+            'other_info' => $contact_balance['other_info'],
             'reminder' => $reminder,
             'current_time' => Carbon::now()->format('Y-m-d H:i:s')
         ];
@@ -388,88 +372,6 @@ class DueTrackerService
         return [
             'list' => $due_list
         ];
-    }
-
-    /**
-     * @return array
-     * @throws AccountingEntryServerError
-     */
-    public function getReport(): array
-    {
-        $queryString = $this->generateQueryString();
-        return $this->dueTrackerRepo->setPartner($this->partner)->getReportForMobile($queryString);
-    }
-
-    /**
-     * @param $request
-     * @return string
-     * @throws AccountingEntryServerError
-     * @throws InvalidPartnerPosCustomer
-     * @throws Throwable
-     */
-    public function downloadPDF(): string
-    {
-        $queryString = $this->generateQueryString();
-        $data = [];
-
-        $start_date = date_create($this->start_date);
-        $end_date = date_create($this->end_date);
-
-        $data['data']['start_date'] = ($this->start_date != null) ? NumberLanguageConverter::en2bn(date_format($start_date,"d")).' '.banglaMonth(date_format($start_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($start_date,"Y")) : '';
-        $data['data']['end_date'] = ($this->end_date != null ? NumberLanguageConverter::en2bn(date_format($end_date,"d")).' '.banglaMonth(date_format($end_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($end_date,"Y")) : '');
-        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d H:i:s"));
-
-        $data['data']['partner']['name'] = $this->partner->name;
-        $data['data']['partner']['mobile'] = $this->partner->mobile;
-        $data['data']['partner']['logo'] = $this->partner->logo;
-
-        if ($this->contact_id == null) {
-            $list = $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
-            $data = array_merge($data, $list);
-            $balanceData = $this->getDueListBalance();
-            $data = array_merge($data, $balanceData);
-            //TODO: Will Change the Pdf Generation
-            return "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/invoices/pdf/20220310_due_tracker_report_1646895731.pdf";
-            //return (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
-        }
-        $data['data'] += $this->dueTrackerRepo->setPartner($this->partner)->downloadPdfByContact($queryString);
-        $data = $this->listBnForContactPdf($data);
-        $header =  view('reports.pdfs.dueTrackerPartials._header_duelist_single_contact', compact('data'))->render();
-        $footer = view('reports.pdfs.dueTrackerPartials._footer_duelist_single_contact')->render();
-
-        return (new AccountingPdfHandler())->setHeader($header)
-            ->setFooter($footer)
-            ->setName("due tracker by contact")
-            ->setData($data)
-            ->setViewFile('due_tracker_due_list_by_contact')
-            ->save(true,$header);
-    }
-
-    /**
-     * @return array|mixed
-     * @throws AccountingEntryServerError
-     */
-    public function generatePublicReport(){
-        $queryString = $this->generateQueryString();
-        $data = $this->dueTrackerRepo->reportForWeb($this->partner_id,$queryString);
-
-        $data['stats']['receivable_bn'] = NumberLanguageConverter::en2bn($data['stats']['receivable']);
-        $data['stats']['payable_bn'] = NumberLanguageConverter::en2bn($data['stats']['payable']);
-        $data['stats']['balance_bn'] = NumberLanguageConverter::en2bn($data['stats']['balance']);
-
-        foreach($data['list'] as $key => $value){
-            $date = date_create($data['list'][$key]['entry_at']);
-            $data['list'][$key]['amount_bn'] = NumberLanguageConverter::en2bn($data['list'][$key]['amount']);
-            $data['list'][$key]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($date,"d")).' '.banglaMonth(date_format($date,"m")).' '.NumberLanguageConverter::en2bn(date_format($date,"Y")) ;
-            $data['list'][$key]['balance_bn'] = NumberLanguageConverter::en2bn($data['list'][$key]['balance']);
-        }
-
-        $this->getPartnerById();
-        $partnerInfo = $this->getPartnerInfo($this->partner);
-
-        $data['partner_info'] = $partnerInfo;
-        $data['partner_info']['contact_type'] = $this->contact_type;
-        return $data;
     }
 
     /**
@@ -520,7 +422,7 @@ class DueTrackerService
      * @param $partner
      * @return array
      */
-    private function getPartnerInfo($partner): array
+    public function getPartnerInfo($partner): array
     {
         return [
             'name' => $partner->name,
@@ -581,39 +483,38 @@ class DueTrackerService
     }
 
     /**
-     * @return void
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
      */
-    private function getPartnerById(){
-        $partner = Partner::where('id', $this->partner_id)->first();
-        $this->setPartner($partner);
-    }
-
-    /**
-     * @param $data
-     * @return array
-     */
-    private function listBnForContactPdf($data): array
+    public function getBalanceByContact()
     {
-        $list = array();
-        foreach($data['data']['due_list'] as $key => $value){
-            $split = explode("-",$key);
-            $keybn = banglaMonth($split[1]).' '.NumberLanguageConverter::en2bn($split[0]);
-            foreach($value['list'] as $key1 => $v){
-                $entry_at = date_create($data['data']['due_list'][$key]['list'][$key1]['entry_at']);
-                $created_at = date_create($data['data']['due_list'][$key]['list'][$key1]['created_at']);
-                $list[$keybn]['list'][$key1]['amount_bn'] = NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['list'][$key1]['amount']);
-                $list[$keybn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['list'][$key1]['balance']);
-                $list[$keybn]['list'][$key1]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($entry_at,"d")).'/'.NumberLanguageConverter::en2bn(date_format($entry_at,"m"));
-                $list[$keybn]['list'][$key1]['created_at_bn'] = NumberLanguageConverter::en2bn(date_format($created_at,"d")).' '.banglaMonth(date_format($created_at,"m")).' '.NumberLanguageConverter::en2bn(date_format($created_at,"Y")) ;
-                $list[$keybn]['list'][$key1]['note'] = $data['data']['due_list'][$key]['list'][$key1]['note'];
-                $list[$keybn]['list'][$key1]['account_type'] = $data['data']['due_list'][$key]['list'][$key1]['account_type'];
-            }
-            $list[$keybn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['receivable']);
-            $list[$keybn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['payable']);
-            $list[$keybn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($data['data']['due_list'][$key]['stats']['total_transactions']);
+        $queryString = $this->generateQueryString();
+        $contact_balance =  $this->dueTrackerRepo
+            ->setPartner($this->partner)
+            ->dueListBalanceByContact($this->contact_id, $queryString);
+
+        if ( $this->contact_type == ContactType::SUPPLIER) {
+            $supplier_due = $this->dueTrackerRepo
+                ->setPartner($this->partner)
+                ->getSupplierMonthlyDue($this->contact_id);
+            $contact_balance['stats']['supplier_current_month_due'] = $supplier_due['due'];
         }
-        $data['data']['due_list_bn']=$list;
-        return $data;
+
+        $customer = $contact_balance['contact_details'];
+        if (is_null($customer)) {
+            /** @var PosCustomerResolver $posCustomerResolver */
+            $posCustomerResolver = app(PosCustomerResolver::class);
+            $posCustomer = $posCustomerResolver->setCustomerId($this->contact_id)->setPartner($this->partner)->get();
+            if (empty($posCustomer)) {
+                throw new InvalidPartnerPosCustomer();
+            }
+            $customer['id'] = $posCustomer->id;
+            $customer['name'] = $posCustomer->name;
+            $customer['mobile'] = $posCustomer->mobile;
+            $customer['pro_pic'] = $posCustomer->pro_pic;
+        }
+        $contact_balance['contact_details'] = $customer;
+        return $contact_balance;
     }
 
 

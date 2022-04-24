@@ -2,7 +2,6 @@
 
 namespace App\Sheba\AccountingEntry\Service;
 
-use App\Models\Partner;
 use App\Sheba\AccountingEntry\Notifications\ReminderNotificationHandler;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use Illuminate\Support\Facades\Log;
@@ -214,7 +213,13 @@ class DueTrackerReminderService
         Log::info(['remidner push', $push, $reminder]);
         $smsStatus = false;
         if ($reminder['should_send_sms'] == 1) {
-//          TODO: send SMS
+            $sms_content["balance"] = $reminder['balance'];
+            $sms_content["balance_type"] = $reminder['balance_type'];
+            $sms_content["contact_name"] = $reminder['contact_info']['name'];
+            $sms_content["contact_mobile"] = $reminder['contact_info']['mobile'];
+//            $response = $this->dueTrackerSmsService->setPartnerId($partner_id)
+//                ->setContactType($contact_type)
+//                ->sendSmsForReminder($sms_content);
             $smsStatus = true;
         }
         $this->setReminderId($reminder['id'])
