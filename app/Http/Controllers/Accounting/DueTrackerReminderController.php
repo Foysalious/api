@@ -115,6 +115,8 @@ class DueTrackerReminderController extends Controller
         $reminder['should_send_sms'] = $request->should_send_sms;
         $reminder['reminder_status'] = $request->reminder_status;
         $reminder['sms_status'] = $request->sms_status;
+        $reminder['balance'] = $request->balance;
+        $reminder['balance_type'] = $request->balance_type;
 
         $response = $this->dueTrackerReminderService->sendReminderPush($reminder);
         return http_response($request, null, 200, ['data' => $response]);
