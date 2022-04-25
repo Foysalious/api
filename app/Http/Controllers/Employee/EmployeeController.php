@@ -11,6 +11,7 @@ use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\PersonalInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
+use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
 use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\Business\EmergencyContactInfoTransformer;
@@ -214,6 +215,10 @@ class EmployeeController extends Controller
 
         $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
         $is_manager = $manager ? 1 : 0;
+
+        /** @var  LiveTrackingSettings $live_tracking_settings */
+        $live_tracking_settings = $business->liveTrackingSettings;
+
         $data = [
             'id' => $member->id,
             'business_member_id' => $business_member->id,
@@ -252,7 +257,8 @@ class EmployeeController extends Controller
                 'pro_pic' => $profile->pro_pic ?: null,
                 'designation' => $designation ? ucwords($designation->name) : null
             ],
-            'is_live_track_enable' => $business_member->is_live_track_enable
+            'is_live_track_enable' => $business_member->is_live_track_enable,
+            'location_fetch_interval_in_minutes' => $live_tracking_settings ? $live_tracking_settings->location_fetch_interval_in_minutes : null
         ];
 
         return api_response($request, $business_member, 200, ['info' => $data]);
