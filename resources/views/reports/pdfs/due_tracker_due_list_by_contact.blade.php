@@ -19,6 +19,7 @@
 </div>
 <div style="padding-left:25px; padding-right:25px;">
     <div style="border: 1px solid #E5E5E5; margin-top: 30px;text-align: center">
+
     <table style="text-align: center;width: 100%">
         @if($data['contact_type'] == 'customer')
         <tr style="text-align: center; padding: 10px 0;">
@@ -65,33 +66,39 @@
 </div>
 <div style=" margin-top: 30px;padding-left:25px; padding-right:25px;">
     <?php reset($data['due_list_bn']) ?>
-    <p style="margin: 0; padding: 0; font-size: 12px; ">লেনদেনের সংখ্যা: {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['due_list_bn'][key($data['due_list_bn'])]['stats']['total_transactions_bn'])  }}  (এই মাস)</p>
-    <div style="border: 1px solid #E5E5E5;text-align: center">
-    <table style="table-layout: fixed;
-        width: 100%;
-        border-collapse: collapse; font-size: 12px;">
-        @if($data['contact_type'] == 'customer')
-            <thead>
-            <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
-                <th style="padding: 9px 16px; width: 150px">তারিখ</th>
-                <th style="text-align: left;">বিস্তারিত</th>
-                <th style="text-align: right;width: 18% ;">বাকি</th>
-                <th style="text-align: right;width: 18% ;">জমা</th>
-                <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
-            </tr>
-            </thead>
-        @elseif($data['contact_type'] == 'supplier')
-            <thead>
-            <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
-                <th style="padding: 9px 16px; width: 150px">তারিখ</th>
-                <th style="text-align: left;">বিস্তারিত</th>
-                <th style="text-align: right;width: 18% ;">বাকি ক্রয়</th>
-                <th style="text-align: right;width: 18% ;">পেমেন্ট</th>
-                <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
-            </tr>
-            </thead>
-        @endif
+    <p style="margin: 0; padding: 0; font-size: 12px; color: #868990">লেনদেনের সংখ্যা: {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['due_list_bn'][key($data['due_list_bn'])]['stats']['total_transactions_bn'])  }}  (এই মাস)</p>
+    <div style="text-align: center">
+        <?php
+        $count =0;
+        ?>
         @foreach($data['due_list_bn'] as $key => $value)
+                <?php $count++; ?>
+            <table style="table-layout: fixed;
+        width: 100%;
+        border-collapse: collapse; font-size: 12px; margin-bottom: 10px">
+                @if($count <= 1)
+                    @if($data['contact_type'] == 'customer')
+                        <thead>
+                        <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
+                            <th style="padding: 9px 16px; width: 150px">তারিখ</th>
+                            <th style="text-align: left;">বিস্তারিত</th>
+                                <th style="text-align: right;width: 18% ;">বাকি</th>
+                            <th style="text-align: right;width: 18% ;">জমা</th>
+                            <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
+                        </tr>
+                        </thead>
+                    @elseif($data['contact_type'] == 'supplier')
+                        <thead>
+                        <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
+                            <th style="padding: 9px 16px; width: 150px">তারিখ</th>
+                            <th style="text-align: left;">বিস্তারিত</th>
+                            <th style="text-align: right;width: 18% ;">বাকি ক্রয়</th>
+                            <th style="text-align: right;width: 18% ;">পেমেন্ট</th>
+                            <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
+                        </tr>
+                        </thead>
+                    @endif
+                @endif
         <tr style="border: 1px solid #EAECF0;">
             <td style="padding: 9px 16px;">{{ $key }}</td>
             <td>&nbsp;</td>
@@ -105,13 +112,13 @@
                     <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
                     <td>{{ $v['note'] }}</td>
                     @if($v['account_type'] == 'receivable' )
-                        <td style="text-align: right; background: #F9EDEC;color: #C92236">৳ {{ $v['amount_bn'] }}</td>
-                        <td style="text-align: right;  background: #EFF8F1;">&nbsp;</td>
-                        <td style="text-align: right; color: #C92236; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+                        <td style="width: 18% ;text-align: right; padding-right: 5px; background: #F9EDEC;color: #C92236">৳ {{ $v['amount_bn'] }}</td>
+                        <td style="width: 18% ;text-align: right; padding-right: 5px; background: #EFF8F1;">&nbsp;</td>
+                        <td style="width: 18% ;text-align: right; padding-right: 5px; color: #C92236; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
                     @elseif($v['account_type'] == 'payable' )
-                        <td style="text-align: right; background: #F9EDEC;">&nbsp;</td>
-                        <td style="text-align: right; background: #EFF8F1; color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
-                        <td style="text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+                        <td style="text-align: right; padding-right: 5px; background: #F9EDEC;width: 18% ;">&nbsp;</td>
+                        <td style="text-align: right; padding-right: 5px; background: #EFF8F1; width: 18% ;color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
+                        <td style="width: 18% ;padding-right: 5px; text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
                     @endif()
 
                 </tr>
@@ -120,30 +127,31 @@
                     <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
                     <td>{{ $v['note'] }}</td>
                     @if($v['account_type'] == 'receivable' )
-                        <td style="text-align: right; background: #EFF8F1; color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
-                        <td style="text-align: right;  background: #F9EDEC;">&nbsp;</td>
-                        <td style="text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+                        <td style="text-align: right; padding-right: 5px; background: #EFF8F1;width: 18% ; color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
+                        <td style="text-align: right; padding-right: 5px; width: 18% ; background: #F9EDEC;">&nbsp;</td>
+                        <td style="width: 18% ;padding-right: 5px;text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
                     @elseif($v['account_type'] == 'payable' )
-                        <td style="text-align: right; background: #EFF8F1;">&nbsp;</td>
-                        <td style="text-align: right; background: #F9EDEC; color: #C92236">৳ {{ $v['amount_bn'] }}</td>
-                        <td style="text-align: right; color: #C92236; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+                        <td style="text-align: right;padding-right: 5px;width: 18% ; background: #EFF8F1;">&nbsp;</td>
+                        <td style="text-align: right;padding-right: 5px;width: 18% ; background: #F9EDEC; color: #C92236">৳ {{ $v['amount_bn'] }}</td>
+                        <td style="width: 18% ;text-align: right;padding-right: 5px; color: #C92236; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
                     @endif()
                 </tr>
             @endif
         @endforeach()
 
             <div style="margin-top: 30px;"></div>
+            </table>
         @endforeach()
-    </table>
+
         <!-- Total calculation -->
         <div style="margin-top: 10px"></div>
         <table style="table-layout: fixed;border-collapse: collapse; width: 100%;font-size: 12px;">
             <tr style=" background: #f4f5f7">
                 <td style="padding: 9px 16px;width: 20% ;">সর্বমোট</td>
                 <td style=""></td>
-                <td style="text-align: right; width: 18% ;color: #bf392b">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }}</td>
-                <td style="text-align: right; width: 18% ; color: #4faf61">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</td>
-                <td style="text-align: right; width: 22.5% ; font-size: 14px; color: #4faf61;">
+                <td style="padding-right: 5px; text-align: right; width: 18% ;color: #bf392b">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }}</td>
+                <td style="padding-right: 5px; text-align: right; width: 18% ; color: #4faf61">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</td>
+                <td style="padding-right: 5px; text-align: right; width: 18% ; font-size: 14px; color: #4faf61;">
                     ৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}
                 </td>
             </tr>
@@ -156,7 +164,7 @@
                         <td style="padding: 9px 16px">মোট ব্যাল্যান্স (বাকিতে বিক্রয়)</td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #f9edec">&nbsp;</td>
-                        <td style="text-align: right;font-size: 14px;color: #bf392b;">
+                        <td style=" padding-right: 5px; text-align: right;font-size: 14px;color: #bf392b;">
                             ৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}
                         </td>
                     </tr>
@@ -165,7 +173,7 @@
                         <td style="padding: 9px 16px">মোট ব্যাল্যান্স (জমা আছে)</td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #EFF8F1">&nbsp;</td>
-                        <td style="text-align: right;font-size: 14px;color: #4faf61;">
+                        <td style="padding-right: 5px;text-align: right;font-size: 14px;color: #4faf61;">
                             ৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}
                         </td>
                     </tr>
