@@ -31,7 +31,6 @@ class DueTrackerReminderController extends Controller
             'reminder_date' => 'required|date_format:Y-m-d H:i:s',
         ]);
 
-
         try {
             $response = $this->dueTrackerReminderService
                 ->setPartner($request->partner)
@@ -43,8 +42,11 @@ class DueTrackerReminderController extends Controller
             return http_response($request, null, 200, ['data' => $response]);
         }
         catch (AccountingEntryServerError $e){
-            if($e->getCode() == 404){
+            if($e->getCode() == 400){
                 return http_response($request, null, 400, ['data' => $e->getMessage()]);
+            }
+            else{
+                throw $e;
             }
         }
 
