@@ -105,36 +105,30 @@ class DueTrackerSmsService
         return $this;
     }
 
-    /**
-     * @throws InvalidPartnerPosCustomer
-     * @throws AccountingEntryServerError
-     */
     public function getSmsContentForTagada(): array
     {
-        $contact_balance = $this->dueTrackerService
-            ->setContactType($this->contactType)
-            ->setContactId($this->contactId)
-            ->setPartner($this->partner)
-            ->getBalanceByContact();
-
+        $sms_content = $this->getSmsContentForSingleContact();
+        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
         return [
-            'balance' => $contact_balance['stats']['balance'],
-            'balance_type' => $contact_balance['stats']['type'],
-            'contact_name' => $contact_balance['contact_details']['name'],
-            'contact_mobile' => $contact_balance['contact_details']['mobile'],
-            'web_report_link' => $this->getWebReportLink(),
+            'balance' => $sms_content['balance'],
+            'balance_type' => $sms_content['balance_type'],
+            'contact_name' => $sms_content['contact_name'],
+            'partner_name' => $partner_info['name'],
+            'partner_mobile' => $partner_info['mobile'],
+            'web_report_link' => $sms_content['web_report_link']
         ];
     }
 
     /**
+     * @return bool
      * @throws AccountingEntryServerError
      * @throws InsufficientBalance
      * @throws InvalidPartnerPosCustomer
      * @throws WalletDebitForbiddenException
      */
-    public function sendSingleSmsToContact()
+    public function sendSingleSmsToContact(): bool
     {
-        $sms_content = $this->getSmsContentForTagada();
+        $sms_content = $this->getSmsContentForSingleContact();
         $this->sendSMS($sms_content);
         return true;
     }
@@ -149,7 +143,6 @@ class DueTrackerSmsService
         $data = $this->generateSmsDataForContactType($sms_content);
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSmsHandler($data);
-        throw new InsufficientBalance();
         $sms_cost = $sms->estimateCharge();
         if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance();
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
@@ -254,7 +247,11 @@ class DueTrackerSmsService
         return  'www.google.com';
     }
 
-    public function sendSmsForReminder(array $sms_content)
+    /**
+     * @throws WalletDebitForbiddenException
+     * @throws InsufficientBalance
+     */
+    public function sendSmsForReminder(array $sms_content): bool
     {
         try {
             /* Todo need a partner resolver from id */
@@ -264,9 +261,33 @@ class DueTrackerSmsService
             $sms_content['web_report_link'] = $this->getWebReportLink();
             $this->sendSMS($sms_content);
             return true;
-        } catch (InsufficientBalance $e){
-            return false;
+        } catch (Exception $e){
+            if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
+                return true;
+            } else {
+                throw $e;
+            }
         }
 
+    }
+
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
+    private function getSmsContentForSingleContact(): array
+    {
+        $contact_balance = $this->dueTrackerService
+            ->setContactType($this->contactType)
+            ->setContactId($this->contactId)
+            ->setPartner($this->partner)
+            ->getBalanceByContact();
+        return [
+            'balance' => $contact_balance['stats']['balance'],
+            'balance_type' => $contact_balance['stats']['type'],
+            'contact_name' => $contact_balance['contact_details']['name'],
+            'contact_mobile' => $contact_balance['contact_details']['mobile'],
+            'web_report_link' => $this->getWebReportLink()
+        ];
     }
 }

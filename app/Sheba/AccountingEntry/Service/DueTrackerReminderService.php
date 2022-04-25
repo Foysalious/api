@@ -2,7 +2,6 @@
 
 namespace App\Sheba\AccountingEntry\Service;
 
-use App\Models\Partner;
 use App\Sheba\AccountingEntry\Notifications\ReminderNotificationHandler;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use Illuminate\Support\Facades\Log;
@@ -204,6 +203,38 @@ class DueTrackerReminderService
     }
 
     /**
+     * @param array $reminder
+     * @return bool
+     * @throws AccountingEntryServerError
+     */
+    public function sendReminderPush(array $reminder): bool
+    {
+        $push = (new ReminderNotificationHandler())->setReminder($reminder)->handler();
+        Log::info(['remidner push', $push, $reminder]);
+        $smsStatus = 'failed';
+        if ($reminder['should_send_sms'] == 1) {
+            $sms_content["balance"] = $reminder['balance'];
+            $sms_content["balance_type"] = $reminder['balance_type'];
+            $sms_content["contact_name"] = $reminder['contact_info']['name'];
+            $sms_content["contact_mobile"] = $reminder['contact_info']['mobile'];
+            $dueTrackerSmsService = app()->make(DueTrackerSmsService::class);
+            $response = $dueTrackerSmsService->setPartnerId($reminder['partner_id'])
+                ->setContactType($reminder['contact_type'])
+                ->sendSmsForReminder($sms_content);
+            if($response){
+                $smsStatus = 'success';
+            }
+        }
+        $this->setReminderId($reminder['id'])
+            ->setSms($reminder['should_send_sms'])
+            ->setReminderDate($reminder['reminder_at'])
+            ->setReminderStatus('success')
+            ->setSmsStatus($smsStatus)
+            ->update();
+        return true;
+    }
+
+    /**
      * @return array
      */
     private function makeDataForReminderCreate(): array
@@ -259,35 +290,4 @@ class DueTrackerReminderService
 
         return implode('&', $query_strings);
     }
-
-    /**
-     * @param array $reminder
-     * @return bool
-     * @throws AccountingEntryServerError
-     */
-    public function sendReminderPush(array $reminder): bool
-    {
-        $push = (new ReminderNotificationHandler())->setReminder($reminder)->handler();
-        Log::info(['remidner push', $push, $reminder]);
-        $smsStatus = false;
-        if ($reminder['should_send_sms'] == 1) {
-//          TODO: send SMS
-//            $sms_content["balance"] = '';
-//            $sms_content["balance_type"] = '';
-//            $sms_content["contact_name"] = '';
-//            $sms_content["contact_mobile"] = '';
-//            $response = $this->dueTrackerSmsService->setPartnerId($partner_id)
-//                ->setContactType($contact_type)
-//                ->sendSmsForReminder($sms_content);
-            $smsStatus = true;
-        }
-        $this->setReminderId($reminder['id'])
-            ->setSms($reminder['should_send_sms'])
-            ->setReminderDate($reminder['reminder_date'])
-            ->setReminderStatus('success')
-            ->setSmsStatus($smsStatus)
-            ->update();
-        return true;
-    }
-
 }
