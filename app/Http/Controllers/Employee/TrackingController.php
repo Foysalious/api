@@ -86,7 +86,7 @@ class TrackingController extends Controller
      * @param CoWorkerInfoFilter $co_worker_info_filter
      * @return JsonResponse
      */
-    public function getManagerSubordinateList(Request $request, CoWorkerInfoFilter $co_worker_info_filter)
+    public function getManagerSubordinateList(Request $request)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -134,7 +134,7 @@ class TrackingController extends Controller
             ];
         }
 
-        if ($request->has('no_activity')) $data = $this->getEmployeeOfNoActivityForCertainHour($data, $request->no_activity);
+        if ($request->has('activity') && $request->activity != "null") $data = $this->getEmployeeOfNoActivityForCertainHour($data, $request->activity);
         if ($request->has('search')) $data = $this->searchEmployee($data, $request);
         $data = collect($data)->values();
         return api_response($request, null, 200, ['employee_list' => $data]);
@@ -228,13 +228,13 @@ class TrackingController extends Controller
 
     /**
      * @param $tracking_locations
-     * @param $no_activity
+     * @param $activity
      * @return \Illuminate\Support\Collection
      */
-    private function getEmployeeOfNoActivityForCertainHour($tracking_locations, $no_activity)
+    private function getEmployeeOfNoActivityForCertainHour($tracking_locations, $activity)
     {
-        $from_time = Carbon::now()->subMinutes($no_activity);
-        return collect($tracking_locations)->filter(function ($tracking_location) use ($no_activity, $from_time) {
+        $from_time = Carbon::now()->subMinutes($activity);
+        return collect($tracking_locations)->filter(function ($tracking_location) use ($from_time) {
             return $tracking_location['last_activity_raw'] <= $from_time;
         });
     }
