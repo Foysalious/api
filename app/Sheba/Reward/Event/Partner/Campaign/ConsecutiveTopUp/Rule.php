@@ -11,6 +11,15 @@ class Rule extends CampaignRule
     /** @var LastUsage */
     public $lastUsage;
 
+    /** @var array */
+    private $partnerConsecutiveCount;
+
+    public function setPartnerConsecutiveCount($count)
+    {
+        $this->partnerConsecutiveCount = $count;
+        return $this;
+    }
+
     public function validate()
     {
         $this->lastUsage->validate();
@@ -30,7 +39,7 @@ class Rule extends CampaignRule
     public function check(Builder $query)
     {
         $this->checkParticipation($query);
-        $this->target->check($query);
+        $this->target->setPartnerConsecutiveCount($this->partnerConsecutiveCount)->check($query);
     }
 
     public function checkParticipation(Builder $query)

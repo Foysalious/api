@@ -2,6 +2,7 @@
 
 use App\Models\Reward;
 use App\Models\TopUpVendor;
+use Carbon\Carbon;
 use Sheba\Payment\AvailableMethods;
 
 class EventDataConverter
@@ -165,13 +166,16 @@ class EventDataConverter
                 ]
             ],
             'consecutive_topup' => [
-                'name' => 'Consecutive Top Up Days',
+                'name' => 'Consecutive Days of Top Up',
                 'event_class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Event::class,
                 'rule_class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Rule::class,
                 'parameters' => [
                     'last_usage' => [
                         'type' => 'usage',
-                        'class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Parameter\LastUsage::class
+                        'class' => \Sheba\Reward\Event\Partner\Campaign\ConsecutiveTopUp\Parameter\LastUsage::class,
+                        'day_count_min' => 1,
+                        'start_max' => Carbon::yesterday()->toDateString(),
+                        'end_max' => Carbon::yesterday()->toDateString(),
                     ],
                     'target' => [
                         'type' => 'number',

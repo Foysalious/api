@@ -18,7 +18,6 @@ class Target extends CampaignEventParameter implements EventTarget
 
     public function check(Builder $query)
     {
-        $query->having('total_count', '>=', $this->value);
     }
 
     public function calculateProgress(Builder $query)
@@ -43,6 +42,7 @@ class Target extends CampaignEventParameter implements EventTarget
 
     public function setAchieved($achieved)
     {
-        // TODO: Implement setAchieved() method.
+        $this->achieved = $achieved;
+        return $this;
     }
 }

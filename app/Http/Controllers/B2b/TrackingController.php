@@ -298,7 +298,7 @@ class TrackingController extends Controller
     private function getEmployeeOfNoActivityForCertainHour($tracking_locations, $no_activity)
     {
         $from_time = Carbon::now()->subMinutes($no_activity);
-        return $tracking_locations->filter(function ($tracking_location) use ($no_activity, $from_time) {
+        return $tracking_locations->filter(function ($tracking_location) use ($from_time) {
             return $tracking_location['last_activity_raw'] <= $from_time;
         });
     }
