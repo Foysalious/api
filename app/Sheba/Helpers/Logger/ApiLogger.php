@@ -71,7 +71,8 @@ class ApiLogger
                 "app_version" => $app ? (int)$app->getVersionCode() : 0,
                 "portal"      => $agent->getPortalName(),
                 "user_info"   => $profile_id,
-                "method"      => $this->request->getMethod()
+                "method"      => $this->request->getMethod(),
+                "project"     => 'accounts'
             ]);
         } catch (\Throwable $e) {
             \Log::error($e->getMessage());
@@ -92,10 +93,10 @@ class ApiLogger
                     $data['avatar'] = ['type' => 'customer', 'type_id' => $data['customer']['id']];
                 } elseif ($portal == 'manager-app' && (array_key_exists('resource', $data) && !empty($data['resource']))) {
                     $data['avatar'] = ['type' => 'partner', 'type_id' => $data['resource']['partner']['id']];
-                }elseif($portal=='resource-app' && array_key_exists('resource', $data)&&!empty($data['resource'])){
-                    $data['avatar']=['type'=>'resource','type_id'=>$data['resource']['id']];
-                }else{
-                    $data['avatar']=['type'=>'public','type_id'=>0];
+                } elseif ($portal == 'resource-app' && array_key_exists('resource', $data) && !empty($data['resource'])) {
+                    $data['avatar'] = ['type' => 'resource', 'type_id' => $data['resource']['id']];
+                } else {
+                    $data['avatar'] = ['type' => 'public', 'type_id' => 0];
                 }
             }
             return $data;
@@ -110,11 +111,11 @@ class ApiLogger
                         'type_id' => $match[2]
                     ]
                 ];
-            }else{
+            } else {
                 return [
-                    'avatar'=>[
-                        'type'=>'public',
-                        'type_id'=>0
+                    'avatar' => [
+                        'type'    => 'public',
+                        'type_id' => 0
                     ]
                 ];
             }
