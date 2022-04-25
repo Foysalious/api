@@ -85,6 +85,9 @@ class DueTrackerControllerV2 extends Controller
      */
     public function getDueListBalance(Request $request): JsonResponse
     {
+        $this->validate($request,[
+
+        ]);
         $response = $this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
