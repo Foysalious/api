@@ -72,7 +72,7 @@ class ApiLogger
                 "portal"      => $agent->getPortalName(),
                 "user_info"   => $profile_id,
                 "method"      => $this->request->getMethod(),
-                "project"     => 'accounts'
+                "project"     => 'api'
             ]);
         } catch (\Throwable $e) {
             \Log::error($e->getMessage());
