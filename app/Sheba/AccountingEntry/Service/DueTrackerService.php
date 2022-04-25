@@ -323,8 +323,12 @@ class DueTrackerService
         $contact_balance = $this->getBalanceByContact();
         try {
             $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
+            if($reminder == []){
+                $reminder = null;
+
+            }
         }catch (Exception $e) {
-            $reminder = [];
+            $reminder = null;
         }
         return [
             'contact_details' => $contact_balance['contact_details'],
