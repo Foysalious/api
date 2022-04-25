@@ -43,7 +43,7 @@ class DueTrackerReminderController extends Controller
             return http_response($request, null, 200, ['data' => $response]);
         }
         catch (AccountingEntryServerError $e){
-            if($e->getCode() == 404){
+            if($e->getCode() == 400){
                 return http_response($request, null, 400, ['data' => $e->getMessage()]);
             }
         }
