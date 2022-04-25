@@ -23,6 +23,7 @@ class PaymentLinkTransactionDetailsTransformer
             'customer_number' => $payment->payable->getMobile(),
             'payment_code' => '#' . $payment->id,
             'amount' => $payment->payable->amount,
+            'status' => $payment->status,
             'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
 
         ];
