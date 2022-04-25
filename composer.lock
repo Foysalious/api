@@ -7222,7 +7222,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_dal.git",
-                "reference": "068dbf5885f3893464497451d19541c392cd4bbe"
+                "reference": "c01df3bf8ebedd59bacc89268e3981fac4a7f79e"
             },
             "require": {
                 "php": ">=5.4"
@@ -7249,7 +7249,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2022-04-19T13:55:04+00:00"
+            "time": "2022-04-25T08:03:05+00:00"
         },
         {
             "name": "sheba/elasticsearch",

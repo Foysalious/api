@@ -103,19 +103,13 @@ abstract class TopUpCommission
         $this->topUpOrder->otf_sheba_commission = $otf_details['sheba_commisssion'] ?? 0;
         $this->topUpOrder->save();
 
-        if ($this->topUpOrder->otf_agent_commission > 0) {
-            $log_message = $this->amount . "tk " . $otf_details['otf_name'] . " - OTF TopUp has been recharged to " . $this->topUpOrder->payee_mobile;
-        } else {
-            $log_message = $this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile;
-        }
-
         $transaction = (new TopUpTransaction())
             ->setAmount($this->amount - $this->topUpOrder->agent_commission - $this->topUpOrder->otf_agent_commission)
-            ->setLog($log_message)
+            ->setLog($this->getLog($otf_details['otf_name']))
             ->setTopUpOrder($this->topUpOrder)
             ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
 
-        $this->transaction =  $this->agent->topUpTransaction($transaction);
+        $this->transaction = $this->agent->topUpTransaction($transaction);
     }
 
     /**
@@ -299,5 +293,19 @@ abstract class TopUpCommission
     public function getSubscriptionWiseTopUpCommission()
     {
         return $this->subscriptionWiseTopUpCommission->commission;
+    }
+
+    protected function getLog($otf_name)
+    {
+        if ($this->topUpOrder->otf_agent_commission > 0) {
+            return $this->amount . "tk " . $otf_name . " - OTF TopUp has been recharged to " . $this->topUpOrder->payee_mobile;
+        } else {
+            return $this->getBasicTopUpLog();
+        }
+    }
+
+    protected function getBasicTopUpLog()
+    {
+        return $this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile . ".";
     }
 }
