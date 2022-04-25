@@ -70,6 +70,19 @@ class MtbSavePrimaryInformation
         return $this;
     }
 
+    /**
+     * @param $name
+     * @return mixed|string
+     */
+    public function mutateName($name)
+    {
+        $name = rtrim(ltrim($name));
+        if (count(explode(' ', $name)) < 2) {
+            return 'Mr/Ms ' . $name;
+        }
+        return $name;
+    }
+
     private function makePrimaryInformation(): array
     {
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
@@ -79,7 +92,7 @@ class MtbSavePrimaryInformation
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
                 'orgCode' => MtbConstants::CHANNEL_ID,
-                'name' => $this->partner->getFirstAdminResource()->profile->name,
+                'name' => $this->mutateName($this->partner->getFirstAdminResource()->profile->name),
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
                 'nid' => $this->partner->getFirstAdminResource()->profile->nid_no,
                 'dob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->dob)),
@@ -109,7 +122,7 @@ class MtbSavePrimaryInformation
                     'contactAddress' => $this->partnerMefInformation->presentAddress
                 ],
                 'ShopInfo' => [
-                    'shopOwnerNm' => $this->partnerMefInformation->shopOwnerName,
+                    'shopOwnerNm' => $this->mutateName($this->partnerMefInformation->shopOwnerName),
                     'shopNm' => $this->partner->name,
                     'shopClass' => config("mtbmcc.{$this->partner->business_type}") ?? config("mtbmcc.অন্যান্য")
                 ]
