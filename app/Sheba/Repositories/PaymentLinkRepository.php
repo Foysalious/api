@@ -28,15 +28,15 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
      * PaymentLinkRepository constructor.
      *
      * @param PaymentLinkTransformer $paymentLinkTransformer
-     * @param UrlTransformer         $urlTransformer
-     * @param PaymentLinkClient      $client
+     * @param UrlTransformer $urlTransformer
+     * @param PaymentLinkClient $client
      */
     public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer, PaymentLinkClient $client)
     {
         parent::__construct();
-        $this->paymentLinkClient                       = $client;
-        $this->paymentLinkTransformer                  = $paymentLinkTransformer;
-        $this->urlTransformer                          = $urlTransformer;
+        $this->paymentLinkClient = $client;
+        $this->paymentLinkTransformer = $paymentLinkTransformer;
+        $this->urlTransformer = $urlTransformer;
         $this->paymentLinkTransactionDetailTransformer = new PaymentLinkTransactionDetailsTransformer();
 
     }
@@ -89,7 +89,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return Payment::leftJoin('payables', 'payments.payable_id', '=', 'payables.id')->where([
             ['type', 'payment_link'], ['type_id', $payment_link_details['linkId']],
         ])->select('payments.id', 'type', 'type_id', 'amount', 'payments.created_at', 'payable_id')
-                      ->where('status', Statuses::COMPLETED)->orderBy('payments.created_at', 'desc');
+            ->where('status', Statuses::COMPLETED)->orderBy('payments.created_at', 'desc');
     }
 
     public function payment($payment)
@@ -138,8 +138,9 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $response && $response->code == 200 ? $this->urlTransformer->setResponse($response->url) : null;
     }
 
-    public function getPaymentList(Request $request)
+    public function getPaymentList(Request $request, $filter_identifier = 0)
     {
+
         $filter             = $search_value = $request->transaction_search;
         $payment_links_list = $this->getPartnerPaymentLinkList($request);
         if (!is_array($payment_links_list) || count($payment_links_list) == 0) return null;
@@ -150,27 +151,38 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         array_walk($payment_links_list, function ($val, $key) use (&$links) {
             $links[$val['linkId']] = $val;
         });
+
         $transactionQuery = DB::table('payments as pa')
-              ->select('pa.id as payment_id', 'pb.id as payable_id', 'customerProfile.name', 'pb.type_id')
-              ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
-              ->leftJoin('customers as cus', function ($join) {
-                  $join->on('pb.user_id', '=', 'cus.id')
-                       ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
-              })
-              ->leftJoin('profiles as customerProfile', function ($join) {
-                  $join->on('cus.profile_id', '=', 'customerProfile.id')
-                       ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
-              })
-              ->whereIn('type_id', $linkIds)
-              ->where('status', Statuses::COMPLETED)
-              ->where('type', 'payment_link');
+            ->select('pa.id as payment_id', 'pa.status as payment_status', 'pb.id as payable_id', 'customerProfile.name', 'pb.type_id')
+            ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
+            ->leftJoin('customers as cus', function ($join) {
+                $join->on('pb.user_id', '=', 'cus.id')
+                    ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
+            })
+            ->leftJoin('profiles as customerProfile', function ($join) {
+                $join->on('cus.profile_id', '=', 'customerProfile.id')
+                    ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
+            })
+            ->whereIn('type_id', $linkIds)
+            ->where('type', 'payment_link');
+
+        if ($filter_identifier) {
+            if ($request->status) {
+                $transactionQuery = $transactionQuery->where('status', $request->status);
+            }
+        } else {
+            if ($request->status) {
+                $transactionQuery = $transactionQuery->where('status', $request->status);
+            } else
+                $transactionQuery = $transactionQuery->where('status', Statuses::COMPLETED);
+        }
 
         $transactions = $transactionQuery->get()->all();
 
         foreach ($transactions as $transaction) {
-            $payment              = $this->payment($transaction->payment_id);
+            $payment = $this->payment($transaction->payment_id);
             $transactionFormatted = $this->paymentLinkTransactionDetailTransformer->transform($payment, $links[$transaction->type_id]);
-            array_push($transactionList, $transactionFormatted);
+            $transactionList[] = $transactionFormatted;
         }
 
         if ($filter) {
@@ -233,9 +245,9 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     public function getActivePaymentLinkByPosOrder($target)
     {
-        $links        = $this->paymentLinkClient->getActivePaymentLinkByPosOrder($target);
+        $links = $this->paymentLinkClient->getActivePaymentLinkByPosOrder($target);
         $payment_link = $this->formatPaymentLinkTransformers($links);
-        $key          = $target->toString();
+        $key = $target->toString();
         if (array_key_exists($key, $payment_link)) {
             return $payment_link[$key][0];
         }

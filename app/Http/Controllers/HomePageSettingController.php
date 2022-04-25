@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
@@ -77,6 +79,7 @@ class HomePageSettingController extends Controller
         } elseif ($request->filled('lat') && $request->filled('lng')) {
             $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
+            else return api_response($request, null, 404);
         }
         if ($request->filled('portal') && $request->filled('screen')) {
             $platform = $this->getPlatform($request);
@@ -86,6 +89,11 @@ class HomePageSettingController extends Controller
         }
 
         $settings = $store->get($setting_key);
+        if (!$settings) {
+            $client = new Client();
+            $res = $client->request('GET', config('sheba.admin_url') . '/api/get-home-settings?key=' . $setting_key);
+            $settings = $res->getBody();
+        }
         if (!$settings) return api_response($request, null, 404);
 
         $settings = json_decode($settings);
@@ -133,6 +141,11 @@ class HomePageSettingController extends Controller
     public function getCarV3(Request $request)
     {
         $settings = json_decode(Redis::get('car_settings_v3'));
+        if (is_null($settings)) {
+            $client = new Client();
+            $res = $client->request('GET', config('sheba.admin_url') . '/api/get-car-settings');
+            $settings = json_decode($res->getBody());
+        }
         return api_response($request, $settings, 200, ['settings' => $settings]);
     }
 
