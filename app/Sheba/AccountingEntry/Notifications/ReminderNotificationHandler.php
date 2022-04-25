@@ -22,6 +22,7 @@ class ReminderNotificationHandler
 
     /**
      * @throws InvalidOptionsException
+     * @throws \Exception
      */
     public function handler()
     {
