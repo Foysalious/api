@@ -422,7 +422,7 @@ class PaymentLinkController extends Controller
     public function transactionListV3(Request $request, Payable $payable)
     {
         try {
-            $data = $this->paymentLinkRepo->getPaymentList($request);
+            $data = $this->paymentLinkRepo->getPaymentList($request, 1);
             if ($data) {
                 return api_response($request, null, 200, ['data' => $data]);
             } else {
