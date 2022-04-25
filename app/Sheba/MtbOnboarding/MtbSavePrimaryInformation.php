@@ -78,7 +78,7 @@ class MtbSavePrimaryInformation
     {
         $name = rtrim(ltrim($name));
         if (count(explode(' ', $name)) < 2) {
-            return 'Mr/Ms ' . $name;
+            return 'Mr/Ms ' . ucfirst($name);
         }
         return $name;
     }
