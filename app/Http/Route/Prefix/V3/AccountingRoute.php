@@ -26,10 +26,10 @@ class AccountingRoute
                     $api->put('/{reminder_id}', 'Accounting\\DueTrackerReminderController@update');
                     $api->delete('/{reminder_id}', 'Accounting\\DueTrackerReminderController@delete');
                 });
-                $api->group(['prefix' => 'entries'], function ($api) {
-                    $api->get('/{entry_id}', 'Accounting\\EntriesControllerV2@details');
-                    $api->delete('/{entry_id}', 'Accounting\\EntriesControllerV2@delete');
-                });
+            });
+            $api->group(['prefix' => 'entries'], function ($api) {
+                $api->get('/{entry_id}', 'Accounting\\EntriesControllerV2@details');
+                $api->delete('/{entry_id}', 'Accounting\\EntriesControllerV2@delete');
             });
         });
         $api->group(['prefix' => 'accounting'], function ($api) {

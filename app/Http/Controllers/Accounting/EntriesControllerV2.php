@@ -10,7 +10,8 @@ use Sheba\Usage\Usage;
 
 class EntriesControllerV2 extends Controller
 {
-    private EntriesRepository $entriesRepo;
+    /** @var EntriesRepository $entriesRepo */
+    private $entriesRepo;
 
     public function __construct(EntriesRepository $entriesRepo)
     {
