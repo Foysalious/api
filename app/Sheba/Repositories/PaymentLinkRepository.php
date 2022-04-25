@@ -144,7 +144,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $response && $response->code == 200 ? $this->urlTransformer->setResponse($response->url) : null;
     }
 
-    public function getPaymentList(Request $request)
+    public function getPaymentList(Request $request, $filter_identifier = 0)
     {
         $filter = $search_value = $request->transaction_search;
         $payment_links_list = $this->getPartnerPaymentLinkList($request);
@@ -168,10 +168,17 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
                 })
                 ->whereIn('type_id', $linkIds)
                 ->where('type', 'payment_link');
-            if ($request->status)
-                $transactionQuery = $transactionQuery->where('status', $request->status);
-            else
-                $transactionQuery = $transactionQuery->where('status', Statuses::COMPLETED);
+            if ($filter_identifier) {
+                if ($request->status) {
+                    $transactionQuery = $transactionQuery->where('status', $request->status);
+                }
+            } else {
+                if ($request->status) {
+                    $transactionQuery = $transactionQuery->where('status', $request->status);
+                } else
+                    $transactionQuery = $transactionQuery->where('status', Statuses::COMPLETED);
+            }
+
             $transactions = $transactionQuery->get();
             foreach ($transactions as $transaction) {
                 $payment = $this->payment($transaction->payment_id);
