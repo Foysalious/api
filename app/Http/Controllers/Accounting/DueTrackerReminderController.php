@@ -30,14 +30,24 @@ class DueTrackerReminderController extends Controller
             'should_send_sms' => 'required',
             'reminder_date' => 'required|date_format:Y-m-d H:i:s',
         ]);
-        $response = $this->dueTrackerReminderService
-            ->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->setContactId($request->contact_id)
-            ->setSms($request->should_send_sms)
-            ->setReminderDate($request->reminder_date)
-            ->createReminder();
-        return http_response($request, null, 200, ['data' => $response]);
+
+
+        try {
+            $response = $this->dueTrackerReminderService
+                ->setPartner($request->partner)
+                ->setContactType($request->contact_type)
+                ->setContactId($request->contact_id)
+                ->setSms($request->should_send_sms)
+                ->setReminderDate($request->reminder_date)
+                ->createReminder();
+            return http_response($request, null, 200, ['data' => $response]);
+        }
+        catch (AccountingEntryServerError $e){
+            if($e->getCode() == 404){
+                return http_response($request, null, 400, ['data' => $e->getMessage()]);
+            }
+        }
+
     }
 
     /**
