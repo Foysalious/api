@@ -410,6 +410,9 @@ class BusinessRoute
                     $api->get('my-visits', 'B2b\VisitController@getMyVisits');
                     $api->get('/{id}', 'B2b\VisitController@show');
                 });
+                $api->group(['prefix' => 'shift'], function ($api) {
+                    $api->post('create', 'B2b\ShiftSettingController@create');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
