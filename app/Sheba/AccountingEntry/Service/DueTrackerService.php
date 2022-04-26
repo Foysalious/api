@@ -4,6 +4,7 @@ use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
+use App\Sheba\AccountingEntry\Repository\EntriesRepository;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
@@ -270,6 +271,8 @@ class DueTrackerService
     public function storeEntry()
     {
         $data = $this->makeDataForEntry();
+        $entry_repo = app()->make(EntriesRepository::class);
+        dd('after entry create');
         return $this->dueTrackerRepo->createEntry($data);
     }
 
@@ -468,7 +471,6 @@ class DueTrackerService
         $posOrder = ($this->entry_type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($this->partner, $this->partner_wise_order_id) : null;
 
         $data['contact_id'] = $this->contact_id;
-        $data['customer_id'] = $this->contact_id; //TODO: Should remove when customer resolver fix from POS SIDE
         $data['contact_type'] = $this->contact_type;
         $data['amount'] = $this->amount;
         $data['entry_at'] = $this->date;
@@ -480,6 +482,7 @@ class DueTrackerService
         $data['attachments'] = $this->attachments;
         $data['source_id'] = $posOrder ? $posOrder->id : null;
 
+        dd($data);
         return $data;
     }
 
