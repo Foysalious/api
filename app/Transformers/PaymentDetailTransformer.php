@@ -7,10 +7,10 @@ class PaymentDetailTransformer extends TransformerAbstract
 {
     private function mutateStatus($status)
     {
-        if ($status == "initiated" || $status == "validated") return 'প্রক্রিয়াধীন';
-        if ($status == "initiation_failed" || $status == "validation_failed" || $status == "failed" || $status == "cancelled") return 'ব্যর্থ';
-        if ($status == "completed") return 'সম্পন্ন';
-        return 'প্রক্রিয়াধীন';
+        if ($status == "initiated" || $status == "validated") return 'processed';
+        if ($status == "initiation_failed" || $status == "validation_failed" || $status == "failed" || $status == "cancelled") return 'failed';
+        if ($status == "completed") return 'completed';
+        return 'processed';
     }
 
     public function transform($payment, $payment_detail, $payment_link_payment_details)
