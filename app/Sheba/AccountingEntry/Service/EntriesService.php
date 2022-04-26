@@ -31,7 +31,7 @@ class EntriesService
         $data['entry_at'] = Carbon::parse($data['entry_at'])->format('Y-m-d h:i:s');
         unset($data["customer_details"]);
         if ($data["extra_payload"]) {
-            $data["extra_payload"] = json_decode($data["extra_payload"]);
+            $data["extra_payload"] = json_decode($data["extra_payload"], true);
         }
         if ($data['source_type'] == EntryTypes::POS) {
             if (isset($data["extra_payload"]["partner_wise_order_id"])) {
