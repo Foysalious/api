@@ -93,17 +93,20 @@ class DashboardController extends Controller
 
         if (!$payroll_setting->is_enable) $dashboard->forget(7);#Payslip
         if (!$is_enable_employee_visit) $dashboard->forget(8);#Visit
-
-        if ($this->isLiveTrackingEnable($live_tracking_settings) || !$is_manager) $dashboard->forget(9);#Tracking
+        if (!$this->isLiveTrackingEnable($live_tracking_settings) || !$is_manager) $dashboard->forget(9);#Tracking
         if (!$is_manager) $dashboard->forget(10);#My Team
 
         return api_response($request, $dashboard, 200, ['dashboard' => $dashboard->values()]);
     }
 
+    /**
+     * @param $live_tracking_settings
+     * @return bool|void
+     */
     private function isLiveTrackingEnable($live_tracking_settings)
     {
         if (!$live_tracking_settings) {
-            return true;
+            return false;
         } elseif ($live_tracking_settings && $live_tracking_settings->is_enable) {
             return true;
         }
