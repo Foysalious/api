@@ -369,6 +369,7 @@ class JobController extends Controller
         if ($is_cancelled_job && $job->isRentCar()) $original_price = (double)$job->servicePrice;
         else $original_price = (double)$job->totalServiceSurcharge ? (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge : (double)$partnerOrder->jobPrices;
         $bill = collect();
+        $partnerOrder = $partnerOrder->calculate();
         $bill['total'] = $is_cancelled_job ? $total_price : (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
         $bill['original_price'] = $original_price;
