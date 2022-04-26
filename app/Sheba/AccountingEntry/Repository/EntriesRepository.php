@@ -37,14 +37,14 @@ class EntriesRepository extends BaseRepository
 
     public function entryDetails()
     {
-//        try {
+        try {
         $url = "api/entries/" . $this->entry_id;
         $data = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
         if ($data["attachments"]) {
             $data["attachments"] = json_decode($data["attachments"]);
         }
-        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d h:i:s');
-        $data['updated_at'] = Carbon::parse($data['updated_at'])->format('Y-m-d h:i:s');
+//        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d h:i:s');
+//        $data['updated_at'] = Carbon::parse($data['updated_at'])->format('Y-m-d h:i:s');
         $data["customer_details"] = null;
         if ($data['extra_payload']) {
             $data["extra_payload"] = json_decode($data["extra_payload"]);
@@ -59,7 +59,6 @@ class EntriesRepository extends BaseRepository
                 }
             }
         }
-
         if ($data["contact_id"]) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
@@ -75,9 +74,9 @@ class EntriesRepository extends BaseRepository
             }
         }
         return $data;
-//        } catch (AccountingEntryServerError $e) {
-//            logError($e);
-//        }
+        } catch (AccountingEntryServerError $e) {
+            logError($e);
+        }
     }
 
     /**
