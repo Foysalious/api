@@ -50,6 +50,7 @@ class TrackingController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
+        $live_tracking_Setting = $business->liveTrackingSettings;
         $employee_lists = [];
         (new ManagerSubordinateEmployeeList())->getManager($business_member->id, $employee_lists, $business_member->id);
         $employee_lists = array_keys($employee_lists);
@@ -71,7 +72,7 @@ class TrackingController extends Controller
         if ($request->has('no_activity')) $tracking_locations = $this->getEmployeeOfNoActivityForCertainHour(collect($tracking_locations), $request->no_activity)->values();
         $total_count = count($tracking_locations);
         $tracking_locations = collect($tracking_locations)->splice($offset, $limit);
-        return api_response($request, $tracking_locations, 200, ['is_live_tracking_active' => $business->liveTrackingSettings->is_enable, 'total' => $total_count, 'tracking_locations' => $tracking_locations]);
+        return api_response($request, $tracking_locations, 200, ['is_live_tracking_active' => $live_tracking_Setting ? $live_tracking_Setting->is_enable : 0, 'total' => $total_count, 'tracking_locations' => $tracking_locations]);
     }
 
     /**
