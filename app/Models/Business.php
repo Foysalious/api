@@ -9,6 +9,7 @@ use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\BusinessPayslip\BusinessPayslip;
+use Sheba\Dal\BusinessShift\BusinessShift;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\Dal\LiveTrackingSettings\Contract;
 use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
@@ -567,6 +568,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function currentIntervalSetting()
     {
         return $this->liveTrackingSettings->intervalSettingLogs()->where('end_date', null)->latest()->first();
+    }
+
+    public function shifts()
+    {
+        return $this->hasMany(BusinessShift::class);
     }
 
 }
