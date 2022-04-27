@@ -20,6 +20,7 @@ class Requester
     private $isHalfDayActivated;
     /*** @var BusinessShiftRepository  */
     private $businessShiftRepository;
+    private $title;
 
     public function __construct()
     {
@@ -47,6 +48,17 @@ class Requester
     public function getName()
     {
         return $this->name;
+    }
+
+    public function setTitle($title)
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function getTitle()
+    {
+        return $this->title;
     }
 
     public function setStartTime($start_time)

@@ -3,7 +3,11 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Transformers\Business\ShiftListTransformer;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\ShiftSetting\Creator;
 use Sheba\Business\ShiftSetting\Requester;
 use Sheba\Dal\BusinessShift\BusinessShiftRepository;
@@ -12,6 +16,22 @@ use Sheba\ModificationFields;
 class ShiftSettingController extends Controller
 {
     use ModificationFields;
+
+    public function index(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $shifts = new Collection($business->shifts, new ShiftListTransformer());
+        $shifts = collect($manager->createData($shifts)->toArray()['data']);
+        return api_response($request, $shifts, 200, ['shifts' => $shifts]);
+    }
 
     public function create(Request $request, Requester $shift_requester, Creator $shift_creator)
     {
@@ -36,6 +56,7 @@ class ShiftSettingController extends Controller
 
         $shift_requester->setBusiness($business)
             ->setName($request->name)
+            ->setTitle($request->title)
             ->setStartTime($request->start_time)
             ->setEndTime($request->end_time)
             ->setIsCheckInGraceAllowed($request->is_checkin_grace_allow)

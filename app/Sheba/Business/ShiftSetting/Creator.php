@@ -30,8 +30,9 @@ class Creator
     private function makeData()
     {
         return [
-          'business_id' => $this->shiftRequester->getBusiness()->id,
+            'business_id' => $this->shiftRequester->getBusiness()->id,
             'name' => $this->shiftRequester->getName(),
+            'title' => $this->shiftRequester->getTitle(),
             'start_time' => $this->shiftRequester->getStartTime(),
             'end_time' => $this->shiftRequester->getEndTime(),
             'checkin_grace_enable' => $this->shiftRequester->getIsCheckInGraceAllowed(),
