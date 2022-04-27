@@ -1,8 +1,14 @@
 <?php namespace Sheba\Business\ShiftSetting;
 
 
+use Carbon\Carbon;
+use Sheba\Dal\BusinessShift\BusinessShiftRepository;
+use Sheba\Helpers\HasErrorCodeAndMessage;
+
 class Requester
 {
+    use HasErrorCodeAndMessage;
+
     private $business;
     private $name;
     private $startTime;
@@ -12,6 +18,13 @@ class Requester
     private $checkInGraceTime;
     private $checkOutGraceTime;
     private $isHalfDayActivated;
+    /*** @var BusinessShiftRepository  */
+    private $businessShiftRepository;
+
+    public function __construct()
+    {
+        $this->businessShiftRepository = app(BusinessShiftRepository::class);
+    }
 
     public function setBusiness($business)
     {
@@ -27,6 +40,7 @@ class Requester
     public function setName($name)
     {
         $this->name = $name;
+        $this->checkUniqueName();
         return  $this;
     }
 
@@ -49,6 +63,7 @@ class Requester
     public function setEndTime($end_time)
     {
         $this->endTime = $end_time;
+        $this->checkShiftDuration();
         return $this;
     }
 
@@ -110,5 +125,19 @@ class Requester
     public function getIsHalfDayActivated()
     {
         return $this->isHalfDayActivated;
+    }
+
+    private function checkUniqueName()
+    {
+        $existing_shift = $this->businessShiftRepository->where('business_id', $this->business->id)->where('name', $this->name)->first();
+        if ($existing_shift) $this->setError(400, 'This shift name is already exists.');
+    }
+
+    private function checkShiftDuration()
+    {
+        $start_time = Carbon::parse($this->startTime.':00');
+        $end_time = Carbon::parse($this->endTime.':59');
+        $diff = $end_time->diffInHours($start_time);
+        if ($diff < 2 && $diff > 24) $this->setError(400, 'Shift duration cannot be less than 2hrs or greater than 24hrs .');
     }
 }
