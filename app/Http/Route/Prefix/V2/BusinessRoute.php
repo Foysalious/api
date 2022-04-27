@@ -412,6 +412,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'shift'], function ($api) {
                     $api->post('create', 'B2b\ShiftSettingController@create');
+                    $api->delete('{id}', 'B2b\ShiftSettingController@delete');
                 });
             });
         });

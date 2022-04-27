@@ -6,6 +6,7 @@ use App\Models\BusinessMember;
 use Illuminate\Http\Request;
 use Sheba\Business\ShiftSetting\Creator;
 use Sheba\Business\ShiftSetting\Requester;
+use Sheba\Dal\BusinessShift\BusinessShiftRepository;
 use Sheba\ModificationFields;
 
 class ShiftSettingController extends Controller
@@ -46,6 +47,20 @@ class ShiftSettingController extends Controller
         if ($shift_requester->hasError()) return api_response($request, null, $shift_requester->getErrorCode(), ['message' => $shift_requester->getErrorMessage()]);
 
         $shift_creator->setShiftRequester($shift_requester)->create();
+        return api_response($request, null, 200);
+    }
+
+    public function delete($business, $id, Request $request, BusinessShiftRepository $business_shift_repository)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $business_shift = $business_shift_repository->find($id);
+        if (!$business_shift) return api_response($request, null, 404);
+        $business_shift->delete();
         return api_response($request, null, 200);
     }
 
