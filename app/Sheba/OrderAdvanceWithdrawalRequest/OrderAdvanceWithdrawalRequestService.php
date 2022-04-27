@@ -80,7 +80,7 @@ class OrderAdvanceWithdrawalRequestService
     public function getActiveFinWithdrawalAmount($partner_order)
     {
         return WithdrawalRequest::select(DB::raw('sum(amount) as total_amount'))
-            ->active()
+            ->whereIn('status', ['pending', 'approval_pending', 'approved', 'completed'])
             ->where('order_id', $partner_order->order_id)
             ->where('requester_type', 'partner')
             ->where('requester_id', $partner_order->partner_id)
