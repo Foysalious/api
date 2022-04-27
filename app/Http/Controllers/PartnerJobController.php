@@ -349,6 +349,7 @@ class PartnerJobController extends Controller
 
             $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
             $channel = config('sheba.push_notification_channel_name.resource');
+            $sound  = config('sheba.push_notification_sound.employee');
             (new PushNotificationHandler())->send([
                 "title" => 'Assigned to a new job',
                 "message" => 'You have been assigned to a new job. Job ID: ' . $job->partnerOrder->order->code(),
@@ -356,7 +357,7 @@ class PartnerJobController extends Controller
                 "event_id" => $job->partnerOrder->id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
         }
