@@ -47,7 +47,7 @@ class EntriesRepository extends BaseRepository
             if ($data["contact_id"]) {
                 /** @var PosCustomerResolver $posCustomerResolver */
                 $posCustomerResolver = app(PosCustomerResolver::class);
-                $posCustomer = $posCustomerResolver->setCustomerId($data["customer_id"])->setPartner($this->partner)->get();
+                $posCustomer = $posCustomerResolver->setCustomerId($data["contact_id"])->setPartner($this->partner)->get();
                 if ($posCustomer) {
                     $data["customer_details"] = [
                         'id' => $posCustomer->id,
