@@ -51,7 +51,7 @@ class Requester
 
     public function setStartTime($start_time)
     {
-        $this->startTime = $start_time;
+        $this->startTime = $start_time.':00';
         return $this;
     }
 
@@ -62,7 +62,7 @@ class Requester
 
     public function setEndTime($end_time)
     {
-        $this->endTime = $end_time;
+        $this->endTime = $end_time.':59';
         $this->checkShiftDuration();
         return $this;
     }
@@ -135,9 +135,9 @@ class Requester
 
     private function checkShiftDuration()
     {
-        $start_time = Carbon::parse($this->startTime.':00');
-        $end_time = Carbon::parse($this->endTime.':59');
+        $start_time = Carbon::parse($this->startTime);
+        $end_time = Carbon::parse($this->endTime);
         $diff = $end_time->diffInHours($start_time);
-        if ($diff < 2 && $diff > 24) $this->setError(400, 'Shift duration cannot be less than 2hrs or greater than 24hrs .');
+        if ($diff < 2 || $diff > 24) $this->setError(400, 'Shift duration cannot be less than 2hrs or more than 24hrs .');
     }
 }

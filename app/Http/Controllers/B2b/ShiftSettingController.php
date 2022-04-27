@@ -36,12 +36,14 @@ class ShiftSettingController extends Controller
         $shift_requester->setBusiness($business)
             ->setName($request->name)
             ->setStartTime($request->start_time)
-            ->setEndTime($request->end_rime)
+            ->setEndTime($request->end_time)
             ->setIsCheckInGraceAllowed($request->is_checkin_grace_allow)
             ->setIsCheckOutGraceAllowed($request->is_checkout_grace_allow)
             ->setCheckInGraceTime($request->checkin_grace_time)
             ->setCheckOutGraceTime($request->checkout_grace_time)
             ->setIsHalfDayActivated($request->is_half_day);
+
+        if ($shift_requester->hasError()) return api_response($request, null, $shift_requester->getErrorCode(), ['message' => $shift_requester->getErrorMessage()]);
 
         $shift_creator->setShiftRequester($shift_requester)->create();
         return api_response($request, null, 200);

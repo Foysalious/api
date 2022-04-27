@@ -38,7 +38,16 @@ class Creator
             'checkout_grace_enable' => $this->shiftRequester->getIsCheckOutGraceAllowed(),
             'checkin_grace_time' => $this->shiftRequester->getCheckinGraceTime(),
             'checkout_grace_time' => $this->shiftRequester->getCheckOutGraceTime(),
-            'is_halfday_enable' => $this->shiftRequester->getIsHalfDayActivated()
+            'is_halfday_enable' => $this->shiftRequester->getIsHalfDayActivated(),
+            'color_code' => $this->getColorCode()
         ];
+    }
+
+    private function getColorCode()
+    {
+        $colors = config('b2b.SHIFT_COLORS');
+        $existing_colors = $this->businessShiftRepository->where('business_id', $this->shiftRequester->getBusiness()->id)->pluck('color_code')->toArray();
+        $unique_colors = array_diff($colors,$existing_colors);
+        return $unique_colors[rand(0, count($unique_colors))];
     }
 }
