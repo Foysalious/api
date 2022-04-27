@@ -34,7 +34,7 @@ class EntriesService
             $data["extra_payload"] = json_decode($data["extra_payload"], true);
         }
         if ($data['source_type'] == EntryTypes::POS) {
-            if (isset($data["extra_payload"]["partner_wise_order_id"])) {
+            if (isset($data["extra_payload"])) {
                 $data["partner_wise_order_id"] = $data["extra_payload"]["partner_wise_order_id"];
             } else {
                 $posOrder = $this->posOrderByOrderId($data['source_id']);
