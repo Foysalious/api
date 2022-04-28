@@ -72,7 +72,7 @@ class PaymentInitiate
      */
     public function canPossible()
     {
-        // if ($this->hasOngoingPayment()) throw new InitiateFailedException($this->getErrorMessageForOngoingPayment(), 400);
+        if ($this->hasOngoingPayment()) throw new InitiateFailedException($this->getErrorMessageForOngoingPayment(), 400);
         if ($this->hasConcurrentUpdateRestriction()) {
             $concurrent_update_object = CURestriction::getCUObject(PartnerOrder::find($this->payable->type_id));
             if (Carbon::now() > Carbon::parse($concurrent_update_object['created_at'])->addSeconds(constants('MAX_CONCURRENT_TIME'))) {
