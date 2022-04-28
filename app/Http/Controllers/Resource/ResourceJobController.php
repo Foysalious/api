@@ -122,7 +122,7 @@ class ResourceJobController extends Controller
     public function rescheduleJob(Job $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
     {
         try {
-            $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string', 'schedule_change_reason' => 'required']);
+            $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string', 'schedule_change_reason' => 'string']);
             /** @var AuthUser $auth_user */
             $auth_user = $request->auth_user;
             $resource = $auth_user->getResource();
