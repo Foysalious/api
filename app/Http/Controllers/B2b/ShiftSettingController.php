@@ -3,10 +3,13 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Transformers\Business\ShiftDetailsTransformer;
 use App\Transformers\Business\ShiftListTransformer;
+use App\Transformers\CustomSerializer;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\ShiftSetting\Creator;
 use Sheba\Business\ShiftSetting\Requester;
@@ -30,7 +33,7 @@ class ShiftSettingController extends Controller
         $manager->setSerializer(new ArraySerializer());
         $shifts = new Collection($business->shifts, new ShiftListTransformer());
         $shifts = collect($manager->createData($shifts)->toArray()['data']);
-        return api_response($request, $shifts, 200, ['shifts' => $shifts]);
+        return api_response($request, $shifts, 200, ['shift' => $shifts]);
     }
 
     public function create(Request $request, Requester $shift_requester, Creator $shift_creator)
@@ -83,6 +86,23 @@ class ShiftSettingController extends Controller
         if (!$business_shift) return api_response($request, null, 404);
         $business_shift->delete();
         return api_response($request, null, 200);
+    }
+
+    public function details($business, $id, Request $request, BusinessShiftRepository $business_shift_repository)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $business_shift = $business_shift_repository->find($id);
+        if (!$business_shift) return api_response($request, null, 404);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $member = new Item($business_shift, new ShiftDetailsTransformer());
+        $business_shift = $manager->createData($member)->toArray()['data'];
+        return api_response($request, $business_shift, 200, ['shift_details' => $business_shift]);
     }
 
 }
