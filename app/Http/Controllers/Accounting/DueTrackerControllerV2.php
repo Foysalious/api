@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\AccountKeyTypes;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Service\DueTrackerReportService;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
@@ -16,7 +17,6 @@ use Sheba\Usage\Usage;
 
 class DueTrackerControllerV2 extends Controller
 {
-    /** @var DueTrackerService */
     protected $dueTrackerService;
     protected $dueTrackerSmsService;
     protected $dueTrackerReportService;
@@ -45,7 +45,21 @@ class DueTrackerControllerV2 extends Controller
             'attachments' => 'sometimes|array',
             'attachments.*' => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
         ]);
-        $response = $this->dueTrackerService
+
+        $entry_dto = app()->make(EntryDTO::class);
+        $entry_dto = $entry_dto
+            ->setAmount($request->amount)
+            ->setSourceType($request->source_type)
+            ->setAccountKey($request->account_key)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setContactName($request->contact_name)
+            ->setContactMobile($request->contact_mobile)
+            ->setContactProPic($request->contact_pro_pic)
+            ->setEntryAt($request->entry_at)
+            ->setAttachments($request->attachments)
+            ->setNote($request->note);
+        $this->dueTrackerService
             ->setPartner($request->partner)
             ->setAmount($request->amount)
             ->setEntryType($request->source_type)
@@ -55,8 +69,9 @@ class DueTrackerControllerV2 extends Controller
             ->setDate($request->entry_at)
             ->setPartnerWiseOrderId($request->partner_wise_order_id)
             ->setAttachments($request->attachments)
-            ->setNote($request->note)
-            ->storeEntry();
+            ->setNote($request->note);
+        $response = $this->dueTrackerService->setEntryDto($entry_dto)->storeEntry();
+
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
         return api_response($request, null, 200, ['data' => $response]);
     }

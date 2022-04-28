@@ -4,6 +4,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
+use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -14,6 +15,7 @@ use Exception;
 class EntriesRepository extends BaseRepository
 {
     private $entry_id, $partner;
+    protected $entry_dto;
 
     /**
      * @param $entry_id
@@ -32,6 +34,15 @@ class EntriesRepository extends BaseRepository
     public function setPartner($partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    /**
+     * @param mixed $entry_dto
+     */
+    public function setEntryDto(EntryDTO $entry_dto)
+    {
+        $this->entry_dto = $entry_dto;
         return $this;
     }
 
@@ -93,6 +104,11 @@ class EntriesRepository extends BaseRepository
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
+    }
+
+    public function createEntry()
+    {
+
     }
 
     private function posOrderByOrderId(int $orderId): ?PosOrderObject

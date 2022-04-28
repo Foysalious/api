@@ -2,6 +2,10 @@
 
 namespace App\Sheba\AccountingEntry\Dto;
 
+
+use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use Sheba\AccountingEntry\Accounts\Accounts;
+
 class EntryDTO
 {
     public $contact_id;
@@ -17,8 +21,6 @@ class EntryDTO
     public $note;
     public $created_from;
     public $source_id;
-    public $debit_account_key;
-    public $credit_account_key;
     public $amount_cleared;
     public $reconcile_amount;
     public $updated_entry_amount;
@@ -152,24 +154,6 @@ class EntryDTO
     }
 
     /**
-     * @param mixed $debit_account_key
-     */
-    public function setDebitAccountKey($debit_account_key)
-    {
-        $this->debit_account_key = $debit_account_key;
-        return $this;
-    }
-
-    /**
-     * @param mixed $credit_account_key
-     */
-    public function setCreditAccountKey($credit_account_key)
-    {
-        $this->credit_account_key = $credit_account_key;
-        return $this;
-    }
-
-    /**
      * @param mixed $amount_cleared
      */
     public function setAmountCleared($amount_cleared)
@@ -295,7 +279,20 @@ class EntryDTO
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getToAccountKey()
+    {
+        return $this->source_type === EntryTypes::DUE ? $this->contact_id : $this->account_key;
+    }
 
-
+    /**
+     * @return mixed
+     */
+    public function getFromAccountKey()
+    {
+        return $this->source_type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $this->contact_id;
+    }
 
 }
