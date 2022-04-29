@@ -15,8 +15,7 @@ use Throwable;
 class PdfHandler extends Handler
 {
     use CdnFileManager;
-
-    /** @var PDF $pdf */
+    /** @var PDF $pdf*/
     private $pdf;
     private $downloadFormat = "pdf";
 
@@ -44,8 +43,8 @@ class PdfHandler extends Handler
             $mPDF->simpleTables = true;
             $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
-            $keep_table_proportions     = TRUE;
-            $data                       = view($this->viewFileName, $this->data)->render();
+            $keep_table_proportions = TRUE;
+            $data = view($this->viewFileName, $this->data)->render();
             $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
             return $mPDF->Output("$this->filename.$this->downloadFormat", "d");
         }
@@ -57,18 +56,17 @@ class PdfHandler extends Handler
     /**
      * @throws MpdfException
      */
-    private function getMpdf()
-    {
-        $defaultConfig     = (new ConfigVariables())->getDefaults();
-        $fontDirs          = $defaultConfig['fontDir'];
+    private function getMpdf(){
+        $defaultConfig = (new ConfigVariables())->getDefaults();
+        $fontDirs = $defaultConfig['fontDir'];
         $defaultFontConfig = (new FontVariables())->getDefaults();
-        $fontData          = $defaultFontConfig['fontdata'];
+        $fontData = $defaultFontConfig['fontdata'];
         return new Mpdf([
             'mode' => 'utf-8',
             'tempDir' => storage_path('app/temp'),
             'fontDir' => array_merge($fontDirs, [
-                storage_path('/fonts'),
-            ]), 'fontdata'        => $fontData + [
+                storage_path('fonts'),
+            ]), 'fontdata' => $fontData + [
                     'kalpurush' => [
                         'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
                     ]
@@ -87,17 +85,17 @@ class PdfHandler extends Handler
             mkdir(public_path('temp'), 0777, true);
         }
         if ($mPdf) {
-            $mPDF                       = $this->getMpdf();
-            $mPDF->simpleTables         = true;
-            $mPDF->packTableData        = true;
+           $mPDF=$this->getMpdf();
+            $mPDF->simpleTables = true;
+            $mPDF->packTableData = true;
             $mPDF->shrink_tables_to_fit = 1;
-            $data                       = view($this->viewFileName, $this->data)->render();
+            $data = view($this->viewFileName, $this->data)->render();
             $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
 
             $folder = $this->folder ?: 'invoices/pdf/';
-            $time   = time();
-            $file   = $this->filename . "_$time." . $this->downloadFormat;
-            $path   = public_path('temp') . '/' . $file;
+            $time = time();
+            $file = $this->filename . "_$time." . $this->downloadFormat;
+            $path = public_path('temp') . '/' . $file;
             $mPDF->Output($path, "F");
             $cdn = $this->saveFileToCDN($path, $folder, $file);
             File::delete($path);
@@ -105,9 +103,9 @@ class PdfHandler extends Handler
         }
         $this->create();
         $folder = $this->folder ?: 'invoices/pdf/';
-        $time   = time();
-        $file   = $this->filename . "_$time." . $this->downloadFormat;
-        $path   = public_path('temp') . '/' . $file;
+        $time = time();
+        $file = $this->filename . "_$time." . $this->downloadFormat;
+        $path = public_path('temp') . '/' . $file;
         $this->pdf->save($path);
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
@@ -116,9 +114,12 @@ class PdfHandler extends Handler
 
     public function saveInvoice($type, $mPdf = false)
     {
+        if (!is_dir(public_path('temp'))) {
+            mkdir(public_path('temp'), 0777, true);
+        }
         $this->data['type'] = $type;
         $filename = ucfirst(strtolower($type)) . '-' . $this->data['partner_order']->code() . '.pdf';
-        $file = $this->getTempFolder() . $filename;
+        $path = public_path('temp') . '/' . $filename;
         if ($mPdf) {
             $mPDF=$this->getMpdf();
             $mPDF->simpleTables = true;
@@ -126,10 +127,10 @@ class PdfHandler extends Handler
             $mPDF->shrink_tables_to_fit = 1;
             $data = view($this->viewFileName, $this->data)->render();
             $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
-            $folder = 'invoices/pdf/';
-            $mPDF->Output($filename, "F");
-            $cdn = $this->saveFileToCDN($file, $folder, $filename);
-            File::delete($file);
+            $mPDF->Output($path, "F");
+            $folder = $this->folder ?: 'invoices/pdf/';
+            $cdn = $this->saveFileToCDN($path, $folder, $filename);
+            File::delete($path);
             return [
                 'link' => $cdn
             ];
