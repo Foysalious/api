@@ -119,6 +119,8 @@ class PdfHandler extends Handler
         $this->data['type'] = $type;
         $filename = ucfirst(strtolower($type)) . '-' . $this->data['partner_order']->code() . '.pdf';
         $file = $this->getTempFolder() . $filename;
+        $path = public_path('temp') . '/' . $file;
+        $this->pdf->save($path);
         if ($mPdf) {
             $mPDF=$this->getMpdf();
             $mPDF->simpleTables = true;
@@ -126,11 +128,12 @@ class PdfHandler extends Handler
             $mPDF->shrink_tables_to_fit = 1;
             $data = view($this->viewFileName, $this->data)->render();
             $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
+            $folder = 'invoices/pdf/';
             $mPDF->Output($filename, "F");
-            $s3_invoice_link = $this->saveToCDN($file, $filename);
+            $cdn = $this->saveFileToCDN($path, $folder, $file);
             File::delete($file);
             return [
-                'link' => $s3_invoice_link
+                'link' => $cdn
             ];
         }
     }

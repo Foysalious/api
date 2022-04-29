@@ -48,6 +48,7 @@ trait CdnFileManager
     private function putFileToCDNAndGetPath($file, $folder, $filename, $access_level = "public")
     {
         $filename = $this->makeFullFilePath($folder, $filename);
+        dd(config('sheba.s3_url') . $filename);
         $cdn = $this->getCDN();
         if ($access_level == "private") {
             $cdn->put($filename, $file);
