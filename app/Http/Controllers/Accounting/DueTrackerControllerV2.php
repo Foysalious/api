@@ -210,6 +210,8 @@ class DueTrackerControllerV2 extends Controller
             ->setContactId($request->contactId)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
+            ->setLimit($request->limit)
+            ->setOffset($request->offset)
             ->getReport();
         return http_response($request, null, 200, ['data' => $data]);
     }
