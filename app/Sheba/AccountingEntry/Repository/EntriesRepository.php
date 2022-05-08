@@ -14,8 +14,8 @@ use Exception;
 
 class EntriesRepository extends BaseRepository
 {
-    private $entry_id, $partner;
-    protected $entry_dto;
+    private $entry_id;
+    private $partner;
 
     /**
      * @param $entry_id
@@ -34,15 +34,6 @@ class EntriesRepository extends BaseRepository
     public function setPartner($partner)
     {
         $this->partner = $partner;
-        return $this;
-    }
-
-    /**
-     * @param mixed $entry_dto
-     */
-    public function setEntryDto(EntryDTO $entry_dto)
-    {
-        $this->entry_dto = $entry_dto;
         return $this;
     }
 
@@ -106,12 +97,21 @@ class EntriesRepository extends BaseRepository
         }
     }
 
-    public function createEntry()
+    public function createEntry(array $data)
     {
-
+        if (!$this->isMigratedToAccounting($this->partner->id)) {
+            return true;
+        }
+        $this->setModifier($this->partner);
+        $url = "api/entries/";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->post($url, $data);
     }
 
-    private function posOrderByOrderId(int $orderId): ?PosOrderObject
+    /**
+     * @param int $orderId
+     * @return PosOrderObject|null
+     */
+    private function posOrderByOrderId(int $orderId)
     {
         try {
             /** @var PosOrderResolver $posOrderResolver */

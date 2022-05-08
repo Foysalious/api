@@ -2,10 +2,10 @@
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Creator\Entry as EntryCreator;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
-use App\Sheba\AccountingEntry\Repository\EntriesRepository;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
@@ -41,7 +41,7 @@ class DueTrackerService
     protected $contact_id;
     protected $note;
     protected $partner_id;
-    protected EntryDTO $entryDTO;
+    protected $entryDTO;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo,DueTrackerReminderRepository $reminderRepo)
     {
@@ -258,20 +258,12 @@ class DueTrackerService
         return $this;
     }
 
-    /**
-     * @throws AccountingEntryServerError
-     */
     public function storeEntry()
     {
-        $data = $this->makeDataForEntry();
-        dd($data);
-//        dd(($data), get_object_vars($this->entryDTO), $this->entryDTO->getFromAccountKey(),$this->entryDTO->getToAccountKey());
-        $entry_repo = app()->make(EntriesRepository::class)
+        return app()->make(EntryCreator::class)
             ->setEntryDto($this->entryDTO)
             ->setPartner($this->partner)
             ->createEntry();
-        dd('after entry create');
-        return $this->dueTrackerRepo->createEntry($data);
     }
 
     /**
@@ -476,7 +468,7 @@ class DueTrackerService
         $data['to_account_key'] = $this->entry_type === EntryTypes::DUE ? $this->contact_id : $this->account_key;
         $data['from_account_key'] = $this->entry_type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $this->contact_id;
         $data['note'] = $this->note;
-//        $data['partner'] = $this->partner;
+        $data['partner'] = $this->partner;
         $data['attachments'] = $this->attachments;
         $data['source_id'] = $posOrder ? $posOrder->id : null;
 

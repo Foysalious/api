@@ -28,9 +28,7 @@ class DueTrackerControllerV2 extends Controller
         $this->dueTrackerReportService = $dueTrackerReportService;
     }
 
-    /**
-     * @throws AccountingEntryServerError
-     */
+
     public function store(Request $request): JsonResponse
     {
         $this->validate($request, [
@@ -47,8 +45,7 @@ class DueTrackerControllerV2 extends Controller
         ]);
 
         $entry_dto = app()->make(EntryDTO::class);
-        $entry_dto = $entry_dto
-            ->setAmount($request->amount)
+        $entry_dto->setAmount($request->amount)
             ->setSourceType($request->source_type)
             ->setAccountKey($request->account_key)
             ->setContactType($request->contact_type)
@@ -59,21 +56,9 @@ class DueTrackerControllerV2 extends Controller
             ->setEntryAt($request->entry_at)
             ->setAttachments($request->attachments)
             ->setNote($request->note);
-        $this->dueTrackerService
-            ->setPartner($request->partner)
-            ->setAmount($request->amount)
-            ->setEntryType($request->source_type)
-            ->setAccountKey($request->account_key)
-            ->setContactType($request->contact_type)
-            ->setContactId($request->contact_id)
-            ->setDate($request->entry_at)
-            ->setPartnerWiseOrderId($request->partner_wise_order_id)
-            ->setAttachments($request->attachments)
-            ->setNote($request->note);
-        $response = $this->dueTrackerService->setEntryDto($entry_dto)->storeEntry();
-
+        $response = $this->dueTrackerService->setPartner($request->partner)->setEntryDto($entry_dto)->storeEntry();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
-        return api_response($request, null, 200, ['data' => $response]);
+        return http_response($request, null, 201, ['data' => $response]);
     }
 
     /**
@@ -92,7 +77,7 @@ class DueTrackerControllerV2 extends Controller
             ->setNote('অনাদায়ী পাওনা')
             ->badDebts();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
-        return api_response($request, null, 200, ['data' => $response]);
+        return http_response($request, null, 200, ['data' => $response]);
     }
 
     /**
