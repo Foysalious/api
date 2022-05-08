@@ -21,7 +21,7 @@
 <div  style="border: 1px solid #E5E5E5; margin-top: 30px;text-align: center">
     <table style="text-align: center;width: 100%">
         @if($data['contact_type'] == 'customer')
-        <tr style="text-align: center; padding: 10px 0;">
+        <tr style="text-align: center; padding: 10px 0;padding-bottom: 5px !important;">
             @if($data['stats']['type'] == 'receivable')
                 <td style="text-align: center; padding: 16px;" colspan="3">ব্যালেন্স (বাকিতে বিক্রয়)
                     <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
@@ -33,7 +33,7 @@
             @endif
         </tr>
         @elseif($data['contact_type'] == 'supplier')
-            <tr style="text-align: center; padding: 10px 0;">
+            <tr style="text-align: center; padding: 10px 0;padding-bottom: 5px !important;">
                 @if($data['stats']['type'] == 'receivable')
                     <td style="text-align: center; padding: 16px;" colspan="3">ব্যালেন্স (বাকিতে ক্রয়)
                         <span style="color: #4faf61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
@@ -46,20 +46,27 @@
             </tr>
         @endif
 
-        <hr style="color: #E5E5E5">
+        <hr style="color: #E5E5E5;margin-bottom: 10px !important;">
         @if($data['contact_type'] == 'customer')
-            <tr style="text-align: center; border-top: 1px solid #e5e5e5; padding: 10px 0;">
-                <td style=" width: 48%; padding: 0 0 16px;">মোট বাকিতে বিক্রয় <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }} </span></td>
+            <tr style="text-align: center; border-top: 1px solid #e5e5e5; ">
+                <td style=" width: 48%; ">মোট বাকিতে বিক্রয় <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }} </span></td>
                 <td style=" width: 4%;"><span style="color: #E5E5E5">|</span></td>
-                <td style=" width: 48%;padding: 0 0 16px;">মোট জমা <span style="color: #4FAF61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</span></td>
+                <td style=" width: 48%;">মোট জমা <span style="color: #4FAF61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</span></td>
+
             </tr>
         @elseif($data['contact_type'] == 'supplier')
-                <tr style="text-align: center; border-top: 1px solid #e5e5e5; padding: 10px 0;">
+                <tr style="text-align: center; border-top: 1px solid #e5e5e5; padding: 2px 0;">
                     <td style=" width: 48%; padding: 0 0 16px;">মোট বাকি ক্রয় <span style="color: #4FAF61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }} </span></td>
                     <td style=" width: 4%;"><span style="color: #E5E5E5">|</span></td>
                     <td style=" width: 48%;padding: 0 0 16px;">মোট পেমেন্ট <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</span></td>
                 </tr>
         @endif
+            <tr >
+                <td colspan="3"></td>
+            </tr>
+            <tr >
+                <td colspan="3"></td>
+            </tr>
     </table>
 </div>
 </div>

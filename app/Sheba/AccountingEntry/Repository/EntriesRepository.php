@@ -40,42 +40,27 @@ class EntriesRepository extends BaseRepository
     public function entryDetails()
     {
         try {
-        $url = "api/entries/" . $this->entry_id;
-        $data = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
-        if ($data["attachments"]) {
-            $data["attachments"] = json_decode($data["attachments"]);
-        }
-//        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d h:i:s');
-//        $data['updated_at'] = Carbon::parse($data['updated_at'])->format('Y-m-d h:i:s');
-        $data["customer_details"] = null;
-        if ($data['extra_payload']) {
-            $data["extra_payload"] = json_decode($data["extra_payload"]);
-        }
-        if ($data['source_type'] == EntryTypes::POS) {
-            if (isset($data["extra_payload"]["partner_wise_order_id"])) {
-                $data["partner_wise_order_id"] = $data["extra_payload"]["partner_wise_order_id"];
-            } else {
-                $posOrder = $this->posOrderByOrderId($data['source_id']);
-                if ($posOrder) {
-                    $data["partner_wise_order_id"] = $posOrder->partner_wise_order_id;
+            $url = "api/entries/" . $this->entry_id;
+            $data = $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->get($url);
+            if ($data["attachments"]) {
+                $data["attachments"] = json_decode($data["attachments"]);
+            }
+            $data["customer_details"] = null;
+            if ($data["contact_id"]) {
+                /** @var PosCustomerResolver $posCustomerResolver */
+                $posCustomerResolver = app(PosCustomerResolver::class);
+                $posCustomer = $posCustomerResolver->setCustomerId($data["contact_id"])->setPartner($this->partner)->get();
+                if ($posCustomer) {
+                    $data["customer_details"] = [
+                        'id' => $posCustomer->id,
+                        'name' => $posCustomer->name,
+                        'phone' => $posCustomer->mobile,
+                        'image' => $posCustomer->pro_pic,
+                        'is_supplier' => $posCustomer->is_supplier
+                    ];
                 }
             }
-        }
-        if ($data["contact_id"]) {
-            /** @var PosCustomerResolver $posCustomerResolver */
-            $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($data["contact_id"])->setPartner($this->partner)->get();
-            if ($posCustomer) {
-                $data["customer_details"] = [
-                    'id' => $posCustomer->id,
-                    'name' => $posCustomer->name,
-                    'phone' => $posCustomer->mobile,
-                    'image' => $posCustomer->pro_pic,
-                    'is_supplier' => $posCustomer->is_supplier
-                ];
-            }
-        }
-        return $data;
+            return $data;
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
