@@ -25,7 +25,8 @@ class DueTrackerReportService
     protected $contact_type;
     protected $partner_id;
     protected $partner;
-
+    protected $limit;
+    protected $offset;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo){
         $this->dueTrackerRepo = $dueTrackerRepo;
@@ -48,6 +49,26 @@ class DueTrackerReportService
     public function setEndDate($end_date): DueTrackerReportService
     {
         $this->end_date = $end_date;
+        return $this;
+    }
+
+    /**
+     * @param $limit
+     * @return $this
+     */
+    public function setLimit($limit): DueTrackerReportService
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     * @return $this
+     */
+    public function setOffset($offset): DueTrackerReportService
+    {
+        $this->offset = $offset;
         return $this;
     }
 
