@@ -139,7 +139,7 @@ class DueTrackerReportService
 
         $data['data']['start_date'] = ($this->start_date != null) ? NumberLanguageConverter::en2bn(date_format($start_date,"d")).' '.banglaMonth(date_format($start_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($start_date,"Y")) : '';
         $data['data']['end_date'] = ($this->end_date != null ? NumberLanguageConverter::en2bn(date_format($end_date,"d")).' '.banglaMonth(date_format($end_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($end_date,"Y")) : '');
-        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d H:i:s")).' | '.NumberLanguageConverter::en2bn(date("d")).' '.banglaMonth(date("m")).' '.NumberLanguageConverter::en2bn(date("Y")) ;
+        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d h:i:s")).' | '.NumberLanguageConverter::en2bn(date("d")).' '.banglaMonth(date("m")).' '.NumberLanguageConverter::en2bn(date("Y")) ;
         $data['data']['contact_type'] = $this->contact_type;
 
         $data['data']['partner']['name'] = $this->partner->name;

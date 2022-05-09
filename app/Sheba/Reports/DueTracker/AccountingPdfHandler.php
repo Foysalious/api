@@ -90,7 +90,7 @@ class AccountingPdfHandler extends Handler
         $defaultFontConfig = (new FontVariables())->getDefaults();
         $fontData = $defaultFontConfig['fontdata'];
         return new Mpdf([
-            'mode' => 'utf-8','format' => 'A4','margin_header' => 0,
+            'mode' => 'utf-8','format' => 'A4','margin_header' => 0,'margin_footer'=>0,
             'tempDir' => storage_path('app/temp'),
             'fontDir' => array_merge($fontDirs, [
                 storage_path('fonts'),

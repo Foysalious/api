@@ -24,11 +24,11 @@
         @if($data['contact_type'] == 'customer')
         <tr style="text-align: center; padding: 10px 0;">
             @if($data['stats']['type'] == 'receivable')
-                <td style="text-align: center; padding: 16px;" colspan="3">ব্যালেন্স (বাকিতে বিক্রয়)
+                <td style="text-align: center; padding: 10px;" colspan="3">ব্যালেন্স (বাকিতে বিক্রয়)
                     <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
                 </td>
             @else
-                <td style="text-align: center; padding: 16px;" colspan="3">ব্যাল্যান্স (জমা আছে)
+                <td style="text-align: center;padding: 10px;" colspan="3">ব্যাল্যান্স (জমা আছে)
                     <span style="color: #4faf61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
                 </td>
             @endif
@@ -36,26 +36,26 @@
         @elseif($data['contact_type'] == 'supplier')
             <tr style="text-align: center; padding: 10px 0;">
                 @if($data['stats']['type'] == 'receivable')
-                    <td style="text-align: center; padding: 16px;" colspan="3">ব্যালেন্স (বাকিতে ক্রয়)
+                    <td style="text-align: center; padding: 10px;" colspan="3">ব্যালেন্স (বাকিতে ক্রয়)
                         <span style="color: #4faf61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
                     </td>
                 @else
-                    <td style="text-align: center; padding: 16px;" colspan="3">ব্যাল্যান্স (অগ্রিম পেমেন্ট)
+                    <td style="text-align: center; padding: 10px;" colspan="3">ব্যাল্যান্স (অগ্রিম পেমেন্ট)
                         <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}</span>
                     </td>
                 @endif
             </tr>
         @endif
 
-        <hr style="color: #E5E5E5">
+        <hr style="color: #E5E5E5;margin-bottom: 15px !important;">
         @if($data['contact_type'] == 'customer')
-            <tr style="text-align: center; border-top: 1px solid #e5e5e5; padding: 10px 0;">
+            <tr style="text-align: center; border-top: 1px solid #e5e5e5; ">
                 <td style=" width: 48%; padding: 0 0 16px;">মোট বাকিতে বিক্রয় <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }} </span></td>
                 <td style=" width: 4%;"><span style="color: #E5E5E5">|</span></td>
                 <td style=" width: 48%;padding: 0 0 16px;">মোট জমা <span style="color: #4FAF61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</span></td>
             </tr>
         @elseif($data['contact_type'] == 'supplier')
-                <tr style="text-align: center; border-top: 1px solid #e5e5e5; padding: 10px 0;">
+                <tr style="text-align: center; border-top: 1px solid #e5e5e5;">
                     <td style=" width: 48%; padding: 0 0 16px;">মোট বাকি ক্রয় <span style="color: #4FAF61;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }} </span></td>
                     <td style=" width: 4%;"><span style="color: #E5E5E5">|</span></td>
                     <td style=" width: 48%;padding: 0 0 16px;">মোট পেমেন্ট <span style="color: #BF392B;">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</span></td>
@@ -69,32 +69,32 @@
     <p style="margin: 0; padding: 0; font-size: 12px; color: #868990">লেনদেনের সংখ্যা: {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['due_list_bn'][key($data['due_list_bn'])]['stats']['total_transactions_bn'])  }}  (এই মাস)</p>
     <div style="text-align: center">
         <?php
-        $count =0;
+         $count =0;
         ?>
         @foreach($data['due_list_bn'] as $key => $value)
                 <?php $count++; ?>
-            <table style="table-layout: fixed;
+            <table style="table-layout: fixed;border-collapse: collapse;
         width: 100%;
-        border-collapse: collapse; font-size: 12px; margin-bottom: 10px">
+         font-size: 12px; margin-bottom: 10px">
                 @if($count <= 1)
                     @if($data['contact_type'] == 'customer')
                         <thead>
                         <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
-                            <th style="padding: 9px 16px; width: 150px">তারিখ</th>
+                            <th style="padding: 9px 16px; width: 150px;text-align: left">তারিখ</th>
                             <th style="text-align: left;">বিস্তারিত</th>
-                                <th style="text-align: right;width: 18% ;">বাকি</th>
-                            <th style="text-align: right;width: 18% ;">জমা</th>
-                            <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
+                            <th style="text-align: right;width: 18% ;padding-right: 5px;">বাকি</th>
+                            <th style="text-align: right;width: 18% ;padding-right: 5px;">জমা</th>
+                            <th style="text-align: right;width: 18% ; padding-right: 5px;">ব্যাল্যান্স</th>
                         </tr>
                         </thead>
                     @elseif($data['contact_type'] == 'supplier')
                         <thead>
                         <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
-                            <th style="padding: 9px 16px; width: 150px">তারিখ</th>
+                            <th style="padding: 9px 16px; width: 150px;text-align: left">তারিখ</th>
                             <th style="text-align: left;">বিস্তারিত</th>
-                            <th style="text-align: right;width: 18% ;">বাকি ক্রয়</th>
-                            <th style="text-align: right;width: 18% ;">পেমেন্ট</th>
-                            <th style="text-align: right; padding-right: 16px;">ব্যাল্যান্স</th>
+                            <th style="text-align: right;width: 18% ;padding-right: 5px;">বাকি ক্রয়</th>
+                            <th style="text-align: right;width: 18% ;padding-right: 5px;">পেমেন্ট</th>
+                            <th style="text-align: right;width: 18% ; padding-right: 5px;">ব্যাল্যান্স</th>
                         </tr>
                         </thead>
                     @endif
@@ -109,8 +109,8 @@
         @foreach($value['list'] as $key1 => $v)
             @if($data['contact_type'] == 'customer')
                 <tr style="border: 1px solid #EAECF0;">
-                    <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
-                    <td>{{ $v['note'] }}</td>
+                    <td style="padding: 9px 16px;text-align: left;width: 150px;">{{ $v['entry_at_bn'] }}</td>
+                    <td style="text-align: left;">{{ $v['note'] }}</td>
                     @if($v['account_type'] == 'receivable' )
                         <td style="width: 18% ;text-align: right; padding-right: 5px; background: #F9EDEC;color: #C92236">৳ {{ $v['amount_bn'] }}</td>
                         <td style="width: 18% ;text-align: right; padding-right: 5px; background: #EFF8F1;">&nbsp;</td>
@@ -124,7 +124,7 @@
                 </tr>
             @elseif($data['contact_type'] == 'supplier')
                 <tr style="border: 1px solid #EAECF0;">
-                    <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
+                    <td style="padding: 9px 16px;text-align: left;width: 150px;">{{ $v['entry_at_bn'] }}</td>
                     <td>{{ $v['note'] }}</td>
                     @if($v['account_type'] == 'receivable' )
                         <td style="text-align: right; padding-right: 5px; background: #EFF8F1;width: 18% ; color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
@@ -151,7 +151,7 @@
                 <td style=""></td>
                 <td style="padding-right: 5px; text-align: right; width: 18% ;color: #bf392b">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['receivable']) }}</td>
                 <td style="padding-right: 5px; text-align: right; width: 18% ; color: #4faf61">৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['payable']) }}</td>
-                <td style="padding-right: 5px; text-align: right; width: 18% ; font-size: 14px; color: #4faf61;">
+                <td style="padding-right: 5px; text-align: right; width: 18% ;  color: #4faf61;">
                     ৳ {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['stats']['balance']) }}
                 </td>
             </tr>
@@ -161,7 +161,7 @@
             @if($data['contact_type'] == 'customer')
                 @if($data['stats']['type'] == 'receivable')
                     <tr style=" background: #f9edec">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (বাকিতে বিক্রয়)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span  style="color: #868990">(বাকিতে বিক্রয়)</span></td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #f9edec">&nbsp;</td>
                         <td style=" padding-right: 5px; text-align: right;font-size: 14px;color: #bf392b;">
@@ -170,7 +170,7 @@
                     </tr>
                 @else
                     <tr style=" background: #EFF8F1">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (জমা আছে)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span  style="color: #868990">(জমা আছে)</span> </td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #EFF8F1">&nbsp;</td>
                         <td style="padding-right: 5px;text-align: right;font-size: 14px;color: #4faf61;">
@@ -181,7 +181,7 @@
             @elseif($data['contact_type'] == 'supplier')
                 @if($data['stats']['type'] == 'receivable')
                     <tr style=" background: #EFF8F1">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (বাকিতে ক্রয়)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span style="color: #868990">(বাকিতে ক্রয়)</span></td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #EFF8F1">&nbsp;</td>
                         <td style="text-align: right;font-size: 14px;color: #4faf61;">
@@ -190,7 +190,7 @@
                     </tr>
                 @else
                     <tr style=" background: #f9edec">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (অগ্রীম পেমেন্ট)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span style="color: #868990">(অগ্রীম পেমেন্ট)</span></td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #f9edec">&nbsp;</td>
                         <td style="text-align: right;font-size: 14px;color: #bf392b;">
