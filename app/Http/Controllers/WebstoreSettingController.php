@@ -117,8 +117,8 @@ class WebstoreSettingController extends Controller
         $this->validate($request, ['image' => 'required_without:banner_id', 'banner_id' => 'required_without:image']);
         $partner = $request->auth_user->getPartner();
         $banner_image_link = null;
-        if ($request->file('image')) $banner_image_link = $this->createBannerForPageSettings($request->file('image'), $request->title);
-        $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->setBannerId($request->banner_id)->setTitle($request->title)->setDescription($request->description)->setBannerImageLink($banner_image_link)->storePageSettings();
+        if ($request->file('image')) $banner_image_link = $this->createBannerForPageSettings($request->file('image'), $request->banner_title);
+        $this->webstoreSettingService->setPartner($partner->id)->setType($request->type)->setBannerId($request->banner_id)->setBannerTitle($request->banner_title)->setBannerDescription($request->banner_description)->setDescription($request->description)->setBannerImageLink($banner_image_link)->storePageSettings();
         return http_response($request, null, 200, ['message' => 'Successful']);
     }
     public function createBannerForPageSettings($file, $filename)

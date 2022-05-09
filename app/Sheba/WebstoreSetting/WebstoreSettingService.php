@@ -19,9 +19,11 @@ class WebstoreSettingService
     private $email;
     private $type;
     private $bannerId;
-    private $title;
     private $description;
     private $bannerImageLink;
+    private $bannerTitle;
+    private $bannerDescription;
+
 
     public function __construct(WebstoreSettingServerClient $client)
     {
@@ -89,16 +91,21 @@ class WebstoreSettingService
     }
 
 
-    public function setTitle($title)
+    public function setBannerTitle($title)
     {
-        $this->title = $title;
+        $this->bannerTitle = $title;
         return $this;
     }
-
 
     public function setDescription($description)
     {
         $this->description = $description;
+        return $this;
+    }
+
+    public function setBannerDescription($description)
+    {
+        $this->bannerDescription = $description;
         return $this;
     }
 
@@ -214,9 +221,10 @@ class WebstoreSettingService
     {
         return [
             "banner_id" => $this->bannerId ?? null,
-            "title" => $this->title ?? null,
-            "description" => $this->description ?? null,
+            "banner_title" => $this->bannerTitle ?? null,
+            "banner_description" => $this->bannerDescription ?? null,
             "banner_image_link" => $this->bannerImageLink ?? null,
+            "description"  =>  $this->description ?? null
         ];
     }
 
