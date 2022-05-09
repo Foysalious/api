@@ -21,7 +21,9 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         $current_count = $this->currentCount($feature, $partner);
         $updated_count = $current_count + $count;
         $this->countUpdate($feature, $updated_count, $partner);
-        return api_response($request, null, 200, ['message' => 'SMS count incremented successfully']);
+
+        $message = ucfirst($feature) . ' count incremented successfully';
+        return api_response($request, null, 200, ['message' => $message]);
     }
 
     public function decrement(Request $request, $partner)

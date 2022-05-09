@@ -14,26 +14,39 @@ class PackageFeatureCount
         $this->partnerPackageFeatureCounter = $partnerPackageFeatureCounter;
     }
 
-    public function topupCurrentCount(): int
+    public function topupCurrentCount($partner): int
     {
-        return 10;
+        return $this->featuresCount($partner)->topup;
     }
 
     public function smsCurrentCount($partner): int
     {
-        $features_count = $this->featuresCount($partner);
-        return $features_count->sms;
+        return $this->featuresCount($partner)->sms;
     }
 
-    public function deliveryCurrentCount(): int
+    public function deliveryCurrentCount($partner): int
     {
-        return 20;
+        return $this->featuresCount($partner)->delivery;
     }
 
     public function smsCountUpdate($updated_count, $partner)
     {
         $features_count = $this->featuresCount($partner);
         $data['sms'] = $updated_count;
+        $features_count->update($this->withUpdateModificationField($data));
+    }
+
+    public function topupCountUpdate($updated_count, $partner)
+    {
+        $features_count = $this->featuresCount($partner);
+        $data['topup'] = $updated_count;
+        $features_count->update($this->withUpdateModificationField($data));
+    }
+
+    public function deliveryCountUpdate($updated_count, $partner)
+    {
+        $features_count = $this->featuresCount($partner);
+        $data['delivery'] = $updated_count;
         $features_count->update($this->withUpdateModificationField($data));
     }
 
