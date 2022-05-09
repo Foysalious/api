@@ -40,11 +40,10 @@ class BaseRepository
     {
         /* Todo need to resolve contact for customer and supplier individually */
 
-        if ((!isset($request->customer_id) || $request->customer_id == null) ||
-            ((!isset($request->contact_id) || $request->contact_id == null)) ) {
+        if (!isset($request->customer_id) || $request->customer_id == null) {
             return $request;
         }
-        if (isset($request->customer_name) || isset($request->contact_name)) {
+        if (isset($request->customer_name) && isset($request->customer_mobile)) {
             return $request;
         }
         $partner = $this->getPartner($request);

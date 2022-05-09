@@ -53,13 +53,13 @@ class AccountingDueTrackerRepository extends BaseRepository
         $this->setModifier($request->partner);
         $posOrder = ($type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id) : null;
         $request->merge(['source_id' =>  $posOrder ? $posOrder->id : null]);
-        $payload = $this->createEntryData($request, $type, $with_update);
-        if (!$request->customer_id) {
-            throw new PosCustomerNotFoundException('Sorry! Cannot create entry without customer', 404);
+        $data = $this->createEntryData($request, $type, $with_update);
+        if (!$request->customer_id || !$request->customer_name) {
+            throw new PosCustomerNotFoundException('Sorry! cannot create entry without customer', 404);
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";
-        Log::debug(['data for accounting', $payload]);
-        return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $payload);
+        Log::debug(['data for accounting', $data]);
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
     }
 
     /**
@@ -220,28 +220,28 @@ class AccountingDueTrackerRepository extends BaseRepository
             $url .= "&order_by=$order_by&order=$order";
         }
 
-        if ($request->filled('balance_type')) {
+        if ($request->has('balance_type')) {
             $url .= "&balance_type=$request->balance_type";
         }
 
-        if ($request->filled('start_date') && $request->filled('end_date')) {
+        if ($request->has('start_date') && $request->has('end_date')) {
             $url .= "&start_date=$request->start_date&end_date=$request->end_date";
         }
 
-        if (($request->filled('download_pdf')) && ($request->download_pdf == 1) ||
-            ($request->filled('share_pdf')) && ($request->share_pdf == 1)) {
+        if (($request->has('download_pdf')) && ($request->download_pdf == 1) ||
+            ($request->has('share_pdf')) && ($request->share_pdf == 1)) {
             return $url;
         }
 
-        if ($request->filled('filter_by_supplier') && $request->filter_by_supplier == 1) {
+        if ($request->has('filter_by_supplier') && $request->filter_by_supplier == 1) {
             $url .= "&filter_by_supplier=$request->filter_by_supplier";
         }
 
-        if ($request->filled('q')) {
+        if ($request->has('q')) {
             $url .= "&q=$request->q";
         }
 
-        if ($request->filled('limit') && $request->filled('offset')) {
+        if ($request->has('limit') && $request->has('offset')) {
             $url .= "&limit=$request->limit&offset=$request->offset";
         }
         return $url;
