@@ -2,27 +2,21 @@
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Creator\Entry as EntryCreator;
+use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
-use App\Sheba\Reports\DueTracker\AccountingPdfHandler;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Accounts\Accounts;
-use Illuminate\Support\Collection;
-use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Order\PosOrderResolver;
-use Sheba\Reports\Exceptions\NotAssociativeArray;
-use Sheba\Reports\PdfHandler;
 use Exception;
-use Throwable;
-use App\Models\Partner;
-use Sheba\Helpers\Converters\NumberLanguageConverter;
+
 class DueTrackerService
 {
     protected $partner;
@@ -35,7 +29,6 @@ class DueTrackerService
     protected $limit;
     protected $offset;
     protected $query;
-    protected $filter_by_supplier;
     protected $amount;
     protected $entry_type;
     protected $account_key;
@@ -48,6 +41,7 @@ class DueTrackerService
     protected $contact_id;
     protected $note;
     protected $partner_id;
+    protected $entryDTO;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo,DueTrackerReminderRepository $reminderRepo)
     {
@@ -62,6 +56,15 @@ class DueTrackerService
     public function setAmount($amount): DueTrackerService
     {
         $this->amount = $amount;
+        return $this;
+    }
+
+    /**
+     * @param mixed $entryDTO
+     */
+    public function setEntryDTO(EntryDTO $entryDTO)
+    {
+        $this->entryDTO = $entryDTO;
         return $this;
     }
 
@@ -226,15 +229,6 @@ class DueTrackerService
     }
 
     /**
-     * @param mixed $filter_by_supplier
-     */
-    public function setFilterBySupplier($filter_by_supplier): DueTrackerService
-    {
-        $this->filter_by_supplier = $filter_by_supplier;
-        return $this;
-    }
-
-    /**
      * @param $start_date
      * @return $this
      */
@@ -264,13 +258,12 @@ class DueTrackerService
         return $this;
     }
 
-    /**
-     * @throws AccountingEntryServerError
-     */
     public function storeEntry()
     {
-        $data = $this->makeDataForEntry();
-        return $this->dueTrackerRepo->createEntry($data);
+        return app()->make(EntryCreator::class)
+            ->setEntryDto($this->entryDTO)
+            ->setPartner($this->partner)
+            ->createEntry();
     }
 
     /**
@@ -468,7 +461,6 @@ class DueTrackerService
         $posOrder = ($this->entry_type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($this->partner, $this->partner_wise_order_id) : null;
 
         $data['contact_id'] = $this->contact_id;
-        $data['customer_id'] = $this->contact_id; //TODO: Should remove when customer resolver fix from POS SIDE
         $data['contact_type'] = $this->contact_type;
         $data['amount'] = $this->amount;
         $data['entry_at'] = $this->date;
