@@ -53,7 +53,7 @@ class AccountingDueTrackerRepository extends BaseRepository
         $posOrder = ($type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($request->partner, $request->partner_wise_order_id) : null;
         $request->merge(['source_id' =>  $posOrder ? $posOrder->id : null]);
         $data = $this->createEntryData($request, $type, $with_update);
-        if (!$request->customer_id && !$request->customer_name) {
+        if (!$request->customer_id || !$request->customer_name) {
             throw new PosCustomerNotFoundException('Sorry! cannot create entry without customer', 404);
         }
         $url = $with_update ? "api/entries/" . $request->entry_id : "api/entries/";

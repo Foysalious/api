@@ -4,6 +4,7 @@ namespace App\Sheba\AccountingEntry\Repository;
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Constants\UserType;
+use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -13,7 +14,8 @@ use Exception;
 
 class EntriesRepository extends BaseRepository
 {
-    private $entry_id, $partner;
+    private $entry_id;
+    private $partner;
 
     /**
      * @param $entry_id
@@ -79,4 +81,31 @@ class EntriesRepository extends BaseRepository
             logError($e);
         }
     }
+
+    public function createEntry(array $data)
+    {
+        if (!$this->isMigratedToAccounting($this->partner->id)) {
+            return true;
+        }
+        $this->setModifier($this->partner);
+        $url = "api/entries/";
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->post($url, $data);
+    }
+
+    /**
+     * @param int $orderId
+     * @return PosOrderObject|null
+     */
+    private function posOrderByOrderId(int $orderId)
+    {
+        try {
+            /** @var PosOrderResolver $posOrderResolver */
+            $posOrderResolver = app(PosOrderResolver::class);
+            return $posOrderResolver->setOrderId($orderId)->get();
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
+
 }

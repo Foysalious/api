@@ -18,6 +18,7 @@ class ShebaHttpResponse
     {
         $preserve_response = [
             200 => 'Successful',
+            201 => 'Successful',
             202 => 'Successful',
             303 => 'Partial Updates Successful',
             400 => 'Bad request',
