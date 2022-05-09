@@ -18,6 +18,7 @@ class WebstoreSettingService
     private $youtube;
     private $email;
     private $type;
+    private $title;
     private $bannerId;
     private $description;
     private $bannerImageLink;
@@ -87,6 +88,12 @@ class WebstoreSettingService
     public function setBannerId($bannerId)
     {
         $this->bannerId = $bannerId;
+        return $this;
+    }
+
+    public function setTitle($title)
+    {
+        $this->title = $title;
         return $this;
     }
 
@@ -227,8 +234,4 @@ class WebstoreSettingService
             "description"  =>  $this->description ?? null
         ];
     }
-
-
-
-
 }
