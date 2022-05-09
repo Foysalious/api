@@ -86,19 +86,19 @@
                     @if($data['contact_type'] == 'customer')
                         <thead>
                         <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
-                            <th style="padding: 9px 16px; width: 150px">তারিখ</th>
+                            <th style="padding: 9px 16px; width: 150px;text-align: left">তারিখ</th>
                             <th style="text-align: left;">নাম</th>
-                            <th style="text-align: right;">বাকি</th>
-                            <th style="text-align: right;">জমা</th>
+                            <th style="text-align: right;padding-right: 5px;">বাকি</th>
+                            <th style="text-align: right;padding-right: 5px;">জমা</th>
                         </tr>
                         </thead>
                     @elseif($data['contact_type'] == 'supplier')
                         <thead>
                         <tr style="background: #F4F5F7; color: #12141A; text-align: left; ">
-                            <th style="padding: 9px 16px; width: 150px">তারিখ</th>
+                            <th style="padding: 9px 16px; width: 150px;text-align: left">তারিখ</th>
                             <th style="text-align: left;">নাম</th>
-                            <th style="text-align: right;">বাকি ক্রয়</th>
-                            <th style="text-align: right;">পেমেন্ট</th>
+                            <th style="text-align: right;padding-right: 5px;">বাকি ক্রয়</th>
+                            <th style="text-align: right;padding-right: 5px;">পেমেন্ট</th>
                         </tr>
                         </thead>
                     @endif
@@ -162,7 +162,7 @@
             @if($data['contact_type'] == 'customer')
                 @if($data['stats']['type'] == 'receivable')
                     <tr style=" background: #f9edec">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (বাকিতে বিক্রয়)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span style="color: #868990">(বাকিতে বিক্রয়)</span></td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #f9edec">&nbsp;</td>
                         <td style="padding-right: 5px;text-align: right;font-size: 14px;color: #bf392b;">
@@ -171,7 +171,7 @@
                     </tr>
                 @else
                     <tr style=" background: #EFF8F1">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (জমা আছে)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span style="color: #868990">(জমা আছে)</span></td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #EFF8F1">&nbsp;</td>
                         <td style="padding-right: 5px;text-align: right;font-size: 14px;color: #4faf61;">
@@ -182,7 +182,7 @@
             @elseif($data['contact_type'] == 'supplier')
                 @if($data['stats']['type'] == 'receivable')
                     <tr style=" background: #EFF8F1">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (বাকিতে ক্রয়)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span style="color: #868990">(বাকিতে ক্রয়)</span></td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #EFF8F1">&nbsp;</td>
                         <td style="padding-right: 5px;text-align: right;font-size: 14px;color: #4faf61;">
@@ -191,7 +191,7 @@
                     </tr>
                 @else
                     <tr style=" background: #f9edec">
-                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স (অগ্রীম পেমেন্ট)</td>
+                        <td style="padding: 9px 16px">মোট ব্যাল্যান্স <span style="color: #868990">(অগ্রীম পেমেন্ট)</span></td>
                         <!-- <td>&nbsp;</td> -->
                         <td style="text-align: right; background: #f9edec">&nbsp;</td>
                         <td style="padding-right: 5px;text-align: right;font-size: 14px;color: #bf392b;">
