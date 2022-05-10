@@ -11,6 +11,7 @@ class QRPaymentStatics
     const MTB_SAVE_TRANSACTION_INFORMATION = "retailfin/api/acctOpen/saveTransactionInformation";
     const MTB_SAVE_NOMINEE_INFORMATION = "retailfin/api/acctOpen/saveNomineeInfo";
     const MTB_DOCUMENT_UPLOAD = "retailfin/api/acctOpen/documentUpload";
+    const MTB_SEND_OTP = "retailfin/api/acctOpen/generateOtp";
 
     const MTB_QR_GENERATE_URL = "retailfinqr/wqr/api/generateqrstring?";
 

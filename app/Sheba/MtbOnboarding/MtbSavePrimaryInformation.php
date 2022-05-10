@@ -70,7 +70,20 @@ class MtbSavePrimaryInformation
         return $this;
     }
 
-    private function makePrimaryInformation(): array
+    /**
+     * @param $name
+     * @return mixed|string
+     */
+    public function mutateName($name)
+    {
+        $name = rtrim(ltrim($name));
+        if (count(explode(' ', $name)) < 2) {
+            return 'Mr/Ms ' . ucfirst($name);
+        }
+        return $name;
+    }
+
+    private function makePrimaryInformation($reference, $otp): array
     {
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         if ($this->partnerMefInformation->tradeLicenseExists == "হ্যা") $tradeLicenseExist = "Y";
@@ -79,7 +92,7 @@ class MtbSavePrimaryInformation
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
                 'orgCode' => MtbConstants::CHANNEL_ID,
-                'name' => $this->partner->getFirstAdminResource()->profile->name,
+                'name' => $this->mutateName($this->partner->getFirstAdminResource()->profile->name),
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
                 'nid' => $this->partner->getFirstAdminResource()->profile->nid_no,
                 'dob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->dob)),
@@ -91,10 +104,13 @@ class MtbSavePrimaryInformation
                 'EmailId' => $this->partner->email,
                 'Tin' => $this->partner->getFirstAdminResource()->profile->tin_no ?? null,
                 'SpouseName' => $this->partnerMefInformation->spouseName ?? null,
-
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
                 'tradeLicenseExists' => $tradeLicenseExist,
                 'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
+                'param1' => "0096",
+                'param2' => $reference,
+                'param3' => $this->partner->getFirstAdminResource()->profile->mobile,
+                'param4' => $otp,
                 'presentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->presentAddress,
                     'postCode' => $this->partnerMefInformation->presentPostCode,
@@ -109,7 +125,7 @@ class MtbSavePrimaryInformation
                     'contactAddress' => $this->partnerMefInformation->presentAddress
                 ],
                 'ShopInfo' => [
-                    'shopOwnerNm' => $this->partnerMefInformation->shopOwnerName,
+                    'shopOwnerNm' => $this->mutateName($this->partnerMefInformation->shopOwnerName),
                     'shopNm' => $this->partner->name,
                     'shopClass' => config("mtbmcc.{$this->partner->business_type}") ?? config("mtbmcc.অন্যান্য")
                 ]
@@ -142,7 +158,7 @@ class MtbSavePrimaryInformation
         $data = (new ApplyValidation())->setPartner($this->partner)->setForm(MtbConstants::MTB_FORM_ID)->getFormSections();
         if ($data != 100)
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data . " completed"]);
-        $data = $this->makePrimaryInformation();
+        $data = $this->makePrimaryInformation($request->reference, $request->otp);
         $response = $this->client->post(QRPaymentStatics::MTB_SAVE_PRIMARY_INFORMATION, $data, AuthTypes::BARER_TOKEN);
         if (!isset($response['ticketId'])) throw new MtbServiceServerError("MTB Account Creation Failed, Invalid Input");
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
