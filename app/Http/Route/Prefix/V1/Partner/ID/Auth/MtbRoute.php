@@ -8,7 +8,7 @@ class MtbRoute
     {
         $api->group(['middleware' => ['accessToken']], function ($api) {
             $api->post('/partners/mtb-apply', 'Mtb\MtbController@apply');
-            $api->post('/partners/send-otp', 'Mtb\MtbController@sendOtp');
+            $api->post('/partners/mtb-send-otp', 'Mtb\MtbController@sendOtp');
         });
     }
 }
