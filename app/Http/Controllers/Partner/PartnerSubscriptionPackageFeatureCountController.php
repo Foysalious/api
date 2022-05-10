@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Sheba\Partner\PackageFeatureCount;
+use Illuminate\Validation\ValidationException;
 
 class PartnerSubscriptionPackageFeatureCountController extends Controller
 {
@@ -15,15 +16,25 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
 
     public function increment(Request $request, $partner)
     {
-        $feature = $request->feature;
-        $count = $request->count;
+        try {
+            $this->validate($request, [
+                'count' => "required|numeric|min:0",
+                'feature' => "required|in:" . implode(',', constants('INCREMENT_FEATURE'))
+            ]);
 
-        $current_count = $this->currentCount($feature, $partner);
-        $updated_count = $current_count + $count;
-        $this->countUpdate($feature, $updated_count, $partner);
+            $feature = $request->feature;
+            $count = $request->count;
 
-        $message = ucfirst($feature) . ' count incremented successfully';
-        return api_response($request, null, 200, ['message' => $message]);
+            $current_count = $this->currentCount($feature, $partner);
+            $updated_count = $current_count + $count;
+            $this->countUpdate($feature, $updated_count, $partner);
+
+            $message = ucfirst($feature) . ' count incremented successfully';
+            return api_response($request, null, 200, ['message' => $message]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }
     }
 
     public function decrement(Request $request, $partner)
