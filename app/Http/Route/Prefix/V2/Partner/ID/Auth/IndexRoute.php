@@ -168,6 +168,7 @@ class IndexRoute
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
                 $api->post('/auto-billing-toggle', 'Partner\PartnerSubscriptionController@toggleAutoBillingActivation');
                 $api->put('/subscription-renewal', 'Partner\PartnerSubscriptionController@updateSubscriptionRenewalInfo');
+                $api->get('/package-feature-current-count', 'Partner\PartnerSubscriptionPackageFeatureCountController@getCurrentCount');
                 $api->put('/increment-package-feature-count', 'Partner\PartnerSubscriptionPackageFeatureCountController@increment');
                 $api->put('/decrement-package-feature-count', 'Partner\PartnerSubscriptionPackageFeatureCountController@decrement');
             });

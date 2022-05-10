@@ -14,6 +14,26 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         $this->packageFeatureCount = $packageFeatureCount;
     }
 
+    public function getCurrentCount(Request $request, $partner)
+    {
+        try {
+            $this->validate($request, [
+                'feature' => "required|string|in:" . implode(',', constants('INCREMENTING_FEATURE'))
+            ]);
+
+            $feature = $request->feature;
+            $current_count = $this->currentCount($feature, $partner);
+
+            $data = [
+                'count' => $current_count
+            ];
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }
+    }
+
     public function increment(Request $request, $partner)
     {
         try {
