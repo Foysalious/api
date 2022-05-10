@@ -13,4 +13,9 @@ class Business extends TopUpCommission
     {
         $this->refundAgentsCommission();
     }
+
+    protected function getBasicTopUpLog()
+    {
+        return parent::getBasicTopUpLog() . " You have received BDT " . $this->topUpOrder->agent_commission . " cashback on this recharge.";
+    }
 }

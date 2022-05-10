@@ -9,6 +9,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new UserMigrationRoute())->set($api);
+            (new PaymentLinkRoute())->set($api);
             (new AccountingRoute())->set($api);
 
             $api->group(['middleware' => 'terminate'], function ($api) {

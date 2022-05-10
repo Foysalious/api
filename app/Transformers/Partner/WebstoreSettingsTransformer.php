@@ -20,6 +20,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
         return [
             'name' => $partner->name,
             'sub_domain' => $partner->sub_domain,
+            'own_domain' => $partner->webstoreDomain && $partner->webstoreDomain->domain_name ? 'https://'. $partner->webstoreDomain->domain_name : null,
             'url' => $this->getWebStoreURL($partner),
             'has_webstore' => $partner->has_webstore,
             'is_webstore_published' => $partner->is_webstore_published,
