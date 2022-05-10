@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Sheba\Partner\PackageFeatureCount;
 use Illuminate\Validation\ValidationException;
@@ -14,7 +15,7 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         $this->packageFeatureCount = $packageFeatureCount;
     }
 
-    public function getCurrentCount(Request $request, $partner)
+    public function getCurrentCount(Request $request, $partner): JsonResponse
     {
         try {
             $this->validate($request, [
@@ -34,7 +35,7 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         }
     }
 
-    public function increment(Request $request, $partner)
+    public function increment(Request $request, $partner): JsonResponse
     {
         try {
             $this->validate($request, [
@@ -57,7 +58,7 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         }
     }
 
-    public function decrement(Request $request, $partner)
+    public function decrement(Request $request, $partner): JsonResponse
     {
         try {
             $this->validate($request, [
