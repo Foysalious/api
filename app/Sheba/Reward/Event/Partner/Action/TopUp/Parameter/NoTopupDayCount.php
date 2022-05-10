@@ -28,7 +28,7 @@ class NoTopupDayCount extends ActionEventParameter
             ->where('agent_type', Partner::class)
             ->where('agent_id', $topup_order->agent_id)
             ->whereDate('created_at', '<', Carbon::today())
-            ->get();
+            ->first();
 
         $no_topup_day = Carbon::parse($result->last_topup_date)->diffInDays(Carbon::now()) - 1;
 
