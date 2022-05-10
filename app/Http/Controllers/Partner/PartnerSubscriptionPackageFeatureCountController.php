@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Sheba\Partner\PackageFeatureCount;
 use Illuminate\Validation\ValidationException;
@@ -14,7 +15,37 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         $this->packageFeatureCount = $packageFeatureCount;
     }
 
-    public function increment(Request $request, $partner)
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
+    public function getCurrentCount(Request $request, $partner): JsonResponse
+    {
+        try {
+            $this->validate($request, [
+                'feature' => "required|string|in:" . implode(',', constants('INCREMENTING_FEATURE'))
+            ]);
+
+            $feature = $request->feature;
+            $current_count = $this->currentCount($feature, $partner);
+
+            $data = [
+                'count' => $current_count
+            ];
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
+    public function increment(Request $request, $partner): JsonResponse
     {
         try {
             $this->validate($request, [
@@ -37,7 +68,12 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         }
     }
 
-    public function decrement(Request $request, $partner)
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
+    public function decrement(Request $request, $partner): JsonResponse
     {
         try {
             $this->validate($request, [
@@ -66,12 +102,23 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         }
     }
 
+    /**
+     * @param $feature
+     * @param $partner
+     * @return mixed
+     */
     private function currentCount($feature, $partner)
     {
         $methodName = $feature . 'CurrentCount';
         return $this->packageFeatureCount->$methodName($partner);
     }
 
+    /**
+     * @param $feature
+     * @param $updated_count
+     * @param $partner
+     * @return mixed
+     */
     private function countUpdate($feature, $updated_count, $partner)
     {
         $methodName = $feature . 'CountUpdate';
