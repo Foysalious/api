@@ -1452,4 +1452,10 @@ return [
     'MAX_CONCURRENT_TIME' => 900,
 
     'MAX_CONCURRENT_MIDDLEWARE_TIME' => 10,
+    'MAX_CONCURRENT_MIDDLEWARE_TIME' => 180,
+    'INCREMENTING_FEATURE' => [
+        'topup',
+        'sms',
+        'delivery'
+    ],
 ];
