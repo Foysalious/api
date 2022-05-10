@@ -29,7 +29,7 @@ class AttendanceCommonInfo
         try {
             return (new BarikoiClient)->getAddressFromGeo($this->getGeo())->getAddress();
         } catch (\Throwable $exception) {
-            return "";
+            return null;
         }
     }
 
