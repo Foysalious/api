@@ -1,9 +1,4 @@
 <?php $job = $partner_order->order->lastJob()->calculate(true); ?>
-<style>
-    .bangla-font-invoice{
-        font-family: Siyamrupali, sans-serif;
-    }
-</style>
 <thead>
     <tr>
         <th class="desc">SERVICE NAME</th>
@@ -17,7 +12,7 @@
 @if($job->status != "Cancelled")
     @forelse($job->jobServices as $service)
         <tr>
-            <td class="bangla-font-invoice">
+            <td >
                 <h3>{{ $service->name }}</h3>
                 <span>
                     @foreach(json_decode($service->variables ) as $key => $serviceVariable)

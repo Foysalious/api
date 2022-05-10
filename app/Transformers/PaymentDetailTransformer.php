@@ -5,6 +5,14 @@ use League\Fractal\TransformerAbstract;
 
 class PaymentDetailTransformer extends TransformerAbstract
 {
+    private function mutateStatus($status)
+    {
+        if ($status == "initiated" || $status == "validated") return 'processed';
+        if ($status == "initiation_failed" || $status == "validation_failed" || $status == "failed" || $status == "cancelled") return 'failed';
+        if ($status == "completed") return 'completed';
+        return 'processed';
+    }
+
     public function transform($payment, $payment_detail, $payment_link_payment_details)
     {
         return [
@@ -13,7 +21,7 @@ class PaymentDetailTransformer extends TransformerAbstract
             'payment_type' => $payment_detail->readableMethod,
             'id' => $payment->id,
             'payment_code' => '#' . $payment->id,
-            'payment_status' => $payment->status,
+            'payment_status' => $this->mutateStatus($payment->status),
             'amount' => $payment->payable->amount,
             'description' => $payment->payable->description,
             'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
