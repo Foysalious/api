@@ -32,6 +32,6 @@ class NoTopupDayCount extends ActionEventParameter
 
         $no_topup_day = Carbon::parse($result->last_topup_date)->diffInDays(Carbon::now()) - 1;
 
-        return $no_topup_day == $this->value;
+        return $no_topup_day >= $this->value;
     }
 }
