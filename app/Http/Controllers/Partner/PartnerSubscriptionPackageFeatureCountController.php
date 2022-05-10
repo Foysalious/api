@@ -19,7 +19,7 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         try {
             $this->validate($request, [
                 'count' => "required|numeric|min:0",
-                'feature' => "required|in:" . implode(',', constants('INCREMENT_FEATURE'))
+                'feature' => "required|string|in:" . implode(',', constants('INCREMENTING_FEATURE'))
             ]);
 
             $feature = $request->feature;
@@ -39,10 +39,31 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
 
     public function decrement(Request $request, $partner)
     {
-        $feature = $request->feature;
-        $count = $request->count;
+        try {
+            $this->validate($request, [
+                'count' => "required|numeric|min:0",
+                'feature' => "required|string|in:" . implode(',', constants('INCREMENTING_FEATURE'))
+            ]);
 
-        $current_count = $this->currentCount($feature, $partner);
+            $feature = $request->feature;
+            $count = $request->count;
+
+            $current_count = $this->currentCount($feature, $partner);
+            $updated_count = $current_count - $count;
+            if ($updated_count < 0) {
+                $message = 'You do not have enough ' . ucfirst($feature);
+                return api_response($request, null, 400, ['message' => $message]);
+            }
+
+            $this->countUpdate($feature, $updated_count, $partner);
+
+            $message = ucfirst($feature) . ' count decremented successfully';
+            return api_response($request, null, 200, ['message' => $message]);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }
     }
 
     private function currentCount($feature, $partner)

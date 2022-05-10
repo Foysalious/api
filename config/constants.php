@@ -1446,7 +1446,7 @@ return [
     'PARTNER_SUBSCRIPTION_SMS' => env('PARTNER_SUBSCRIPTION_SMS'),
 
     'MAX_CONCURRENT_MIDDLEWARE_TIME' => 180,
-    'INCREMENT_FEATURE' => [
+    'INCREMENTING_FEATURE' => [
         'topup',
         'sms',
         'delivery'
