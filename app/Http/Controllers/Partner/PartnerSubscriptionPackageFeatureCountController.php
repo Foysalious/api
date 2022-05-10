@@ -15,6 +15,11 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         $this->packageFeatureCount = $packageFeatureCount;
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
     public function getCurrentCount(Request $request, $partner): JsonResponse
     {
         try {
@@ -35,6 +40,11 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
     public function increment(Request $request, $partner): JsonResponse
     {
         try {
@@ -58,6 +68,11 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
     public function decrement(Request $request, $partner): JsonResponse
     {
         try {
@@ -87,12 +102,23 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
         }
     }
 
+    /**
+     * @param $feature
+     * @param $partner
+     * @return mixed
+     */
     private function currentCount($feature, $partner)
     {
         $methodName = $feature . 'CurrentCount';
         return $this->packageFeatureCount->$methodName($partner);
     }
 
+    /**
+     * @param $feature
+     * @param $updated_count
+     * @param $partner
+     * @return mixed
+     */
     private function countUpdate($feature, $updated_count, $partner)
     {
         $methodName = $feature . 'CountUpdate';
