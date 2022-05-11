@@ -41,6 +41,7 @@ class DueTrackerService
     protected $contact_id;
     protected $note;
     protected $partner_id;
+    /* @var EntryDTO */
     protected $entryDTO;
 
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo,DueTrackerReminderRepository $reminderRepo)
@@ -269,14 +270,17 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
-    public function badDebts(){
+    public function badDebts()
+    {
         $queryString = $this->generateQueryString();
         $balance = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
-
         if($balance['stats']['type'] == 'receivable') {
-            $this->amount = $balance['stats']['balance'];
-            $data = $this->makeDataForEntry();
-            return $this->dueTrackerRepo->createEntry($data);
+            $this->entryDTO->setAmount($balance['stats']['balance']);
+            /* @var $creator EntryCreator */
+            $creator = app()->make(EntryCreator::class);
+            $creator->setEntryDto($this->entryDTO)
+                ->setPartner($this->partner)
+                ->createEntry();
         }
         return "Balance is Already Positive.";
     }
