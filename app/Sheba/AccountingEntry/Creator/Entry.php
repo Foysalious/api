@@ -6,6 +6,7 @@ namespace App\Sheba\AccountingEntry\Creator;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Helper\FileUploader;
 use App\Sheba\AccountingEntry\Repository\EntriesRepository;
+use App\Sheba\AccountingEntry\Service\DueTrackerContactResolver;
 use Carbon\Carbon;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
@@ -76,18 +77,20 @@ class Entry
         $data['real_amount'] = $this->entryDto->real_amount ?? null;
         $data['contact_id'] = $this->entryDto->contact_id ?? null;
         $data['contact_type'] = $this->entryDto->contact_type ?? null;
-        return array_merge($data, $this->getContactDetails());
+        if ($this->entryDto->contact_id && $this->entryDto->contact_type) {
+            $data = array_merge($data, $this->getContactDetails());
+        }
+        return $data;
 
     }
 
-    private function getContactDetails()
+    private function getContactDetails(): array
     {
-        return [
-            'contact_id' => $this->entryDto->contact_id,
-            'contact_name' => $this->entryDto->contact_name,
-            'contact_mobile' => $this->entryDto->contact_mobile,
-            'contact_pro_pic' => $this->entryDto->contact_pro_pic,
-        ];
+        $contact_resolver = app()->make(DueTrackerContactResolver::class);
+        return $contact_resolver->setContactType($this->entryDto->contact_type)
+            ->setContactId($this->entryDto->contact_id)
+            ->setPartner($this->partner)
+            ->getContactDetails();
     }
 
 }
