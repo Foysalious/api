@@ -109,8 +109,7 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
      */
     private function currentCount($feature, $partner)
     {
-        $methodName = $feature . 'CurrentCount';
-        return $this->packageFeatureCount->$methodName($partner);
+        return $this->packageFeatureCount->featureCurrentCount($feature, $partner);
     }
 
     /**
@@ -121,7 +120,6 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
      */
     private function countUpdate($feature, $updated_count, $partner)
     {
-        $methodName = $feature . 'CountUpdate';
-        return $this->packageFeatureCount->$methodName($updated_count, $partner);
+        return $this->packageFeatureCount->featureCountUpdate($feature, $updated_count, $partner);
     }
 }
