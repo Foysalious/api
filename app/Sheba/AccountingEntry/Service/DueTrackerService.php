@@ -270,7 +270,7 @@ class DueTrackerService
     /**
      * @throws AccountingEntryServerError
      */
-    public function badDebts()
+    public function badDebts(): string
     {
         $queryString = $this->generateQueryString();
         $balance = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
