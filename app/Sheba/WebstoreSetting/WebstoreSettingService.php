@@ -24,6 +24,7 @@ class WebstoreSettingService
     private $bannerImageLink;
     private $bannerTitle;
     private $bannerDescription;
+    private $isPublished;
 
 
     public function __construct(WebstoreSettingServerClient $client)
@@ -119,6 +120,12 @@ class WebstoreSettingService
     public function setBannerImageLink($bannerImageLink)
     {
         $this->bannerImageLink = $bannerImageLink;
+        return $this;
+    }
+
+    public function setIsPublished($isPublished)
+    {
+        $this->isPublished = $isPublished;
         return $this;
     }
 
