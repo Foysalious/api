@@ -162,20 +162,19 @@ class MtbSavePrimaryInformation
      */
     public function storePrimaryInformationToMtb($request): JsonResponse
     {
-
         $data = (new ApplyValidation())->setPartner($this->partner)->setForm(MtbConstants::MTB_FORM_ID)->getFormSections();
         if ($data != 100)
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data . " completed"]);
         $data = $this->makePrimaryInformation($request->reference, $request->otp);
         $response = $this->client->post(QRPaymentStatics::MTB_SAVE_PRIMARY_INFORMATION, $data, AuthTypes::BARER_TOKEN);
-        if (!isset($response['ticketId'])) throw new MtbServiceServerError("MTB Account Creation Failed, " . $response['ResponseMessage']);
+        if (!isset($response['ticketId'])) throw new MtbServiceServerError("MTB Account Creation Failed, " . $response['responseMessage']);
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
         $this->applyMtb();
         $bannerMtb = (new PaymentService())->setPartner($this->partner)->getBannerForMtb();
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $morClient->post("api/v1/applications/users" . $this->partner->id, $this->makeDataForMorStore());
+        $morClient->post("api/v1/applications/users/" . $this->partner->id, $this->makeDataForMorStore());
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
     }
 }
