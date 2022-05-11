@@ -174,7 +174,7 @@ class MtbSavePrimaryInformation
         $bannerMtb = (new PaymentService())->setPartner($this->partner)->getBannerForMtb();
         /** @var MORServiceClient $morClient */
         $morClient = app(MORServiceClient::class);
-        $morClient->post("api/v1/applications/users/" . $this->partner->id, $this->makeDataForMorStore());
+        $morClient->post("api/v1/application/users/" . $this->partner->id, $this->makeDataForMorStore());
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
     }
 }
