@@ -15,23 +15,23 @@ class MtbMappedAccountStatus
     public function mapMtbAccountStatus()
     {
         if ($this->status == "11") return [
-            "status" => "Pending",
+            "status" => "pending",
             "description" => MtbAccountStatusConstants::REQUEST_PLACED
         ];
         if ($this->status == "15") return [
-            "status" => "Processing",
+            "status" => "processing",
             "description" => MtbAccountStatusConstants::CIF_CREATED
         ];
         if ($this->status == "17") return [
-            "status" => "Processing",
+            "status" => "processing",
             "description" => MtbAccountStatusConstants::ACCOUNT_OPENED_CBS
         ];
         if ($this->status == "19") return [
-            "status" => "Completed",
+            "status" => "completed",
             "description" => MtbAccountStatusConstants::MERCHANT_CREATED
         ];
         if ($this->status == "20") return [
-            "status" => "Cancelled",
+            "status" => "cancelled",
             "description" => MtbAccountStatusConstants::REQUEST_CANCELLED
         ];
 
