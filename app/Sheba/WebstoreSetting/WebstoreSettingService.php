@@ -297,7 +297,8 @@ class WebstoreSettingService
             "banner_title" => $this->bannerTitle ?? null,
             "banner_description" => $this->bannerDescription ?? null,
             "banner_image_link" => $this->bannerImageLink ?? null,
-            "description"  =>  $this->description ?? null
+            "description"  =>  $this->description ?? null,
+            "is_published" => $this->isPublished ?? 1,
         ];
     }
 
