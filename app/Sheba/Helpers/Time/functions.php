@@ -354,3 +354,59 @@ if (!function_exists('dayTimeConvertBn')) {
         return $dayOfTime." ".NumberLanguageConverter::en2bn(date_format($time,"H")).':'.NumberLanguageConverter::en2bn((date_format($time,"i")));
     }
 }
+
+if (!function_exists('dateRangeTitleBn')) {
+    /**
+     * @param string $title
+     * @param array $date_range
+     * @param string $date_separator
+     * @return string
+     */
+    function dateRangeTitleBn(string $title, array $date_range, string $date_separator='/'): string
+    {
+        switch ($title) {
+            case 'today':
+                return sprintf('আজ (%s)',
+                    convertNumbersToBangla($date_range[0]->day, false) . $date_separator.
+                    convertNumbersToBangla($date_range[0]->month, false) . $date_separator .
+                    convertNumbersToBangla($date_range[0]->year, false));
+            case 'yesterday':
+                return sprintf('গত কাল (%s)',
+                    convertNumbersToBangla($date_range[0]->day, false) . $date_separator.
+                    convertNumbersToBangla($date_range[0]->month, false) . $date_separator .
+                    convertNumbersToBangla($date_range[0]->year, false));
+            case 'year':
+                return sprintf('এই বছর (%s)',convertNumbersToBangla($date_range[0]->year, false));
+            case 'last_year':
+                return sprintf('গত বছর (%s)',convertNumbersToBangla($date_range[0]->year, false));
+            case 'month':
+                return sprintf('এই মাস (%s)',banglaMonth($date_range[0]->month));
+            case 'last_month':
+                return sprintf('গত মাস (%s)',banglaMonth($date_range[0]->month));
+            case 'week':
+                return sprintf('এই সপ্তাহ (%1$s - %2$s)',
+                    convertNumbersToBangla($date_range[0]->day, false) . $date_separator.
+                    convertNumbersToBangla($date_range[0]->month, false) . $date_separator .
+                    convertNumbersToBangla($date_range[0]->year, false),
+                    convertNumbersToBangla($date_range[1]->day, false) . $date_separator.
+                    convertNumbersToBangla($date_range[1]->month, false) . $date_separator .
+                    convertNumbersToBangla($date_range[1]->year, false));
+            case 'last_week':
+                return sprintf('গত সপ্তাহ (%1$s - %2$s)',
+                    convertNumbersToBangla($date_range[0]->day, false) . $date_separator.
+                    convertNumbersToBangla($date_range[0]->month, false) . $date_separator .
+                    convertNumbersToBangla($date_range[0]->year, false),
+                    convertNumbersToBangla($date_range[1]->day, false) . $date_separator.
+                    convertNumbersToBangla($date_range[1]->month, false) . $date_separator .
+                    convertNumbersToBangla($date_range[1]->year, false));
+            case 'quarter':
+                return sprintf('এই কোয়ার্টার (%1$s - %2$s)', banglaMonth($date_range[0]->month),
+                    banglaMonth($date_range[1]->month));
+            case 'last_quarter':
+                return sprintf('গত কোয়ার্টার (%1$s - %2$s)', banglaMonth($date_range[0]->month),
+                    banglaMonth($date_range[1]->month));
+            default:
+                return '' ;
+        }
+    }
+}
