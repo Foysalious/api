@@ -19,6 +19,7 @@ class AccountingRoute
                 $api->post('/send-single-sms/','Accounting\\DueTrackerSmsController@sendSingleSmsToContact');
                 $api->post('/send-bulk-sms/','Accounting\\DueTrackerSmsController@sendBulkSmsToContacts');
                 $api->get('/bulk-sms-eligible-list/','Accounting\\DueTrackerSmsController@getBulkSmsContactList');
+                $api->get('date-range-filter', 'Accounting\\DueTrackerControllerV2@getDateRangeFilter');
 
                 $api->group(['prefix' => 'reminders'], function ($api) {
                     $api->get('/', 'Accounting\\DueTrackerReminderController@reminders');
