@@ -3,19 +3,23 @@
 namespace Sheba\Reward\Event\Partner\Action\TopUp;
 
 use App\Models\Partner;
+
 use App\Models\TopUpOrder;
 use Sheba\Reward\AmountCalculator;
 use Sheba\Reward\Event\Action;
+use Sheba\Reward\Event\Partner\Action\PartnerFilter;
 use Sheba\Reward\Event\Rule as BaseRule;
 use Sheba\Reward\Exception\RulesTypeMismatchException;
 
 class Event extends Action implements AmountCalculator
 {
+    use PartnerFilter;
+
     /** @var Partner $partner */
     private $partner;
 
-    /** @var TopUpOrder $topup_order */
-    private $topup_order;
+    /** @var TopUpOrder $topUpOrder */
+    private $topUpOrder;
 
     /**
      * @param BaseRule $rule
@@ -33,14 +37,17 @@ class Event extends Action implements AmountCalculator
     public function setParams(array $params)
     {
         parent::setParams($params);
-        $this->topup_order = $this->params[0];
-        if($this->topup_order->isAgentPartner())
-            $this->partner = Partner::find($this->topup_order->agent_id);
+        $this->topUpOrder = $this->params[0];
+        if($this->topUpOrder->isAgentPartner())
+            $this->partner = Partner::find($this->topUpOrder->agent_id);
     }
 
     public function isEligible(): bool
     {
-        return $this->rule->check($this->params) && $this->filterConstraints() && $this->filterTargets();
+        return $this->rule->check($this->params)
+            && $this->filterConstraints()
+            && $this->filterTargets()
+            && $this->filterByUserFilters();
     }
 
     /**
@@ -72,21 +79,17 @@ class Event extends Action implements AmountCalculator
     /**
      * @return float|int|mixed
      */
-
     public function calculateAmount()
     {
-        $topUpAmount = $this->params[0];
-        if ($this->reward->is_amount_percentage) {
-            $cap = $this->reward->cap ? : 0;
-            $amount = ($this->reward->amount * $topUpAmount->amount);
-            return  $amount > $cap ? $cap : $amount;
-        }
-        return $this->reward->amount;
+        if (!$this->reward->is_amount_percentage) return $this->reward->amount;
+
+        $amount = ($this->reward->amount * $this->topUpOrder->amount) / 100;
+        return $this->reward->cap ? min($amount, $this->reward->cap) : $amount;
     }
 
     public function getLogEvent()
     {
-        $log = $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $this->partner->id;
+        $log = $this->calculateAmount() . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $this->partner->id;
         return $log;
     }
 }
