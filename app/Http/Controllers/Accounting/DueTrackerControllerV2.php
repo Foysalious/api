@@ -68,16 +68,24 @@ class DueTrackerControllerV2 extends Controller
      */
     public function badDebts(Request $request): JsonResponse
     {
-        $response = $this->dueTrackerService
-            ->setPartner($request->partner)
-            ->setEntryType(EntryTypes::DEPOSIT)
+
+        $entry_dto = app()->make(EntryDTO::class);
+        $entry_dto->setAmount($request->amount)
+            ->setSourceType(EntryTypes::DEPOSIT)
             ->setAccountKey(AccountKeyTypes::CASH)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
-            ->setNote('অনাদায়ী পাওনা')
+            ->setNote('অনাদায়ী পাওনা');
+
+        $response = $this->dueTrackerService
+            ->setPartner($request->partner)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setEntryDTO($entry_dto)
             ->badDebts();
+
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
-        return http_response($request, null, 200, ['data' => $response]);
+        return http_response($request, null, 201, ['data' => $response]);
     }
 
     /**
