@@ -281,6 +281,7 @@ class DueTrackerService
             $creator->setEntryDto($this->entryDTO)
                 ->setPartner($this->partner)
                 ->createEntry();
+            return "Successful";
         }
         return "Balance is Already Positive.";
     }
