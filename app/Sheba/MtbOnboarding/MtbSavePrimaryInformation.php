@@ -9,6 +9,7 @@ use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
 use App\Sheba\QRPayment\QRPaymentStatics;
+use App\Sheba\ResellerPayment\MORServiceClient;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -147,6 +148,13 @@ class MtbSavePrimaryInformation
         $this->mtbAccountStatus->setPartner($this->partner)->checkAccountStatus();
     }
 
+    private function makeDataForMorStore()
+    {
+        $data['key'] = 'mtb';
+        $data['user_name'] = $this->mutateName($this->partner->getFirstAdminResource()->profile->name);
+        $data['user_mobile'] = $this->partner->getFirstAdminResource()->profile->mobile;
+        return $data;
+    }
 
     /**
      * @param $request
@@ -165,6 +173,9 @@ class MtbSavePrimaryInformation
         $this->partner->partnerMefInformation->save();
         $this->applyMtb();
         $bannerMtb = (new PaymentService())->setPartner($this->partner)->getBannerForMtb();
+        /** @var MORServiceClient $morClient */
+        $morClient = app(MORServiceClient::class);
+        $morClient->post("api/v1/applications/users" . $this->partner->id, $this->makeDataForMorStore());
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
     }
 }
