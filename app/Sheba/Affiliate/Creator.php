@@ -50,10 +50,12 @@ class Creator
 
     public function create()
     {
+        $status = $this->profile->nid_verified == 1 ? VerificationStatus::VERIFIED : VerificationStatus::PENDING;
+
         $data = [
             'profile_id' => $this->profile->id,
             'remember_token' => randomString(255, 0, 1, 0),
-            'verification_status' => VerificationStatus::PENDING,
+            'verification_status' => $status,
             'geolocation' => $this->geolocation
         ];
         $this->affiliate = $this->affiliateRepo->setModel(new Affiliate())->create($data);

@@ -220,4 +220,38 @@ class TimeFrame
 
         return $this;
     }
+
+    public function for7DaysAfter(Carbon $from)
+    {
+        return $this->forDaysAfter($from, 7);
+    }
+
+    public function for30DaysAfter(Carbon $from)
+    {
+        return $this->forDaysAfter($from, 30);
+    }
+
+    public function forDaysAfter(Carbon $from, $days = 1)
+    {
+        $this->start = $from;
+        $this->end = $from->copy()->addDays($days);
+        return $this;
+    }
+
+    public function for7DaysBefore(Carbon $to)
+    {
+        return $this->forDaysBefore($to, 7);
+    }
+
+    public function for30DaysBefore(Carbon $to)
+    {
+        return $this->forDaysBefore($to, 30);
+    }
+
+    public function forDaysBefore(Carbon $to, $days = 1)
+    {
+        $this->start = $to->copy()->subDays($days);
+        $this->end = $to;
+        return $this;
+    }
 }

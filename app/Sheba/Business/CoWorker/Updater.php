@@ -528,25 +528,19 @@ class Updater
 
     public function activeFormInviteOrInactive()
     {
-        DB::beginTransaction();
-        try {
-            $profile_data['name'] = $this->basicRequest->getFirstName();
-            $profile_data['gender'] = $this->basicRequest->getGender();
-            $this->profile = $this->profileRepository->update($this->profile, $profile_data);
+        $profile_data['name'] = $this->basicRequest->getFirstName();
+        $profile_data['gender'] = $this->basicRequest->getGender();
+        $this->profile = $this->profileRepository->update($this->profile, $profile_data);
 
-            $this->businessRole = $this->getBusinessRole();
-            $business_member_data['business_role_id'] = $this->businessRole->id;
-            $business_member_data['join_date'] = $this->basicRequest->getJoinDate();
-            $business_member_data['status'] = $this->basicRequest->getStatus();
-            $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
-            $this->updateSalary();
-            DB::commit();
-            return $this->businessMember;
-        } catch (Throwable $e) {
-            DB::rollback();
-            app('sentry')->captureException($e);
-            return null;
-        }
+        $this->businessRole = $this->getBusinessRole();
+        $business_member_data['business_role_id'] = $this->businessRole->id;
+        $business_member_data['join_date'] = $this->basicRequest->getJoinDate();
+        $business_member_data['status'] = $this->basicRequest->getStatus();
+        $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
+
+        $this->updateSalary();
+        return $this->businessMember;
+
     }
 
     /**

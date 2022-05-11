@@ -112,6 +112,47 @@ class PdfHandler extends Handler
         return $cdn;
     }
 
+    public function saveInvoice($type, $mPdf = false)
+    {
+        if (!is_dir(public_path('temp'))) {
+            mkdir(public_path('temp'), 0777, true);
+        }
+        $this->data['type'] = $type;
+        $filename = ucfirst(strtolower($type)) . '-' . $this->data['partner_order']->code() . '.pdf';
+        if ($mPdf) {
+            $mPDF=$this->getMpdf();
+            $mPDF->simpleTables = true;
+            $mPDF->packTableData = true;
+            $mPDF->shrink_tables_to_fit = 1;
+            $data = view($this->viewFileName, $this->data)->render();
+            $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
+            $folder = $this->folder ?: 'invoices/pdf/';
+            $file = $filename;
+            $path = public_path('temp') . '/' . $file;
+            $mPDF->Output($path, "F");
+            $cdn = $this->saveFileToCDN($path, $folder, $file);
+            File::delete($path);
+            return [
+                'link' => $cdn
+            ];
+        }
+    }
+
+    private function getTempFolder()
+    {
+        $temp_folder = public_path() . '/';
+        if (!is_dir($temp_folder)) {
+            mkdir($temp_folder, 0777, true);
+        }
+        return $temp_folder;
+    }
+
+    private function saveToCDN($file, $filename)
+    {
+        $s3_invoice_path = 'invoices/';
+        return $this->saveFileToCDN($file, $s3_invoice_path, $filename);
+    }
+
     protected function getViewPath()
     {
         return $this->viewPath ?: "reports.pdfs.";
