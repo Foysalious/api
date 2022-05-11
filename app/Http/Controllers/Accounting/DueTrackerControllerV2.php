@@ -216,4 +216,20 @@ class DueTrackerControllerV2 extends Controller
         return http_response($request, null, 200, ['data' => $data]);
     }
 
+    public function getDateRangeFilter(Request $request): JsonResponse
+    {
+        $filters = ['today', 'week', 'month', 'quarter', 'year', 'yesterday', 'last_week',
+            'last_month', 'last_quarter', 'last_year'] ;
+        $response = [];
+        foreach ($filters as $filter) {
+            $date_range = getRangeFormat(['range' => $filter]);
+            $response[$filter] = [
+                'title' => dateRangeTitleBn($filter, $date_range),
+                'start_date' => $date_range[0]->format('Y-m-d'),
+                'end_date' => $date_range[1]->format('Y-m-d'),
+            ];
+        }
+        return http_response($request, null, 200, ['data' => $response]);
+    }
+
 }
