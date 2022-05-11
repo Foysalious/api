@@ -168,7 +168,7 @@ class MtbSavePrimaryInformation
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data . " completed"]);
         $data = $this->makePrimaryInformation($request->reference, $request->otp);
         $response = $this->client->post(QRPaymentStatics::MTB_SAVE_PRIMARY_INFORMATION, $data, AuthTypes::BARER_TOKEN);
-        if (!isset($response['ticketId'])) throw new MtbServiceServerError("MTB Account Creation Failed, Invalid Input");
+        if (!isset($response['ticketId'])) throw new MtbServiceServerError("MTB Account Creation Failed, " . $response['ResponseMessage']);
         $this->partner->partnerMefInformation->mtb_ticket_id = $response['ticketId'];
         $this->partner->partnerMefInformation->save();
         $this->applyMtb();

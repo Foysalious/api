@@ -144,10 +144,13 @@ class PaymentService
 
     private function savePartnerFinancialInformation($mid)
     {
-        $partnerFinancialInformation = new PartnerFinancialInformation();
-        $partnerFinancialInformation->partner_id = $this->partner->id;
-        $partnerFinancialInformation->mtb_merchant_id = $mid;
-        $partnerFinancialInformation->save();
+        $partnerFinancialInformation = PartnerFinancialInformation::where('partner_id', $this->partner->id)->first();
+        if (!$partnerFinancialInformation) {
+            $partnerFinancialInformation = new PartnerFinancialInformation();
+            $partnerFinancialInformation->partner_id = $this->partner->id;
+            $partnerFinancialInformation->mtb_merchant_id = $mid;
+            $partnerFinancialInformation->save();
+        }
     }
 
 
