@@ -232,12 +232,13 @@ class DueTrackerControllerV2 extends Controller
         foreach ($filters as $filter) {
             $date_range = getRangeFormat(['range' => $filter]);
             $response[$filter] = [
+                'key' => $filter,
                 'title' => dateRangeTitleBn($filter, $date_range),
                 'start_date' => $date_range[0]->format('Y-m-d'),
                 'end_date' => $date_range[1]->format('Y-m-d'),
             ];
         }
-        return http_response($request, null, 200, ['data' => $response]);
+        return http_response($request, null, 200, [ 'data' => ['filter' => array_values($response)]  ]  );
     }
 
 }
