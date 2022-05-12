@@ -1,4 +1,6 @@
-<?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
+<?php
+
+namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
 
 use App\Models\Partner;
 use App\Models\TopUpOrder;
@@ -9,7 +11,7 @@ use Sheba\Dal\TopupOrder\Statuses;
 trait DailyFirstTopUpChecker
 {
     /**
-     * @param TopUpOrder $topup_order
+     * @param  TopUpOrder  $topup_order
      * @return bool
      */
     private function isFirstTopUpToday(TopUpOrder $topup_order)
@@ -19,7 +21,7 @@ trait DailyFirstTopUpChecker
             ->where('agent_id', $topup_order->agent_id)
             ->where('status', Statuses::SUCCESSFUL)
             ->where('created_at', '<', $topup_order->created_at)
-            ->whereDate('created_at', Carbon::today())
+            ->whereDate('created_at', '=', Carbon::today())
             ->count();
 
         return $count_today == 0;

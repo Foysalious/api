@@ -162,8 +162,9 @@ class Reward extends Model
         $user_filters = $this->getUserFilters();
         if (!array_key_exists("registration_within", $user_filters)) return null;
 
-        $start = $user_filters["registration_within"]['start'] . " 00:00:00";
-        $end = $user_filters["registration_within"]['end'] . " 23:59:59";
-        return new TimeFrame($start, $end);
+        $start = $user_filters["registration_within"]['start'];
+        $end = $user_filters["registration_within"]['end'];
+
+        return (new TimeFrame())->forDateRange($start, $end);
     }
 }
