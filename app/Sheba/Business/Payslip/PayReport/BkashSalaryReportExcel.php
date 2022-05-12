@@ -22,7 +22,7 @@ class BkashSalaryReportExcel
         return $this;
     }
 
-    public function makeData()
+    public function takeCompletedAction()
     {
         $this->loadExcel();
 
@@ -32,19 +32,11 @@ class BkashSalaryReportExcel
             $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::WALLET_NO . ($key + 4), $pay_report_data['account_no']);
             $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::PRINCIPLE_AMOUNT . ($key + 4), $pay_report_data['net_payable']);
         }
-        $this->excel->save();
-
-        return $this;
+        $this->excel->download('xls');
     }
 
     private function loadExcel()
     {
         $this->excel = Excel::selectSheets([BkashPayslipExcel::FINAL_DISBURSEMENT, BkashPayslipExcel::CLIENT, BkashPayslipExcel::FINAL, BkashPayslipExcel::FEE, BkashPayslipExcel::BKASH])->load($this->file);
-    }
-
-    public function takeCompletedAction()
-    {
-        $this->excel->download('xls');
-        unlink($this->file);
     }
 }
