@@ -125,28 +125,31 @@ class PaymentService
      */
     private function getMtbAccountStatus($mtb_information)
     {
-        $mtb_status = $mtb_information;
-        if (json_decode($mtb_status->mtb_account_status)->Status != '19') {
-            /** @var MtbServerClient $client */
-            $client = App::make(MtbServerClient::class);
-            $response = $client->get(QRPaymentStatics::MTB_ACCOUNT_STATUS . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
-            $this->mtbStatus = $response["Status"];
-            if (json_decode($mtb_status->mtb_account_status)->Status != $response["Status"]) {
-                $this->storeMtbAccountStatus($response);
+        if (isset($mtb_status->mtb_account_status)) {
+            $mtb_status = $mtb_information;
+            if (json_decode($mtb_status->mtb_account_status)->Status != '19') {
+                /** @var MtbServerClient $client */
+                $client = App::make(MtbServerClient::class);
+                $response = $client->get(QRPaymentStatics::MTB_ACCOUNT_STATUS . $mtb_status->mtb_ticket_id, AuthTypes::BARER_TOKEN);
+                $this->mtbStatus = $response["Status"];
+                if (json_decode($mtb_status->mtb_account_status)->Status != $response["Status"]) {
+                    $this->storeMtbAccountStatus($response);
+                }
             }
-        }
-        $mapped_status = (new MtbMappedAccountStatus())->setStatus($this->mtbStatus)->mapMtbAccountStatus();
-        if (isset($this->partner->partnerMefinformation->mtb_account_status)) {
-            if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
-        }
-        try {
-            /** @var MORServiceClient $morClient */
-            $morClient = app(MORServiceClient::class);
-            $morClient->put("api/v1/application/users/" . $this->partner->id . "/key=mtb&new_status=" . $mapped_status['status'], null);
-        } catch (\Exception $e) {
+            $mapped_status = (new MtbMappedAccountStatus())->setStatus($this->mtbStatus)->mapMtbAccountStatus();
+            if (isset($this->partner->partnerMefinformation->mtb_account_status)) {
+                if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+            }
+            try {
+                /** @var MORServiceClient $morClient */
+                $morClient = app(MORServiceClient::class);
+                $morClient->put("api/v1/application/users/" . $this->partner->id . "/key=mtb&new_status=" . $mapped_status['status'], null);
+            } catch (\Exception $e) {
+                return $mapped_status;
+            }
             return $mapped_status;
         }
-        return $mapped_status;
+        return 1;
     }
 
     private function savePartnerFinancialInformation($mid)
