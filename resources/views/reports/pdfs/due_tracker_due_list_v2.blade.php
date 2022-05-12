@@ -112,8 +112,8 @@
         @foreach($value['list'] as $key1 => $v)
             @if($data['contact_type'] == 'customer')
                 <tr style="border: 1px solid #EAECF0;">
-                    <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
-                    <td>{{ $v['contact_name'] }}</td>
+                    <td style="padding: 9px 16px; width: 150px;text-align: left">{{ $v['entry_at_bn'] }}</td>
+                    <td style="text-overflow: ellipsis;">{{ $v['contact_name'] }}</td>
                     @if($v['balance_type'] == 'account_receivable' )
                         <td style="padding-right: 5px;text-align: right;width: 18% ; background: #F9EDEC;color: #BF392B">৳ {{ $v['balance_bn'] }}</td>
                         <td style="padding-right: 5px;text-align: right;width: 18% ;  background: #EFF8F1;">&nbsp;</td>
@@ -124,8 +124,8 @@
                 </tr>
             @elseif($data['contact_type'] == 'supplier')
                 <tr style="border: 1px solid #EAECF0;">
-                    <td style="padding: 9px 16px;text-align: left;">{{ $v['entry_at_bn'] }}</td>
-                    <td>{{ $v['contact_name'] }}</td>
+                    <td style="padding: 9px 16px; width: 150px;text-align: left">{{ $v['entry_at_bn'] }}</td>
+                    <td style="text-overflow: ellipsis;">{{ $v['contact_name'] }}</td>
                     @if($v['balance_type'] == 'account_receivable' || $v['balance_type'] == 'cleared' )
                         <td style="padding-right: 5px;text-align: right;width: 18% ; background: #EFF8F1;color: #4FAF61 ">৳ {{ $v['balance_bn'] }}</td>
                         <td style="padding-right: 5px;text-align: right; width: 18% ; background: #F9EDEC;">&nbsp;</td>
