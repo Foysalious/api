@@ -158,7 +158,7 @@ class AttendanceController extends Controller
             'is_geo_required' => $is_remote_enable ? 1 : 0,
             'is_remote_enable' => $is_remote_enable,
             'is_geo_location_enable' => $is_geo_location_enable,
-            'is_live_track_enable' => $business->is_live_track_enable ? $business_member->is_live_track_enable : 0
+            'is_live_track_enable' => $business->liveTrackingSettings->is_enable ? $business_member->is_live_track_enable : 0
         ];
         return api_response($request, null, 200, ['attendance' => $data]);
     }
