@@ -798,7 +798,8 @@ return [
     'COMPLAIN_STATUSES' => [
         'Open' => 'Open',
         'Observation' => 'Observation',
-        'Resolved' => 'Resolved'
+        'Resolved' => 'Resolved',
+        'Rejected'    => 'Rejected'
     ],
     'COMPLAIN_RESOLVE_CATEGORIES' => [
         'service_provided' => 'Service Provided',
