@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Subscription\Partner;
 
+use App\Models\PartnerSubscriptionPackageCharge;
 use App\Sheba\Repositories\PartnerSubscriptionChargesRepository;
 use Carbon\Carbon;
 use Sheba\Subscription\Partner\PartnerSubscriptionBilling;
@@ -46,7 +47,8 @@ class PartnerSubscriptionCharges
     private function setDates()
     {
         $this->data['activation_date'] = Carbon::parse($this->partnerSubscriptionBilling->partner->billing_start_date);
-        $this->data['billing_date']    = $this->partnerSubscriptionBilling->today;
+        $this->data['previous_billing_date'] = $this->partnerSubscriptionBilling->old_next_billing_date;
+        $this->data['billing_date'] = $this->partnerSubscriptionBilling->today;
         return $this;
     }
 
