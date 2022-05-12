@@ -5,6 +5,7 @@ namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
 use App\Models\Partner;
 use App\Models\TopUpOrder;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Sheba\Reward\Event\ActionEventParameter;
 
 class NoTopupDayCount extends ActionEventParameter
@@ -26,10 +27,11 @@ class NoTopupDayCount extends ActionEventParameter
             ->selectRaw('MAX(DATE(created_at)) as last_topup_date')
             ->where('agent_type', Partner::class)
             ->where('agent_id', $topup_order->agent_id)
-            ->get();
+            ->whereDate('created_at', '<', Carbon::today())
+            ->first();
 
         $no_topup_day = Carbon::parse($result->last_topup_date)->diffInDays(Carbon::now()) - 1;
 
-        return $no_topup_day == $this->value;
+        return $no_topup_day >= $this->value;
     }
 }
