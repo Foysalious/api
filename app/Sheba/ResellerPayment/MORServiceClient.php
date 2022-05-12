@@ -12,6 +12,7 @@ use Sheba\ModificationFields;
 class MORServiceClient
 {
     use ModificationFields;
+
     protected $client;
     protected $baseUrl;
     private $token;
@@ -53,7 +54,7 @@ class MORServiceClient
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
-            if($http_code == 404) {
+            if ($http_code == 404) {
                 throw new NotFoundAndDoNotReportException($message, $http_code);
             }
             if ($http_code > 399 && $http_code < 500) throw new MORServiceServerError($message, $http_code);
@@ -69,9 +70,9 @@ class MORServiceClient
     private function getOptions($data = null): array
     {
         $options['headers'] = [
-            'Content-Type'  => 'application/json',
-            'Accept'        => 'application/json',
-            'client-id'     => $this->clientId,
+            'Content-Type' => 'application/json',
+            'Accept' => 'application/json',
+            'client-id' => $this->clientId,
             'client-secret' => $this->clientSecret
         ];
         if ($data) {
