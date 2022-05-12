@@ -47,7 +47,7 @@ class MonthlyStat
         $data = [];
         $check_weekend = new CheckWeekend();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray();
-
+        $leave_days = $late_days = $absent_days = [];
         foreach ($this->businessHoliday as $holiday) {
             $start_date = Carbon::parse($holiday->start_date);
             $end_date = Carbon::parse($holiday->end_date);
@@ -72,10 +72,7 @@ class MonthlyStat
             'left_early_note' => 0,
             'total_hours' => 0,
             'overtime_in_minutes' => 0,
-            'overtime' => 0,
-            'leave_days' => [],
-            'late_days' => [],
-            'absent_days' => []
+            'overtime' => 0
         ];
 
         $daily_breakdown = [];
@@ -103,12 +100,12 @@ class MonthlyStat
             // leave calculation
             if ($is_on_leave) {
                 if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) {
-                    array_push($statistics['leave_days'], $date->toDateString());
                     $statistics['full_day_leave']++;
                     $breakdown_data['leave_type'] = $this->getLeaveType($date, $leaves_date_with_half_and_full_day);
                 }
                 if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
+                $leave_days[] = $date->toDateString();
             }
 
             /** @var Attendance $attendance */
@@ -156,10 +153,7 @@ class MonthlyStat
                     }
                 }
 
-                if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin())
-                {
-                    $statistics['late_days'][] = $date->toDateString();
-                }
+                if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin()) $late_days[] = $date->toDateString();
 
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
 
@@ -172,33 +166,19 @@ class MonthlyStat
             if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
                 if ($this->forOneEmployee) $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
-                $statistics['absent_days'][] = $date->toDateString();
+                $absent_days[] = $date->toDateString();
             }
 
             if ($this->forOneEmployee) $breakdown_data['date'] = $date->toDateString();
             if ($this->forOneEmployee) $daily_breakdown[] = $breakdown_data;
         }
-
         $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
         $statistics['on_leave'] = $statistics['full_day_leave'] + $statistics['half_day_leave'];
         $statistics['total_hours'] = $statistics['total_hours'] ? $this->formatMinute($statistics['total_hours']) : 0;
         $statistics['overtime'] = $statistics['overtime_in_minutes'] ? $this->formatMinute($statistics['overtime_in_minutes']) : 0;
-//        $statistics[]
-
-        if(sizeof($statistics['leave_days']))
-            $statistics['leave_days'] = implode(", ",$statistics['leave_days']);
-        else
-            $statistics['leave_days'] = "-";
-
-        if(sizeof($statistics['late_days']))
-            $statistics['late_days'] = implode(", ",$statistics['late_days']);
-        else
-            $statistics['late_days'] = "-";
-
-        if(sizeof($statistics['absent_days']))
-            $statistics['absent_days'] = implode(", ",$statistics['absent_days']);
-        else
-            $statistics['absent_days'] = "-";
+        $statistics['leave_days'] = !empty($leave_days) ? implode(", ", $leave_days) : "-";
+        $statistics['absent_days'] = !empty($absent_days) ? implode(", ", $absent_days) : "-";
+        $statistics['late_days'] = !empty($late_days) ? implode(", ", $late_days) : "-";
 
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
     }

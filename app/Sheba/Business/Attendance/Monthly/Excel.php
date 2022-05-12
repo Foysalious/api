@@ -54,7 +54,7 @@ class Excel
     private function makeData()
     {
         foreach ($this->monthlyData as $employee) {
-            array_push($this->data, [
+            $this->data[] = [
                 'employee_id' => $employee['employee_id'],
                 'name' => $employee['member']['name'],
                 'dept' => $employee['department']['name'],
@@ -72,8 +72,9 @@ class Excel
                 'leave_days' => $employee['attendance']['leave_days'],
                 'late_days' => $employee['attendance']['late_days'],
                 'absent_days' => $employee['attendance']['absent_days']
-            ]);
+            ];
         }
+        dd($this->data);
     }
 
     private function getHeaders()
