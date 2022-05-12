@@ -248,7 +248,11 @@ class DueTrackerSmsService
 
     public function getWebReportLink(): string
     {
-        return  'www.google.com';
+        return app()->make(DueTrackerReportService::class)
+            ->setPartner($this->partner)
+            ->setContactId($this->contactId)
+            ->setContactType($this->contactType)
+            ->getWebReportLink();
     }
 
     /**
