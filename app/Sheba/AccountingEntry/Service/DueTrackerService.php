@@ -20,7 +20,6 @@ use Exception;
 class DueTrackerService
 {
     protected $partner;
-    protected $reminderRepo;
     protected $dueTrackerRepo;
     protected $contact_type;
     protected $order;
@@ -29,35 +28,15 @@ class DueTrackerService
     protected $limit;
     protected $offset;
     protected $query;
-    protected $amount;
-    protected $entry_type;
-    protected $account_key;
-    protected $customer_id;
-    protected $date;
-    protected $partner_wise_order_id;
-    protected $attachments;
     protected $start_date;
     protected $end_date;
     protected $contact_id;
-    protected $note;
-    protected $partner_id;
     /* @var EntryDTO */
     protected $entryDTO;
 
-    public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo,DueTrackerReminderRepository $reminderRepo)
+    public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
     {
         $this->dueTrackerRepo = $dueTrackerRepo;
-        $this->reminderRepo = $reminderRepo;
-    }
-
-    /**
-     * @param mixed $amount
-     * @return DueTrackerService
-     */
-    public function setAmount($amount): DueTrackerService
-    {
-        $this->amount = $amount;
-        return $this;
     }
 
     /**
@@ -80,82 +59,12 @@ class DueTrackerService
     }
 
     /**
-     * @param mixed $entry_type
-     * @return DueTrackerService
-     */
-    public function setEntryType($entry_type): DueTrackerService
-    {
-        $this->entry_type = $entry_type;
-        return $this;
-    }
-
-    /**
-     * @param mixed $account_key
-     * @return DueTrackerService
-     */
-    public function setAccountKey($account_key): DueTrackerService
-    {
-        $this->account_key = $account_key;
-        return $this;
-    }
-
-    /**
-     * @param mixed $customer_id
-     * @return DueTrackerService
-     */
-    public function setCustomerId($customer_id): DueTrackerService
-    {
-        $this->customer_id = $customer_id;
-        return $this;
-    }
-
-    /**
-     * @param mixed $date
-     * @return DueTrackerService
-     */
-    public function setDate($date): DueTrackerService
-    {
-        $this->date = $date;
-        return $this;
-    }
-
-    /**
-     * @param mixed $partner_wise_order_id
-     * @return DueTrackerService
-     */
-    public function setPartnerWiseOrderId($partner_wise_order_id): DueTrackerService
-    {
-        $this->partner_wise_order_id = $partner_wise_order_id;
-        return $this;
-    }
-
-    /**
-     * @param mixed $attachments
-     * @return DueTrackerService
-     */
-    public function setAttachments($attachments): DueTrackerService
-    {
-        $this->attachments = $attachments;
-        return $this;
-    }
-
-    /**
      * @param mixed $partner
      * @return DueTrackerService
      */
     public function setPartner($partner): DueTrackerService
     {
         $this->partner = $partner;
-        return $this;
-    }
-
-    /**
-     * @param $partner_id
-     * @return $this
-     */
-    public function setPartnerId($partner_id): DueTrackerService
-    {
-        $this->partner_id = $partner_id;
         return $this;
     }
 
@@ -249,16 +158,6 @@ class DueTrackerService
         return $this;
     }
 
-    /**
-     * @param $note
-     * @return $this
-     */
-    public function setNote($note): DueTrackerService
-    {
-        $this->note = $note;
-        return $this;
-    }
-
     public function storeEntry()
     {
         return app()->make(EntryCreator::class)
@@ -319,8 +218,8 @@ class DueTrackerService
     public function dueListBalanceByContact(): array
     {
         $contact_balance = $this->getBalanceByContact();
-
-        $reminder = $this->reminderRepo->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
+        $reminder = app()->make(DueTrackerReminderRepository::class)
+            ->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
         if($reminder == []){
             $reminder = null;
         }
@@ -418,19 +317,6 @@ class DueTrackerService
     }
 
     /**
-     * @param $partner
-     * @return array
-     */
-    public function getPartnerInfo($partner): array
-    {
-        return [
-            'name' => $partner->name,
-            'avatar' => $partner->logo,
-            'mobile' => $partner->mobile,
-        ];
-    }
-
-    /**
      * @param $pos_orders
      * @return mixed
      * @throws PosOrderServiceServerError
@@ -456,28 +342,6 @@ class DueTrackerService
         } catch (Exception $e) {
             return null;
         }
-    }
-
-    /**
-     * @return array
-     */
-    private function makeDataForEntry(): array
-    {
-        $posOrder = ($this->entry_type == EntryTypes::POS) ? $this->posOrderByPartnerWiseOrderId($this->partner, $this->partner_wise_order_id) : null;
-
-        $data['contact_id'] = $this->contact_id;
-        $data['contact_type'] = $this->contact_type;
-        $data['amount'] = $this->amount;
-        $data['entry_at'] = $this->date;
-        $data['source_type'] = $this->entry_type;
-        $data['to_account_key'] = $this->entry_type === EntryTypes::DUE ? $this->contact_id : $this->account_key;
-        $data['from_account_key'] = $this->entry_type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $this->contact_id;
-        $data['note'] = $this->note;
-        $data['partner'] = $this->partner;
-        $data['attachments'] = $this->attachments;
-        $data['source_id'] = $posOrder ? $posOrder->id : null;
-
-        return $data;
     }
 
     /**

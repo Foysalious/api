@@ -21,10 +21,9 @@ class DueTrackerControllerV2 extends Controller
     protected $dueTrackerSmsService;
     protected $dueTrackerReportService;
 
-    public function __construct(DueTrackerService $dueTrackerService, DueTrackerSmsService $dueTrackerSmsService, DueTrackerReportService $dueTrackerReportService)
+    public function __construct(DueTrackerService $dueTrackerService, DueTrackerReportService $dueTrackerReportService)
     {
         $this->dueTrackerService = $dueTrackerService;
-        $this->dueTrackerSmsService = $dueTrackerSmsService;
         $this->dueTrackerReportService = $dueTrackerReportService;
     }
 
@@ -94,7 +93,7 @@ class DueTrackerControllerV2 extends Controller
     public function getDueListBalance(Request $request): JsonResponse
     {
         $this->validate($request,[
-
+            'contact_type' => 'required|string'
         ]);
         $response = $this->dueTrackerService
             ->setPartner($request->partner)
@@ -113,6 +112,9 @@ class DueTrackerControllerV2 extends Controller
      */
     public function dueList(Request $request): JsonResponse
     {
+        $this->validate($request,[
+            'contact_type' => 'required|string'
+        ]);
         $data=$this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
@@ -135,6 +137,9 @@ class DueTrackerControllerV2 extends Controller
      */
     public function dueListByContact(Request $request): JsonResponse
     {
+        $this->validate($request,[
+            'contact_type' => 'required|string',
+        ]);
         $data=$this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
@@ -159,6 +164,9 @@ class DueTrackerControllerV2 extends Controller
      */
     public function dueListBalanceByContact(Request $request): JsonResponse
     {
+        $this->validate($request,[
+            'contact_type' => 'required|string',
+        ]);
         $data = $this->dueTrackerService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
@@ -227,7 +235,7 @@ class DueTrackerControllerV2 extends Controller
     public function getDateRangeFilter(Request $request): JsonResponse
     {
         $filters = ['today', 'week', 'month', 'quarter', 'year', 'yesterday', 'last_week',
-            'last_month', 'last_quarter', 'last_year'] ;
+            'last_month', 'last_quarter', 'last_year', 'by_date'] ;
         $response = [];
         foreach ($filters as $filter) {
             $date_range = getRangeFormat(['range' => $filter]);
@@ -238,7 +246,8 @@ class DueTrackerControllerV2 extends Controller
                 'end_date' => $date_range[1]->format('Y-m-d'),
             ];
         }
-        return http_response($request, null, 200, [ 'data' => ['filter' => array_values($response)]  ]  );
+        return http_response($request, null, 200,
+            [ 'data' => ['filter' => array_values($response)]  ]);
     }
 
 }
