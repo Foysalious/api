@@ -72,7 +72,7 @@
 </div>
 <div style="margin-top: 30px;">
     <?php reset($data['due_list_bn']) ?>
-    <p style="margin: 0; padding: 0; padding-left:25px; padding-right:25px; font-size: 12px; color: #868990">লেনদেনের সংখ্যা: {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn($data['due_list_bn'][key($data['due_list_bn'])]['stats']['total_transactions_bn'])  }}  (এই মাস)</p>
+    <p style="margin: 0; padding: 0; padding-left:25px; padding-right:25px; font-size: 12px; color: #868990">লেনদেনের সংখ্যা: {{ Sheba\Helpers\Converters\NumberLanguageConverter::en2bn( $data['due_list_bn'][key($data['due_list_bn'])]['stats']['total_transactions_bn']  ?? 0)  }}  (এই মাস)</p>
     <div style="padding-left:25px; padding-right:25px;text-align: center">
         <?php
             $count =0;
