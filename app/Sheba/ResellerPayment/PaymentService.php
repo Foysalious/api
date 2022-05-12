@@ -87,7 +87,7 @@ class PaymentService
      * @return array
      * @throws Exceptions\MORServiceServerError
      * @throws InvalidQRKeyException
-     * @throws NotFoundAndDoNotReportException
+     * @throws NotFoundAndDoNotReportException|MtbServiceServerError
      */
     private function getQRGatewayDetails(): array
     {
@@ -138,6 +138,13 @@ class PaymentService
         $mapped_status = (new MtbMappedAccountStatus())->setStatus($this->mtbStatus)->mapMtbAccountStatus();
         if (isset($this->partner->partnerMefinformation->mtb_account_status)) {
             if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+        }
+        try {
+            /** @var MORServiceClient $morClient */
+            $morClient = app(MORServiceClient::class);
+            $morClient->put("api/v1/application/users/" . $this->partner->id . "/key=mtb&new_status=" . $mapped_status['status'], null);
+        } catch (\Exception $e) {
+            return $mapped_status;
         }
         return $mapped_status;
     }
@@ -445,6 +452,7 @@ class PaymentService
         foreach ($qrGateways as $qrGateway) {
             $qrData[] = $this->makeQRGatewayData($qrGateway, $completion);
         }
+        $this->getMtbAccountStatus($this->partner->partnerMefInformation);
 
         return $qrData;
     }
