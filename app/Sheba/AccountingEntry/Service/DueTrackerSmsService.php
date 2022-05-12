@@ -105,10 +105,14 @@ class DueTrackerSmsService
         return $this;
     }
 
+    /**
+     * @throws InvalidPartnerPosCustomer
+     * @throws AccountingEntryServerError
+     */
     public function getSmsContentForTagada(): array
     {
         $sms_content = $this->getSmsContentForSingleContact();
-        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
+        $partner_info = $this->getPartnerInfo();
         return [
             'balance' => $sms_content['balance'],
             'balance_type' => $sms_content['balance_type'],
@@ -242,7 +246,7 @@ class DueTrackerSmsService
         }
     }
 
-    public function getWebReportLink()
+    public function getWebReportLink(): string
     {
         return  'www.google.com';
     }
@@ -288,6 +292,15 @@ class DueTrackerSmsService
             'contact_name' => $contact_balance['contact_details']['name'],
             'contact_mobile' => $contact_balance['contact_details']['mobile'],
             'web_report_link' => $this->getWebReportLink()
+        ];
+    }
+
+    private function getPartnerInfo(): array
+    {
+        return [
+            'name' => $this->partner->name,
+            'avatar' => $this->partner->logo,
+            'mobile' => $this->partner->mobile,
         ];
     }
 }
