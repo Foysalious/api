@@ -2,6 +2,7 @@
 
 use App\Models\TopUpOrder;
 use Exception;
+use Illuminate\Support\Facades\Cache;
 use InvalidArgumentException;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Response\PaywellResponse;
@@ -84,16 +85,17 @@ class PaywellClient
      */
     public function getToken()
     {
-        $auth_code = base64_encode($this->username . ":" . $this->authPassword);
-        $headers = [
-            "Authorization: Basic " . $auth_code
-        ];
+        $cache_key = 'paywell_topup_token';
+        return Cache::store('redis')->remember($cache_key, 60, function () {
+            $auth_code = base64_encode($this->username . ":" . $this->authPassword);
+            $headers = ["Authorization: Basic " . $auth_code];
 
-        $tp_request = new TPRequest();
-        $tp_request->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
-        $response = $this->tpClient->call($tp_request);
+            $tp_request = new TPRequest();
+            $tp_request->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
+            $response = $this->tpClient->call($tp_request);
 
-        return $response->token->security_token;
+            return $response->token->security_token;
+        });
     }
 
     /**
