@@ -133,8 +133,8 @@ class PayReportController extends Controller
         $payslip = $pay_report_list->setBusiness($business)
             ->setBusinessPayslipId($id)
             ->getBkashSalaryData();
-        (new BkashSalaryReportExcel)->setFile($file_path)->setEmployeeData($payslip->toArray())->takeCompletedAction();
+        $file_link = (new BkashSalaryReportExcel)->setFile($file_path)->setEmployeeData($payslip->toArray())->takeCompletedAction();
 
-        return api_response($request, null, 200);
+        return api_response($request, null, 200, ['file_url' => $file_link]);
     }
 }
