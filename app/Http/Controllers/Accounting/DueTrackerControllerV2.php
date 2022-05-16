@@ -14,6 +14,7 @@ use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Usage\Usage;
+use Throwable;
 
 class DueTrackerControllerV2 extends Controller
 {
@@ -67,10 +68,12 @@ class DueTrackerControllerV2 extends Controller
      */
     public function badDebts(Request $request): JsonResponse
     {
-
+        $this->validate($request,[
+            'contact_type' => 'required|string',
+            'contact_id' => 'required',
+        ]);
         $entry_dto = app()->make(EntryDTO::class);
-        $entry_dto->setAmount($request->amount)
-            ->setSourceType(EntryTypes::DEPOSIT)
+        $entry_dto->setSourceType(EntryTypes::DEPOSIT)
             ->setAccountKey(AccountKeyTypes::CASH)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
@@ -88,6 +91,8 @@ class DueTrackerControllerV2 extends Controller
     }
 
     /**
+     * @param Request $request
+     * @return JsonResponse
      * @throws AccountingEntryServerError
      */
     public function getDueListBalance(Request $request): JsonResponse
@@ -184,17 +189,20 @@ class DueTrackerControllerV2 extends Controller
      * @throws MpdfException
      * @throws InvalidPartnerPosCustomer
      * @throws NotAssociativeArray
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function downloadPdf(Request $request): JsonResponse
     {
+        $this->validate($request,[
+            'contact_type' => 'required|string',
+        ]);
         $data=$this->dueTrackerReportService
             ->setPartner($request->partner)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->downloadPDF($request);
+            ->downloadPDF();
         return http_response($request, null, 200, ['message' => 'PDF download successful', 'pdf_link' => $data]);
     }
 
