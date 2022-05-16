@@ -47,4 +47,11 @@ class MtbController extends Controller
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $data]);
     }
 
+    public function getPartnerMobileNumber(Request $request): JsonResponse
+    {
+        $partner = $request->auth_user->getPartner();
+        $mobile = $partner->getFirstAdminResource()->profile->mobile;
+        return http_response($request, null, 200, ['message' => 'Successful', 'mobile' => $mobile]);
+    }
+
 }
