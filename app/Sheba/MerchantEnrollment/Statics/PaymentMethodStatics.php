@@ -3,6 +3,7 @@
 namespace Sheba\MerchantEnrollment\Statics;
 
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
+use Sheba\Dal\MefForm\Model as MefForm;
 
 class PaymentMethodStatics
 {
@@ -17,7 +18,7 @@ class PaymentMethodStatics
     public static function classMap(): array
     {
         return [
-            'ssl'   => 'SslGateway',
+            'ssl' => 'SslGateway',
             'bkash' => 'BkashGateway',
             'shurjopay' => 'ShurjoPayGateway',
         ];
@@ -26,13 +27,25 @@ class PaymentMethodStatics
     /**
      * @param $paymentGatewayCode
      * @return mixed
-     * @throws InvalidKeyException
      */
     public static function paymentGatewayCategoryList($paymentGatewayCode)
     {
         $categoryList = config('reseller_payment.category_list');
         if (isset($categoryList[$paymentGatewayCode])) return $categoryList[$paymentGatewayCode];
-        throw new InvalidKeyException();
+        else {
+            $paymentMethodStatics = new PaymentMethodStatics();
+            return $paymentMethodStatics->getMefSections($paymentGatewayCode);
+        }
+    }
+
+    private function getMefSections($paymentGatewayCode)
+    {
+        $categoryList = [];
+        $form = MefForm::where('key', $paymentGatewayCode)->first();
+        foreach ($form->sections as $section) {
+            $categoryList[$section->key] = $section->name;
+        }
+        return $categoryList;
     }
 
     public static function categoryTitles($category_code)
@@ -58,7 +71,7 @@ class PaymentMethodStatics
     {
         return [
             "incomplete_message" => "SSL পেমেন্ট সার্ভিস সচল করতে প্রয়োজনীয় তথ্য প্রদান করুন।",
-            "completed_message"  => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, SSL পেমেন্ট সার্ভিস সচল করতে আবেদন করুন।"
+            "completed_message" => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, SSL পেমেন্ট সার্ভিস সচল করতে আবেদন করুন।"
         ];
     }
 

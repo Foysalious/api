@@ -25,6 +25,12 @@ return [
             'personal'    => 'Personal',
             'documents'   => 'Documents'
         ],
+        'shurjopay' => [
+            'nid_selfie'  => 'NIDSelfie',
+            'institution' => 'Institution',
+            'personal'    => 'Personal',
+            'documents'   => 'Documents'
+        ],
     ],
     'completion_message' => [
         'mtb' => [
@@ -40,6 +46,12 @@ return [
             'documents' => [],
         ],
         'bkash' => [
+            'institution' => [],
+            'nid_selfie' => [],
+            'personal' => [],
+            'documents' => [],
+        ],
+        'shurjopay' => [
             'institution' => [],
             'nid_selfie' => [],
             'personal' => [],
