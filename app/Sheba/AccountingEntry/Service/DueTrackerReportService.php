@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Service;
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\Reports\DueTracker\AccountingPdfHandler;
+use App\Sheba\UrlShortener\Sheba\UrlShortenerService;
 use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\Helpers\Converters\NumberLanguageConverter;
@@ -314,6 +315,14 @@ class DueTrackerReportService
         }
         $data['data']['due_list_bn']=$list;
         return $data;
+    }
+
+    public function getWebReportLink()
+    {
+        $partner_url = env('SHEBA_PARTNER_URL');
+        $report_link = $partner_url  . "/due-tracker/{$this->partner->id}/report?contact_id=$this->contact_id" .
+            "&contact_type=$this->contact_type";
+        return app()->make(UrlShortenerService::class)->shortUrl($report_link);
     }
 
 }
