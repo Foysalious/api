@@ -29,6 +29,10 @@ class DueTrackerControllerV2 extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store(Request $request): JsonResponse
     {
         $this->validate($request, [
@@ -240,6 +244,10 @@ class DueTrackerControllerV2 extends Controller
         return http_response($request, null, 200, ['data' => $data]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getDateRangeFilter(Request $request): JsonResponse
     {
         $filters = ['today', 'week', 'month', 'quarter', 'year', 'yesterday', 'last_week',
