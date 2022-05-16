@@ -44,7 +44,13 @@ class TopUpTest extends UnitTestCase
     {
         $this->tryToRechargeInvalidOrder();
         $this->assertTrue($this->topUpOrder->isFailed());
-        $this->assertEquals($this->getError()->toJson(), $this->topUpOrder->transaction_details);
+        $error = $this->getError();
+        $transaction_details = json_encode([
+            'code' => $error->getErrorCode(),
+            'message' => $error->getErrorMessage(),
+            'transaction_details' => $error->getErrorResponse(),
+        ]);
+        $this->assertEquals($transaction_details, $this->topUpOrder->transaction_details);
     }
 
     /**
