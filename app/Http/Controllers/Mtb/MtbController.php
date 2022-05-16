@@ -44,7 +44,8 @@ class MtbController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $data = $this->mtbSendOtp->setPartner($partner)->sendOtp($request);
-        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $data]);
+        $mobile = $partner->getFirstAdminResource()->profile->mobile;
+        return http_response($request, null, 200, ['message' => 'Successful', 'data' => $data, 'mobile' => $mobile]);
     }
 
 }
