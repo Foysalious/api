@@ -2,11 +2,13 @@
 
 use Excel;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 
 class BkashSalaryReportExcel
 {
+    use CdnFileManager, FileManager;
     private $payReportData;
     private $file;
     /** @var LaravelExcelReader */
@@ -37,7 +39,7 @@ class BkashSalaryReportExcel
         $this->excel->save();
         $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . 'bkash_payable_file.xls';
         $file_name = $this->uniqueFileName($this->excel->title, $this->excel->ext);
-        return $this->saveFileToPublicFolder($file_path, '/bKash_excel', $file_name);
+        return $this->saveFileToCDN($file_path, getBkashExcelFolder(), $file_name);
     }
 
     private function loadExcel()
