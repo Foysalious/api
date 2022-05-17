@@ -213,7 +213,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         /** @var Partner $partner */
         $partner = $request->partner;
         if ($this->isPartnerBlacklisted($partner))
-            return api_response($request, null, 400, ['message' => 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।']);
+            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।']);
 
         $order = Order::find($request->order_id);
         if (is_null($order))
