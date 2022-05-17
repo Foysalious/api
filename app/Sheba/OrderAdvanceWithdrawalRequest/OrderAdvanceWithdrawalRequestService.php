@@ -53,8 +53,9 @@ class OrderAdvanceWithdrawalRequestService
 
         $activeWithdrawalAmount = $this->activeRequestAgainstPartnerOrderAmount($partner_order);
 
-        if ($partner_order->sheba_collection > $activeWithdrawalAmount) {
-            return $partner_order->sheba_collection - $activeWithdrawalAmount;
+        $minAmount = min([$partner_order->sheba_collection, $partner_order->grossAmountWithLogistic]);
+        if ($minAmount > $activeWithdrawalAmount) {
+            return $minAmount - $activeWithdrawalAmount;
         }
         return 0;
     }
