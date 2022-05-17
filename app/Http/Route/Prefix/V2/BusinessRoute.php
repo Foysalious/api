@@ -418,6 +418,9 @@ class BusinessRoute
                         $api->get('/', 'B2b\ShiftSettingController@details');
                     });
                 });
+                $api->group(['prefix' => 'shift-calender'], function ($api) {
+                    $api->get('/', 'B2b\ShiftCalenderController@index');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
