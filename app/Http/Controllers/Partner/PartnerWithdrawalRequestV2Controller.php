@@ -213,16 +213,16 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         /** @var Partner $partner */
         $partner = $request->partner;
         if ($this->isPartnerBlacklisted($partner))
-            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।']);
+            return api_response($request, null, 400, ['message' => 'ব্ল্যাক লিস্ট/সাময়িকভাবে বরখাস্ত হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।আরও জানতে কল করুন ১৬৫১৬।']);
 
         $order = Order::find($request->order_id);
         if (is_null($order))
-            return api_response($request, null, 402, ['message' => 'You can not make withdrawal request against this order']);
+            return api_response($request, null, 400, ['message' => 'You can not make withdrawal request against this order']);
 
         /** @var PartnerOrder $partnerOrder */
         $partnerOrder = $order->lastPartnerOrder();
         if (!$order->is_credit_limit_adjustable || $order->isCancelled() || $partnerOrder->isClosed() || $partnerOrder->partner_id != $partner->id || $orderAdvanceWithdrawalRequestService->hasPendingCancelRequest($partnerOrder->order_id))
-            return api_response($request, null, 402, ['message' => 'You can not make withdrawal request against this order']);
+            return api_response($request, null, 400, ['message' => 'You can not make withdrawal request against this order']);
 
         $doesExceedWithdrawalLimit = $partnerWithdrawalService->doesExceedWithdrawalLimit((double)$request->amount, $request->payment_method);
         if ($doesExceedWithdrawalLimit['status'])
@@ -230,7 +230,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         $partnerOrder->calculate(true);
         if ($orderAdvanceWithdrawalRequestService->doesExceedWithdrawalAmountForOrder((double)$request->amount, $partnerOrder))
-            return api_response($request, null, 402, ['message' => 'Withdrawal amount can not be greater than sheba collection amount']);
+            return api_response($request, null, 400, ['message' => 'Withdrawal amount can not be greater than sheba collection amount']);
 
         $data = array_merge((new UserRequestInformation($request))->getInformationArray(), [
             'order_id'        => $order->id,
