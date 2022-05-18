@@ -10,6 +10,8 @@ use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\BusinessPayslip\BusinessPayslip;
 use Sheba\Dal\BusinessShift\BusinessShift;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
+use Sheba\Dal\LiveTrackingSettings\Contract;
+use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
 use Sheba\Dal\OfficePolicy\OfficePolicy;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficePolicyRule\OfficePolicyRule;
@@ -49,6 +51,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function announcements()
     {
         return $this->hasMany(Announcement::class);
+    }
+
+    public function departments()
+    {
+        return $this->hasMany(BusinessDepartment::class);
     }
 
     public function members()
@@ -517,6 +524,35 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function shifts()
     {
         return $this->hasMany(BusinessShift::class);
+    }
+
+    public function liveTrackingSettings()
+    {
+        return $this->hasOne(LiveTrackingSettings::class);
+    }
+
+    public function getTrackLocationActiveBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('is_live_track_enable', 1)->where('status', Statuses::ACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
+    public function currentIntervalSetting()
+    {
+        return $this->liveTrackingSettings->intervalSettingLogs()->where('end_date', null)->latest()->first();
     }
 
 }

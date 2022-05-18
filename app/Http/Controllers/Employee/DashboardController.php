@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Models\Business;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
+use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
 
 class DashboardController extends Controller
 {
@@ -26,6 +27,8 @@ class DashboardController extends Controller
         $business = $this->getBusiness($request);
         /** @var PayrollSetting $payroll_setting */
         $payroll_setting = $business->payrollSetting;
+        /** @var  LiveTrackingSettings $live_tracking_settings */
+        $live_tracking_settings = $business->liveTrackingSettings;
 
         $is_enable_employee_visit = $business->is_enable_employee_visit;
 
@@ -33,61 +36,80 @@ class DashboardController extends Controller
         $is_manager = $manager ? 1 : 0;
 
         $dashboard = collect([
-            [
+            [#0
                 'title' => 'Support',
                 'target_type' => 'support',
             ],
-            [
+            [#1
                 'title' => 'Attendance',
                 'target_type' => 'attendance',
             ],
-            [
+            [#2
                 'title' => 'Notice',
                 'target_type' => 'notice',
             ],
-            [
+            [#3
                 'title' => 'Expense',
                 'target_type' => 'expense',
             ],
-            [
+            [#4
                 'title' => 'Leave',
                 'target_type' => 'leave',
             ],
-            [
+            [#5
                 'title' => 'Approval',
                 'target_type' => 'approval',
             ],
-            [
+            [#6
                 'title' => 'Phonebook',
                 'target_type' => 'phonebook',
             ],
-            [
+            [#7
                 'title' => 'Payslip',
                 'target_type' => 'payslip',
 
             ],
-            [
+            [#8
                 'title' => 'Visit',
                 'target_type' => 'visit',
 
             ],
-            [
+            [#9
+                'title' => 'Tracking',
+                'target_type' => 'tracking',
+
+            ],
+            [#10
                 'title' => 'My Team',
                 'target_type' => 'my_team',
 
             ],
-            [
+            [#11
                 'title' => 'Feedback',
                 'target_type' => 'feedback',
                 'link' => "https://sheba.freshdesk.com/support/tickets/new"
             ],
         ]);
 
-        if (!$payroll_setting->is_enable) $dashboard->forget(7);
-        if (!$is_enable_employee_visit) $dashboard->forget(8);
-        if (!$is_manager) $dashboard->forget(9);
+        if (!$payroll_setting->is_enable) $dashboard->forget(7);#Payslip
+        if (!$is_enable_employee_visit) $dashboard->forget(8);#Visit
+        if (!$this->isLiveTrackingEnable($live_tracking_settings) || !$is_manager) $dashboard->forget(9);#Tracking
+        if (!$is_manager) $dashboard->forget(10);#My Team
 
         return api_response($request, $dashboard, 200, ['dashboard' => $dashboard->values()]);
+    }
+
+    /**
+     * @param $live_tracking_settings
+     * @return bool|void
+     */
+    private function isLiveTrackingEnable($live_tracking_settings)
+    {
+        if (!$live_tracking_settings) {
+            return false;
+        } elseif ($live_tracking_settings && $live_tracking_settings->is_enable) {
+            return true;
+        }
     }
 
     /**
