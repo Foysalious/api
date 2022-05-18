@@ -5,6 +5,7 @@ namespace App\Sheba\DynamicForm;
 use App\Models\District;
 use App\Models\Division;
 use App\Models\Partner;
+use App\Models\Thana;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\MefForm\Model as MefForm;
 use Sheba\Dal\MefSections\Model as MefSection;
@@ -193,6 +194,22 @@ class DynamicForm
                 'district' => ['list' => $district]
             ];
             return $data['district'];
+        }
+        if ($this->type == "thana") {
+            if ($request->district) {
+                $thana = Thana::where('district_id', $request->district)->get();
+                $thana = (new CollectionFormatter())->setData($thana)->formatCollection();
+                $data = [
+                    'thana' => ['list' => $thana]
+                ];
+                return $data['thana'];
+            }
+            $thana = Thana::get();
+            $thana = (new CollectionFormatter())->setData($thana)->formatCollection();
+            $data = [
+                'thana' => ['list' => $thana]
+            ];
+            return $data['thana'];
         }
         if ($this->type == "tradeLicenseExists") {
             return config('trade_license');

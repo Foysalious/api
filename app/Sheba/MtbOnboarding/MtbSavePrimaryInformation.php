@@ -3,6 +3,7 @@
 use App\Models\District;
 use App\Models\Division;
 use App\Models\Partner;
+use App\Models\Thana;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
@@ -94,7 +95,8 @@ class MtbSavePrimaryInformation
         $divisionDistrictThana = [];
         $division = Division::where('bn_name', $string[0])->first()->name;
         $district = District::where('bn_name', $string[1])->first()->name;
-        array_push($divisionDistrictThana, $division, $district);
+        $thana = Thana::where('bn_name', $string[2])->first()->name;
+        array_push($divisionDistrictThana, $division, $district, $thana);
         return $divisionDistrictThana;
 
     }
@@ -135,6 +137,7 @@ class MtbSavePrimaryInformation
                     'postCode' => $this->partnerMefInformation->presentPostCode,
                     'division' => $englishDivisionDistrict[0],
                     'district' => $englishDivisionDistrict[1],
+                    'upazillaThana' => $englishDivisionDistrict[2],
                     'country' => MtbConstants::COUNTRY
                 ],
                 'permanentAddress' => [
