@@ -1,6 +1,8 @@
 <?php namespace Sheba\UrlShortener\Sheba;
 
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
+use App\Sheba\UrlShortener\Sheba\UrlShortenerServerError;
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -49,9 +51,16 @@ class UrlShortenerServerClient
         return $options;
     }
 
+    /**
+     * @throws UrlShortenerServerError
+     */
     public function post($uri, $data, $multipart = false)
     {
-        return $this->call('post', $uri, $data, $multipart);
+        try {
+            return $this->call('post', $uri, $data, $multipart);
+        } catch (GuzzleException $e) {
+            throw new UrlShortenerServerError($e->getMessage(), $e->getCode());
+        }
     }
 
 }
