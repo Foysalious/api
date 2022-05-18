@@ -80,5 +80,6 @@ class DueTrackerSmsController extends Controller
             ->setContactIds($request->contact_ids)
             ->setContactType($request->contact_type)
             ->sendBulkSmsThroughJob();
+        return http_response($request, null, 200, ['data' => true ]);
     }
 }

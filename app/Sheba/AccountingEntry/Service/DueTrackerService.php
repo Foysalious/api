@@ -158,6 +158,9 @@ class DueTrackerService
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     public function storeEntry()
     {
         return app()->make(EntryCreator::class)
