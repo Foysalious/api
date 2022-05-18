@@ -138,9 +138,9 @@ class DueTrackerReportService
         $start_date = date_create($this->start_date);
         $end_date = date_create($this->end_date);
 
-        $data['data']['start_date'] = ($this->start_date != null) ? NumberLanguageConverter::en2bn(date_format($start_date,"d")).' '.banglaMonth(date_format($start_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($start_date,"Y")) : '';
-        $data['data']['end_date'] = ($this->end_date != null ? NumberLanguageConverter::en2bn(date_format($end_date,"d")).' '.banglaMonth(date_format($end_date,"m")).' '.NumberLanguageConverter::en2bn(date_format($end_date,"Y")) : '');
-        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d h:i:s")).' | '.NumberLanguageConverter::en2bn(date("d")).' '.banglaMonth(date("m")).' '.NumberLanguageConverter::en2bn(date("Y")) ;
+        $data['data']['start_date'] = ($this->start_date != null) ? dateEn2Bn(date_format($start_date,"y-m-d"),'d M Y') : '';
+        $data['data']['end_date'] = ($this->end_date != null ? dateEn2Bn(date_format($end_date,"y-m-d"),'d M Y') : '');
+        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d h:i:s")).' | '.dateEn2Bn(date("y-m-d"),'d M Y');
         $data['data']['contact_type'] = $this->contact_type;
 
         $data['data']['partner']['name'] = $this->partner->name;
@@ -186,7 +186,7 @@ class DueTrackerReportService
         foreach($data['list'] as $key => $value){
             $date = date_create($data['list'][$key]['entry_at']);
             $data['list'][$key]['amount_bn'] = NumberLanguageConverter::en2bn($data['list'][$key]['amount']);
-            $data['list'][$key]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($date,"d")).' '.banglaMonth(date_format($date,"m")).' '.NumberLanguageConverter::en2bn(date_format($date,"Y")) ;
+            $data['list'][$key]['entry_at_bn'] = dateEn2Bn(date_format($date,"y-m-d"),'d M Y');
             $data['list'][$key]['balance_bn'] = NumberLanguageConverter::en2bn($data['list'][$key]['balance']);
         }
 
@@ -257,8 +257,8 @@ class DueTrackerReportService
                 $created_at = date_create($v['created_at']);
                 $list[$keybn]['list'][$key1]['amount_bn'] = NumberLanguageConverter::en2bn($v['amount']);
                 $list[$keybn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($v['balance']);
-                $list[$keybn]['list'][$key1]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($entry_at,"d")).'/'.NumberLanguageConverter::en2bn(date_format($entry_at,"m"));
-                $list[$keybn]['list'][$key1]['created_at_bn'] = NumberLanguageConverter::en2bn(date_format($created_at,"d")).' '.banglaMonth(date_format($created_at,"m")).' '.NumberLanguageConverter::en2bn(date_format($created_at,"Y")) ;
+                $list[$keybn]['list'][$key1]['entry_at_bn'] = dateEn2Bn(date_format($entry_at,"y-m-d"),'d/m');
+                $list[$keybn]['list'][$key1]['created_at_bn'] = dateEn2Bn(date_format($created_at,"y-m-d"),'d M Y');
                 $list[$keybn]['list'][$key1]['note'] = $v['note'];
                 $list[$keybn]['list'][$key1]['account_type'] = $v['account_type'];
             }
@@ -304,7 +304,7 @@ class DueTrackerReportService
             foreach($value['list'] as $key1 => $v){
                 $entry_at = date_create($v['entry_at']);
                 $list[$keybn]['list'][$key1]['contact_name'] = $v['contact_name'];
-                $list[$keybn]['list'][$key1]['entry_at_bn'] = NumberLanguageConverter::en2bn(date_format($entry_at,"d")).'/'.NumberLanguageConverter::en2bn(date_format($entry_at,"m"));
+                $list[$keybn]['list'][$key1]['entry_at_bn'] = dateEn2Bn(date_format($entry_at,"y-m-d"),"d/m");
                 $list[$keybn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($v['balance']);
                 $list[$keybn]['list'][$key1]['balance_type'] = NumberLanguageConverter::en2bn($v['balance_type']);
             }
