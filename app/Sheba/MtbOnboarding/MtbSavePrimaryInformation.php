@@ -1,7 +1,8 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
+use App\Models\District;
+use App\Models\Division;
 use App\Models\Partner;
-use App\Sheba\DynamicForm\DynamicForm;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
@@ -11,7 +12,6 @@ use App\Sheba\MTB\Validation\ApplyValidation;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\ResellerPayment\MORServiceClient;
 use App\Sheba\ResellerPayment\PaymentService;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 
 
@@ -84,9 +84,27 @@ class MtbSavePrimaryInformation
         return $name;
     }
 
+    private function separateDivisionDistrictThana($separator)
+    {
+        return preg_split("/\,/", $separator);
+    }
+
+    private function translateDivisionDistrictThana($string)
+    {
+        $divisionDistrictThana = [];
+        $division = Division::where('bn_name', $string[0])->first()->name;
+        $district = District::where('bn_name', $string[1])->first()->name;
+        array_push($divisionDistrictThana, $division, $district);
+        return $divisionDistrictThana;
+
+    }
+
     private function makePrimaryInformation($reference, $otp): array
     {
+
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
+        $divisionDistrictThana = $this->separateDivisionDistrictThana($this->partnerMefInformation->presentDivision);
+        $englishDivisionDistrict = $this->translateDivisionDistrictThana($divisionDistrictThana);
         if ($this->partnerMefInformation->tradeLicenseExists == "হ্যা") $tradeLicenseExist = "Y";
         else $tradeLicenseExist = "N";
         return [
@@ -115,8 +133,8 @@ class MtbSavePrimaryInformation
                 'presentAddress' => [
                     'addressLine1' => $this->partnerMefInformation->presentAddress,
                     'postCode' => $this->partnerMefInformation->presentPostCode,
-                    'division' => $this->partnerMefInformation->presentDivision,
-                    'district' => $this->partnerMefInformation->presentDistrict,
+                    'division' => $englishDivisionDistrict[0],
+                    'district' => $englishDivisionDistrict[1],
                     'country' => MtbConstants::COUNTRY
                 ],
                 'permanentAddress' => [
