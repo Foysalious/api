@@ -410,3 +410,21 @@ if (!function_exists('dateRangeTitleBn')) {
         }
     }
 }
+
+if(!function_exists('dateEn2Bn')){
+    /**
+     * @param $date
+     * @param string $format
+     * @return array|string|string[]
+     */
+    function dateEn2Bn($date, string $format='d:m:y h:i:s'){
+        $date = new Carbon($date);
+        if(strpos(($format), 'M')){
+            $format = str_replace("M","XXX",$format);
+            $banglaMonth = banglaMonth($date->format('m'));
+            $bnglaDate = NumberLanguageConverter::en2bn($date->format($format));
+            return str_replace("XXX",$banglaMonth,$bnglaDate);
+        }
+        return NumberLanguageConverter::en2bn($date->format($format));
+    }
+}
