@@ -574,10 +574,4 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         return $this->liveTrackingSettings->intervalSettingLogs()->where('end_date', null)->latest()->first();
     }
-
-    public function shifts()
-    {
-        return $this->hasMany(BusinessShift::class);
-    }
-
 }
