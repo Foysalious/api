@@ -112,7 +112,9 @@ class AttendanceTransformer extends TransformerAbstract
                         'time' => $attendance->checkin_time,
                         'is_remote' => $attendance_checkin_action->is_remote ?: 0,
                         'address' => $attendance_checkin_action->is_remote ?
-                            $attendance_checkin_action->location ? json_decode($attendance_checkin_action->location)->address : null
+                            $attendance_checkin_action->location ?
+                                json_decode($attendance_checkin_action->location)->address ?: json_decode($attendance_checkin_action->location)->lat.', '.json_decode($attendance_checkin_action->location)->lng
+                                : null
                             : null,
                         'remote_mode' => $attendance_checkin_action->remote_mode ?: null
                     ] : null,
@@ -121,7 +123,9 @@ class AttendanceTransformer extends TransformerAbstract
                         'time' => $attendance->checkout_time,
                         'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                         'address' => $attendance_checkout_action->is_remote ?
-                            $attendance_checkout_action->location ? json_decode($attendance_checkout_action->location)->address : null
+                            $attendance_checkout_action->location ?
+                                json_decode($attendance_checkout_action->location)->address ?: json_decode($attendance_checkout_action->location)->lat.', '.json_decode($attendance_checkout_action->location)->lng
+                                : null
                             : null,
                         'remote_mode' => $attendance_checkout_action->remote_mode ?: null
                     ] : null,

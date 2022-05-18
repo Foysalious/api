@@ -1606,3 +1606,20 @@ if (!function_exists('getAttendanceReconciliationFolder')) {
         return $url . 'attendance_reconciliation/';
     }
 }
+
+if (!function_exists('getBkashExcelFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBkashExcelFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'bkash_excel/';
+    }
+}

@@ -124,8 +124,10 @@ class MonthlyStat
                             'is_remote' => $attendance_checkin_action->is_remote ?: 0,
                             'remote_mode' => $attendance_checkin_action->remote_mode ?: null,
                             'address' => $attendance_checkin_action->is_remote ?
-                                $attendance_checkin_action->location ? json_decode($attendance_checkin_action->location)->address : null
+                            $attendance_checkin_action->location ?
+                                json_decode($attendance_checkin_action->location)->address ?: json_decode($attendance_checkin_action->location)->lat.', '.json_decode($attendance_checkin_action->location)->lng
                                 : null
+                            : null,
                         ] : null,
                         'check_out' => $attendance_checkout_action ? [
                             'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkout_action->status,
@@ -133,8 +135,10 @@ class MonthlyStat
                             'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                             'remote_mode' => $attendance_checkout_action->remote_mode ?: null,
                             'address' => $attendance_checkout_action->is_remote ?
-                                $attendance_checkout_action->location ? json_decode($attendance_checkout_action->location)->address : null
-                                : null
+                                $attendance_checkout_action->location ?
+                                    json_decode($attendance_checkout_action->location)->address ?: json_decode($attendance_checkout_action->location)->lat.', '.json_decode($attendance_checkout_action->location)->lng
+                                    : null
+                                : null,
                         ] : null,
                         'late_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin()) ? $attendance->checkinAction()->note : null,
                         'left_early_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,
