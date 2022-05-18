@@ -418,6 +418,9 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'shift-calender'], function ($api) {
                     $api->get('/', 'B2b\ShiftCalenderController@index');
+                    $api->group(['prefix' => '{id}'], function ($api) {
+                        $api->post('/assign-shift', 'B2b\ShiftCalenderController@assignShift');
+                    });
                 });
 
                 $api->group(['prefix' => 'live-tracking'], function ($api) {
