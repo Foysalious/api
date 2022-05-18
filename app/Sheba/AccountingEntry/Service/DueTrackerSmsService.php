@@ -181,7 +181,7 @@ class DueTrackerSmsService
 
     private function generateSmsDataForContactType(array $sms_content)
     {
-        $partner_info = $this->dueTrackerService->getPartnerInfo($this->partner);
+        $partner_info = $this->getPartnerInfo();
         $data =[
             'partner_name' => $partner_info['name'],
             'partner_mobile' => $partner_info['mobile'],

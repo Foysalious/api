@@ -319,6 +319,7 @@ class DueTrackerReportService
 
     public function getWebReportLink()
     {
+        return '';
         $partner_url = env('SHEBA_PARTNER_URL');
         $report_link = $partner_url  . "/due-tracker/{$this->partner->id}/report?contact_id=$this->contact_id" .
             "&contact_type=$this->contact_type";
