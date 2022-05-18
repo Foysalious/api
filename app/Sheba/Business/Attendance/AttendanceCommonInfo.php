@@ -29,7 +29,8 @@ class AttendanceCommonInfo
         try {
             return (new BarikoiClient)->getAddressFromGeo($this->getGeo())->getAddress();
         } catch (\Throwable $exception) {
-            return "";
+            app('sentry')->captureException($exception);
+            return null;
         }
     }
 

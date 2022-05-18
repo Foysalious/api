@@ -2,9 +2,10 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Reward\ActionEventInitiator;
 use Sheba\Reward\CampaignEventInitiator;
-use \Sheba\Dal\RewardTargets\Model as RewardTargets;
+use Sheba\Dal\RewardTargets\Model as RewardTargets;
 
 class Reward extends Model
 {
@@ -34,12 +35,12 @@ class Reward extends Model
 
     public function isCampaign()
     {
-        return $this->detail_type == 'App\Models\RewardCampaign';
+        return $this->detail_type == RewardCampaign::class;
     }
 
     public function isAction()
     {
-        return $this->detail_type == 'App\Models\RewardAction';
+        return $this->detail_type == RewardAction::class;
     }
 
     public function scopeOngoing($query)
@@ -54,22 +55,22 @@ class Reward extends Model
 
     public function scopeForPartner($query)
     {
-        return $query->where('target_type', 'App\Models\Partner');
+        return $query->where('target_type', Partner::class);
     }
 
     public function scopeForResource($query)
     {
-        return $query->where('target_type', 'App\Models\Resource');
+        return $query->where('target_type', Resource::class);
     }
 
     public function scopeTypeCampaign($query)
     {
-        return $query->where('detail_type', 'App\Models\RewardCampaign');
+        return $query->where('detail_type', RewardCampaign::class);
     }
 
     public function scopeTypeAction($query)
     {
-        return $query->where('detail_type', 'App\Models\RewardAction');
+        return $query->where('detail_type', RewardAction::class);
     }
 
     public function getAmount()
@@ -131,11 +132,41 @@ class Reward extends Model
 
     public function isCustomer()
     {
-        return $this->target_type == "App\\Models\\Customer";
+        return $this->target_type == Customer::class;
     }
 
     public function getTerms()
     {
         return $this->terms && json_decode($this->terms) > 0 ? json_decode($this->terms) : [];
+    }
+
+    public function getUserFilters(): array
+    {
+        return json_decode($this->user_filters, 1) ?: [];
+    }
+
+    public function getActiveStatusUserFilterTimeFrame()
+    {
+        $user_filters = $this->getUserFilters();
+        if (!array_key_exists("active_status", $user_filters)) return null;
+
+        if ($user_filters['active_status'] == 'last7') {
+            return (new TimeFrame())->for7DaysBefore($this->created_at);
+        } else if ($user_filters['active_status'] == 'last30') {
+            return (new TimeFrame())->for30DaysBefore($this->created_at);
+        }
+
+        return null;
+    }
+
+    public function getRegistrationWithinUserFilterTimeFrame()
+    {
+        $user_filters = $this->getUserFilters();
+        if (!array_key_exists("registration_within", $user_filters)) return null;
+
+        $start = $user_filters["registration_within"]['start'];
+        $end = $user_filters["registration_within"]['end'];
+
+        return (new TimeFrame())->forDateRange($start, $end);
     }
 }

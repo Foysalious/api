@@ -106,7 +106,7 @@ abstract class TopUpCommission
         if ($this->topUpOrder->otf_agent_commission > 0) {
             $log_message = $this->amount . "tk " . $otf_details['otf_name'] . " - OTF TopUp has been recharged to " . $this->topUpOrder->payee_mobile;
         } else {
-            $log_message = $this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile;
+            $log_message = $this->getBasicTopUpLog();
         }
 
         $transaction = (new TopUpTransaction())
@@ -115,7 +115,7 @@ abstract class TopUpCommission
             ->setTopUpOrder($this->topUpOrder)
             ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
 
-        $this->transaction =  $this->agent->topUpTransaction($transaction);
+        $this->transaction = $this->agent->topUpTransaction($transaction);
     }
 
     /**
@@ -299,5 +299,10 @@ abstract class TopUpCommission
     public function getSubscriptionWiseTopUpCommission()
     {
         return $this->subscriptionWiseTopUpCommission->commission;
+    }
+
+    protected function getBasicTopUpLog()
+    {
+        return $this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile . ".";
     }
 }
