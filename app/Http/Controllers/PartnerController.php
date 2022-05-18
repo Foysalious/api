@@ -4,6 +4,9 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Models\Slide;
+use App\Models\Slider;
+use App\Models\SliderPortal;
 use App\Sheba\PartnerGeneralSettings;
 use App\Sheba\PosOrderService\Services\OrderService;
 use App\Sheba\UserMigration\Modules;
@@ -1204,6 +1207,14 @@ class PartnerController extends Controller
 
     public function getSliderDetails(Request $request)
     {
+        $slider_id = SliderPortal::where('screen', 'login')->select('slider_id')->first();
+        $slider = Slider::query()->where('id', $slider_id->slider_id)->first();
+//        dd($slider);
+        $slide_id = $slider->slides()->get();
+        dd($slide_id);
+        $images = Slide::where('id', 234)->select('id', 'image_link')->get();
+        dd($images);
+
         $data = [
             [
                 'id' => 1,
