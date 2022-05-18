@@ -203,6 +203,7 @@ class MemberController extends Controller
             'is_super' => $business_member ? $business_member->is_super : null,
             'is_essential_info_available_for_activate' => $this->isEssentialInfoAvailableForActivate($business_member, $profile),
             'is_payroll_enable' => $business_member ? $business_member->is_payroll_enable : null,
+            'is_shift_enable' => $business->is_shift_enable,
             'remember_token' => $member->remember_token,
             'is_manager' => $is_manager,
             'access' => [
