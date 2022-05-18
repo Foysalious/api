@@ -661,8 +661,9 @@ class JobController extends Controller
         $this->validate($request, [
             'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet,nagad',
             'emi_month' => 'numeric',
-            'amount' => 'integer'
+            'amount' => 'numeric'
         ]);
+        $request->merge(['amount' => (int)$request->amount]);
         if($request->has('amount') && $request->amount < 10) {
             return api_response($request, null, 400, ['message' => 'Amount can not be less than 10 taka']);
         }
