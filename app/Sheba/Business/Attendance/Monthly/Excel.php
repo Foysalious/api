@@ -74,7 +74,6 @@ class Excel
                 'absent_days' => $employee['attendance']['absent_days']
             ];
         }
-        dd($this->data);
     }
 
     private function getHeaders()
