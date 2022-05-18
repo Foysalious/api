@@ -54,7 +54,7 @@ class PartnerNotificationHandler extends Handler
             $notifications_base_query = $notifications_base_query->where("event_type", "<>", "App\Models\Procurement");
 
         $notifications = $notifications_base_query
-            ->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')
+            ->select('id', 'feature_name', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')
             ->orderBy('id', 'desc');
 
         $unseen = $this->model->notifications()->where('is_seen', '0')->count();
@@ -74,7 +74,7 @@ class PartnerNotificationHandler extends Handler
     {
         $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
         $notification->time = $notification->created_at->format('j M \\a\\t h:i A');
-        $notification->icon = self::getNotificationIcon($notification->type);
+        $notification->icon = self::getNotificationIcon($notification->feature_name, $notification->type);
         if ($notification->event_type == 'Offershowcase') {
             $offer = OfferShowcase::query()->where('id', $notification->event_id)->first();
             if ($offer && $offer->thumb != '') $notification->icon = $offer->thumb;
@@ -84,13 +84,19 @@ class PartnerNotificationHandler extends Handler
     }
 
     /**
+     * @param $feature_name
      * @param $type
      * @return mixed|string
      */
-    public static function getNotificationIcon($type)
+    public static function getNotificationIcon($feature_name, $type)
     {
-        if (in_array(config('constants.NOTIFICATION_ICONS.' . $type), config('constants.NOTIFICATION_ICONS'))) return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
-        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.Default');
+        if ($feature_name == 'default') {
+            if (in_array(config('constants.NOTIFICATION_ICONS.' . $type), config('constants.NOTIFICATION_ICONS')))
+                return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $type);
+            return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.Default');
+        }
+
+        return getCDNAssetsFolder() . config('constants.NOTIFICATION_ICONS.' . $feature_name);
     }
 
     /**
