@@ -474,7 +474,9 @@ class AttendanceList
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
                             'address' => $action->is_remote ?
-                                $action->location ? json_decode($action->location)->address : null
+                                $action->location ?
+                                    json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
+                                    : null
                                 : null,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
                             'note' => $action->note,
@@ -486,7 +488,9 @@ class AttendanceList
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
                             'address' => $action->is_remote ?
-                                $action->location ? json_decode($action->location)->address : null
+                                $action->location ?
+                                    json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
+                                    : null
                                 : null,
                             'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
                             'note' => $action->note,
@@ -502,7 +506,7 @@ class AttendanceList
                     }
                 }
 
-                array_push($data, $this->getBusinessMemberData($attendance->businessMember) + [
+                $data[] = $this->getBusinessMemberData($attendance->businessMember) + [
                         'id' => $attendance->id,
                         'check_in' => $checkin_data,
                         'check_out' => $checkout_data,
@@ -522,9 +526,8 @@ class AttendanceList
                         'override' => [
                             'is_check_in_overridden' => $check_in_overridden,
                             'is_check_out_overridden' => $check_out_overridden
-                        ],
-                        'is_attendance_reconciled' => $attendance->is_attendance_reconciled
-                    ]);
+                        ]
+                    ];
             }
         }
 

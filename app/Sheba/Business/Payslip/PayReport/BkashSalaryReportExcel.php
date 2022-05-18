@@ -1,10 +1,14 @@
 <?php namespace Sheba\Business\Payslip\PayReport;
 
 use Excel;
+use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 
 class BkashSalaryReportExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithStyles
 {
+    use CdnFileManager, FileManager;
     private $payReportData;
 
     public function __construct(array $pay_report_data)
@@ -17,7 +21,7 @@ class BkashSalaryReportExcel implements FromCollection, WithHeadings, ShouldAuto
         return ['Employee Id', 'Employee Name', 'Bkash Number', 'Net Payable'];
     }
 
-    public function makeData()
+    public function takeCompletedAction()
     {
         $this->loadExcel();
 
@@ -28,8 +32,9 @@ class BkashSalaryReportExcel implements FromCollection, WithHeadings, ShouldAuto
             $this->excel->getActiveSheet()->setCellValue(BkashPayslipExcel::PRINCIPLE_AMOUNT . ($key + 4), $pay_report_data['net_payable']);
         }
         $this->excel->save();
-
-        return $this;
+        $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . 'bkash_payable_file.xls';
+        $file_name = $this->uniqueFileName($this->excel->title, $this->excel->ext);
+        return $this->saveFileToCDN($file_path, getBkashExcelFolder(), $file_name);
     }
 
     private function loadExcel()
@@ -37,10 +42,33 @@ class BkashSalaryReportExcel implements FromCollection, WithHeadings, ShouldAuto
         $this->excel = Excel::selectSheets([BkashPayslipExcel::FINAL_DISBURSEMENT, BkashPayslipExcel::CLIENT, BkashPayslipExcel::FINAL, BkashPayslipExcel::FEE, BkashPayslipExcel::BKASH])->load($this->file);
     }
 
-    public function takeCompletedAction()
+    private function saveFileToPublicFolder($file_path, $folder, $file_name)
     {
-        $this->excel->download('xls');
-        unlink($this->file);
+        return $this->putFileToPublicAndGetPath(file_get_contents($file_path), $folder, $file_name);
+    }
+
+    private function putFileToPublicAndGetPath($file, $folder, $filename)
+    {
+        $filename = $this->makeFullFilePath($folder, $filename);
+        $public = Storage::disk('exports');
+        $public->put($filename, $file);
+        return url('/exports'). DIRECTORY_SEPARATOR.$filename;
+    }
+
+    private function makeFullFilePath($folder, $filename)
+    {
+        $filename = clean($filename, '_', ['.', '-']);
+        $folder = trim($folder, '/');
+        return $folder . '/' . $filename;
+    }
+
+    protected function uniqueFileName($name, $ext = null)
+    {
+        if (empty($name)) {
+            $name = "bkash_payable_file";
+        }
+        $name = strtolower(str_replace(' ', '_', $name));
+        return time() . "_" . $name . "." . $ext;
     }
 
     /**

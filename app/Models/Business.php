@@ -541,6 +541,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $this->policy()->where('policy_type', Type::LATE_CHECKIN_EARLY_CHECKOUT)->orderBy('from_days');
     }
 
+    public function shifts()
+    {
+        return $this->hasMany(BusinessShift::class);
+    }
+
     public function liveTrackingSettings()
     {
         return $this->hasOne(LiveTrackingSettings::class);

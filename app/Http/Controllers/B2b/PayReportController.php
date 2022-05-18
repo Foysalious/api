@@ -138,18 +138,8 @@ class PayReportController extends Controller
         $payslip = $pay_report_list->setBusiness($business)
             ->setMonthYear($request->month_year)
             ->getBkashSalaryData();
+        $file_link = (new BkashSalaryReportExcel)->setFile($file_path)->setEmployeeData($payslip->toArray())->takeCompletedAction();
 
-        $six_digit_random_number = randomString(6, true);
-        $time = Carbon::now()->format("Y_m_d_H_i_s");
-        $file_name = 'Net_Payable_Bkash_Report_' . $six_digit_random_number . '_' . $time . ".xlsx";
-        $excel = new BkashSalaryReportExcel($payslip->toArray());
-        MaatwebsiteExcel::store($excel, $file_name);
-
-        $file_path = storage_path("app/" . $file_name) . DIRECTORY_SEPARATOR . $file_name;
-        $file_name = $this->uniqueFileName($file_path, $file_name, 'xlsx');
-        $file_link = $this->saveFileToCDN($file_path, getBulkGrossSalaryFolder(), $file_name);
-        unlink($file_path);
-
-        return api_response($request, null, 200, ['bkash_salary_report' => $bkash_salary_report]);
+        return api_response($request, null, 200, ['file_url' => $file_link]);
     }
 }
