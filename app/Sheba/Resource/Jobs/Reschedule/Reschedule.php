@@ -19,6 +19,7 @@ class Reschedule
 
     private $scheduleDate;
     private $scheduleTimeSlot;
+    private $rescheduleReason;
 
 
     public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
@@ -64,6 +65,15 @@ class Reschedule
     }
 
     /**
+     * @param mixed $rescheduleReason
+     */
+    public function setRescheduleReason($rescheduleReason)
+    {
+        $this->rescheduleReason = $rescheduleReason;
+        return $this;
+    }
+
+    /**
      * @return RescheduleResponse
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
@@ -85,6 +95,7 @@ class Reschedule
                     'remember_token' => $this->resource->remember_token,
                     'schedule_date' => $this->scheduleDate,
                     'preferred_time' => $this->scheduleTimeSlot,
+                    'order_reschedule_reason' => $this->rescheduleReason,
                     'created_by_type' => get_class($this->resource),
                     'portal_name' => $this->userAgentInformation->getPortalName(),
                     'user_agent' => $this->userAgentInformation->getUserAgent(),

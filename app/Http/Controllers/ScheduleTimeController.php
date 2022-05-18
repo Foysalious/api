@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\OrderRescheduleReason;
 use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use App\Models\ScheduleSlot;
@@ -25,10 +26,11 @@ class ScheduleTimeController extends Controller
                 'partner' => 'sometimes|required|numeric|min:1',
                 'limit' => 'sometimes|required|numeric|min:1'
             ]);
+            $reschedule_reasons = OrderRescheduleReason::pluck('name');
             if ($request->has('category') && $request->has('partner')) {
                 $partnerSchedule->setPartner($request->partner)->setCategory($request->category)->setFor($request->for);
                 $dates = $request->has('limit') ? $partnerSchedule->get($request->limit) : $partnerSchedule->get();
-                return $dates ? api_response($request, $dates, 200, ['dates' => $dates]) : api_response($request, null, 400, [
+                return $dates ? api_response($request, $dates, 200, ['dates' => $dates, 'reschedule_reasons' => $reschedule_reasons]) : api_response($request, null, 400, [
                     'message' => $partnerSchedule->getErrorMessage()
                 ]);
             }
@@ -57,9 +59,9 @@ class ScheduleTimeController extends Controller
                 $time_slots[$time_slot_key] = $time_slot_value;
             }
             if ($request->has('for')) {
-                return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots]);
+                return api_response($request, $sheba_slots, 200, ['times' => $sheba_slots, 'reschedule_reasons' => $reschedule_reasons]);
             } else {
-                return api_response($request, $sheba_slots, 200, ['times' => $time_slots, 'valid_times' => $valid_time_slots]);
+                return api_response($request, $sheba_slots, 200, ['times' => $time_slots, 'reschedule_reasons' => $reschedule_reasons, 'valid_times' => $valid_time_slots]);
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
