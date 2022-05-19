@@ -3,20 +3,24 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Transformers\Business\ShiftCalenderTransformer;
+use App\Transformers\Business\EmployeeShiftDetailsTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
 use Sheba\Business\ShiftSetting\ShiftAssign\Requester;
 use Sheba\Business\ShiftSetting\ShiftAssign\Creator;
 use Sheba\Business\ShiftSetting\ShiftAssign\ShiftRemover;
 use Sheba\Dal\BusinessShift\BusinessShiftRepository;
 use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
 use Sheba\ModificationFields;
+use League\Fractal\Resource\Item;
 
 class ShiftCalenderController extends Controller
 {
     use ModificationFields;
     private $shiftCalenderRepository;
+    private $businessShiftRepository;
     private $shiftCalenderRequester;
     /** @var Creator  */
     private $shiftCalenderCreator;
@@ -25,6 +29,7 @@ class ShiftCalenderController extends Controller
     public function __construct()
     {
         $this->shiftCalenderRepository = app(ShiftCalenderRepository::class);
+        $this->businessShiftRepository = app(BusinessShiftRepository::class);
         $this->shiftCalenderRequester = app(Requester::class);
         $this->shiftCalenderCreator = app(Creator::class);
         $this->shiftRemover = app(ShiftRemover::class);
@@ -50,7 +55,7 @@ class ShiftCalenderController extends Controller
         return api_response($request, null, 200, ['shift_calender_employee' => $shift_calender_employee_data, 'shift_calender_header' => $shift_calender_data['header'], 'total' => $total_data]);
     }
 
-    public function assignShift($business, $id, Request $request, BusinessShiftRepository $business_shift_repository)
+    public function assignShift($business, $id, Request $request)
     {
         $this->validate($request, [
             'shift_id'                  => 'required|integer',
@@ -65,10 +70,10 @@ class ShiftCalenderController extends Controller
         if (!$business_member) return api_response($request, null, 401);
 
         $this->setModifier($request->manager_member);
-        $business_shift = $business_shift_repository->find($request->shift_id);
+        $business_shift = $this->businessShiftRepository->find($request->shift_id);
         if (!$business_shift) return api_response($request, null, 404);
 
-        $business_shift = $business_shift_repository->find($request->shift_id);
+        $business_shift = $this->businessShiftRepository->find($request->shift_id);
         $shift_calender = $this->shiftCalenderRepository->find($id);
 
         $this->shiftCalenderRequester->setShiftId($request->shift_id)
@@ -113,6 +118,26 @@ class ShiftCalenderController extends Controller
             $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($as_shift);
         }
         return api_response($request, null, 200);
+    }
+
+    public function details($business, $id, Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        $shift_calender = $this->shiftCalenderRepository->find($id);
+
+        if (!$shift_calender) return api_response($request, null, 404);
+//        return api_response($request, $shift_calender, 200, ['shift_calender' => $shift_calender->shift()]);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $member = new Item($shift_calender, new EmployeeShiftDetailsTransformer());
+        $shift_calender = $manager->createData($member)->toArray()['data'];
+        return api_response($request, $shift_calender, 200, ['shift_calender' => $shift_calender]);
     }
 
     private function employeeSortByPDisplayPriority($a, $b)

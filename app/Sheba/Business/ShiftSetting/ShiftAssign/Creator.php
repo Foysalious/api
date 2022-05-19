@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\ShiftSetting\ShiftAssign;
 
-use Sheba\Business\ShiftSetting\ShiftAssign\Requester;
 use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
 
 class Creator
@@ -26,6 +25,12 @@ class Creator
     {
         $data = $this->makeData();
         $this->shiftCalenderRepository->update($shift_calender, $data);
+    }
+
+    public function assignGeneral($calender)
+    {
+        $data = $this->makeData();
+        $this->shiftCalenderRepository->update($calender, $data);
     }
 
     private function makeData()

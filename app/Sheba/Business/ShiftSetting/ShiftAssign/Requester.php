@@ -135,4 +135,9 @@ class Requester
 //        $this->shiftCalenderRepository->where('')
 //        $this->setError(400);
     }
+
+    private function checkTimeGap()
+    {
+        return $this->getEndTime();
+    }
 }
