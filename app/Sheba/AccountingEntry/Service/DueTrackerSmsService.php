@@ -307,4 +307,16 @@ class DueTrackerSmsService
             'mobile' => $this->partner->mobile,
         ];
     }
+
+    public function checkSmsSubscription($sms_count)
+    {
+        $free_sms = rand(0,$sms_count+5);
+        if($free_sms >= $sms_count) {
+            return "${sms_count} জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
+        } elseif ($free_sms > 0) {
+            return "$free_sms জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
+        } else {
+            return "$sms_count জন কাস্টমারের নিকট তাগাদা পাঠাতে আপনার অ্যাকাউন্ট থেকে চার্জ করা হবে!";
+        }
+    }
 }
