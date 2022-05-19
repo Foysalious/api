@@ -72,6 +72,7 @@ class Requester
 
     public function getEndTime()
     {
+//        return $this->checkTimeGap();
         return $this->endTime;
     }
 
@@ -138,6 +139,8 @@ class Requester
 
     private function checkTimeGap()
     {
-        return $this->getEndTime();
+        $endTime = Carbon::parse($this->endTime);
+        $check_time = Carbon::parse("22:00:00");
+        return $endTime->gte($check_time);
     }
 }
