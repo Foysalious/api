@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\BusinessMember;
 use Carbon\Carbon;
 
 class ShiftCalenderTransformer
@@ -15,7 +16,16 @@ class ShiftCalenderTransformer
                 'date' =>  Carbon::parse($shift_calender->date)->format('d M'),
                 'day' => Carbon::parse($shift_calender->date)->format('l')
             ];
-            $data[$shift_calender->business_member_id][$shift_calender->date] = [
+            if (!isset($data[$shift_calender->business_member_id]['employee'])){
+                $business_member = BusinessMember::find($shift_calender->business_member_id);
+                $data[$shift_calender->business_member_id]['employee'] = [
+                    'business_member_id' => $shift_calender->business_member_id,
+                    'employee_id' => $business_member->employee_id,
+                    'name' => $business_member->member->profile->name
+                ];
+            }
+
+            $data[$shift_calender->business_member_id]['date'][$shift_calender->date] = [
                 'id' => $shift_calender->id,
                 'date' => $shift_calender->date,
                 'business_member_id' => $shift_calender->business_member_id,

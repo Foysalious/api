@@ -418,6 +418,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'shift-calender'], function ($api) {
                     $api->get('/', 'B2b\ShiftCalenderController@index');
+                    $api->get('/dashboard', 'B2b\ShiftCalenderController@dashboard');
                     $api->group(['prefix' => '{id}'], function ($api) {
                         $api->get('/', 'B2b\ShiftCalenderController@details');
                         $api->post('/assign-shift', 'B2b\ShiftCalenderController@assignShift');

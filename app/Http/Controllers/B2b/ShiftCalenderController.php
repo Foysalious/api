@@ -46,11 +46,17 @@ class ShiftCalenderController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $start_date = $request->start_date ?: Carbon::now()->addDay()->toDateString();
         $end_date = $request->end_date ?: Carbon::now()->addDays(7)->toDateString();
-        $active_business_member_ids = $business->getActiveBusinessMember()->pluck('id')->toArray();
+        $active_business_member = $business->getActiveBusinessMember();
+        $active_business_member_ids = $active_business_member->pluck('id')->toArray();
+
         $shift_calender = $shift_calender_repository->builder()->whereIn('business_member_id', $active_business_member_ids)->whereBetween('date', [$start_date, $end_date]);
         $shift_calender_data = (new ShiftCalenderTransformer())->transform($shift_calender->get());
-        $total_data = count($shift_calender_data['data']);
-        $shift_calender_employee_data = collect($shift_calender_data['data'])->splice($offset, $limit)->toArray();
+        $shift_calender_employee_data = collect($shift_calender_data['data'])->splice($offset, $limit);
+        if ($request->has('search')) {
+            $shift_calender_employee_data = $this->searchEmployeeByNameOrId($shift_calender_employee_data, $request->search);
+        }
+        $total_data = count($shift_calender_employee_data);
+        $shift_calender_employee_data = $shift_calender_employee_data->toArray();
         usort($shift_calender_employee_data, array($this,'employeeSortByPDisplayPriority'));
         return api_response($request, null, 200, ['shift_calender_employee' => $shift_calender_employee_data, 'shift_calender_header' => $shift_calender_data['header'], 'total' => $total_data]);
     }
@@ -120,6 +126,28 @@ class ShiftCalenderController extends Controller
         return api_response($request, null, 200);
     }
 
+    public function dashboard(Request $request, ShiftCalenderRepository $shift_calender_repository)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        $total_active_employee_ids = $business->getActiveBusinessMember()->pluck('id')->toArray();
+        $under_general_attendance_count = $shift_calender_repository->where('business_member_id', $total_active_employee_ids)->where('is_general', 1)->where('date', '<', Carbon::now()->toDateString())->count();
+        $under_shift_count = $shift_calender_repository->where('business_member_id', $total_active_employee_ids)->where('is_shift', 1)->where('date', '<', Carbon::now()->toDateString())->count();
+        $unassigned_shift_count = $shift_calender_repository->where('business_member_id', $total_active_employee_ids)->where('is_unassigned', 1)->where('date', '>', Carbon::now()->toDateString())->count();
+
+        return api_response($request, null, 200, ['dashboard' => [
+            'total_employee' => count($total_active_employee_ids),
+            'under_general_attendance' => $under_general_attendance_count,
+            'under_shift_count' => $under_shift_count,
+            'unassigned_shift_count' => $unassigned_shift_count
+        ]]);
+    }
+
     public function details($business, $id, Request $request)
     {
         /** @var Business $business */
@@ -144,5 +172,13 @@ class ShiftCalenderController extends Controller
     {
         if ($a['display_priority'] < $b['display_priority']) return 0;
         return 1;
+    }
+
+    private function searchEmployeeByNameOrId($active_business_member, $search_key)
+    {
+        return $active_business_member->filter(function($item) use($search_key) {
+            return preg_match("/{$search_key}/i", $item['employee']['name']) || preg_match("/{$search_key}/i", $item['employee']['employee_id']);
+        });
+
     }
 }
