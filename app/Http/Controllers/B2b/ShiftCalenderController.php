@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Transformers\Business\EmployeeShiftDetailsTransformer;
+use App\Transformers\Business\ShiftCalenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -47,9 +48,17 @@ class ShiftCalenderController extends Controller
         $start_date = $request->start_date ?: Carbon::now()->addDay()->toDateString();
         $end_date = $request->end_date ?: Carbon::now()->addDays(7)->toDateString();
         $active_business_member = $business->getActiveBusinessMember();
+        if ($request->has('department_id')) {
+            $active_business_member = $active_business_member->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department_id);
+                });
+            });
+        }
         $active_business_member_ids = $active_business_member->pluck('id')->toArray();
 
         $shift_calender = $shift_calender_repository->builder()->whereIn('business_member_id', $active_business_member_ids)->whereBetween('date', [$start_date, $end_date]);
+        if ($request->has('shift_type')) $shift_calender = $shift_calender->where($request->shift_type, 1);
         $shift_calender_data = (new ShiftCalenderTransformer())->transform($shift_calender->get());
         $shift_calender_employee_data = collect($shift_calender_data['data'])->splice($offset, $limit);
         if ($request->has('search')) {
