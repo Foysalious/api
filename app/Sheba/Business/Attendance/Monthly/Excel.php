@@ -40,7 +40,7 @@ class Excel
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:Q1', function ($cells) {
+                $sheet->cell('A1:R1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
@@ -57,6 +57,7 @@ class Excel
             $this->data[] = [
                 'employee_id' => $employee['employee_id'],
                 'name' => $employee['member']['name'],
+                'email' => $employee['email'],
                 'dept' => $employee['department']['name'],
                 'working_days' => $employee['attendance']['working_days'],
                 'present' => $employee['attendance']['present'],
@@ -78,6 +79,6 @@ class Excel
 
     private function getHeaders()
     {
-        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave', 'Absent', 'Total Hours', 'Overtime', 'Joining Prorated', 'Leave Days', 'Late Days', 'Absent Days'];
+        return ['Employee ID', 'Employee Name', 'Employee Email', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave', 'Absent', 'Total Hours', 'Overtime', 'Joining Prorated', 'Leave Days', 'Late Days', 'Absent Days'];
     }
 }
