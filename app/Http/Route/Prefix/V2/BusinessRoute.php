@@ -420,6 +420,7 @@ class BusinessRoute
                     $api->get('/', 'B2b\ShiftCalenderController@index');
                     $api->group(['prefix' => '{id}'], function ($api) {
                         $api->post('/assign-shift', 'B2b\ShiftCalenderController@assignShift');
+                        $api->post('/assign-general-attendance', 'B2b\ShiftCalenderController@assignGeneralAttendance');
                     });
                 });
 
