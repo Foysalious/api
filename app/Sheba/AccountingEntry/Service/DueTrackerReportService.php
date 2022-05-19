@@ -319,7 +319,7 @@ class DueTrackerReportService
 
     public function getWebReportLink()
     {
-        $partner_url = env('SHEBA_PARTNER_URL');
+        $partner_url = env('SHEBA_PARTNER_END_URL');
         $report_link = $partner_url  . "/due-tracker/{$this->partner->id}/report?contact_id=$this->contact_id" .
             "&contact_type=$this->contact_type";
         return app()->make(UrlShortenerService::class)->shortUrl($report_link);
