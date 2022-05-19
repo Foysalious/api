@@ -1211,9 +1211,7 @@ class PartnerController extends Controller
         $slider = Slider::query()->where('id', $slider_id->slider_id)->first();
 //        dd($slider);
         $slide_id = $slider->slides()->get();
-        dd($slide_id);
         $images = Slide::where('id', 234)->select('id', 'image_link')->get();
-        dd($images);
 
         $data = [
             [
