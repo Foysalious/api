@@ -311,7 +311,8 @@ class OrderController extends Controller
                         ->setBusinessType(BusinessType::MARKETPLACE)
                         ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                         ->send($customer->profile->mobile, [
-                            'order_code' => $order->code()
+                            'order_code' => $order->code(),
+                            'order_link' => config('sheba.front_url').'/od/'.$order->jobs->last()->id ?? '',
                         ]);
                 }
             }
