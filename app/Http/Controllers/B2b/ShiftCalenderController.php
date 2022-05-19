@@ -101,7 +101,7 @@ class ShiftCalenderController extends Controller
             ->setIsShiftActivated(1)
             ->setColorCode($business_shift->color_code);
 
-//        return json_encode($shift_calender_requester->getEndTime());
+        return json_encode($this->shiftCalenderRequester->getEndTime());
         $this->shiftCalenderCreator->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_calender);
         return api_response($request, null, 200);
     }
@@ -169,7 +169,6 @@ class ShiftCalenderController extends Controller
         $shift_calender = $this->shiftCalenderRepository->find($id);
 
         if (!$shift_calender) return api_response($request, null, 404);
-//        return api_response($request, $shift_calender, 200, ['shift_calender' => $shift_calender->shift()]);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $member = new Item($shift_calender, new EmployeeShiftDetailsTransformer());

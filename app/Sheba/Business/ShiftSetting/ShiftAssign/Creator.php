@@ -27,12 +27,6 @@ class Creator
         $this->shiftCalenderRepository->update($shift_calender, $data);
     }
 
-    public function assignGeneral($calender)
-    {
-        $data = $this->makeData();
-        $this->shiftCalenderRepository->update($calender, $data);
-    }
-
     private function makeData()
     {
         return [
