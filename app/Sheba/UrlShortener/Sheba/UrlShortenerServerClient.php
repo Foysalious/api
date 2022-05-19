@@ -1,8 +1,6 @@
 <?php namespace Sheba\UrlShortener\Sheba;
 
-use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use App\Sheba\UrlShortener\Sheba\UrlShortenerServerError;
-use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
