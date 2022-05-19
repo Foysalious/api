@@ -52,7 +52,7 @@ class EntriesService
         return $this->entryRepo->setPartner($partner)->setEntryId($entryId)->deleteEntry();
     }
 
-    private function posOrderByOrderId(int $orderId): ?PosOrderObject
+    private function posOrderByOrderId(int $orderId)
     {
         try {
             /** @var PosOrderResolver $posOrderResolver */

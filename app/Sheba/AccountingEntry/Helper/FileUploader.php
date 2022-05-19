@@ -9,18 +9,17 @@ trait FileUploader
 {
     use CdnFileManager, FileManager;
 
-    public function uploadAttachments($request)
+    public function uploadAttachments($data)
     {
-        $attachments = $this->uploadFiles($request);
+        $attachments = $this->uploadFiles($data);
         return json_encode($attachments);
     }
 
 
-    private function uploadFiles($request): array
+    private function uploadFiles($files): array
     {
         $attachments = [];
-
-        if (isset($request->attachments) && !empty($request->attachments) && request()->hasFile('attachments')) {
+        if (!empty($files) && request()->hasFile('attachments')) {
             foreach (request()->file('attachments') as $key => $file) {
                 if (!empty($file)) {
                     list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
