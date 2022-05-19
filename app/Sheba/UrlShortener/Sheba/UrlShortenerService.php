@@ -20,7 +20,7 @@ class UrlShortenerService
     public function shortUrl($url)
     {
         try {
-            $response = $this->urlShortenerClient->post('generate-short-url',[
+            $response = $this->urlShortenerClient->post('generate-short-url/',[
                 'url' => $url
             ]);
             return $response['short_url'];
