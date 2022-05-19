@@ -15,6 +15,8 @@ class ShiftDetailsTransformer extends TransformerAbstract
             'start_time' => Carbon::parse($shift->start_time)->format('h:i A'),
             'start_grace_time' => $shift->checkin_grace_time,
             'end_time' => Carbon::parse($shift->end_time)->format('h:i A'),
+            'is_start_grace_enable' => $shift->checkin_grace_enable,
+            'is_end_grace_enable' => $shift->checkout_grace_enable,
             'end_grace_time' => $shift->checkout_grace_time,
             'is_half_day_active' => $shift->is_halfday_enable,
             'created_at' => $shift->created_at->format('h:i A d/m/Y'),
