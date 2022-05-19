@@ -183,7 +183,8 @@ class OrderController extends Controller
                     ->setBusinessType(BusinessType::SMANAGER)
                     ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                     ->send($partner->getContactNumber(), [
-                        'order_code' => $order->code(), 'partner_name' => $partner->name
+                        'order_code' => $order->code(), 'partner_name' => $partner->name,
+                        'order_link' => config('sheba.front_url').'od/'.$order->jobs->last()->id ?? '',
                     ]);
             }
         } catch (Throwable $e) {
