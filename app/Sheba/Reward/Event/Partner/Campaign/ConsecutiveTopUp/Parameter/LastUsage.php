@@ -11,7 +11,7 @@ class LastUsage extends CampaignEventParameter
     {
         if ($this->value == null) return;
 
-        $usage_timeframe = new TimeFrame($this->value->start . " 00:00:00", $this->value->end . " 23:59:59");
+        $usage_timeframe = (new TimeFrame())->forDateRange($this->value->start, $this->value->end);
 
         $usage_calculator = new TopUpDayUsageCalculator($usage_timeframe);
 
