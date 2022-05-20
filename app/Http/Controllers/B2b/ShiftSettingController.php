@@ -15,6 +15,8 @@ use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\ShiftSetting\Creator;
 use Sheba\Business\ShiftSetting\Requester;
 use Sheba\Business\ShiftSetting\ShiftAssign\ShiftRemover;
+use Sheba\Business\ShiftSetting\Updater;
+use Sheba\Business\ShiftCalendar\Updater as ShiftCalendarUpdater;
 use Sheba\Dal\BusinessShift\BusinessShiftRepository;
 use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
 use Sheba\Business\ShiftSetting\ShiftAssign\Requester as ShiftCalendarRequester;
@@ -116,6 +118,28 @@ class ShiftSettingController extends Controller
         $member = new Item($business_shift, new ShiftDetailsTransformer());
         $business_shift = $manager->createData($member)->toArray()['data'];
         return api_response($request, $business_shift, 200, ['shift_details' => $business_shift]);
+    }
+
+    public function updateColor($business, $id, Request $request, BusinessShiftRepository $business_shift_repository, ShiftCalenderRepository $shift_calender_repo, ShiftCalendarRequester $shift_calendar_requester, Requester $shift_requester, Updater $shift_updater, ShiftCalendarUpdater $shift_calendar_updater)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $business_shift = $business_shift_repository->find($id);
+        if (!$business_shift) return api_response($request, null, 404);
+        $shift_calender = $shift_calender_repo->where('shift_id', $business_shift->id)->where('date', '>', Carbon::now()->addDay()->toDateString())->get();
+        $shift_requester->setShift($business_shift)->setColor($request->color);
+        $shift_updater->setShiftRequester($shift_requester)->update();
+        $shift_calendar_requester->setColorCode($request->color);
+        foreach($shift_calender as $shift)
+        {
+            $shift_calendar_updater->setShiftCalenderRequester($shift_calendar_requester)->update($shift);
+        }
+
+        return api_response($request, null, 200);
     }
 
 }

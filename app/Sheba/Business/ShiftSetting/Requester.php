@@ -21,6 +21,8 @@ class Requester
     /*** @var BusinessShiftRepository  */
     private $businessShiftRepository;
     private $title;
+    private $shift;
+    private $color;
 
     public function __construct()
     {
@@ -137,6 +139,28 @@ class Requester
     public function getIsHalfDayActivated()
     {
         return $this->isHalfDayActivated;
+    }
+
+    public function setShift($shift)
+    {
+        $this->shift = $shift;
+        return $this;
+    }
+
+    public function getShift()
+    {
+        return $this->shift;
+    }
+
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+
+    public function getColor()
+    {
+        return $this->color;
     }
 
     private function checkUniqueName()
