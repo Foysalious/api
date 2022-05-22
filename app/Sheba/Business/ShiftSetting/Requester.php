@@ -172,8 +172,8 @@ class Requester
     private function checkShiftDuration()
     {
         $start_time = Carbon::parse($this->startTime);
-        $end_time = Carbon::parse($this->endTime);
-        $diff = $end_time->diffInHours($start_time);
+        $end_time = $this->startTime > $this->endTime ? Carbon::parse($this->endTime)->addDay() : Carbon::parse($this->endTime);
+        $diff = $start_time->diffInHours($end_time);
         if ($diff < 2 || $diff > 24) $this->setError(400, 'Shift duration cannot be less than 2hrs or more than 24hrs .');
     }
 }
