@@ -74,7 +74,11 @@ class ShiftCalenderController extends Controller
     {
         $this->validate($request, [
             'shift_id'                  => 'required|integer',
-            'date'                      => 'required|date_format:Y-m-d'
+            'repeat'                    => 'boolean',
+            'repeat_type'               => 'string',
+            'repeat_range'              => 'integer',
+            'days'                      => 'array',
+            'end_date'                  => 'date_format:Y-m-d'
         ]);
 
         /** @var Business $business */
@@ -90,7 +94,6 @@ class ShiftCalenderController extends Controller
 
         $business_shift = $this->businessShiftRepository->find($request->shift_id);
         $shift_calender = $this->shiftCalenderRepository->find($id);
-
         $this->shiftCalenderRequester->setShiftId($request->shift_id)
             ->setShiftName($business_shift->name)
             ->setStartTime($business_shift->start_time)
@@ -101,8 +104,8 @@ class ShiftCalenderController extends Controller
             ->setIsShiftActivated(1)
             ->setColorCode($business_shift->color_code);
 
-        return json_encode($this->shiftCalenderRequester->getEndTime());
-        $this->shiftCalenderCreator->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_calender);
+        $request->repeat ? $this->checkRepeat($request, $shift_calender, $business_member) : $this->checkAndAssign($shift_calender);
+        if ($this->shiftCalenderRequester->hasError()) return api_response($request, null, $this->shiftCalenderRequester->getErrorCode(), ['message' => $this->shiftCalenderRequester->getErrorMessage()]);
         return api_response($request, null, 200);
     }
 
@@ -120,13 +123,9 @@ class ShiftCalenderController extends Controller
 
         $this->setModifier($request->manager_member);
         $this->shiftCalenderRequester->setShiftId(null)
-            ->setShiftName(null)
-            ->setStartTime(null)
-            ->setEndTime(null)
             ->setIsHalfDayActivated(0)
             ->setIsGeneralActivated(1)
-            ->setIsShiftActivated(0)
-            ->setColorCode(null);
+            ->setIsShiftActivated(0);
 
         foreach($shift_calender as $as_shift)
         {
@@ -188,5 +187,78 @@ class ShiftCalenderController extends Controller
             return preg_match("/{$search_key}/i", $item['employee']['name']) || preg_match("/{$search_key}/i", $item['employee']['employee_id']);
         });
 
+    }
+
+    private function getDatesFromDayRepeat($start_date, $end_date, $repeat)
+    {
+        $dates = [];
+        $start_date = Carbon::parse($start_date);
+        $end_date = Carbon::parse($end_date);
+        for($date = $start_date->copy(); $date->lte($end_date); $date->addDays($repeat)) {
+            $dates[] = $date->format('Y-m-d');
+        }
+        return $dates;
+    }
+
+    private function getDatesFromWeekRepeat($start_date, $end_date, $repeat, $days)
+    {
+        $end_date = Carbon::parse($end_date);
+        foreach ($days as $day)
+        {
+            $day = date('N', strtotime($day));
+            $start_date = Carbon::parse($start_date)->next($day - 1);
+            for($date = $start_date->copy(); $date->lte($end_date); $date->addWeeks($repeat)) {
+                $dates[] = $date->format('Y-m-d');
+            }
+        }
+        return $dates;
+    }
+
+    private function checkEndTime()
+    {
+        $endTime = Carbon::parse($this->shiftCalenderRequester->getEndTime());
+        $check_time = Carbon::parse("22:00:00");
+        return $endTime->gte($check_time);
+    }
+
+    private function assignShiftCalender($shift_calender)
+    {
+        return $this->shiftCalenderCreator->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_calender);
+    }
+
+    private function checkRepeat($request, $shift_calender, $business_member)
+    {
+        $dates = [];
+        if($request->repeat_type == 'days')
+            $dates = $this->getDatesFromDayRepeat($shift_calender->date, $request->end_date, $request->repeat_range);
+        elseif ($request->repeat_type == 'weeks')
+            $dates = $this->getDatesFromWeekRepeat($shift_calender->date, $request->end_date, $request->repeat_range, $request->days);
+
+        foreach ($dates as $date)
+        {
+            $shift_calender = $this->shiftCalenderRepository->where('business_member_id', $business_member->id)->where('date', $date)->first();
+            $this->checkAndAssign($shift_calender);
+        }
+    }
+
+    private function checkAndAssign($shift_calender)
+    {
+        $this->checkEndTime() ? $this->checkNextDayShift($shift_calender) : $this->assignShiftCalender($shift_calender);
+    }
+
+    private function checkNextDayShift($shift_calender)
+    {
+        $next_date = Carbon::parse($shift_calender->date)->addDay()->toDateString();
+        $check_next_date_shift = $this->shiftCalenderRepository->where('business_member_id', $shift_calender->business_member_id)->where('date', $next_date)->first();
+
+        if($check_next_date_shift->shift_name) return $this->checkShiftTimeGap($check_next_date_shift, $shift_calender);
+        return $this->assignShiftCalender($shift_calender);
+    }
+
+    private function checkShiftTimeGap($check_next_date_shift, $shift_calender)
+    {
+        $endTime = Carbon::parse($this->shiftCalenderRequester->getEndTime());
+        $next_day_start_time = Carbon::parse($check_next_date_shift->start_time)->addDay();
+        return $next_day_start_time->diffInHours($endTime) >= 2 ? $this->assignShiftCalender($shift_calender) : $this->shiftCalenderRequester->setShiftAssignError();
     }
 }

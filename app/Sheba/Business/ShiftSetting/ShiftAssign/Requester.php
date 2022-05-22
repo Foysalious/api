@@ -33,7 +33,6 @@ class Requester
     public function setShiftId($shiftId)
     {
         $this->shiftId = $shiftId;
-//        $this->checkExistingShift();
         return $this;
     }
 
@@ -72,7 +71,6 @@ class Requester
 
     public function getEndTime()
     {
-//        return $this->checkTimeGap();
         return $this->endTime;
     }
 
@@ -131,16 +129,8 @@ class Requester
         return $this->colorCode;
     }
 
-    private function checkExistingShift()
+    public function setShiftAssignError()
     {
-//        $this->shiftCalenderRepository->where('')
-//        $this->setError(400);
-    }
-
-    private function checkTimeGap()
-    {
-        $endTime = Carbon::parse($this->endTime);
-        $check_time = Carbon::parse("22:00:00");
-        return $endTime->gte($check_time);
+        $this->setError(400, "Could not assign shift because it overlaps with another shift.");
     }
 }
