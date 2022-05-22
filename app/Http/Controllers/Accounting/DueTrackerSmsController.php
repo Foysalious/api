@@ -82,4 +82,11 @@ class DueTrackerSmsController extends Controller
             ->sendBulkSmsThroughJob();
         return http_response($request, null, 200, ['data' => true ]);
     }
+
+    public function checkSmsSubscription(Request $request)
+    {
+        $response = $this->dueTrackerSmsService->setPartner($request->partner)->checkSmsSubscription($request->sending_sms_count);
+        return http_response($request, null, 200, ['data' => $response  ]);
+
+    }
 }

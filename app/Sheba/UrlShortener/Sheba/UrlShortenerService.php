@@ -2,6 +2,7 @@
 
 namespace App\Sheba\UrlShortener\Sheba;
 
+use Exception;
 use Sheba\UrlShortener\Sheba\UrlShortenerServerClient;
 
 class UrlShortenerService
@@ -13,12 +14,20 @@ class UrlShortenerService
         $this->urlShortenerClient = $client;
     }
 
+    /**
+     * @throws UrlShortenerServerError
+     */
     public function shortUrl($url)
     {
-        return '';
-        $response = $this->urlShortenerClient->post('generate-short-url',[
-            'url' => $url
-        ]);
-        return $response['short_url'];
+        try {
+            $response = $this->urlShortenerClient->post('generate-short-url/',[
+                'url' => $url
+            ]);
+            return $response['short_url'];
+        } catch (UrlShortenerServerError $error) {
+            return '';
+        } catch (Exception $e) {
+            throw new $e;
+        }
     }
 }

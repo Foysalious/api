@@ -251,20 +251,20 @@ class DueTrackerReportService
         $list = array();
         foreach($data['data']['due_list'] as $key => $value){
             $split = explode("-",$key);
-            $keybn = banglaMonth($split[1]).' '.NumberLanguageConverter::en2bn($split[0]);
+            $key_bn = banglaMonth($split[1]).' '.NumberLanguageConverter::en2bn($split[0]);
             foreach($value['list'] as $key1 => $v){
                 $entry_at = date_create($v['entry_at']);
                 $created_at = date_create($v['created_at']);
-                $list[$keybn]['list'][$key1]['amount_bn'] = NumberLanguageConverter::en2bn($v['amount']);
-                $list[$keybn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($v['balance']);
-                $list[$keybn]['list'][$key1]['entry_at_bn'] = dateEn2Bn(date_format($entry_at,"y-m-d"),'d/m');
-                $list[$keybn]['list'][$key1]['created_at_bn'] = dateEn2Bn(date_format($created_at,"y-m-d"),'d M Y');
-                $list[$keybn]['list'][$key1]['note'] = $v['note'];
-                $list[$keybn]['list'][$key1]['account_type'] = $v['account_type'];
+                $list[$key_bn]['list'][$key1]['amount_bn'] = NumberLanguageConverter::en2bn($v['amount']);
+                $list[$key_bn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($v['balance']);
+                $list[$key_bn]['list'][$key1]['entry_at_bn'] = dateEn2Bn(date_format($entry_at,"y-m-d"),'d/m');
+                $list[$key_bn]['list'][$key1]['created_at_bn'] = dateEn2Bn(date_format($created_at,"y-m-d"),'d M Y');
+                $list[$key_bn]['list'][$key1]['note'] = $v['note'];
+                $list[$key_bn]['list'][$key1]['account_type'] = $v['account_type'];
             }
-            $list[$keybn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['receivable']);
-            $list[$keybn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['payable']);
-            $list[$keybn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($value['stats']['total_transactions']);
+            $list[$key_bn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['receivable']);
+            $list[$key_bn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['payable']);
+            $list[$key_bn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($value['stats']['total_transactions']);
         }
         $data['data']['due_list_bn']=$list;
         return $data;
@@ -300,18 +300,18 @@ class DueTrackerReportService
         $list = array();
         foreach($data['data']['due_list'] as $key => $value){
             $split = explode("-",$key);
-            $keybn = banglaMonth($split[1]).' '.NumberLanguageConverter::en2bn($split[0]);
+            $key_bn = banglaMonth($split[1]).' '.NumberLanguageConverter::en2bn($split[0]);
             foreach($value['list'] as $key1 => $v){
                 $entry_at = date_create($v['entry_at']);
-                $list[$keybn]['list'][$key1]['contact_name'] = $v['contact_name'];
-                $list[$keybn]['list'][$key1]['entry_at_bn'] = dateEn2Bn(date_format($entry_at,"y-m-d"),"d/m");
-                $list[$keybn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($v['balance']);
-                $list[$keybn]['list'][$key1]['balance_type'] = NumberLanguageConverter::en2bn($v['balance_type']);
+                $list[$key_bn]['list'][$key1]['contact_name'] = $v['contact_name'];
+                $list[$key_bn]['list'][$key1]['entry_at_bn'] = dateEn2Bn(date_format($entry_at,"y-m-d"),"d/m");
+                $list[$key_bn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($v['balance']);
+                $list[$key_bn]['list'][$key1]['balance_type'] = NumberLanguageConverter::en2bn($v['balance_type']);
             }
-            $list[$keybn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($value['stats']['total_transactions']);
-            $list[$keybn]['stats']['balance'] =  NumberLanguageConverter::en2bn($value['stats']['balance']);
-            $list[$keybn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['receivable']);
-            $list[$keybn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['payable']);
+            $list[$key_bn]['stats']['total_transactions_bn'] =  NumberLanguageConverter::en2bn($value['stats']['total_transactions']);
+            $list[$key_bn]['stats']['balance'] =  NumberLanguageConverter::en2bn($value['stats']['balance']);
+            $list[$key_bn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['receivable']);
+            $list[$key_bn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['payable']);
         }
         $data['data']['due_list_bn']=$list;
         return $data;
@@ -319,8 +319,7 @@ class DueTrackerReportService
 
     public function getWebReportLink()
     {
-        return '';
-        $partner_url = env('SHEBA_PARTNER_URL');
+        $partner_url = env('SHEBA_PARTNER_END_URL');
         $report_link = $partner_url  . "/due-tracker/{$this->partner->id}/report?contact_id=$this->contact_id" .
             "&contact_type=$this->contact_type";
         return app()->make(UrlShortenerService::class)->shortUrl($report_link);

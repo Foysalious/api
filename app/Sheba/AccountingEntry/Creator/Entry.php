@@ -64,7 +64,7 @@ class Entry
         $data['updated_entry_amount'] = $this->entryDto->updated_entry_amount ?? 0;
         $data['entry_at'] = $this->entryDto->entry_at ?? Carbon::now()->format('Y-m-d H:i:s');
         $data['attachments'] = isset($this->entryDto->attachments) ?
-            $this->uploadAttachments($this->entryDto->attachments) : null;
+            $this->uploadAttachments($this->entryDto->attachments) : json_encode([]);
         $data['total_discount'] = isset($this->entryDto->total_discount) ? (double)$this->entryDto->total_discount : 0;
         $data['total_vat'] = isset($this->entryDto->total_vat) ? (double)$this->entryDto->total_vat : 0;
         $data['delivery_charge'] = isset($this->entryDto->delivery_charge) ? (double)$this->entryDto->delivery_charge : 0;
