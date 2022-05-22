@@ -46,6 +46,8 @@ class MtbSavePrimaryInformation
      * @var PartnerMefInformation
      */
     private $partnerMefInformation;
+    private $mtbThana;
+    private $code;
 
 
     public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
@@ -96,9 +98,21 @@ class MtbSavePrimaryInformation
         $division = Division::where('bn_name', $string[0])->first()->name;
         $district = District::where('bn_name', $string[1])->first()->name;
         $thana = Thana::where('bn_name', $string[2])->first()->name;
+        $this->mtbThana = $thana;
         array_push($divisionDistrictThana, $division, $district, $thana);
         return $divisionDistrictThana;
 
+    }
+
+    public function getCode()
+    {
+        $thanaInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
+        for ($i = 0; $i < count($thanaInformation); $i++) {
+            if ($thanaInformation[$i]->thana == $this->mtbThana) {
+                $this->code = $thanaInformation[$i]->branch_code;
+            }
+        }
+        return $this->code;
     }
 
     private function makePrimaryInformation($reference, $otp): array
@@ -128,7 +142,7 @@ class MtbSavePrimaryInformation
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
                 'tradeLicenseExists' => $tradeLicenseExist,
                 'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
-                'param1' => "0096",
+                'param1' => strval($this->getCode()),
                 'param2' => $reference,
                 'param3' => $this->partner->getFirstAdminResource()->profile->mobile,
                 'param4' => $otp,
@@ -187,6 +201,7 @@ class MtbSavePrimaryInformation
         if ($data != 100)
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data . " completed"]);
         $data = $this->makePrimaryInformation($request->reference, $request->otp);
+        if (!$this->getCode()) return http_response($request, null, 403, ['message' => 'Thana Not Matched']);
         $response = $this->client->post(QRPaymentStatics::MTB_SAVE_PRIMARY_INFORMATION, $data, AuthTypes::BARER_TOKEN);
         if (!isset($response['ticketId'])) {
             if (isset($response['responseMessage']))
