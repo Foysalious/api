@@ -415,6 +415,7 @@ class BusinessRoute
                         $api->delete('/', 'B2b\ShiftSettingController@delete');
                         $api->get('/', 'B2b\ShiftSettingController@details');
                         $api->post('/color', 'B2b\ShiftSettingController@updateColor');
+                        $api->post('/update', 'B2b\ShiftSettingController@updateShift');
                     });
                 });
                 $api->group(['prefix' => 'shift-calender'], function ($api) {

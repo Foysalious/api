@@ -132,7 +132,7 @@ class ShiftSettingController extends Controller
         if (!$business_shift) return api_response($request, null, 404);
         $shift_calender = $shift_calender_repo->where('shift_id', $business_shift->id)->where('date', '>', Carbon::now()->addDay()->toDateString())->get();
         $shift_requester->setShift($business_shift)->setColor($request->color);
-        $shift_updater->setShiftRequester($shift_requester)->update();
+        $shift_updater->setShiftRequester($shift_requester)->updateColor();
         $shift_calendar_requester->setColorCode($request->color);
         foreach($shift_calender as $shift)
         {
@@ -142,4 +142,47 @@ class ShiftSettingController extends Controller
         return api_response($request, null, 200);
     }
 
+    public function updateShift($business, $id, Request $request, Requester $shift_requester, BusinessShiftRepository $business_shift_repository, Updater $shift_updater)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        $this->validate($request, [
+            'name' => 'required|string',
+            'start_time' => 'required|date_format:H:i',
+            'end_time' => 'required|date_format:H:i',
+            'is_checkin_grace_allow' => 'required|in:0,1',
+            'is_checkout_grace_allow' => 'required|in:0,1',
+            'checkin_grace_time' => 'required_if:is_checkin_grace_allow, == , 1',
+            'checkout_grace_time' => 'required_if:is_checkout_grace_allow, == , 1',
+            'is_half_day' => 'required|in:0,1'
+        ]);
+        $business_shift = $business_shift_repository->find($id);
+        if (!$business_shift) return api_response($request, null, 404);
+
+        $this->setModifier($business_member->member);
+
+        $shift_requester->setBusiness($business)
+            ->setShift($business_shift)
+            ->setName($request->name);
+        $shift_requester->checkUniqueName();
+        if ($shift_requester->hasError()) return api_response($request, null, $shift_requester->getErrorCode(), ['message' => $shift_requester->getErrorMessage()]);
+        $shift_requester->setTitle($request->title)
+            ->setStartTime($request->start_time)
+            ->setEndTime($request->end_time);
+        if ($shift_requester->hasError()) return api_response($request, null, $shift_requester->getErrorCode(), ['message' => $shift_requester->getErrorMessage()]);
+        $shift_requester->setIsCheckInGraceAllowed($request->is_checkin_grace_allow)
+            ->setIsCheckOutGraceAllowed($request->is_checkout_grace_allow)
+            ->setCheckInGraceTime($request->checkin_grace_time)
+            ->setCheckOutGraceTime($request->checkout_grace_time)
+            ->setIsHalfDayActivated($request->is_half_day)
+            ->shiftConflictCheck();
+        if ($shift_requester->hasError()) return api_response($request, null, $shift_requester->getErrorCode(), ['message' => $shift_requester->getErrorMessage()]);
+        $shift_updater->setShiftRequester($shift_requester)->update();
+        return api_response($request, null, 200);
+    }
 }
