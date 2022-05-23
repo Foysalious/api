@@ -5,7 +5,9 @@ namespace App\Jobs\Partner;
 use App\Jobs\Job;
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 
 class DueTrackerBulkSmsSend extends Job implements ShouldQueue
 {
@@ -25,6 +27,10 @@ class DueTrackerBulkSmsSend extends Job implements ShouldQueue
         $this->contactType = $contactType;
     }
 
+    /**
+     * @throws InsufficientBalance
+     * @throws WalletDebitForbiddenException
+     */
     public function handle()
     {
         $service = app()->make(DueTrackerSmsService::class);
