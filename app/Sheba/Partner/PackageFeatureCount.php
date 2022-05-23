@@ -1,5 +1,7 @@
 <?php namespace App\Sheba\Partner;
 
+use Exception;
+
 class PackageFeatureCount
 {
     const TOPUP = 'topup';
@@ -28,10 +30,13 @@ class PackageFeatureCount
     /**
      * @param $feature
      * @return $this
+     * @throws Exception
      */
     public function setFeature($feature)
     {
         $this->feature = $feature;
+        $this->validateFeatureName($this->feature);
+
         return $this;
     }
 
@@ -40,10 +45,7 @@ class PackageFeatureCount
      */
     public function featureCurrentCount()
     {
-        if ($this->feature == self::DELIVERY || $this->feature == self::SMS || $this->feature == self::TOPUP) {
-            return $this->featureCounter->getCurrentCount($this->feature, $this->partner);
-        }
-        return 'Please enter correct feature name';
+        return $this->featureCounter->getCurrentCount($this->feature, $this->partner);
     }
 
     /**
@@ -52,10 +54,7 @@ class PackageFeatureCount
      */
     public function incrementFeatureCount($count)
     {
-        if ($this->feature == self::DELIVERY || $this->feature == self::SMS || $this->feature == self::TOPUP) {
-            return $this->featureCounter->incrementCount($this->feature, $this->partner, $count);
-        }
-        return 'Please enter correct feature name';
+        return $this->featureCounter->incrementCount($this->feature, $this->partner, $count);
     }
 
     /**
@@ -64,9 +63,15 @@ class PackageFeatureCount
      */
     public function decrementFeatureCount($count)
     {
-        if ($this->feature == self::DELIVERY || $this->feature == self::SMS || $this->feature == self::TOPUP) {
-            return $this->featureCounter->decrementCount($this->feature, $this->partner, $count);
+        return $this->featureCounter->decrementCount($this->feature, $this->partner, $count);
+    }
+
+    private function validateFeatureName($feature)
+    {
+        if ($feature == self::DELIVERY || $feature == self::SMS || $feature == self::TOPUP) {
+            return true;
+        } else {
+            throw new Exception('You have tried with incorrect feature name');
         }
-        return 'Please enter correct feature name';
     }
 }
