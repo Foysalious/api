@@ -40,6 +40,7 @@ class PartnerSubscriptionBilling
     public  $runningCycleNumber;
     private $partnerTransactionHandler;
     public  $partnerBonusHandler;
+    public  $old_next_billing_date;
     public  $today;
     public  $refundAmount;
     public  $packagePrice;
@@ -75,6 +76,7 @@ class PartnerSubscriptionBilling
         $this->partner                         = $partner;
         $this->partnerTransactionHandler       = new PartnerTransactionHandler($this->partner);
         $this->partnerBonusHandler             = new PaymentByBonusAndWallet($this->partner, $this->partner->subscription);
+        $this->old_next_billing_date           = $this->partner->next_billing_date;
         $this->today                           = Carbon::today();
         $this->refundAmount                    = 0;
         $this->isCollectAdvanceSubscriptionFee = $this->partner->isAlreadyCollectedAdvanceSubscriptionFee();
