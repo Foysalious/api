@@ -1,10 +1,12 @@
 <?php namespace App\Sheba\Business\CoWorker;
 
-use App\Transformers\Business\CoWorkerManagerListTransformer;
-use App\Transformers\CustomSerializer;
+use App\Models\BusinessDepartment;
+use App\Models\BusinessRole;
+use App\Models\Member;
+use App\Models\Profile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
-use League\Fractal\Manager;
-use League\Fractal\Resource\Item;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Repositories\Business\BusinessMemberRepository;
 
 class ManagerSubordinateEmployeeList
@@ -23,30 +25,29 @@ class ManagerSubordinateEmployeeList
      * @param null $is_employee_active
      * @return array
      */
-    public function get($business_member, $department = null, $is_employee_active = null)
+    public function get($business_member, $department = null, $is_employee_active = null): array
     {
+        $managers = [];
+        $this->getManager($business_member->id, $managers, $business_member->id);
         $managers_data = [];
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-
-        /** @var  $first_level_managers */
-        $first_level_managers = $this->getCoWorkersUnderSpecificManager($business_member->id);
-        if ($first_level_managers->count() > 0)
-            foreach ($first_level_managers as $first_level_manager) {
-                $resource = new Item($first_level_manager, new CoWorkerManagerListTransformer());
-                $managers_data[] = $manager->createData($resource)->toArray()['data'];
-
-                /** @var  $second_level_managers */
-                $second_level_managers = $this->getCoWorkersUnderSpecificManager($first_level_manager->id);
-                if ($second_level_managers->count() > 0)
-                    foreach ($second_level_managers as $second_level_manager) {
-                        $resource = new Item($second_level_manager, new CoWorkerManagerListTransformer());
-                        $managers_data[] = $manager->createData($resource)->toArray()['data'];
-                    }
-            }
-        $managers_data = $this->uniqueManagerData($managers_data);
+        foreach ($managers as $manager) $managers_data[] = $this->formatSubordinateList($manager);
         if ($department) return $this->filterEmployeeByDepartment($business_member, $managers_data, $is_employee_active);
         return $managers_data;
+    }
+
+    /**
+     * @param $business_member_id
+     * @param $managers
+     * @param $root_manager_id
+     */
+    public function getManager($business_member_id, &$managers, $root_manager_id)
+    {
+        $sub_ordinates = $this->getCoWorkersUnderSpecificManager($business_member_id);
+        foreach ($sub_ordinates as $sub_ordinate) {
+            if (array_key_exists($sub_ordinate->id, $managers) || $sub_ordinate->id == $root_manager_id) continue;
+            $managers[$sub_ordinate->id] = $sub_ordinate;
+            $this->getManager($sub_ordinate->id, $managers, $root_manager_id);
+        }
     }
 
     /**
@@ -55,7 +56,9 @@ class ManagerSubordinateEmployeeList
      */
     private function getCoWorkersUnderSpecificManager($business_member_id)
     {
-        return $this->businessMemberRepository->where('manager_id', $business_member_id)->get();
+        return $this->businessMemberRepository->where('manager_id', $business_member_id)
+            ->where('status', 'active')
+            ->get();
     }
 
     /**
@@ -99,5 +102,29 @@ class ManagerSubordinateEmployeeList
         return array_filter($unique_managers_data, function ($manager_data) use ($business_member) {
             return ($manager_data['id'] != $business_member->id);
         });
+    }
+
+    private function formatSubordinateList($business_member)
+    {
+        /** @var Member $member */
+        $member = $business_member->member;
+        /** @var Profile $profile */
+        $profile = $member->profile;
+        /** @var BusinessRole $role */
+        $role = $business_member->role;
+        /** @var BusinessDepartment $department */
+        $department = $role ? $role->businessDepartment : null;
+
+        return [
+            'id' => $business_member->id,
+            'name' => $profile->name,
+            'pro_pic' => $profile->pro_pic,
+            'phone' => $business_member->mobile,
+            'designation' => $role ? $role->name : null,
+            'department_id' => $department ? $department->id : null,
+            'department' => $department ? $department->name : null,
+            'manager_id' => $business_member->manager_id,
+            'is_active' => $business_member->status === Statuses::ACTIVE ? 1 : 0
+        ];
     }
 }

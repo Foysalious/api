@@ -6,6 +6,14 @@ use Carbon\Carbon;
 
 class PaymentLinkTransactionDetailsTransformer
 {
+    private function mutateStatus($status)
+    {
+        if ($status == "initiated" || $status == "validated") return 'processed';
+        if ($status == "initiation_failed" || $status == "validation_failed" || $status == "failed" || $status == "cancelled") return 'failed';
+        if ($status == "completed") return 'completed';
+        return 'processed';
+    }
+
     public function transform($payment, $link)
     {
         return [
@@ -23,7 +31,7 @@ class PaymentLinkTransactionDetailsTransformer
             'customer_number' => $payment->payable->getMobile(),
             'payment_code' => '#' . $payment->id,
             'amount' => $payment->payable->amount,
-            'status' => $payment->status,
+            'status' => $this->mutateStatus($payment->status),
             'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
 
         ];

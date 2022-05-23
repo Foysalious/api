@@ -62,6 +62,12 @@ return [
             'bucket' => env('S3_BUCKET'),
         ],
 
+        'exports' => [
+            'driver' => 'local',
+            'root' => public_path('exports'),
+            'visibility' => 'public',
+        ],
+
     ],
 
 ];

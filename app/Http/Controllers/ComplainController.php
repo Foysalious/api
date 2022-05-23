@@ -109,6 +109,7 @@ class ComplainController extends Controller
 
             if ($complain) {
                 $comments = $this->formationComments($complain->comments);
+                if ($complain->status == constants('COMPLAIN_STATUSES')['Rejected']) $complain['status'] = 'Closed';
                 $complain['comments'] = $comments;
                 $complain['code'] = $complain->code();
                 return api_response($request, null, 200, ['complain' => $complain]);

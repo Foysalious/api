@@ -87,7 +87,7 @@ class ApiLogger
             if (!array_key_exists('avatar', $data) || empty($data['avatar'])) {
                 if ($portal == 'bondhu-app' && (array_key_exists('affiliate', $data) && !empty($data['affiliate']))) {
                     $data['avatar'] = ['type' => 'affiliate', 'type_id' => $data['affiliate']['id']];
-                } elseif ($portal == 'employee-app' && (array_key_exists('business_member', $data) && !empty($data['business_member']))) {
+                } elseif (in_array($portal, ['employee-app', 'business-portal']) && (array_key_exists('business_member', $data) && !empty($data['business_member']))) {
                     $data['avatar'] = ['type' => 'employee', 'type_id' => $data['business_member']['id']];
                 } elseif ($portal == 'customer-app' && (array_key_exists('customer', $data) && !empty($data['customer']))) {
                     $data['avatar'] = ['type' => 'customer', 'type_id' => $data['customer']['id']];
