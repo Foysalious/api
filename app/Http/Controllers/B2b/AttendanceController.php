@@ -196,7 +196,9 @@ class AttendanceController extends Controller
                 $start_date = Carbon::now()->startOfMonth()->toDateString();
                 $end_date = Carbon::now()->endOfMonth()->toDateString();
             }
-            $member_name = $business_member->member->profile->name;
+            $member = $business_member->member;
+            $profile = $member->profile;
+            $member_name = $profile->name;
             /** @var BusinessMember $business_member */
             $member_department = $business_member->role ? $business_member->role->businessDepartment : null;
             $department_name = $member_department ? $member_department->name : 'N/S';
@@ -212,12 +214,13 @@ class AttendanceController extends Controller
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
             $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, false))->transform($attendances);
 
-            array_push($all_employee_attendance, [
+            $all_employee_attendance[] = [
                 'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
+                'email' => $profile->email,
                 'status' => $business_member->status,
                 'member' => [
-                    'id' => $business_member->member->id,
+                    'id' => $member->id,
                     'name' => $member_name,
                 ],
                 'department' => [
@@ -226,7 +229,7 @@ class AttendanceController extends Controller
                 ],
                 'attendance' => $employee_attendance['statistics'],
                 'joining_prorated' => $joining_prorated ? 'Yes' : 'No'
-            ]);
+            ];
 
         }
 

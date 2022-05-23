@@ -47,8 +47,8 @@ class Creator
     private function getColorCode()
     {
         $colors = config('b2b.SHIFT_COLORS');
-        $existing_colors = $this->businessShiftRepository->where('business_id', $this->shiftRequester->getBusiness()->id)->pluck('color_code')->toArray();
+        $existing_colors = $this->businessShiftRepository->where('business_id', $this->shiftRequester->getBusiness()->id)->groupBy('color_code')->pluck('color_code')->toArray();
         $unique_colors = array_diff($colors,$existing_colors);
-        return $unique_colors[rand(0, count($unique_colors))];
+        return $unique_colors[array_rand($unique_colors)];
     }
 }

@@ -415,10 +415,17 @@ class BusinessRoute
                     $api->group(['prefix' => '{id}'], function ($api) {
                         $api->delete('/', 'B2b\ShiftSettingController@delete');
                         $api->get('/', 'B2b\ShiftSettingController@details');
+                        $api->post('/color', 'B2b\ShiftSettingController@updateColor');
                     });
                 });
                 $api->group(['prefix' => 'shift-calender'], function ($api) {
                     $api->get('/', 'B2b\ShiftCalenderController@index');
+                    $api->get('/dashboard', 'B2b\ShiftCalenderController@dashboard');
+                    $api->group(['prefix' => '{id}'], function ($api) {
+                        $api->get('/', 'B2b\ShiftCalenderController@details');
+                        $api->post('/assign-shift', 'B2b\ShiftCalenderController@assignShift');
+                        $api->post('/assign-general-attendance', 'B2b\ShiftCalenderController@assignGeneralAttendance');
+                    });
                 });
 
                 $api->group(['prefix' => 'live-tracking'], function ($api) {

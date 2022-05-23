@@ -21,6 +21,8 @@ class Requester
     /*** @var BusinessShiftRepository  */
     private $businessShiftRepository;
     private $title;
+    private $shift;
+    private $color;
 
     public function __construct()
     {
@@ -139,6 +141,28 @@ class Requester
         return $this->isHalfDayActivated;
     }
 
+    public function setShift($shift)
+    {
+        $this->shift = $shift;
+        return $this;
+    }
+
+    public function getShift()
+    {
+        return $this->shift;
+    }
+
+    public function setColor($color)
+    {
+        $this->color = $color;
+        return $this;
+    }
+
+    public function getColor()
+    {
+        return $this->color;
+    }
+
     private function checkUniqueName()
     {
         $existing_shift = $this->businessShiftRepository->where('business_id', $this->business->id)->where('name', $this->name)->first();
@@ -148,8 +172,8 @@ class Requester
     private function checkShiftDuration()
     {
         $start_time = Carbon::parse($this->startTime);
-        $end_time = Carbon::parse($this->endTime);
-        $diff = $end_time->diffInHours($start_time);
+        $end_time = $this->startTime > $this->endTime ? Carbon::parse($this->endTime)->addDay() : Carbon::parse($this->endTime);
+        $diff = $start_time->diffInHours($end_time);
         if ($diff < 2 || $diff > 24) $this->setError(400, 'Shift duration cannot be less than 2hrs or more than 24hrs .');
     }
 }
