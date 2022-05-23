@@ -226,7 +226,7 @@ class DueTrackerSmsService
 
     public function sendBulkSmsThroughJob()
     {
-        dispatchJobNow(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
+        dispatch(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
     }
 
     /**
