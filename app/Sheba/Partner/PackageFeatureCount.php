@@ -8,6 +8,8 @@ class PackageFeatureCount
     const SMS = 'sms';
     const DELIVERY = 'delivery';
 
+
+
     private $partner;
     private $feature;
     private $featureCounter;
@@ -52,16 +54,16 @@ class PackageFeatureCount
      * @param $count
      * @return string
      */
-    public function incrementFeatureCount($count)
+    public function incrementFeatureCount(int $count=1)
     {
         return $this->featureCounter->incrementCount($this->feature, $this->partner, $count);
     }
 
     /**
-     * @param $count
+     * @param int $count
      * @return string
      */
-    public function decrementFeatureCount($count)
+    public function decrementFeatureCount(int $count=1)
     {
         return $this->featureCounter->decrementCount($this->feature, $this->partner, $count);
     }
