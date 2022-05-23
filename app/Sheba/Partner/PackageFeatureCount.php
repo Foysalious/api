@@ -8,8 +8,6 @@ class PackageFeatureCount
     const SMS = 'sms';
     const DELIVERY = 'delivery';
 
-
-
     private $partner;
     private $feature;
     private $featureCounter;
@@ -68,6 +66,11 @@ class PackageFeatureCount
         return $this->featureCounter->decrementCount($this->feature, $this->partner, $count);
     }
 
+    /**
+     * @param $feature
+     * @return bool
+     * @throws Exception
+     */
     private function validateFeatureName($feature)
     {
         if ($feature == self::DELIVERY || $feature == self::SMS || $feature == self::TOPUP) {

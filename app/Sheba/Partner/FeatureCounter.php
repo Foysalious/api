@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Partner;
 
-use Exception;
+use DB;
+use Illuminate\Database\QueryException;
 use Sheba\Dal\PartnerPackageFeatureCounter\EloquentImplementation as PartnerPackageFeatureCounter;
 use Sheba\ModificationFields;
 
@@ -36,10 +37,18 @@ class FeatureCounter
         $features_count_model = $this->allFeaturesCount($partner);
         $feature_count = $features_count_model[$feature];
 
-        $updated_count = $feature_count + $count;
-        $data[$feature] = $updated_count;
-        $features_count_model->update($this->withUpdateModificationField($data));
-        return $updated_count;
+        try {
+            DB::transaction(function () use($feature_count, $count, $feature, $features_count_model) {
+                $updated_count = $feature_count + $count;
+                $data[$feature] = $updated_count;
+                $features_count_model->update($this->withUpdateModificationField($data));
+            });
+
+            return ucfirst($feature) . " count has updated successfully!";
+        } catch (QueryException $e) {
+            return $e->getMessage();
+        }
+
     }
 
     /**
@@ -47,21 +56,22 @@ class FeatureCounter
      * @param $partner
      * @param $count
      * @return string
-     * @throws Exception
      */
     public function decrementCount($feature, $partner, $count)
     {
         $features_count_model = $this->allFeaturesCount($partner);
         $feature_count = $features_count_model[$feature];
 
-        if ($feature_count >= $count) {
-            $updated_count = $feature_count - $count;
-            $data[$feature] = $updated_count;
-            $features_count_model->update($this->withUpdateModificationField($data));
-            return $updated_count;
-        } else {
-            $message = "you don't have sufficient {$feature}";
-            throw new Exception($message);
+        try {
+            DB::transaction(function () use($feature_count, $count, $feature, $features_count_model) {
+                $updated_count = $feature_count - $count;
+                $data[$feature] = $updated_count;
+                $features_count_model->update($this->withUpdateModificationField($data));
+            });
+
+            return ucfirst($feature) . " count has updated successfully!";
+        } catch (QueryException $e) {
+            return $e->getMessage();
         }
     }
 
