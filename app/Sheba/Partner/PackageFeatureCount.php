@@ -1,49 +1,72 @@
 <?php namespace App\Sheba\Partner;
 
-use Sheba\Dal\PartnerPackageFeatureCounter\EloquentImplementation as PartnerPackageFeatureCounter;
-use Sheba\ModificationFields;
-
 class PackageFeatureCount
 {
-    use ModificationFields;
+    const TOPUP = 'topup';
+    const SMS = 'sms';
+    const DELIVERY = 'delivery';
 
-    protected $partnerPackageFeatureCounter;
+    private $partner;
+    private $feature;
+    private $featureCounter;
 
-    public function __construct(PartnerPackageFeatureCounter $partnerPackageFeatureCounter)
+    public function __construct(FeatureCounter $featureCounter)
     {
-        $this->partnerPackageFeatureCounter = $partnerPackageFeatureCounter;
+        $this->featureCounter = $featureCounter;
+    }
+
+    /**
+     * @param $partner
+     * @return $this
+     */
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
     }
 
     /**
      * @param $feature
-     * @param $partner
-     * @return mixed
+     * @return $this
      */
-    public function featureCurrentCount($feature, $partner)
+    public function setFeature($feature)
     {
-        return $this->allFeaturesCount($partner)->$feature;
+        $this->feature = $feature;
+        return $this;
     }
 
     /**
-     * @param $feature
-     * @param $updated_count
-     * @param $partner
-     * @return bool
+     * @return mixed
      */
-    public function featureCountUpdate($feature, $updated_count, $partner): bool
+    public function featureCurrentCount()
     {
-        $features_count = $this->allFeaturesCount($partner);
-        $data[$feature] = $updated_count;
-        $features_count->update($this->withUpdateModificationField($data));
-        return true;
+        if ($this->feature == self::DELIVERY || $this->feature == self::SMS || $this->feature == self::TOPUP) {
+            return $this->featureCounter->getCurrentCount($this->feature, $this->partner);
+        }
+        return 'Please enter correct feature name';
     }
 
     /**
-     * @param $partner
-     * @return mixed
+     * @param $count
+     * @return string
      */
-    private function allFeaturesCount($partner)
+    public function incrementFeatureCount($count)
     {
-        return $this->partnerPackageFeatureCounter->where('partner_id', $partner)->first();
+        if ($this->feature == self::DELIVERY || $this->feature == self::SMS || $this->feature == self::TOPUP) {
+            return $this->featureCounter->incrementCount($this->feature, $this->partner, $count);
+        }
+        return 'Please enter correct feature name';
+    }
+
+    /**
+     * @param $count
+     * @return string
+     */
+    public function decrementFeatureCount($count)
+    {
+        if ($this->feature == self::DELIVERY || $this->feature == self::SMS || $this->feature == self::TOPUP) {
+            return $this->featureCounter->decrementCount($this->feature, $this->partner, $count);
+        }
+        return 'Please enter correct feature name';
     }
 }
