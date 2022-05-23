@@ -311,28 +311,32 @@ class PartnerJobController extends Controller
 
     private function sendAssignResourcePushNotifications(Job $job)
     {
-        $topic = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
-        $channel = config('sheba.push_notification_channel_name.customer');
-        (new PushNotificationHandler())->send([
-            "title" => 'Resource has been assigned',
-            "message" => $job->resource->profile->name . " has been added as a resource for your job.",
-            "event_type" => 'Job',
-            "event_id" => $job->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel);
+        try {
+            $topic = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
+            $channel = config('sheba.push_notification_channel_name.customer');
+            (new PushNotificationHandler())->send([
+                "title" => 'Resource has been assigned',
+                "message" => $job->resource->profile->name . " has been added as a resource for your job.",
+                "event_type" => 'Job',
+                "event_id" => $job->id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ], $topic, $channel);
 
-        $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
-        $channel = config('sheba.push_notification_channel_name.resource');
-        $sound  = config('sheba.push_notification_sound.employee');
-        (new PushNotificationHandler())->send([
-            "title" => 'Assigned to a new job',
-            "message" => 'You have been assigned to a new job. Job ID: ' . $job->partnerOrder->order->code(),
-            "event_type" => 'PartnerOrder',
-            "event_id" => $job->partnerOrder->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ], $topic, $channel, $sound);
+            $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
+            $channel = config('sheba.push_notification_channel_name.resource');
+            $sound  = config('sheba.push_notification_sound.employee');
+            (new PushNotificationHandler())->send([
+                "title" => 'Assigned to a new job',
+                "message" => 'You have been assigned to a new job. Job ID: ' . $job->partnerOrder->order->code(),
+                "event_type" => 'PartnerOrder',
+                "event_id" => $job->partnerOrder->id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ], $topic, $channel, $sound);
+        } catch (Throwable $e) {
+            logError($e);
+        }
     }
 
     public function cancelRequests($partner, Request $request)
