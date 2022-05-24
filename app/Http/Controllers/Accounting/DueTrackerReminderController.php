@@ -134,4 +134,22 @@ class DueTrackerReminderController extends Controller
         $response = $this->dueTrackerReminderService->sendReminderPush($reminder);
         return http_response($request, null, 200, ['data' => $response]);
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function statusCount(Request $request){
+        $this->validate($request, [
+            'contact_type' => 'required|in:customer,supplier',
+        ]);
+        $data = $this->dueTrackerReminderService
+            ->setPartner($request->partner)
+            ->setReminderStatus($request->reminder_status)
+            ->setContactType($request->contact_type)
+            ->getStatusCount();
+
+        return http_response($request, null, 200, ['data' => $data]);
+
+    }
 }
