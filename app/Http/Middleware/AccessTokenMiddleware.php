@@ -42,7 +42,7 @@ class AccessTokenMiddleware
         $key_name = 'digigo:debug:' . $now;
 
         try {
-            $token = JWTAuth::getToken();
+            $token = $this->getToken();
             if (!$token) {
                 if ($is_digigo) Redis::set($key_name, "1: $now : null");
                 return $this->formApiResponse($request, null, 401, ['message' => "Your session has expired. Try Login"]);
@@ -58,6 +58,7 @@ class AccessTokenMiddleware
                 throw new AccessTokenNotValidException();
             }
             $this->setAuthorizationToken($access_token);
+            $this->authUser = AuthUser::create();
 
             $this->authUser = AuthUser::create();
             $request->merge(['access_token' => $access_token, 'auth_user' => $this->authUser]);
