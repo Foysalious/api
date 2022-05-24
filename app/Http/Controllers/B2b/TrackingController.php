@@ -275,7 +275,7 @@ class TrackingController extends Controller
     private function searchWithEmployeeName($tracking_locations, $search_value)
     {
         return $tracking_locations->filter(function ($tracking_location) use ($search_value) {
-            return str_contains(strtoupper($tracking_location['employee']['employee_name']), strtoupper($search_value));
+            return str_contains(strtoupper($tracking_location['employee']['employee_name']), strtoupper($search_value)) || str_contains(strtoupper($tracking_location['employee']['employee_id']), strtoupper($search_value));
         });
     }
 
@@ -287,7 +287,7 @@ class TrackingController extends Controller
     private function searchEmployee($employees, Request $request)
     {
         return collect($employees)->filter(function ($employee) use ($request) {
-            return str_contains(strtoupper($employee['name']), strtoupper($request->search));
+            return str_contains(strtoupper($employee['employee_id']), strtoupper($request->search)) || str_contains(strtoupper($employee['name']), strtoupper($request->search));
         });
     }
 

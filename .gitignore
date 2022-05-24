@@ -3,6 +3,7 @@
 .idea/
 storage/*
 !storage/fonts/
+!storage/app/temp/mpdf/
 /node_modules
 npm-debug.log
 build/config.gypi
