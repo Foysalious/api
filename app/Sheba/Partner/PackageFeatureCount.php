@@ -34,7 +34,7 @@ class PackageFeatureCount
      */
     public function setFeature($feature)
     {
-        $this->feature = $feature;
+        $this->feature = strtolower($feature);
         $this->validateFeatureName($this->feature);
 
         return $this;
