@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
-use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Creator\Entry as EntryCreator;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
@@ -10,10 +9,8 @@ use App\Sheba\Pos\Order\PosOrderObject;
 use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
 use Carbon\Carbon;
-use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
-use Sheba\Pos\Customer\PosCustomerResolver;
+use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
 use Sheba\Pos\Order\PosOrderResolver;
 use Exception;
 
@@ -216,11 +213,17 @@ class DueTrackerService
 
     /**
      * @return array
-     * @throws InvalidPartnerPosCustomer|AccountingEntryServerError
+     * @throws AccountingEntryServerError|ContactDoesNotExistInDueTracker
      */
     public function dueListBalanceByContact(): array
     {
         $contact_balance = $this->getBalanceByContact();
+        if ($this->contact_type == ContactType::SUPPLIER) {
+            $supplier_due = $this->dueTrackerRepo
+                ->setPartner($this->partner)
+                ->getSupplierMonthlyDue($this->contact_id);
+            $contact_balance['stats']['supplier_current_month_due'] = $supplier_due['due'];
+        }
         $reminder = app()->make(DueTrackerReminderRepository::class)
             ->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
         if($reminder == []){
@@ -348,8 +351,8 @@ class DueTrackerService
     }
 
     /**
-     * @throws InvalidPartnerPosCustomer
      * @throws AccountingEntryServerError
+     * @throws ContactDoesNotExistInDueTracker
      */
     public function getBalanceByContact()
     {
@@ -357,28 +360,9 @@ class DueTrackerService
         $contact_balance =  $this->dueTrackerRepo
             ->setPartner($this->partner)
             ->dueListBalanceByContact($this->contact_id, $queryString);
-
-        if ( $this->contact_type == ContactType::SUPPLIER) {
-            $supplier_due = $this->dueTrackerRepo
-                ->setPartner($this->partner)
-                ->getSupplierMonthlyDue($this->contact_id);
-            $contact_balance['stats']['supplier_current_month_due'] = $supplier_due['due'];
+        if(!isset($contact_balance['contact_details'])) {
+            throw new ContactDoesNotExistInDueTracker();
         }
-
-        $customer = $contact_balance['contact_details'];
-        if (is_null($customer)) {
-            /** @var PosCustomerResolver $posCustomerResolver */
-            $posCustomerResolver = app(PosCustomerResolver::class);
-            $posCustomer = $posCustomerResolver->setCustomerId($this->contact_id)->setPartner($this->partner)->get();
-            if (empty($posCustomer)) {
-                throw new InvalidPartnerPosCustomer();
-            }
-            $customer['id'] = $posCustomer->id;
-            $customer['name'] = $posCustomer->name;
-            $customer['mobile'] = $posCustomer->mobile;
-            $customer['pro_pic'] = $posCustomer->pro_pic;
-        }
-        $contact_balance['contact_details'] = $customer;
         return $contact_balance;
     }
 
