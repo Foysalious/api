@@ -663,9 +663,10 @@ class JobController extends Controller
             'emi_month' => 'numeric',
             'amount' => 'numeric'
         ]);
-        $request->merge(['amount' => (int)$request->amount]);
-        if($request->has('amount') && $request->amount < 10) {
-            return api_response($request, null, 400, ['message' => 'Amount can not be less than 10 taka']);
+
+        if($request->has('amount')) {
+            $request->merge(['amount' => (int)$request->amount]);
+            if ($request->amount < 10) return api_response($request, null, 400, ['message' => 'Amount can not be less than 10 taka']);
         }
 
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
