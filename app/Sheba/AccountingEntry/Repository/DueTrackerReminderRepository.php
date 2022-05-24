@@ -55,6 +55,17 @@ class DueTrackerReminderRepository extends AccountingRepository
 
     /**
      * @param $partner
+     * @param $query_string
+     * @return mixed
+     * @throws AccountingEntryServerError
+     */
+    public function getStatusCount($partner,$query_string){
+        $url = "api/reminders/status-count/?".$query_string;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->get($url);
+    }
+
+    /**
+     * @param $partner
      * @param $data
      * @return mixed
      * @throws AccountingEntryServerError

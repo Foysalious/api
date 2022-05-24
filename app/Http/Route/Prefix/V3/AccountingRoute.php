@@ -23,6 +23,7 @@ class AccountingRoute
                 $api->get('/sms-subscription-check', 'Accounting\\DueTrackerSmsController@checkSmsSubscription');
                 $api->group(['prefix' => 'reminders'], function ($api) {
                     $api->get('/', 'Accounting\\DueTrackerReminderController@reminders');
+                    $api->get('/status-count', 'Accounting\\DueTrackerReminderController@statusCount');
                     $api->post('/', 'Accounting\\DueTrackerReminderController@store');
                     $api->put('/{reminder_id}', 'Accounting\\DueTrackerReminderController@update');
                     $api->delete('/{reminder_id}', 'Accounting\\DueTrackerReminderController@delete');

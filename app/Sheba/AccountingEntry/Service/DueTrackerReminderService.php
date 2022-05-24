@@ -185,6 +185,14 @@ class DueTrackerReminderService
 
     /**
      * @return mixed
+     */
+    public function getStatusCount(){
+        $query_string = $this->generateQueryString();
+        return $this->dueTrackerReminderRepo->getStatusCount($this->partner, $query_string);
+    }
+
+    /**
+     * @return mixed
      * @throws AccountingEntryServerError
      */
     public function update()
