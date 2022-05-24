@@ -3,6 +3,7 @@
 
 use Carbon\Carbon;
 use Sheba\Dal\BusinessShift\BusinessShiftRepository;
+use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 
 class Requester
@@ -23,10 +24,13 @@ class Requester
     private $title;
     private $shift;
     private $color;
+    /*** @var ShiftCalenderRepository */
+    private $shiftCalendarRepository;
 
     public function __construct()
     {
         $this->businessShiftRepository = app(BusinessShiftRepository::class);
+        $this->shiftCalendarRepository = app(ShiftCalenderRepository::class);
     }
 
     public function setBusiness($business)
@@ -163,13 +167,32 @@ class Requester
         return $this->color;
     }
 
-    private function checkUniqueName()
+    public function shiftConflictCheck()
     {
+        $shift_calendar = $this->shiftCalendarRepository->where('shift_id', $this->shift->id)->groupBy('business_member_id')->get();
+        if (count($shift_calendar) < 1) return false;
+        $employee_count = 0;
+        foreach ($shift_calendar as $calendar)
+        {
+            $unique_Shifts = $this->shiftCalendarRepository->where('business_member_id', $calendar->business_member_id)->where('is_shift', 1)->groupBy('shift_id')->get();
+
+            foreach ($unique_Shifts as $shift)
+            {
+                if ($shift->start_time >= $this->startTime && $shift->start_time <= $this->endTime || $shift->end_time >= $this->startTime && $shift->end_time <= $this->endTime) $employee_count++;
+            }
+        }
+        if ($employee_count < 1) return false;
+        $this->setError(400, $this->title.' edit unsuccessful as '.$employee_count.' employee(s) has conflicting shifts with the newly proposed shift timing.');
+    }
+
+    public function checkUniqueName()
+    {
+        if ($this->shift && $this->shift->name == $this->name) return false;
         $existing_shift = $this->businessShiftRepository->where('business_id', $this->business->id)->where('name', $this->name)->first();
         if ($existing_shift) $this->setError(400, 'This shift name is already exists.');
     }
 
-    private function checkShiftDuration()
+    public function checkShiftDuration()
     {
         $start_time = Carbon::parse($this->startTime);
         $end_time = $this->startTime > $this->endTime ? Carbon::parse($this->endTime)->addDay() : Carbon::parse($this->endTime);

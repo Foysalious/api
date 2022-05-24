@@ -10,12 +10,14 @@ class ShiftCalenderTransformer
         $data = $header = [];
         foreach ($shift_calenders as $shift_calender)
         {
-            $header[$shift_calender->date] =
-            [
-                'date_raw' => $shift_calender->date,
-                'date' =>  Carbon::parse($shift_calender->date)->format('d M'),
-                'day' => Carbon::parse($shift_calender->date)->format('l')
-            ];
+            if (count($header) < 7) {
+                $header[] =
+                    [
+                        'date_raw' => $shift_calender->date,
+                        'date' => Carbon::parse($shift_calender->date)->format('d M'),
+                        'day' => Carbon::parse($shift_calender->date)->format('l')
+                    ];
+            }
             if (!isset($data[$shift_calender->business_member_id]['employee'])){
                 $business_member = BusinessMember::find($shift_calender->business_member_id);
                 $data[$shift_calender->business_member_id]['employee'] = [
