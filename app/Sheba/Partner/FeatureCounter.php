@@ -30,6 +30,19 @@ class FeatureCounter
      * @param $feature
      * @param $partner
      * @param $count
+     * @return bool
+     */
+    public function isEligible($feature, $partner, $count)
+    {
+        $features_count_model = $this->allFeaturesCount($partner);
+        $feature_count = $features_count_model[$feature];
+        return $feature_count >= $count;
+    }
+
+    /**
+     * @param $feature
+     * @param $partner
+     * @param $count
      * @return mixed
      */
     public function incrementCount($feature, $partner, $count)

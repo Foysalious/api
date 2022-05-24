@@ -50,6 +50,15 @@ class PackageFeatureCount
 
     /**
      * @param $count
+     * @return bool
+     */
+    public function eligible($count): bool
+    {
+        return $this->featureCounter->isEligible($this->feature, $this->partner, $count);
+    }
+
+    /**
+     * @param $count
      * @return string
      */
     public function incrementFeatureCount(int $count=1)
