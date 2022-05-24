@@ -1,49 +1,91 @@
 <?php namespace App\Sheba\Partner;
 
-use Sheba\Dal\PartnerPackageFeatureCounter\EloquentImplementation as PartnerPackageFeatureCounter;
-use Sheba\ModificationFields;
+use Exception;
 
 class PackageFeatureCount
 {
-    use ModificationFields;
+    const TOPUP = 'topup';
+    const SMS = 'sms';
+    const DELIVERY = 'delivery';
 
-    protected $partnerPackageFeatureCounter;
+    private $partner;
+    private $feature;
+    private $featureCounter;
 
-    public function __construct(PartnerPackageFeatureCounter $partnerPackageFeatureCounter)
+    public function __construct(FeatureCounter $featureCounter)
     {
-        $this->partnerPackageFeatureCounter = $partnerPackageFeatureCounter;
+        $this->featureCounter = $featureCounter;
+    }
+
+    /**
+     * @param $partner
+     * @return $this
+     */
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
     }
 
     /**
      * @param $feature
-     * @param $partner
+     * @return $this
+     * @throws Exception
+     */
+    public function setFeature($feature)
+    {
+        $this->feature = strtolower($feature);
+        $this->validateFeatureName($this->feature);
+
+        return $this;
+    }
+
+    /**
      * @return mixed
      */
-    public function featureCurrentCount($feature, $partner)
+    public function featureCurrentCount()
     {
-        return $this->allFeaturesCount($partner)->$feature;
+        return $this->featureCounter->getCurrentCount($this->feature, $this->partner);
     }
 
     /**
-     * @param $feature
-     * @param $updated_count
-     * @param $partner
+     * @param int $count
      * @return bool
      */
-    public function featureCountUpdate($feature, $updated_count, $partner): bool
+    public function eligible(int $count = 1): bool
     {
-        $features_count = $this->allFeaturesCount($partner);
-        $data[$feature] = $updated_count;
-        $features_count->update($this->withUpdateModificationField($data));
-        return true;
+        return $this->featureCounter->isEligible($this->feature, $this->partner, $count);
     }
 
     /**
-     * @param $partner
-     * @return mixed
+     * @param int $count
+     * @return string
      */
-    private function allFeaturesCount($partner)
+    public function incrementFeatureCount(int $count=1)
     {
-        return $this->partnerPackageFeatureCounter->where('partner_id', $partner)->first();
+        return $this->featureCounter->incrementCount($this->feature, $this->partner, $count);
+    }
+
+    /**
+     * @param int $count
+     * @return string
+     */
+    public function decrementFeatureCount(int $count=1)
+    {
+        return $this->featureCounter->decrementCount($this->feature, $this->partner, $count);
+    }
+
+    /**
+     * @param $feature
+     * @return bool
+     * @throws Exception
+     */
+    private function validateFeatureName($feature)
+    {
+        if ($feature == self::DELIVERY || $feature == self::SMS || $feature == self::TOPUP) {
+            return true;
+        } else {
+            throw new Exception('You have tried with incorrect feature name');
+        }
     }
 }
