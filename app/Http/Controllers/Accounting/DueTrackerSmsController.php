@@ -7,6 +7,7 @@ use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -51,13 +52,20 @@ class DueTrackerSmsController extends Controller
      */
     public function sendSingleSmsToContact(Request $request): JsonResponse
     {
-        $response =  $this->dueTrackerSmsService
-            ->setPartner($request->partner)
-            ->setContactType($request->contact_type)
-            ->setContactId($request->contact_id)
-            ->sendSingleSmsToContact();
-
-        return http_response($request, null, 200, ['data' => $response]);
+        try {
+            $response =  $this->dueTrackerSmsService
+                ->setPartner($request->partner)
+                ->setContactType($request->contact_type)
+                ->setContactId($request->contact_id)
+                ->sendSingleSmsToContact();
+            return http_response($request, null, 200, ['data' => $response]);
+        }  catch (Exception $e) {
+            if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
+                return http_response($request, null, $e->getCode(), ['data' => $e->getMessage()]);
+            } else {
+                throw $e;
+            }
+        }
     }
 
     public function getBulkSmsContactList(Request $request): JsonResponse
