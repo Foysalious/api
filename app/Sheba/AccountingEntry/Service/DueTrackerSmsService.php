@@ -9,9 +9,9 @@ use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Exception;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
-use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
@@ -106,8 +106,7 @@ class DueTrackerSmsService
     }
 
     /**
-     * @throws InvalidPartnerPosCustomer
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|ContactDoesNotExistInDueTracker
      */
     public function getSmsContentForTagada(): array
     {
@@ -126,8 +125,8 @@ class DueTrackerSmsService
     /**
      * @return bool
      * @throws AccountingEntryServerError
+     * @throws ContactDoesNotExistInDueTracker
      * @throws InsufficientBalance
-     * @throws InvalidPartnerPosCustomer
      * @throws WalletDebitForbiddenException
      */
     public function sendSingleSmsToContact(): bool
@@ -280,8 +279,8 @@ class DueTrackerSmsService
     }
 
     /**
-     * @throws InvalidPartnerPosCustomer
      * @throws AccountingEntryServerError
+     * @throws ContactDoesNotExistInDueTracker
      */
     private function getSmsContentForSingleContact(): array
     {
@@ -308,7 +307,7 @@ class DueTrackerSmsService
         ];
     }
 
-    public function checkSmsSubscription($sms_count)
+    public function checkSmsSubscription($sms_count): string
     {
         $free_sms = rand(0,$sms_count+5);
         if($free_sms >= $sms_count) {

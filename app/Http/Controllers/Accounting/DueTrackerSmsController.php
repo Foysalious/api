@@ -10,7 +10,7 @@ use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
+use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
 use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 
 class DueTrackerSmsController extends Controller
@@ -25,8 +25,10 @@ class DueTrackerSmsController extends Controller
     }
 
     /**
-     * @throws InvalidPartnerPosCustomer
+     * @param Request $request
+     * @return JsonResponse
      * @throws AccountingEntryServerError
+     * @throws ContactDoesNotExistInDueTracker
      */
     public function getSmsContent(Request $request): JsonResponse
     {
@@ -40,12 +42,14 @@ class DueTrackerSmsController extends Controller
     }
 
     /**
-     * @throws InvalidPartnerPosCustomer
-     * @throws WalletDebitForbiddenException
+     * @param Request $request
+     * @return JsonResponse
      * @throws AccountingEntryServerError
+     * @throws ContactDoesNotExistInDueTracker
      * @throws InsufficientBalance
+     * @throws WalletDebitForbiddenException
      */
-    public function sendSingleSmsToContact(Request $request)
+    public function sendSingleSmsToContact(Request $request): JsonResponse
     {
         $response =  $this->dueTrackerSmsService
             ->setPartner($request->partner)
@@ -56,7 +60,7 @@ class DueTrackerSmsController extends Controller
         return http_response($request, null, 200, ['data' => $response]);
     }
 
-    public function getBulkSmsContactList(Request $request)
+    public function getBulkSmsContactList(Request $request): JsonResponse
     {
         $response =  $this->dueTrackerSmsService
             ->setPartner($request->partner)
@@ -69,7 +73,7 @@ class DueTrackerSmsController extends Controller
         return http_response($request, null, 200, ['data' => $response]);
     }
 
-    public function sendBulkSmsToContacts(Request $request)
+    public function sendBulkSmsToContacts(Request $request): JsonResponse
     {
         $this->validate($request, [
             'contact_type' => 'required|string|in:' . implode(',', ContactType::get()),
@@ -83,7 +87,7 @@ class DueTrackerSmsController extends Controller
         return http_response($request, null, 200, ['data' => true ]);
     }
 
-    public function checkSmsSubscription(Request $request)
+    public function checkSmsSubscription(Request $request): JsonResponse
     {
         $response = $this->dueTrackerSmsService->setPartner($request->partner)->checkSmsSubscription($request->sending_sms_count);
         return http_response($request, null, 200, ['data' => $response  ]);
