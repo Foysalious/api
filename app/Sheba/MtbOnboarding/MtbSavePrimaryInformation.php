@@ -48,6 +48,7 @@ class MtbSavePrimaryInformation
     private $partnerMefInformation;
     private $mtbThana;
     private $code;
+    private $mtbDistrict;
 
 
     public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
@@ -99,6 +100,7 @@ class MtbSavePrimaryInformation
         $district = District::where('bn_name', $string[1])->first()->name;
         $thana = Thana::where('bn_name', $string[2])->first()->name;
         $this->mtbThana = $thana;
+        $this->mtbDistrict = $district;
         array_push($divisionDistrictThana, $division, $district, $thana);
         return $divisionDistrictThana;
 
@@ -108,7 +110,7 @@ class MtbSavePrimaryInformation
     {
         $thanaInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
         for ($i = 0; $i < count($thanaInformation); $i++) {
-            if ($thanaInformation[$i]->thana == $this->mtbThana) {
+            if ($thanaInformation[$i]->thana == $this->mtbThana && $thanaInformation[$i]->district == $this->mtbDistrict) {
                 $this->code = $thanaInformation[$i]->branch_code;
             }
         }
@@ -202,7 +204,7 @@ class MtbSavePrimaryInformation
             return http_response($request, null, 403, ['message' => 'Please fill Up all the fields, Your form is ' . $data . " completed"]);
         $data = $this->makePrimaryInformation($request->reference, $request->otp);
         $response = $this->client->post(QRPaymentStatics::MTB_SAVE_PRIMARY_INFORMATION, $data, AuthTypes::BARER_TOKEN);
-        if (empty($response['Data']['TicketId']))  {
+        if (empty($response['Data']['TicketId'])) {
             if (isset($response['responseMessage']))
                 throw new MtbServiceServerError("MTB Account Creation Failed, " . $response['responseMessage']);
             else
