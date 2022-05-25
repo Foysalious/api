@@ -16,6 +16,7 @@ use Sheba\Dal\BusinessShift\BusinessShiftRepository;
 use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
 use Sheba\ModificationFields;
 use League\Fractal\Resource\Item;
+use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 
 class ShiftCalenderController extends Controller
 {
@@ -26,14 +27,17 @@ class ShiftCalenderController extends Controller
     /** @var Creator  */
     private $shiftCalenderCreator;
     private $shiftRemover;
+    /*** @var DepartmentRepositoryInterface */
+    private $departmentRepo;
 
-    public function __construct()
+    public function __construct(DepartmentRepositoryInterface $department_repository)
     {
         $this->shiftCalenderRepository = app(ShiftCalenderRepository::class);
         $this->businessShiftRepository = app(BusinessShiftRepository::class);
         $this->shiftCalenderRequester = app(Requester::class);
         $this->shiftCalenderCreator = app(Creator::class);
         $this->shiftRemover = app(ShiftRemover::class);
+        $this->departmentRepo = $department_repository;
     }
 
     public function index(Request $request, ShiftCalenderRepository $shift_calender_repository)
@@ -67,7 +71,8 @@ class ShiftCalenderController extends Controller
         $total_data = count($shift_calender_employee_data);
         $shift_calender_employee_data = $shift_calender_employee_data->toArray();
         usort($shift_calender_employee_data, array($this,'employeeSortByPDisplayPriority'));
-        return api_response($request, null, 200, ['shift_calender_employee' => $shift_calender_employee_data, 'shift_calender_header' => $shift_calender_data['header'], 'total' => $total_data]);
+        $departments = $this->departmentRepo->getBusinessDepartmentByBusiness($business)->pluck('name', 'id')->toArray();
+        return api_response($request, null, 200, ['shift_calender_employee' => $shift_calender_employee_data, 'shift_calender_header' => $shift_calender_data['header'], 'departments' => $departments, 'total' => $total_data]);
     }
 
     public function assignShift($business, $id, Request $request)
