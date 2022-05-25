@@ -27,6 +27,15 @@ class FeatureCounter
     }
 
     /**
+     * @param $partner
+     * @return mixed
+     */
+    public function getAllFeaturesCurrentCount($partner)
+    {
+        return $this->allFeaturesCount($partner);
+    }
+
+    /**
      * @param $feature
      * @param $partner
      * @param $count

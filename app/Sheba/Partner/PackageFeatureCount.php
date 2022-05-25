@@ -48,6 +48,11 @@ class PackageFeatureCount
         return $this->featureCounter->getCurrentCount($this->feature, $this->partner);
     }
 
+    public function featuresCurrentCountList()
+    {
+        return $this->featureCounter->getAllFeaturesCurrentCount($this->partner);
+    }
+
     /**
      * @param int $count
      * @return bool
