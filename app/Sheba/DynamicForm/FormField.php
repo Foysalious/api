@@ -23,6 +23,7 @@ class FormField implements Arrayable
     private $mandatory = false;
     private $data_source = '';
     private $data_source_id = '';
+    private $regex = '';
 
     public function setFormInput($input): FormField
     {
@@ -55,7 +56,8 @@ class FormField implements Arrayable
             "min_length" => $this->min_length,
             "max_length" => $this->max_length,
             "is_editable" => $this->is_editable,
-            "mandatory" => $this->mandatory
+            "mandatory" => $this->mandatory,
+            "regex"=> $this->regex,
         ];
     }
 
