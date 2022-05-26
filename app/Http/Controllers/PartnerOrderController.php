@@ -232,8 +232,10 @@ class PartnerOrderController extends Controller
                 }
             }
 
-            $maxWithdrawalAmount = $orderAdvanceWithdrawalRequestService->getWithdrawableAmountForPartnerOrder($partner_order);
-            $isMoneyWithdrawable = $maxWithdrawalAmount > 0;
+            $maxWithdrawalAmount = 0;
+            if ($isMoneyWithdrawable = $orderAdvanceWithdrawalRequestService->isPartnerOrderWithdrawable($partner_order, $partner)) {
+                $maxWithdrawalAmount = $orderAdvanceWithdrawalRequestService->getWithdrawableAmountForPartnerOrder($partner_order);
+            }
 
             $partner_order = [
                 'id' => $partner_order->id,
