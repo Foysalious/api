@@ -44,6 +44,15 @@ class DueTrackerReportService
     }
 
     /**
+     * @param $partner_id
+     * @return $this
+     */
+    public function setPartnerById($partner_id){
+        $this->partner = Partner::where('id', $partner_id)->first();
+        return $this;
+    }
+
+    /**
      * @param $end_date
      * @return DueTrackerReportService
      */
@@ -285,6 +294,7 @@ class DueTrackerReportService
     private function getPartnerInfo($partner): array
     {
         return [
+            'id' => $partner->id,
             'name' => $partner->name,
             'avatar' => $partner->logo,
             'mobile' => $partner->mobile,
