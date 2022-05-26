@@ -138,7 +138,10 @@ class PaymentService
             }
             $mapped_status = (new MtbMappedAccountStatus())->setStatus($this->mtbStatus)->mapMtbAccountStatus();
             if (isset($this->partner->partnerMefinformation->mtb_account_status)) {
-                if (json_decode($mtb_status->mtb_account_status)->Status == '19') $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+                if (json_decode($mtb_status->mtb_account_status)->Status == '19') {
+                    $this->savePartnerFinancialInformation(json_decode($mtb_status->mtb_account_status)->Mid);
+                    $this->storeGatewayAccounts();
+                }
             }
             try {
                 /** @var MORServiceClient $morClient */
@@ -163,6 +166,20 @@ class PaymentService
         }
     }
 
+    private function storeGatewayAccounts()
+    {
+        $partnerGatewayAccounts = $this->partner->QRGatewayAccounts()->get();
+        if (!$partnerGatewayAccounts) {
+            $partnerGatewayAccounts = new GatewayAccount();
+            $partnerGatewayAccounts->user_id = $this->partner->id;
+            $partnerGatewayAccounts->user_type = 'partner';
+            $partnerGatewayAccounts->gateway_type = 'qr';
+            $partnerGatewayAccounts->gateway_type_id = 1;
+            $partnerGatewayAccounts->name = 'mtb';
+            $partnerGatewayAccounts->status = 1;
+            $partnerGatewayAccounts->save();
+        }
+    }
 
     private function storeMtbAccountStatus($response)
     {
