@@ -307,13 +307,22 @@ class DueTrackerSmsService
         ];
     }
 
-    public function checkSmsSubscription($sms_count): string
+    /**
+     * @throws InsufficientBalance
+     * @throws WalletDebitForbiddenException
+     */
+    public function checkSmsSubscription(array $contact_ids): string
     {
-        $free_sms = rand(0,$sms_count+5);
+        $free_sms = rand(0,3);
+        $sms_cost = 2.5;
+        $sms_count = count($contact_ids);
+        if ((double)$this->partner->wallet < $sms_cost || true) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
+        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+
         if($free_sms >= $sms_count) {
             return "${sms_count} জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
         } elseif ($free_sms > 0) {
-            return "$free_sms জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
+            return $sms_count - $free_sms. " জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে, বাকি টাকা আপনার একাউন্ট থেকে চার্জ করা হবে";
         } else {
             return "$sms_count জন কাস্টমারের নিকট তাগাদা পাঠাতে আপনার অ্যাকাউন্ট থেকে চার্জ করা হবে!";
         }
