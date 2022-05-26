@@ -128,7 +128,6 @@ class ReportsController extends Controller
         return api_response($request, $response, 200, ['data' => $response]);
 
     }
-
     public function getTransactionList(Request $request): JsonResponse
     {
         $partner = $request->auth_user->getPartner();

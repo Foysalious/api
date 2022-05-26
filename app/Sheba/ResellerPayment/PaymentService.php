@@ -125,7 +125,7 @@ class PaymentService
      */
     private function getMtbAccountStatus($mtb_information)
     {
-        if (isset($mtb_status->mtb_account_status)) {
+        if (isset($mtb_information->mtb_account_status)) {
             $mtb_status = $mtb_information;
             if (json_decode($mtb_status->mtb_account_status)->Status != '19') {
                 /** @var MtbServerClient $client */
