@@ -10,7 +10,7 @@ return [
         'client_id' => env('MOR_CLIENT_ID',1234),
         'client_secret' => env('MOR_CLIENT_SECRET','abcd')
     ],
-    "available_payment_gateway_keys" => [PaymentStrategy::SSL],
+    "available_payment_gateway_keys" => [PaymentStrategy::SSL,PaymentStrategy::SHURJOPAY],
 
     'category_list' => [
         'ssl' => [
@@ -25,6 +25,12 @@ return [
             'personal'    => 'Personal',
             'documents'   => 'Documents'
         ],
+    ],
+    'completion_message' => [
+        'mtb' => [
+            "incomplete_message" => "MTB QR সার্ভিস সচল করতে প্রয়োজনীয় তথ্য প্রদান করুন।",
+            "completed_message"  => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, MTB QR সার্ভিস সচল করতে আবেদন করুন।"
+        ]
     ],
     'exclude_form_keys' => [
         'ssl' => [
@@ -60,6 +66,23 @@ return [
         ],
         'bkash' => [
 
+        ],
+        'mtb' => [
+            [
+                'name' => 'trade_licence',
+                'name_bn' => 'ট্রেড লাইসেন্স',
+                'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/trade_licence_icon.png'
+            ],
+            [
+                'name' => 'tin_certificate',
+                'name_bn' => 'টিন সার্টিফিকেট',
+                'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/tin_certificate_icon.png'
+            ],
+            [
+                'name' => 'vat_certificate',
+                'name_bn' => 'ভ্যাট সার্টিফিকেট',
+                'icon' => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/reseller_payment/vat_certificate_icon.png'
+            ]
         ]
     ],
     'document_service_list' => [

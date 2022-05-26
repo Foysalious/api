@@ -14,6 +14,7 @@ trait DynamicStore
     public function setPartner($receiver)
     {
         $this->partner = $receiver;
+        return $this;
     }
 
     public function getStoreAccount($key)
