@@ -316,7 +316,7 @@ class DueTrackerSmsService
         $free_sms = rand(0,3);
         $sms_cost = 2.5;
         $sms_count = count($contact_ids);
-        if ((double)$this->partner->wallet < $sms_cost || true) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
+        if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
 
         if($free_sms >= $sms_count) {
