@@ -203,7 +203,7 @@ class DueTrackerReportService
         $partnerInfo = $this->getPartnerInfo($this->partner);
 
         $data['partner_info'] = $partnerInfo;
-        $data['partner_info']['contact_type'] = $this->contact_type;
+        $data['contact_details']['contact_type'] = $this->contact_type;
         return $data;
     }
 
