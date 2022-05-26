@@ -300,5 +300,11 @@ class IndexRoute
             (new DueTrackerRoute())->set($api);
             (new ReferralRoute())->individuals($api);
         });
+
+        $api->group(['prefix' => '{partner}/subscriptions', 'middleware' => ['jwtGlobalAuth']], function ($api) {
+            $api->get('/package-feature-current-count-list', 'Partner\PartnerSubscriptionPackageFeatureCountController@getFeaturesCurrentCount');
+//            $api->put('/increment-package-feature-count', 'Partner\PartnerSubscriptionPackageFeatureCountController@increment');
+//            $api->put('/decrement-package-feature-count', 'Partner\PartnerSubscriptionPackageFeatureCountController@decrement');
+        });
     }
 }
