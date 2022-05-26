@@ -127,8 +127,7 @@ class ShiftCalenderController extends Controller
         $shift_calender = $this->shiftCalenderRepository->where('business_member_id', $shift_calender->business_member_id)->where('is_shift', 1)->get();
 
         $this->setModifier($request->manager_member);
-        $this->shiftCalenderRequester->setShiftId(null)
-            ->setIsHalfDayActivated(0)
+        $this->setIsHalfDayActivated(0)
             ->setIsGeneralActivated(1)
             ->setIsShiftActivated(0);
 
