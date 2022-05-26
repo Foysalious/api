@@ -28,8 +28,9 @@ use Sheba\Dal\PartnerMefInformation\Model as PartnerMefInformation;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
-use Sheba\Dal\PartnerWebstoreDomainInfo\PartnerWebstoreDomainInfo;
 use Sheba\Dal\GatewayAccount\Model as GatewayAccount;
+use Sheba\Dal\PartnerWebstoreDomainInfo\PartnerWebstoreDomainInfo;
+use Sheba\Dal\PgwStoreAccount\Model as PgwStoreAccount;
 use Sheba\Dal\Survey\Model as Survey;
 use Sheba\Dal\UserMigration\UserStatus;
 use Sheba\FraudDetection\TransactionSources;
@@ -164,6 +165,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->hasOne(PartnerBasicInformation::class);
     }
+
+    public function partnerMefInformation()
+    {
+        return $this->hasOne(PartnerMefInformation::class);
+    }
+
 
     public function financeResources()
     {
@@ -1080,6 +1087,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     }
 
+
     public function webstoreBanner()
     {
         return $this->hasOne(PartnerWebstoreBanner::class);
@@ -1190,9 +1198,5 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerFinancialInformation::class);
     }
 
-    public function partnerMefInformation()
-    {
-        return $this->hasOne(PartnerMefInformation::class);
-    }
 
 }
