@@ -138,7 +138,7 @@ class MtbSavePrimaryInformation
                 'motherName' => $this->partnerMefInformation->motherName,
                 "contactAddress" => MtbConstants::CONTACT_ADDRESS,
                 'custGrade' => MtbConstants::CUSTOMER_GRADE,
-                'EmailId' => $this->partner->email,
+                'EmailId' => $this->partner->getFirstAdminResource()->profile->email,
                 'Tin' => $this->partner->getFirstAdminResource()->profile->tin_no ?? null,
                 'SpouseName' => $this->partnerMefInformation->spouseName ?? null,
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
