@@ -217,12 +217,36 @@ class DueTrackerControllerV2 extends Controller
      */
     public function publicReport(Request $request): JsonResponse
     {
+        $this->validate($request,[
+            'contact_type' => 'required|string',
+        ]);
         $data = $this->dueTrackerReportService
             ->setPartnerId($request->partner_id)
             ->setContactType($request->contact_type)
             ->setContactId($request->contact_id)
             ->generatePublicReport();
         return http_response($request, null, 200, ['data' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @return void
+     * @throws AccountingEntryServerError
+     * @throws MpdfException
+     * @throws NotAssociativeArray
+     * @throws Throwable
+     */
+    public function publicReportDownload(Request $request){
+        $data=$this->dueTrackerReportService
+            ->setPartnerById($request->partner_id)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->downloadPDF();
+        header("Content-type:application/pdf");
+        header("Content-Disposition:attachment;filename='".$request->partner_id.$request->contact_type.$request->contact_id."_report.pdf'");
+        readfile($data);
     }
 
     /**
