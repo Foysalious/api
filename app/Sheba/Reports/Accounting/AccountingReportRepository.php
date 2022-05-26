@@ -9,7 +9,15 @@ use App\Sheba\AccountingEntry\Constants\AccountingReport;
 class AccountingReportRepository extends BaseRepository
 {
     private $api;
-
+    private $q;
+    private $userId;
+    private $limit;
+    private $offset;
+    private $startDate;
+    private $endDate;
+    private $transactionType;
+    private $reconcile;
+    private $gateway;
     /**
      * AccountingReportRepository constructor.
      * @param AccountingEntryClient $client
@@ -18,6 +26,96 @@ class AccountingReportRepository extends BaseRepository
     {
         parent::__construct($client);
         $this->api = 'api/reports/';
+    }
+
+    /**
+     * @param $userId
+     * @return $this
+     */
+    public function setUserId($userId): AccountingReportRepository
+    {
+        $this->userId = $userId;
+        return $this;
+    }
+
+    /**
+     * @param $limit
+     * @return $this
+     */
+    public function setLimit($limit): AccountingReportRepository
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     * @return $this
+     */
+    public function setOffset($offset): AccountingReportRepository
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param $startDate
+     * @return $this
+     */
+    public function setStartDate($startDate): AccountingReportRepository
+    {
+        $this->startDate = $startDate;
+        return $this;
+    }
+
+    /**
+     * @param $endDate
+     * @return $this
+     */
+    public function setEndDate($endDate): AccountingReportRepository
+    {
+        $this->endDate = $endDate;
+        return $this;
+    }
+
+    /**
+     * @param $transactionType
+     * @return $this
+     */
+    public function setTransactionType($transactionType): AccountingReportRepository
+    {
+        $this->transactionType = $transactionType;
+        return $this;
+    }
+
+    /**
+     * @param $reconcile
+     * @return $this
+     */
+    public function setReconcile($reconcile): AccountingReportRepository
+    {
+        $this->reconcile = $reconcile;
+        return $this;
+    }
+
+    /**
+     * @param $gateway
+     * @return $this
+     */
+    public function setGateway($gateway): AccountingReportRepository
+    {
+        $this->gateway = $gateway;
+        return $this;
+    }
+
+    /**
+     * @param $q
+     * @return $this
+     */
+    public function setQ($q): AccountingReportRepository
+    {
+        $this->q = $q;
+        return $this;
     }
 
     /**
@@ -78,5 +176,12 @@ class AccountingReportRepository extends BaseRepository
                 'icon' => config('accounting_entry.icon_url').'/'.'loss_profit_report.png'
             ],
         ];
+    }
+
+    public function transactionList($userId, $userType = UserType::PARTNER)
+    {
+        return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . "accounting-report/payments_report?" . ($this->limit ? "limit={$this->limit}" : "") . ($this->offset ? "&offset={$this->offset}" : "&offset=0")
+            . ($this->startDate ? "&start_date={$this->startDate}" : "") . ($this->endDate ? "&end_date={$this->endDate}" : "") . ($this->transactionType ? "&transaction_type={$this->transactionType}" : "")
+            . ($this->reconcile ? "&reconcile={$this->reconcile}" : "") . ($this->gateway ? "&gateway={$this->gateway}" : "") . ($this->q ? "&q={$this->q}+" : ""));
     }
 }
