@@ -109,4 +109,17 @@ class SmsHandler
         $this->sms->setFeatureType($featureType);
         return $this;
     }
+
+    /**
+     * @return array
+     */
+    public function getSmsCountAndEstimationCharge()
+    {
+        $sms_estimation = $this->sms->estimateCharge();
+        return [
+            'charge_per_sms' => $sms_estimation->getChargePerSms(),
+            'sms_count' => $sms_estimation->getSmsCount(),
+            'total_charge' => $sms_estimation->getTotalCharge()
+        ];
+    }
 }
