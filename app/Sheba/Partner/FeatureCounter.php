@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Partner;
 
 use DB;
+use Exception;
 use Illuminate\Database\QueryException;
 use Sheba\Dal\PartnerPackageFeatureCounter\EloquentImplementation as PartnerPackageFeatureCounter;
 use Sheba\ModificationFields;
@@ -20,10 +21,23 @@ class FeatureCounter
      * @param $feature
      * @param $partner
      * @return mixed
+     * @throws Exception
      */
     public function getCurrentCount($feature, $partner)
     {
-        return $this->allFeaturesCount($partner)[$feature];
+        $features_count_model = $this->allFeaturesCount($partner);
+        $this->isPartnerDataAvailable($features_count_model);
+
+        return $features_count_model[$feature];
+    }
+
+    /**
+     * @param $partner
+     * @return mixed
+     */
+    public function getAllFeaturesCurrentCount($partner)
+    {
+        return $this->allFeaturesCount($partner);
     }
 
     /**
@@ -31,10 +45,12 @@ class FeatureCounter
      * @param $partner
      * @param $count
      * @return bool
+     * @throws Exception
      */
     public function isEligible($feature, $partner, $count)
     {
         $features_count_model = $this->allFeaturesCount($partner);
+        $this->isPartnerDataAvailable($features_count_model);
         $feature_count = $features_count_model[$feature];
         return $feature_count >= $count;
     }
@@ -44,10 +60,12 @@ class FeatureCounter
      * @param $partner
      * @param $count
      * @return mixed
+     * @throws Exception
      */
     public function incrementCount($feature, $partner, $count)
     {
         $features_count_model = $this->allFeaturesCount($partner);
+        $this->isPartnerDataAvailable($features_count_model);
         $feature_count = $features_count_model[$feature];
 
         try {
@@ -69,10 +87,12 @@ class FeatureCounter
      * @param $partner
      * @param $count
      * @return string
+     * @throws Exception
      */
     public function decrementCount($feature, $partner, $count)
     {
         $features_count_model = $this->allFeaturesCount($partner);
+        $this->isPartnerDataAvailable($features_count_model);
         $feature_count = $features_count_model[$feature];
 
         try {
@@ -95,6 +115,19 @@ class FeatureCounter
     private function allFeaturesCount($partner)
     {
         return $this->partnerPackageFeatureCounter->where('partner_id', $partner)->first();
+    }
+
+    /**
+     * @param $features_count_model
+     * @return bool
+     * @throws Exception
+     */
+    private function isPartnerDataAvailable($features_count_model)
+    {
+        if (! $features_count_model) {
+            throw new Exception('Partner data not available');
+        }
+        return true;
     }
 
 }

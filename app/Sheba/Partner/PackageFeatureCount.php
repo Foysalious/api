@@ -49,8 +49,17 @@ class PackageFeatureCount
     }
 
     /**
+     * @return mixed
+     */
+    public function featuresCurrentCountList()
+    {
+        return $this->featureCounter->getAllFeaturesCurrentCount($this->partner);
+    }
+
+    /**
      * @param int $count
      * @return bool
+     * @throws Exception
      */
     public function eligible(int $count = 1): bool
     {
@@ -60,6 +69,7 @@ class PackageFeatureCount
     /**
      * @param int $count
      * @return string
+     * @throws Exception
      */
     public function incrementFeatureCount(int $count=1)
     {
@@ -69,6 +79,7 @@ class PackageFeatureCount
     /**
      * @param int $count
      * @return string
+     * @throws Exception
      */
     public function decrementFeatureCount(int $count=1)
     {
