@@ -1,19 +1,10 @@
 <?php namespace Sheba\Reward\Disburse;
 
-use App\Models\Customer;
-use App\Models\Partner;
-use App\Models\Resource;
 use App\Models\Reward;
-
 use Exception;
 use Sheba\AccountingEntry\Accounts\Accounts;
-use Sheba\AccountingEntry\Accounts\RootAccounts;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
-use Sheba\CustomerWallet\CustomerTransactionHandler;
-use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\Repositories\BonusRepository;
-use Sheba\Repositories\CustomerRepository;
-use Sheba\Repositories\PartnerRepository;
 use Sheba\Repositories\RewardLogRepository;
 use Sheba\Reward\Event;
 use Sheba\Reward\Rewardable;

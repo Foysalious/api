@@ -11,7 +11,7 @@ class StatusChanger
 {
     /** @var TopUpOrderRepository */
     private $orderRepo;
-    /** @var TopUpOrderRepository */
+    /** @var TopUpOrderStatusLogRepository */
     private $statusRepo;
 
     /** @var TopUpOrder */

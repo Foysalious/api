@@ -1,5 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V3;
 
+use App\Http\Route\Prefix\V3\PaymentLinkRoute;
+
 class Route
 {
     public function set($api)
@@ -9,6 +11,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new UserMigrationRoute())->set($api);
+            (new PaymentLinkRoute())->set($api);
 
             $api->group(['middleware' => 'terminate'], function ($api) {
                 (new BusinessRoute())->set($api);
