@@ -51,7 +51,7 @@ class MtbSavePrimaryInformation
     private $mtbDistrict;
 
 
-    public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
+    public function __construct(MtbServerClient $client, MtbAccountStatus $mtbAccountStatus,
                                 MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload, MtbSaveTransaction $mtbSaveTransaction
     )
     {
@@ -96,9 +96,12 @@ class MtbSavePrimaryInformation
     private function translateDivisionDistrictThana($string)
     {
         $divisionDistrictThana = [];
-        $division = Division::where('bn_name', $string[0])->first()->name;
-        $district = District::where('bn_name', $string[1])->first()->name;
-        $thana = Thana::where('bn_name', $string[2])->first()->name;
+//        $division = Division::where('bn_name', $string[0])->first()->name;
+//        $district = District::where('bn_name', $string[1])->first()->name;
+//        $thana = Thana::where('bn_name', $string[2])->first()->name;
+        $division = $string[0];
+        $district = $string[1];
+        $thana = $string[2];
         $this->mtbThana = $thana;
         $this->mtbDistrict = $district;
         array_push($divisionDistrictThana, $division, $district, $thana);
@@ -138,7 +141,7 @@ class MtbSavePrimaryInformation
                 'motherName' => $this->partnerMefInformation->motherName,
                 "contactAddress" => MtbConstants::CONTACT_ADDRESS,
                 'custGrade' => MtbConstants::CUSTOMER_GRADE,
-                'EmailId' => $this->partner->email,
+                'EmailId' => $this->partner->getFirstAdminResource()->profile->email,
                 'Tin' => $this->partner->getFirstAdminResource()->profile->tin_no ?? null,
                 'SpouseName' => $this->partnerMefInformation->spouseName ?? null,
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
