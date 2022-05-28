@@ -181,7 +181,7 @@ class DynamicForm
         }
         if ($this->type == "district") {
             if ($request->division) {
-                $district = District::where('division_id', $request->division)->get();
+                $district = District::where('division_id', $request->division)->orderBy('name', 'ASC')->get();
                 $district = (new CollectionFormatter())->setData($district)->formatCollection();
                 $data = [
                     'district' => ['list' => $district]
@@ -197,7 +197,7 @@ class DynamicForm
         }
         if ($this->type == "thana") {
             if ($request->district) {
-                $thana = Thana::where('district_id', $request->district)->get();
+                $thana = Thana::where('district_id', $request->district)->orderBY('name', 'ASC')->get();
                 $thana = (new CollectionFormatter())->setData($thana)->formatCollection();
                 $data = [
                     'thana' => ['list' => $thana]
