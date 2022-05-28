@@ -51,7 +51,7 @@ class MtbSavePrimaryInformation
     private $mtbDistrict;
 
 
-    public function __construct(MtbServerClient $client, MtbAccountStatus $mtbAccountStatus,
+    public function __construct(MtbServerClient           $client, MtbAccountStatus $mtbAccountStatus,
                                 MtbSaveNomineeInformation $mtbSaveNomineeInformation, MtbDocumentUpload $mtbDocumentUpload, MtbSaveTransaction $mtbSaveTransaction
     )
     {
@@ -96,9 +96,6 @@ class MtbSavePrimaryInformation
     private function translateDivisionDistrictThana($string)
     {
         $divisionDistrictThana = [];
-//        $division = Division::where('bn_name', $string[0])->first()->name;
-//        $district = District::where('bn_name', $string[1])->first()->name;
-//        $thana = Thana::where('bn_name', $string[2])->first()->name;
         $division = $string[0];
         $district = $string[1];
         $thana = $string[2];
@@ -122,7 +119,6 @@ class MtbSavePrimaryInformation
 
     private function makePrimaryInformation($reference, $otp): array
     {
-
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         $divisionDistrictThana = $this->separateDivisionDistrictThana($this->partnerMefInformation->presentDivision);
         $englishDivisionDistrict = $this->translateDivisionDistrictThana($divisionDistrictThana);
@@ -147,7 +143,7 @@ class MtbSavePrimaryInformation
                 'businessStartDt' => date("Ymd", strtotime($this->partnerMefInformation->businessStartDt)),
                 'tradeLicenseExists' => $tradeLicenseExist,
                 'startDtWithMerchant' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->created_at)),
-                'param1' => strval($this->getCode() ?? 0001),
+                'param1' => strval($this->getCode() ?? "0001"),
                 'param2' => $reference,
                 'param3' => $this->partner->getFirstAdminResource()->profile->mobile,
                 'param4' => $otp,
