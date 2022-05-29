@@ -101,6 +101,22 @@ class PaymentService
         $qr_gateway = QRGateway::where('method_name', $this->key)->first();
         if (!$qr_gateway) throw new InvalidQRKeyException();
         $this->getResellerPaymentStatus(true);
+        if (json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status == 19) {
+            return [
+                'banner' => PaymentMethodStatics::getMtbBannerURL(),
+                'faq' => PaymentMethodStatics::detailsFAQ(),
+                'status' => 'completed' ?? null,
+                'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : '',
+                'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
+                'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
+                'details' => [
+                    'id' => $qr_gateway->id,
+                    'key' => $qr_gateway->key,
+                    'name_bn' => $qr_gateway->name_bn,
+                    'icon' => $qr_gateway->icon
+                ]
+            ];
+        }
         return [
             'banner' => PaymentMethodStatics::getMtbBannerURL(),
             'faq' => PaymentMethodStatics::detailsFAQ(),
@@ -168,7 +184,7 @@ class PaymentService
 
     private function storeGatewayAccounts()
     {
-        $partnerGatewayAccounts = GatewayAccount::where('user_id',$this->partner->id)->where('gateway_type','qr')->where('gateway_type_id',1)->where('name','mtb')->where('status',1)->first();
+        $partnerGatewayAccounts = GatewayAccount::where('user_id', $this->partner->id)->where('gateway_type', 'qr')->where('gateway_type_id', 1)->where('name', 'mtb')->where('status', 1)->first();
         if (!$partnerGatewayAccounts) {
             $partnerGatewayAccounts = new GatewayAccount();
             $partnerGatewayAccounts->user_id = $this->partner->id;
