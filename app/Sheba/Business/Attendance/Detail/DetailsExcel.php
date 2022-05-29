@@ -117,7 +117,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
                     $this->status = "On leave: half day";
                 }
             }
-            $data->push([
+            $this->data[] = [
                 'date' => $this->date,
                 'status' => $this->status,
 
@@ -136,7 +136,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
                 'attendance_reconciled' => $this->attendanceReconciled
-            ]);
+            ];
         }
         return $data;
     }
@@ -153,11 +153,15 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
         if ($attendance_check_in['status'] === AttendanceConstGetter::ON_TIME) {
             $this->checkInStatus = 'On time';
         }
+
         if ($attendance_check_in['is_remote']) {
-            $this->checkInLocation = AttendanceConstGetter::REMOTE;
-        } else {
+            $this->checkInLocation = "Remote";
+        } else if ($attendance_check_in['is_in_wifi']) {
             $this->checkInLocation = "Office IP";
+        } else if ($attendance_check_in['is_geo']) {
+            $this->checkInLocation = "Geo Location";
         }
+
         if ($attendance_check_in['address']) {
             $this->checkInAddress = $attendance_check_in['address'];
         }
@@ -173,11 +177,14 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
                 $this->checkOutStatus = 'Left timely';
             }
 
-            if ($attendance_check_out['is_remote']) {
-                $this->checkOutLocation = AttendanceConstGetter::REMOTE;
-            } else {
-                $this->checkOutLocation = 'Office IP';
+            if ($attendance_check_in['is_remote']) {
+                $this->checkOutLocation = "Remote";
+            } else if ($attendance_check_in['is_in_wifi']) {
+                $this->checkOutLocation = "Office IP";
+            } else if ($attendance_check_in['is_geo']) {
+                $this->checkOutLocation = "Geo Location";
             }
+
             if ($attendance_check_out['address']) {
                 $this->checkOutAddress = $attendance_check_out['address'];
             }

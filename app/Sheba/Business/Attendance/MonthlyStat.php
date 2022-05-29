@@ -7,6 +7,7 @@ use Sheba\Business\Attendance\CheckWeekend;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOffice;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Helpers\TimeFrame;
 
@@ -19,6 +20,8 @@ class MonthlyStat
     private $forOneEmployee;
     private $businessMemberLeave;
     private $business;
+    /*** @var BusinessOffice */
+    private $businessOfficeRepo;
 
     /**
      * @param TimeFrame $time_frame
@@ -36,6 +39,7 @@ class MonthlyStat
         $this->businessWeekendSettings = $weekend_settings;
         $this->businessMemberLeave = $business_member_leave;
         $this->forOneEmployee = $for_one_employee;
+        $this->businessOfficeRepo = app(BusinessOffice::class);
     }
 
     /**
@@ -117,6 +121,9 @@ class MonthlyStat
                 $attendance_checkout_action = $attendance->checkoutAction();
 
                 if ($this->forOneEmployee) {
+                    $is_in_wifi = $attendance_checkin_action->is_in_wifi;
+                    $is_geo = $attendance_checkin_action->is_geo_location;
+                    $business_office = $is_in_wifi || $is_geo ? $this->businessOfficeRepo->findWithTrashed($attendance_checkin_action->business_office_id) : null;
                     $breakdown_data['show_attendance'] = 1;
                     $breakdown_data['attendance'] = [
                         'id' => $attendance->id,
@@ -124,23 +131,27 @@ class MonthlyStat
                             'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkin_action->status,
                             'time' => Carbon::parse($attendance->checkin_time)->format('h:i a'),
                             'is_remote' => $attendance_checkin_action->is_remote ?: 0,
+                            'is_geo' => $is_geo,
+                            'is_in_wifi' => $is_in_wifi,
                             'remote_mode' => $attendance_checkin_action->remote_mode ?: null,
                             'address' => $attendance_checkin_action->is_remote ?
                             $attendance_checkin_action->location ?
                                 json_decode($attendance_checkin_action->location)->address ?: json_decode($attendance_checkin_action->location)->lat.', '.json_decode($attendance_checkin_action->location)->lng
                                 : null
-                            : null,
+                            : $business_office->name,
                         ] : null,
                         'check_out' => $attendance_checkout_action ? [
                             'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkout_action->status,
                             'time' => Carbon::parse($attendance->checkout_time)->format('h:i a'),
                             'is_remote' => $attendance_checkout_action->is_remote ?: 0,
+                            'is_geo' => $is_geo,
+                            'is_in_wifi' => $is_in_wifi,
                             'remote_mode' => $attendance_checkout_action->remote_mode ?: null,
                             'address' => $attendance_checkout_action->is_remote ?
                                 $attendance_checkout_action->location ?
                                     json_decode($attendance_checkout_action->location)->address ?: json_decode($attendance_checkout_action->location)->lat.', '.json_decode($attendance_checkout_action->location)->lng
                                     : null
-                                : null,
+                                : $business_office->name,
                         ] : null,
                         'late_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasLateCheckin()) ? $attendance->checkinAction()->note : null,
                         'left_early_note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,
