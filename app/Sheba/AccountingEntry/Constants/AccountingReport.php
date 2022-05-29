@@ -14,4 +14,5 @@ class AccountingReport
     const GENERAL_ACCOUNTING_REPORT = 'general_accounting_report';
     const CUSTOMER_WISE_SALES_REPORT = 'customer_wise_sales_report';
     const PRODUCT_WISE_SALES_REPORT = 'product_wise_sales_report';
+    const DIGITAL_TRANSACTION_LIST = 'digital_transaction_list';
 }
