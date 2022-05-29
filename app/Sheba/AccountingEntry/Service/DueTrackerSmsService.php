@@ -4,9 +4,11 @@ use App\Jobs\Partner\DueTrackerBulkSmsSend;
 use App\Models\Partner;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\AccountingEntry\Constants\BalanceType;
+use App\Sheba\AccountingEntry\Constants\BulkSmsDialogue;
 use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use App\Sheba\Partner\PackageFeatureCount;
 use Exception;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
@@ -235,12 +237,8 @@ class DueTrackerSmsService
     public function sendBulkSmsToContacts()
     {
         /* Todo need to check the wallet for sms charge calculation before job */
-
-        $sms_sending_lists = $this->dueTrackerRepo->setPartner($this->partner)
-            ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
+        $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $each_sms) {
-            $each_sms['web_report_link'] = $this->getWebReportLink($this->partner->id,
-                $each_sms['contact_id'], $this->contactType);
             $this->sendSMS($each_sms);
         }
     }
@@ -307,43 +305,58 @@ class DueTrackerSmsService
     /**
      * @throws InsufficientBalance
      * @throws WalletDebitForbiddenException
+     * @throws Exception
      */
-    public function checkSmsBalanceAndSubscription(array $contact_ids): string
+    public function checkSmsBalanceAndSubscription(): string
     {
         /*
+        $packageFeatureCount = app()->make(PackageFeatureCount::class);
+        $free_sms = $packageFeatureCount->setPartner($this->partner)
+            ->setFeature(PackageFeatureCount::SMS)->featureCurrentCount();
+        */
         $sms_cost = 0;
         $total_sms_count = 0;
-        $sms_sending_lists = $this->dueTrackerRepo
-            ->setPartner($this->partner)
-            ->getBulkSmsContactListByContactIds($this->contactType, $contact_ids);
-
-        foreach ($sms_sending_lists as &$each_sms) {
-            $each_sms['web_report_link'] = $this->getWebReportLink($this->partner->id,$each_sms['contact_id'],
-                $this->contactType);
-        }
-
+        $free_sms = 3;
+        $user_count_for_free_sms = 0;
+        $user_count = count($this->contactIds);
+        $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $sms_content) {
             $data = $this->generateSmsDataForContactType($sms_content);
+            /** @var SmsHandlerRepo $sms */
             list($sms, $log) = $this->getSmsHandler($data);
             $sms_estimation = $sms->getSmsCountAndEstimationCharge();
-            $sms_cost += $sms_estimation['total_charge'];
+            $sms_count = $sms_estimation['sms_count'];
             $total_sms_count += $sms_estimation['sms_count'];
+            if ($free_sms - $sms_count >= 0) {
+                $free_sms = $free_sms - $sms_count;
+                $user_count_for_free_sms++;
+            } else {
+                $sms_cost += $sms_estimation['total_charge'];
+            }
         }
-        */
-
-        $free_sms = rand(0,3);
-        $sms_cost = 2.5;
-        $sms_count = count($contact_ids);
 
         if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
 
-        if($free_sms >= $sms_count) {
-            return "$sms_count জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
-        } elseif ($free_sms > 0) {
-            return $sms_count - $free_sms. " জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে, বাকি টাকা আপনার একাউন্ট থেকে চার্জ করা হবে";
+        if($sms_cost == 0) {
+            return $user_count_for_free_sms  . BulkSmsDialogue::FREE_SMS_DIALOGUE;
+        } elseif ($user_count_for_free_sms && $sms_cost) {
+            return $user_count_for_free_sms . BulkSmsDialogue::SMS_FREE_AND_CHARGING_BOTH_DIALOGUE;
         } else {
-            return "$sms_count জন কাস্টমারের নিকট তাগাদা পাঠাতে আপনার অ্যাকাউন্ট থেকে চার্জ করা হবে!";
+            return $user_count . BulkSmsDialogue::SMS_CHARGING_DIALOGUE;
         }
+    }
+
+    private function getSmsContentsForBulkSmsSending()
+    {
+        $bulk_sms_contents_by_contacts = $this->dueTrackerRepo
+            ->setPartner($this->partner)
+            ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
+
+        foreach ($bulk_sms_contents_by_contacts as &$each_sms) {
+            $each_sms['web_report_link'] = $this->getWebReportLink($this->partner->id,$each_sms['contact_id'],
+                $this->contactType);
+        }
+        return $bulk_sms_contents_by_contacts;
     }
 }

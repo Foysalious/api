@@ -109,7 +109,8 @@ class DueTrackerSmsController extends Controller
         try {
             $response = $this->dueTrackerSmsService->setPartner($request->partner)
                 ->setContactType($request->contact_type)
-                ->checkSmsBalanceAndSubscription($request->contact_ids);
+                ->setContactIds($request->contact_ids)
+                ->checkSmsBalanceAndSubscription();
             return http_response($request, null, 200, ['data' => $response  ]);
         } catch (Exception $e) {
             if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
