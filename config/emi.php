@@ -1,11 +1,11 @@
 <?php
 
 $breakdowns = [
-    ['month' => 3, 'interest' => 4.0],
-    ['month' => 6, 'interest' => 5.50],
-    ['month' => 9, 'interest' => 7.50],
-    ['month' => 12, 'interest' => 9.50],
-    ['month' => 18, 'interest' => 12.50]
+    ['month' => 3, 'interest' => 0.0],
+    ['month' => 6, 'interest' => 0.00],
+    ['month' => 9, 'interest' => 0.00],
+    ['month' => 12, 'interest' => 0.00],
+    ['month' => 18, 'interest' => 00.00]
 ];
 
 return [
@@ -22,10 +22,12 @@ return [
     /**
      * EMI CONFIGURATION FOR MANAGER
      */
-    'manager'      => [
-        'minimum_emi_amount'  => (double)env('MANAGER_MINIMUM_EMI_AMOUNT', 5000),
+    'manager' => [
+        'minimum_emi_amount' => (double)env('MANAGER_MINIMUM_EMI_AMOUNT', 5000),
         'bank_fee_percentage' => (double)env('MANAGER_BANK_FEE_PERCENTAGE', 2),
-        'breakdowns'          => $breakdowns,
-        'valid_months'        => array_map(function ($item) { return $item['month']; }, $breakdowns)
+        'breakdowns' => $breakdowns,
+        'valid_months' => array_map(function ($item) {
+            return $item['month'];
+        }, $breakdowns)
     ]
 ];
