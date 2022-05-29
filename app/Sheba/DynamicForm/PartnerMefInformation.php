@@ -50,6 +50,7 @@ class PartnerMefInformation implements Arrayable
     private $userRecentPhoto;
     private $bankChequePhoto;
     private $businessVisitingCard;
+    private $spouseName;
 
     public function setProperty($input): PartnerMefInformation
     {
