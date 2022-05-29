@@ -168,7 +168,7 @@ class PaymentService
 
     private function storeGatewayAccounts()
     {
-        $partnerGatewayAccounts = $this->partner->QRGatewayAccounts()->get();
+        $partnerGatewayAccounts = GatewayAccount::where('user_id',$this->partner->id)->where('gateway_type','qr')->where('gateway_type_id',1)->where('name','mtb')->where('status',1)->first();
         if (!$partnerGatewayAccounts) {
             $partnerGatewayAccounts = new GatewayAccount();
             $partnerGatewayAccounts->user_id = $this->partner->id;
