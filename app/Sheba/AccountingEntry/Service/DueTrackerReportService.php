@@ -149,7 +149,7 @@ class DueTrackerReportService
 
         $data['data']['start_date'] = ($this->start_date != null) ? dateEn2Bn(date_format($start_date,"y-m-d"),'d M Y') : '';
         $data['data']['end_date'] = ($this->end_date != null ? dateEn2Bn(date_format($end_date,"y-m-d"),'d M Y') : '');
-        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d h:i:s")).' | '.dateEn2Bn(date("y-m-d"),'d M Y');
+        $data['data']['now'] = DayTimeConvertBn(date("Y-m-d H:i:s")).' | '.dateEn2Bn(date("y-m-d"),'d M Y');
         $data['data']['contact_type'] = $this->contact_type;
 
         $data['data']['partner']['name'] = $this->partner->name;
