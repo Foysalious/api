@@ -40,6 +40,9 @@ RUN curl -sL https://sentry.io/get-cli/ | bash
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+
+FROM api-base-php-fpm-70
+
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
 
