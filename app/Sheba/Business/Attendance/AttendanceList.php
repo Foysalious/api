@@ -464,6 +464,7 @@ class AttendanceList
                     $is_in_wifi = $action->is_in_wifi;
                     $is_geo = $action->is_geo_location;
                     $business_office = $is_in_wifi || $is_geo ? $this->businessOfficeRepo->findWithTrashed($action->business_office_id) : null;
+                    $business_office_name = $business_office ? $business_office->name : null;
                     if ($action->action == Actions::CHECKIN) {
                         $checkin_data = collect([
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
@@ -474,7 +475,7 @@ class AttendanceList
                                 $action->location ?
                                     json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
                                     : null
-                                : $business_office->name,
+                                : $business_office_name,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
@@ -486,12 +487,11 @@ class AttendanceList
                             'is_remote' => $action->is_remote ?: 0,
                             'is_geo' => $is_geo,
                             'is_in_wifi' => $is_in_wifi,
-                            'office_name' => $business_office ? $business_office->name : null,
                             'address' => $action->is_remote ?
                                 $action->location ?
                                     json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
                                     : null
-                                : null,
+                                : $business_office_name,
                             'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
