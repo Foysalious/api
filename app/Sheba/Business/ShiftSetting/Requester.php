@@ -3,7 +3,7 @@
 
 use Carbon\Carbon;
 use Sheba\Dal\BusinessShift\BusinessShiftRepository;
-use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
+use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 
 class Requester
@@ -24,13 +24,13 @@ class Requester
     private $title;
     private $shift;
     private $color;
-    /*** @var ShiftCalenderRepository */
-    private $shiftCalendarRepository;
+    /*** @var ShiftAssignmentRepository */
+    private $shiftAssignmentRepository;
 
     public function __construct()
     {
         $this->businessShiftRepository = app(BusinessShiftRepository::class);
-        $this->shiftCalendarRepository = app(ShiftCalenderRepository::class);
+        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
     }
 
     public function setBusiness($business)
@@ -169,12 +169,12 @@ class Requester
 
     public function shiftConflictCheck()
     {
-        $shift_calendar = $this->shiftCalendarRepository->where('shift_id', $this->shift->id)->groupBy('business_member_id')->get();
+        $shift_calendar = $this->shiftAssignmentRepository->where('shift_id', $this->shift->id)->groupBy('business_member_id')->get();
         if (count($shift_calendar) < 1) return false;
         $employee_count = 0;
         foreach ($shift_calendar as $calendar)
         {
-            $unique_Shifts = $this->shiftCalendarRepository->where('business_member_id', $calendar->business_member_id)->where('is_shift', 1)->groupBy('shift_id')->get();
+            $unique_Shifts = $this->shiftAssignmentRepository->where('business_member_id', $calendar->business_member_id)->where('is_shift', 1)->groupBy('shift_id')->get();
 
             foreach ($unique_Shifts as $shift)
             {

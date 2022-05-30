@@ -1,18 +1,18 @@
 <?php namespace Sheba\Business\ShiftSetting;
 
 use Carbon\Carbon;
-use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
+use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 
 class Updater
 {
     /** @var Requester $shiftRequester */
     private $shiftRequester;
-    /*** @var ShiftCalenderRepository */
-    private $shiftCalendarRepo;
+    /*** @var ShiftAssignmentRepository */
+    private $shiftAssignmentRepo;
 
     public function __construct()
     {
-        $this->shiftCalendarRepo = app(ShiftCalenderRepository::class);
+        $this->shiftAssignmentRepo = app(ShiftAssignmentRepository::class);
     }
 
     public function setShiftRequester(Requester $shiftRequester)
@@ -44,7 +44,7 @@ class Updater
 
     private function updateShiftCalendar()
     {
-        $shift_assignments = $this->shiftCalendarRepo->where('shift_id', $this->shiftRequester->getShift()->id)->where('date', '>=', Carbon::now()->addDay())->get();
+        $shift_assignments = $this->shiftAssignmentRepo->where('shift_id', $this->shiftRequester->getShift()->id)->where('date', '>=', Carbon::now()->addDay())->get();
         foreach ($shift_assignments as $shift)
         {
             $shift->update([

@@ -18,7 +18,7 @@ use Sheba\ModificationFields;
 use League\Fractal\Resource\Item;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 
-class ShiftCalenderController extends Controller
+class ShiftAssignmentController extends Controller
 {
     use ModificationFields;
     private $businessShiftRepository;
