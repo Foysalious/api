@@ -8,11 +8,10 @@ class EmployeeShiftDetailsTransformer extends TransformerAbstract
 {
     public function transform(ShiftCalender $shiftCalender)
     {
-        return [
+        $shift_details = [
             'id'                        => $shiftCalender->id,
             'business_member_id'        => $shiftCalender->business_member_id,
             'shift_id'                  => $shiftCalender->shift_id,
-            'title'                     => $shiftCalender->shift->title,
             'shift_name'                => $shiftCalender->shift_name,
             'date'                      => Carbon::parse($shiftCalender->date)->format('d-m-Y'),
             'start_time'                => Carbon::parse($shiftCalender->start_time)->format('h:i A'),
@@ -27,7 +26,8 @@ class EmployeeShiftDetailsTransformer extends TransformerAbstract
             'created_by_name'           => $shiftCalender->created_by_name,
             'updated_by'                => $shiftCalender->updated_by,
             'updated_by_name'           => $shiftCalender->updated_by_name
-
         ];
+        if($shiftCalender->is_shift) $shift_details['title'] = $shiftCalender->shift->title;
+        return $shift_details;
     }
 }
