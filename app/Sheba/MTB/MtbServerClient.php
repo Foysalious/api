@@ -46,7 +46,7 @@ class MtbServerClient
      * @throws NotFoundAndDoNotReportException
      */
     private function call($method, $uri, $auth_type, $data = null, $multipart = false)
-    {dd($this->getOptions($auth_type, $data, $multipart),$this->makeUrl($uri),strtoupper($method));
+    {
         try {
             $response = $this->client->request(strtoupper($method), $this->makeUrl($uri),
                 $this->getOptions($auth_type, $data, $multipart))->getBody()->getContents();
