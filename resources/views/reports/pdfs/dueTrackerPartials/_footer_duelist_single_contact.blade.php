@@ -5,7 +5,7 @@
         bottom: 0;
         background: #e0fbd8;
         display: inline-block;
-        padding: 8px;
+        padding: 8px 18px;
       "
     >
 
