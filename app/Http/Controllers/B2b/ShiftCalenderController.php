@@ -13,7 +13,7 @@ use Sheba\Business\ShiftSetting\ShiftAssign\Requester;
 use Sheba\Business\ShiftSetting\ShiftAssign\Creator;
 use Sheba\Business\ShiftSetting\ShiftAssign\ShiftRemover;
 use Sheba\Dal\BusinessShift\BusinessShiftRepository;
-use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
+use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 use Sheba\ModificationFields;
 use League\Fractal\Resource\Item;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
@@ -21,7 +21,6 @@ use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 class ShiftCalenderController extends Controller
 {
     use ModificationFields;
-    private $shiftCalenderRepository;
     private $businessShiftRepository;
     private $shiftCalenderRequester;
     /** @var Creator  */
@@ -29,10 +28,12 @@ class ShiftCalenderController extends Controller
     private $shiftRemover;
     /*** @var DepartmentRepositoryInterface */
     private $departmentRepo;
+    /*** @var ShiftAssignmentRepository */
+    private $shiftAssignmentRepository;
 
     public function __construct(DepartmentRepositoryInterface $department_repository)
     {
-        $this->shiftCalenderRepository = app(ShiftCalenderRepository::class);
+        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
         $this->businessShiftRepository = app(BusinessShiftRepository::class);
         $this->shiftCalenderRequester = app(Requester::class);
         $this->shiftCalenderCreator = app(Creator::class);
@@ -40,7 +41,7 @@ class ShiftCalenderController extends Controller
         $this->departmentRepo = $department_repository;
     }
 
-    public function index(Request $request, ShiftCalenderRepository $shift_calender_repository)
+    public function index(Request $request, ShiftAssignmentRepository $shift_assignment_repository)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -61,7 +62,7 @@ class ShiftCalenderController extends Controller
         }
         $active_business_member_ids = $active_business_member->pluck('id')->toArray();
 
-        $shift_calender = $shift_calender_repository->builder()->whereIn('business_member_id', $active_business_member_ids)->whereBetween('date', [$start_date, $end_date]);
+        $shift_calender = $shift_assignment_repository->builder()->whereIn('business_member_id', $active_business_member_ids)->whereBetween('date', [$start_date, $end_date]);
         if ($request->has('shift_type')) $shift_calender = $shift_calender->where($request->shift_type, 1);
         $shift_calender_data = (new ShiftCalenderTransformer())->transform($shift_calender->get());
         $shift_calender_employee_data = collect($shift_calender_data['data'])->splice($offset, $limit);
@@ -98,7 +99,7 @@ class ShiftCalenderController extends Controller
         if (!$business_shift) return api_response($request, null, 404);
 
         $business_shift = $this->businessShiftRepository->find($request->shift_id);
-        $shift_calender = $this->shiftCalenderRepository->find($id);
+        $shift_calender = $this->shiftAssignmentRepository->find($id);
         $this->shiftCalenderRequester->setShiftId($request->shift_id)
             ->setShiftName($business_shift->name)
             ->setStartTime($business_shift->start_time)
@@ -123,8 +124,8 @@ class ShiftCalenderController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
-        $shift_calender = $this->shiftCalenderRepository->find($id);
-        $shift_calender = $this->shiftCalenderRepository->where('business_member_id', $shift_calender->business_member_id)->where('is_shift', 1)->get();
+        $shift_calender = $this->shiftAssignmentRepository->find($id);
+        $shift_calender = $this->shiftAssignmentRepository->where('business_member_id', $shift_calender->business_member_id)->where('is_shift', 1)->get();
 
         $this->setModifier($request->manager_member);
         $this->setIsHalfDayActivated(0)
@@ -138,7 +139,7 @@ class ShiftCalenderController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function dashboard(Request $request, ShiftCalenderRepository $shift_calender_repository)
+    public function dashboard(Request $request, ShiftAssignmentRepository $shift_assignment_repository)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -148,9 +149,9 @@ class ShiftCalenderController extends Controller
         if (!$business_member) return api_response($request, null, 401);
 
         $total_active_employee_ids = $business->getActiveBusinessMember()->pluck('id')->toArray();
-        $under_general_attendance_count = $shift_calender_repository->where('business_member_id', $total_active_employee_ids)->where('is_general', 1)->where('date', '<', Carbon::now()->toDateString())->count();
-        $under_shift_count = $shift_calender_repository->where('business_member_id', $total_active_employee_ids)->where('is_shift', 1)->where('date', '<', Carbon::now()->toDateString())->count();
-        $unassigned_shift_count = $shift_calender_repository->where('business_member_id', $total_active_employee_ids)->where('is_unassigned', 1)->where('date', '>', Carbon::now()->toDateString())->count();
+        $under_general_attendance_count = $shift_assignment_repository->where('business_member_id', $total_active_employee_ids)->where('is_general', 1)->where('date', '<', Carbon::now()->toDateString())->count();
+        $under_shift_count = $shift_assignment_repository->where('business_member_id', $total_active_employee_ids)->where('is_shift', 1)->where('date', '<', Carbon::now()->toDateString())->count();
+        $unassigned_shift_count = $shift_assignment_repository->where('business_member_id', $total_active_employee_ids)->where('is_unassigned', 1)->where('date', '>', Carbon::now()->toDateString())->count();
 
         return api_response($request, null, 200, ['dashboard' => [
             'total_employee' => count($total_active_employee_ids),
@@ -169,7 +170,7 @@ class ShiftCalenderController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
-        $shift_calender = $this->shiftCalenderRepository->find($id);
+        $shift_calender = $this->shiftAssignmentRepository->find($id);
 
         if (!$shift_calender) return api_response($request, null, 404);
         $manager = new Manager();
@@ -240,7 +241,7 @@ class ShiftCalenderController extends Controller
 
         foreach ($dates as $date)
         {
-            $shift_calender = $this->shiftCalenderRepository->where('business_member_id', $business_member->id)->where('date', $date)->first();
+            $shift_calender = $this->shiftAssignmentRepository->where('business_member_id', $business_member->id)->where('date', $date)->first();
             $this->checkAndAssign($shift_calender);
         }
     }
@@ -253,7 +254,7 @@ class ShiftCalenderController extends Controller
     private function checkNextDayShift($shift_calender)
     {
         $next_date = Carbon::parse($shift_calender->date)->addDay()->toDateString();
-        $check_next_date_shift = $this->shiftCalenderRepository->where('business_member_id', $shift_calender->business_member_id)->where('date', $next_date)->first();
+        $check_next_date_shift = $this->shiftAssignmentRepository->where('business_member_id', $shift_calender->business_member_id)->where('date', $next_date)->first();
 
         if($check_next_date_shift->shift_name) return $this->checkShiftTimeGap($check_next_date_shift, $shift_calender);
         return $this->assignShiftCalender($shift_calender);
