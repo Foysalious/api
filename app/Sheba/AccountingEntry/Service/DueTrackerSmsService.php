@@ -337,13 +337,12 @@ class DueTrackerSmsService
 
         if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
-
         if($sms_cost == 0) {
-            return $user_count_for_free_sms  . BulkSmsDialogue::FREE_SMS_DIALOGUE;
+            return en2bnNumber($user_count_for_free_sms)  . BulkSmsDialogue::FREE_SMS_DIALOGUE;
         } elseif ($user_count_for_free_sms && $sms_cost) {
-            return $user_count_for_free_sms . BulkSmsDialogue::SMS_FREE_AND_CHARGING_BOTH_DIALOGUE;
+            return en2bnNumber($user_count_for_free_sms) . BulkSmsDialogue::SMS_FREE_AND_CHARGING_BOTH_DIALOGUE;
         } else {
-            return $user_count . BulkSmsDialogue::SMS_CHARGING_DIALOGUE;
+            return en2bnNumber($user_count) . BulkSmsDialogue::SMS_CHARGING_DIALOGUE;
         }
     }
 
