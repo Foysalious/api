@@ -236,22 +236,18 @@ class DueTrackerSmsService
     {
         /* Todo need to check the wallet for sms charge calculation before job */
 
-        $sms_sending_lists = $this->dueTrackerRepo
-            ->setPartner($this->partner)
+        $sms_sending_lists = $this->dueTrackerRepo->setPartner($this->partner)
             ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
         foreach ($sms_sending_lists as $each_sms) {
-            $each_sms['web_report_link'] = $this->getWebReportLink();
+            $each_sms['web_report_link'] = $this->getWebReportLink($this->partner->id,
+                $each_sms['contact_id'], $this->contactType);
             $this->sendSMS($each_sms);
         }
     }
 
-    public function getWebReportLink(): string
+    public function getWebReportLink(int $partner_id, string $contact_id, string $contact_type): string
     {
-        return app()->make(DueTrackerReportService::class)
-            ->setPartner($this->partner)
-            ->setContactId($this->contactId)
-            ->setContactType($this->contactType)
-            ->getWebReportLink();
+        return DueTrackerReportService::getWebReportLink($partner_id, $contact_id, $contact_type);
     }
 
     /**
@@ -265,7 +261,8 @@ class DueTrackerSmsService
             $this->partner = Partner::where('id', $this->partnerId)->first();
             $sms_content['partner_name'] = $this->partner->name;
             $sms_content['partner_mobile'] = $this->partner->mobile;
-            $sms_content['web_report_link'] = $this->getWebReportLink();
+            $sms_content['web_report_link'] = $this->getWebReportLink($this->partner->id,
+                $sms_content['contact_id'], $this->contactType);
             $this->sendSMS($sms_content);
             return true;
         } catch (Exception $e){
@@ -294,7 +291,7 @@ class DueTrackerSmsService
             'balance_type' => $contact_balance['stats']['type'],
             'contact_name' => $contact_balance['contact_details']['name'],
             'contact_mobile' => $contact_balance['contact_details']['mobile'],
-            'web_report_link' => $this->getWebReportLink()
+            'web_report_link' => $this->getWebReportLink($this->partner->id, $this->contactId, $this->contactType)
         ];
     }
 
@@ -307,13 +304,44 @@ class DueTrackerSmsService
         ];
     }
 
-    public function checkSmsSubscription($sms_count): string
+    /**
+     * @throws InsufficientBalance
+     * @throws WalletDebitForbiddenException
+     */
+    public function checkSmsBalanceAndSubscription(array $contact_ids): string
     {
-        $free_sms = rand(0,$sms_count+5);
+        /*
+        $sms_cost = 0;
+        $total_sms_count = 0;
+        $sms_sending_lists = $this->dueTrackerRepo
+            ->setPartner($this->partner)
+            ->getBulkSmsContactListByContactIds($this->contactType, $contact_ids);
+
+        foreach ($sms_sending_lists as &$each_sms) {
+            $each_sms['web_report_link'] = $this->getWebReportLink($this->partner->id,$each_sms['contact_id'],
+                $this->contactType);
+        }
+
+        foreach ($sms_sending_lists as $sms_content) {
+            $data = $this->generateSmsDataForContactType($sms_content);
+            list($sms, $log) = $this->getSmsHandler($data);
+            $sms_estimation = $sms->getSmsCountAndEstimationCharge();
+            $sms_cost += $sms_estimation['total_charge'];
+            $total_sms_count += $sms_estimation['sms_count'];
+        }
+        */
+
+        $free_sms = rand(0,3);
+        $sms_cost = 2.5;
+        $sms_count = count($contact_ids);
+
+        if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
+        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+
         if($free_sms >= $sms_count) {
-            return "${sms_count} জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
+            return "$sms_count জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
         } elseif ($free_sms > 0) {
-            return "$free_sms জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
+            return $sms_count - $free_sms. " জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে, বাকি টাকা আপনার একাউন্ট থেকে চার্জ করা হবে";
         } else {
             return "$sms_count জন কাস্টমারের নিকট তাগাদা পাঠাতে আপনার অ্যাকাউন্ট থেকে চার্জ করা হবে!";
         }

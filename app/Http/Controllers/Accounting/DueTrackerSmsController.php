@@ -95,10 +95,28 @@ class DueTrackerSmsController extends Controller
         return http_response($request, null, 200, ['data' => true ]);
     }
 
-    public function checkSmsSubscription(Request $request): JsonResponse
+    /**
+     * @throws InsufficientBalance
+     * @throws WalletDebitForbiddenException
+     */
+    public function checkSmsBalanceAndSubscription(Request $request): JsonResponse
     {
-        $response = $this->dueTrackerSmsService->setPartner($request->partner)->checkSmsSubscription($request->sending_sms_count);
-        return http_response($request, null, 200, ['data' => $response  ]);
+        $this->validate($request, [
+            'contact_type' => 'required|string|in:' . implode(',', ContactType::get()),
+            'contact_ids' => 'required|array'
+        ]);
 
+        try {
+            $response = $this->dueTrackerSmsService->setPartner($request->partner)
+                ->setContactType($request->contact_type)
+                ->checkSmsBalanceAndSubscription($request->contact_ids);
+            return http_response($request, null, 200, ['data' => $response  ]);
+        } catch (Exception $e) {
+            if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
+                return http_response($request, null, $e->getCode(), ['data' => $e->getMessage()]);
+            } else {
+                throw $e;
+            }
+        }
     }
 }
