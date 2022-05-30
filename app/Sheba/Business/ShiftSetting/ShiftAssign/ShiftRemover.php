@@ -1,16 +1,15 @@
 <?php namespace Sheba\Business\ShiftSetting\ShiftAssign;
 
-use Sheba\Business\ShiftSetting\ShiftAssign\Requester;
-use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
+use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 
 class ShiftRemover
 {
-    /*** @var ShiftCalenderRepository  */
-    private $shiftCalenderRepository;
+    /*** @var ShiftAssignmentRepository */
+    private $shiftAssignmentRepository;
 
     public function __construct()
     {
-        $this->shiftCalenderRepository = app(ShiftCalenderRepository::class);
+        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
     }
 
     /** @var Requester $shiftCalenderRequester */
@@ -25,7 +24,7 @@ class ShiftRemover
     public function update($shift_calender)
     {
         $data = $this->makeData();
-        $this->shiftCalenderRepository->update($shift_calender, $data);
+        $this->shiftAssignmentRepository->update($shift_calender, $data);
     }
 
     private function makeData()

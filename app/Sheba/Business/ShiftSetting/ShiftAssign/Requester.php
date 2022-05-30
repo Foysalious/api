@@ -1,8 +1,5 @@
 <?php namespace Sheba\Business\ShiftSetting\ShiftAssign;
 
-use Carbon\Carbon;
-use Sheba\Dal\BusinessShift\BusinessShiftRepository;
-use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 
 class Requester
@@ -17,18 +14,7 @@ class Requester
     private $isGeneralActivated;
     private $isUnassignedActivated;
     private $isShiftActivated;
-    /*** @var BusinessShiftRepository  */
-    private $businessShiftRepository;
     private $colorCode;
-    /**
-     * @var \Illuminate\Foundation\Application|mixed
-     */
-    private $shiftCalenderRepository;
-
-    public function __construct()
-    {
-        $this->shiftCalenderRepository = app(ShiftCalenderRepository::class);
-    }
 
     public function setShiftId($shiftId)
     {
