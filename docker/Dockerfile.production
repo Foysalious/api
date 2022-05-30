@@ -1,4 +1,4 @@
-FROM php:7.0-fpm
+FROM php:7.0-fpm AS api-base-php-fpm-70
 
 ARG APP_ENV
 
@@ -47,6 +47,9 @@ RUN curl -sL https://sentry.io/get-cli/ | bash
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=1.8.6
 RUN composer global require hirak/prestissimo
+
+
+FROM api-base-php-fpm-70
 
 # Copy existing application directory permissions
 COPY --chown=www-data:www-data . /var/www
