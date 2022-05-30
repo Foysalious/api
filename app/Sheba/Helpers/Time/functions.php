@@ -351,7 +351,7 @@ if (!function_exists('dayTimeConvertBn')) {
         else if($hour >= 20 && $hour <= 24)
             $dayOfTime = "রাত";
 
-        return $dayOfTime." ".NumberLanguageConverter::en2bn(date_format($time,"H")).':'.NumberLanguageConverter::en2bn((date_format($time,"i")));
+        return $dayOfTime." ".NumberLanguageConverter::en2bn(date_format($time,"h")).':'.NumberLanguageConverter::en2bn((date_format($time,"i")));
     }
 }
 
