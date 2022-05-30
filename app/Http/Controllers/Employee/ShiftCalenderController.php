@@ -5,20 +5,20 @@ use App\Models\Business;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Models\BusinessMember;
 use App\Sheba\Employee\ShiftCalender;
+use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 use Sheba\Helpers\TimeFrame;
 use Illuminate\Http\Request;
-use Sheba\Dal\ShiftCalender\ShiftCalenderRepository;
 
 class ShiftCalenderController extends Controller
 {
     use BusinessBasicInformation;
 
-    /* @var ShiftCalenderRepository */
-    private $shiftCalenderRepository;
+    /*** @var ShiftAssignmentRepository*/
+    private $shiftAssignmentRepository;
 
     public function __construct()
     {
-        $this->shiftCalenderRepository = app(ShiftCalenderRepository::class);
+        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
     }
 
     public function index(Request $request, TimeFrame $time_frame)
@@ -34,7 +34,7 @@ class ShiftCalenderController extends Controller
         $month = $request->month;
         $year = $request->year;
         $time_frame = $time_frame->forAMonth($month, $year);
-        $shift_calender = $this->shiftCalenderRepository->builder()->with('shift')->where('business_member_id', $business_member->id)->whereBetween('date', [$time_frame->start, $time_frame->end])->get();
+        $shift_calender = $this->shiftAssignmentRepository->builder()->with('shift')->where('business_member_id', $business_member->id)->whereBetween('date', [$time_frame->start, $time_frame->end])->get();
 
         $shift_data = new ShiftCalender($business, $shift_calender);
         $shift_data = $shift_data->employee_shift_calender();
