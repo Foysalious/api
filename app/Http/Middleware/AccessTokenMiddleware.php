@@ -1,9 +1,6 @@
 <?php namespace App\Http\Middleware;
 
-use App\Exceptions\NotFoundException;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
@@ -59,9 +56,6 @@ class AccessTokenMiddleware
             $this->setAuthorizationToken($access_token);
 
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
-            try {
-                Log::info('Spro service request post:'.' request->mobile: '. $request->all()['mobile'] . ' Bearer Token: ' . $token . ' Auth-user: ' . $request->auth_user->toJson());
-            } catch (\Exception $e){}
             $partner = $request->auth_user->getPartner();
             if (!$this->isRouteAccessAllowed($partner)) {
                 return api_response($request, null, 403, ["message" => "Sorry! Your migration is running. Please be patient."]);
