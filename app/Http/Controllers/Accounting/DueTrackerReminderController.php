@@ -138,11 +138,9 @@ class DueTrackerReminderController extends Controller
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountingEntryServerError
      */
     public function statusCount(Request $request){
-        $this->validate($request, [
-            'contact_type' => 'required|in:customer,supplier',
-        ]);
         $data = $this->dueTrackerReminderService
             ->setPartner($request->partner)
             ->setReminderStatus($request->reminder_status)
