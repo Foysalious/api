@@ -168,7 +168,7 @@ class InfoCallController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         try {
-            Log::info('Spro service request form-data: Auth user:' . $request->auth_user . ' Customer mobile: ' . $request->mobile);
+            Log::info('Spro service request form-data: Auth user:' . $request->all());
         } catch (\Exception $e) {}
         $resource = $auth_user->getResource();
         $this->setModifier($resource);
