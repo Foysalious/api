@@ -8,18 +8,18 @@ use Sheba\Sms\SmsService\SingleSmsResponse;
 
 class SmsHandler
 {
-    /** @var SmsTemplate  */
+    /** @var SmsTemplate */
     private $template;
-    /** @var Sms  */
+    /** @var Sms */
     private $sms;
 
     /** @var Sms */
     public function __construct($event_name)
     {
         /** @var SmsTemplateRepo $sms_templates */
-        $sms_templates  = app(SmsTemplateRepo::class);
+        $sms_templates = app(SmsTemplateRepo::class);
         $this->template = $sms_templates->findByEventName($event_name);
-        $this->sms      = app(Sms::class);
+        $this->sms = app(Sms::class);
     }
 
     /**
@@ -108,5 +108,18 @@ class SmsHandler
     {
         $this->sms->setFeatureType($featureType);
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getSmsCountAndEstimationCharge(): array
+    {
+        $sms_estimation = $this->sms->estimateCharge();
+        return [
+            'charge_per_sms' => $sms_estimation->getChargePerSms(),
+            'sms_count' => $sms_estimation->getSmsCount(),
+            'total_charge' => $sms_estimation->getTotalCharge()
+        ];
     }
 }
