@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use Sheba\Business\ShiftSetting\ShiftAssign\Requester;
 use Sheba\Business\ShiftSetting\ShiftAssign\Creator;
+use Sheba\Business\ShiftSetting\ShiftAssign\ShiftAssignToCalender;
 use Sheba\Business\ShiftSetting\ShiftAssign\ShiftRemover;
 use Sheba\Dal\BusinessShift\BusinessShiftRepository;
 use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
@@ -21,25 +22,31 @@ use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 class ShiftAssignmentController extends Controller
 {
     use ModificationFields;
+    /*** @var BusinessShiftRepository $businessShiftRepository*/
     private $businessShiftRepository;
-    /** @var Requester */
+    /** @var Requester $shiftCalenderRequester */
     private $shiftCalenderRequester;
-    /** @var Creator  */
+    /** @var Creator $creator */
     private $shiftCalenderCreator;
+    /*** @var ShiftRemover $shiftRemover */
     private $shiftRemover;
-    /*** @var DepartmentRepositoryInterface */
+    /*** @var DepartmentRepositoryInterface $departmentRepo */
     private $departmentRepo;
-    /*** @var ShiftAssignmentRepository */
+    /*** @var ShiftAssignmentRepository $shiftAssignmentRepository */
     private $shiftAssignmentRepository;
+    /*** @var ShiftAssignToCalender $shiftAssignToCalender */
+    private $shiftAssignToCalender;
 
-    public function __construct(DepartmentRepositoryInterface $department_repository)
+    public function __construct(DepartmentRepositoryInterface $department_repository, ShiftAssignmentRepository $shift_assignment_repository, BusinessShiftRepository $business_shift_repository,
+                                Requester $requester, Creator $creator, ShiftRemover $shift_remover, ShiftAssignToCalender $shift_assign_to_calender)
     {
-        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
-        $this->businessShiftRepository = app(BusinessShiftRepository::class);
-        $this->shiftCalenderRequester = app(Requester::class);
-        $this->shiftCalenderCreator = app(Creator::class);
-        $this->shiftRemover = app(ShiftRemover::class);
+        $this->shiftAssignmentRepository = $shift_assignment_repository;
+        $this->businessShiftRepository = $business_shift_repository;
+        $this->shiftCalenderRequester = $requester;
+        $this->shiftCalenderCreator = $creator;
+        $this->shiftRemover = $shift_remover;
         $this->departmentRepo = $department_repository;
+        $this->shiftAssignToCalender = $shift_assign_to_calender;
     }
 
     public function index(Request $request, ShiftAssignmentRepository $shift_assignment_repository)
@@ -77,7 +84,7 @@ class ShiftAssignmentController extends Controller
         return api_response($request, null, 200, ['shift_calender_employee' => $shift_calender_employee_data, 'shift_calender_header' => $shift_calender_data['header'], 'departments' => $departments, 'total' => $total_data]);
     }
 
-    public function assignShift($business, $id, Request $request)
+    public function assignShift($business, $calender_id, Request $request)
     {
         $this->validate($request, [
             'shift_id'                  => 'required|integer',
@@ -98,9 +105,7 @@ class ShiftAssignmentController extends Controller
         $this->setModifier($request->manager_member);
         $business_shift = $this->businessShiftRepository->find($request->shift_id);
         if (!$business_shift) return api_response($request, null, 404);
-
-        $business_shift = $this->businessShiftRepository->find($request->shift_id);
-        $shift_calender = $this->shiftAssignmentRepository->find($id);
+        $shift_calender = $this->shiftAssignmentRepository->find($calender_id);
 
         $this->shiftCalenderRequester->setShiftId($request->shift_id)
             ->setShiftName($business_shift->name)
@@ -117,7 +122,7 @@ class ShiftAssignmentController extends Controller
             ->setIsShiftActivated(1)
             ->setColorCode($business_shift->color_code);
 
-        $request->repeat ? $this->shiftCalenderRequester->checkRepeat($request, $shift_calender, $business_member) : $this->shiftCalenderRequester->checkAndAssign($shift_calender);
+        $this->shiftAssignToCalender->checkShiftRepeat($request, $shift_calender, $business_member, $this->shiftCalenderRequester);
         $shift_calender = $this->shiftCalenderRequester->getData();
         if ($this->shiftCalenderRequester->hasError()) return api_response($request, null, $this->shiftCalenderRequester->getErrorCode(), ['message' => $this->shiftCalenderRequester->getErrorMessage()]);
         $this->shiftCalenderCreator->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_calender);
