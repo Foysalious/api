@@ -148,14 +148,11 @@ class DueTrackerSmsService
         $data = $this->generateSmsDataForContactType($sms_content);
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSmsHandler($data);
-        $sms_cost = $sms->estimateCharge();
-        if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance();
-        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+        $sms_count = $sms->getSmsCountAndEstimationCharge();
         $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         if (config('sms.is_on')) {
             $sms->shoot();
         }
-        $this->deductSmsCostFromWallet($sms_cost,$log);
     }
 
     /**
@@ -309,15 +306,13 @@ class DueTrackerSmsService
      */
     public function checkSmsBalanceAndSubscription(): string
     {
-        /*
+
         $packageFeatureCount = app()->make(PackageFeatureCount::class);
         $free_sms = $packageFeatureCount->setPartner($this->partner)
             ->setFeature(PackageFeatureCount::SMS)->featureCurrentCount();
-        */
-        $sms_cost = 0;
+        dd($free_sms);
         $total_sms_count = 0;
-        $free_sms = 3;
-        $user_count_for_free_sms = 0;
+        $package_sms_count = 1;
         $user_count = count($this->contactIds);
         $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $sms_content) {
@@ -325,24 +320,12 @@ class DueTrackerSmsService
             /** @var SmsHandlerRepo $sms */
             list($sms, $log) = $this->getSmsHandler($data);
             $sms_estimation = $sms->getSmsCountAndEstimationCharge();
-            $sms_count = $sms_estimation['sms_count'];
             $total_sms_count += $sms_estimation['sms_count'];
-            if ($free_sms - $sms_count >= 0) {
-                $free_sms = $free_sms - $sms_count;
-                $user_count_for_free_sms++;
-            } else {
-                $sms_cost += $sms_estimation['total_charge'];
-            }
         }
-
-        if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
-        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
-        if($sms_cost == 0) {
-            return en2bnNumber($user_count_for_free_sms)  . BulkSmsDialogue::FREE_SMS_DIALOGUE;
-        } elseif ($user_count_for_free_sms && $sms_cost) {
-            return en2bnNumber($user_count_for_free_sms) . BulkSmsDialogue::SMS_FREE_AND_CHARGING_BOTH_DIALOGUE;
+        if($total_sms_count <= $package_sms_count) {
+            return en2bnNumber($user_count)  . BulkSmsDialogue::FREE_SMS_DIALOGUE;
         } else {
-            return en2bnNumber($user_count) . BulkSmsDialogue::SMS_CHARGING_DIALOGUE;
+            return en2bnNumber($user_count) . BulkSmsDialogue::SHORTAGE_OF_SMS;
         }
     }
 
