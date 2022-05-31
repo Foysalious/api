@@ -223,7 +223,11 @@ class DueTrackerController extends Controller
             if ($request->type == 'receivable' || $request->type == 'due') {
                 $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
-            $dueTrackerRepository->sendSMS($request);
+            $sendSms = $dueTrackerRepository->sendSMS($request);
+            if (!$sendSms) {
+                $message = "Insufficient SMS count";
+                return api_response($request, $message, 400, ['message' => $message]);
+            }
             (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_SMS_SEND)->create($request->manager_resource);
             return api_response($request, true, 200);
         } catch (ValidationException $e) {

@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use App\Sheba\Partner\PackageFeatureCount;
 use Exception;
 use Sheba\AccountingEntry\Exceptions\MigratedToAccountingException;
 use Sheba\Pos\Customer\PosCustomerResolver;
@@ -494,8 +495,7 @@ class DueTrackerRepository extends BaseRepository
     /**
      * @param Request $request
      * @return bool
-     * @throws InvalidPartnerPosCustomer|InsufficientBalance
-     * @throws WalletDebitForbiddenException
+     * @throws InvalidPartnerPosCustomer
      * @throws Exception
      */
     public function sendSMS(Request $request)
@@ -526,22 +526,38 @@ class DueTrackerRepository extends BaseRepository
         }
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSms($data);
-        $sms_cost = $sms->estimateCharge();
-        if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
-        //freeze money amount check
-        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
-        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-        if (config('sms.is_on')) $sms->shoot();
-        $transaction = (new WalletTransactionHandler())
-            ->setModel($request->partner)
-            ->setAmount($sms_cost)
-            ->setType(Types::debit())
-            ->setLog($sms_cost . $log)
-            ->setTransactionDetails([])
-            ->setSource(TransactionSources::SMS)
-            ->store();
-        $this->storeJournal($request->partner, $transaction);
-        return true;
+        $sms_cost = $sms->getSmsCountAndEstimationCharge();
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class);
+        $isEligible = $packageFeatureCount
+            ->setPartner($request->partner)
+            ->setFeature('sms')
+            ->eligible($sms_cost['sms_count']);
+        if ($isEligible) {
+            $sms->shoot();
+            $packageFeatureCount
+                ->setPartner($request->partner)
+                ->setFeature('sms')
+                ->decrementFeatureCount($sms_cost['sms_count']);
+            return true;
+        }
+        return false;
+
+//        if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
+//          freeze money amount check
+//        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+//        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
+//        if (config('sms.is_on')) $sms->shoot();
+//        $transaction = (new WalletTransactionHandler())
+//            ->setModel($request->partner)
+//            ->setAmount($sms_cost)
+//            ->setType(Types::debit())
+//            ->setLog($sms_cost . $log)
+//            ->setTransactionDetails([])
+//            ->setSource(TransactionSources::SMS)
+//            ->store();
+//        $this->storeJournal($request->partner, $transaction);
+
     }
 
     private function storeJournal($partner, $transaction)
