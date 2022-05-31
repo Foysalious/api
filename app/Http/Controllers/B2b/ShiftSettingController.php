@@ -214,4 +214,15 @@ class ShiftSettingController extends Controller
         $this->shiftUpdater->setShiftRequester($this->shiftRequester)->update();
         return api_response($request, null, 200);
     }
+
+    public function getColor($business, Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 401);
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        return api_response($request, null, 200, ['colors' => config('b2b.SHIFT_COLORS')]);
+    }
 }
