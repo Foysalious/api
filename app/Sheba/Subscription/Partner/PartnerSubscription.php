@@ -104,7 +104,7 @@ class PartnerSubscription
             return !in_array($item->en, ['Payment Link', 'Loan']);
         }));
         $package['is_featured'] = in_array($package->id, $featured_package_id);
-        $package['web_view']    = config('sheba.partners_url') . "/api/packages/" . $package->id;
+        $package['web_view']    = config('sheba.partners_base_url') . "/api/packages/" . $package->id;
 
         if ($partner) {
             $package['is_subscribed']     = (int)($partner->package_id == $package->id);
