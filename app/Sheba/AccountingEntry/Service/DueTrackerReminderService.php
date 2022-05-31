@@ -220,7 +220,7 @@ class DueTrackerReminderService
      */
     public function sendReminderPush(array $reminder): bool
     {
-        $partner = Partner::where('id', $this->partnerId)->first();
+        $partner = Partner::where('id', $reminder['partner_id'])->first();
         (new ReminderNotificationHandler())->setReminder($reminder)->handler();
         $smsStatus = 'failed';
         if ($reminder['should_send_sms'] == 1) {
