@@ -60,7 +60,7 @@ class AccessTokenMiddleware
 
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
             try {
-                Log::info('Spro service request post:'.' request->mobile: '. $request->mobile . ' Bearer Token: ' . $token . ' Auth-user: ' . $request->auth_user->toJson());
+                Log::info('Spro service request post:'.' request->mobile: '. $request->all()['mobile'] . ' Bearer Token: ' . $token . ' Auth-user: ' . $request->auth_user->toJson());
             } catch (\Exception $e){}
             $partner = $request->auth_user->getPartner();
             if (!$this->isRouteAccessAllowed($partner)) {
