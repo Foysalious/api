@@ -7,9 +7,9 @@ class Creator
     /*** @var ShiftAssignmentRepository  $shiftAssignmentRepository*/
     private $shiftAssignmentRepository;
 
-    public function __construct(ShiftAssignmentRepository $shiftAssignmentRepository)
+    public function __construct(ShiftAssignmentRepository $shift_assignment_repository)
     {
-        $this->shiftAssignmentRepository = $shiftAssignmentRepository;
+        $this->shiftAssignmentRepository = $shift_assignment_repository;
     }
 
     /** @var Requester $shiftCalenderRequester */
