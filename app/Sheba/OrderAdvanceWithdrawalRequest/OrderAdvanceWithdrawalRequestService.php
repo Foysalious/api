@@ -103,7 +103,7 @@ class OrderAdvanceWithdrawalRequestService
             && !$partner_order->isClosed()
             && $partner_order->partner_id == $partner->id
             && $partner_order->order->is_credit_limit_adjustable
-            && $this->hasPendingCancelRequest($partner_order->order_id)
+            && !$this->hasPendingCancelRequest($partner_order->order_id)
             && $this->getWithdrawableAmountForPartnerOrder($partner_order) > 0;
     }
 }
