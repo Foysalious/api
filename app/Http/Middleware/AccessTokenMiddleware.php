@@ -48,7 +48,7 @@ class AccessTokenMiddleware
             if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
             $access_token = $this->findAccessToken($token);
             try {
-                Log::info('Spro service request post: Auth user:' . $request->auth_user . ' Customer mobile: ' . $request->mobile . 'Bearer Token: ' . $token);
+                Log::info('Spro service request post: Bearer Token: ' . $token);
             } catch (\Exception $e){}
             if (!$access_token) {
                 if ($is_digigo) Redis::set($key_name, "2: $now : $token");
