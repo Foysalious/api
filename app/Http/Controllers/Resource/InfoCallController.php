@@ -167,6 +167,11 @@ class InfoCallController extends Controller
     {
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
+
+        Log::info("INFO CALL ISSUES:" . $auth_user->toJson(), [
+            $request->all()['access_token']->token, $auth_user->getResource()->toJson()
+        ]);
+
         $resource = $auth_user->getResource();
         $this->setModifier($resource);
         $service = Service::select('name')->where('id', $request->service_id)->get();
@@ -201,6 +206,7 @@ class InfoCallController extends Controller
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);
     }
+
     public function show(Request $request, $id)
     {
         /** @var AuthUser $auth_user */
