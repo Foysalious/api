@@ -3,6 +3,7 @@
 namespace App\Sheba\AccountingEntry\Repository;
 
 
+use App\Models\Partner;
 use App\Sheba\AccountingEntry\Constants\UserType;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Repository\AccountingEntryClient;
@@ -65,12 +66,12 @@ class DueTrackerReminderRepository extends AccountingRepository
     }
 
     /**
-     * @param $partner
+     * @param Partner $partner
      * @param $data
      * @return mixed
      * @throws AccountingEntryServerError
      */
-    public function updateReminder($partner,$data){
+    public function updateReminder(Partner $partner,$data){
         $url = "api/reminders/".$data['reminder_id'];
         return $this->client->setUserType(UserType::PARTNER)->setUserId($partner->id)->put($url, $data);
 
