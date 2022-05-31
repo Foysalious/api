@@ -5,6 +5,7 @@ namespace App\Sheba\AccountingEntry\Service;
 use App\Sheba\AccountingEntry\Notifications\ReminderNotificationHandler;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use Illuminate\Support\Facades\Log;
+use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 
 class DueTrackerReminderService
@@ -214,16 +215,16 @@ class DueTrackerReminderService
     /**
      * @param array $reminder
      * @return bool
-     * @throws AccountingEntryServerError
+     * @throws AccountingEntryServerError|InvalidOptionsException
      */
     public function sendReminderPush(array $reminder): bool
     {
-        $push = (new ReminderNotificationHandler())->setReminder($reminder)->handler();
-        Log::info(['remidner push', $push, $reminder]);
+        (new ReminderNotificationHandler())->setReminder($reminder)->handler();
         $smsStatus = 'failed';
         if ($reminder['should_send_sms'] == 1) {
             $sms_content["balance"] = $reminder['balance'];
             $sms_content["balance_type"] = $reminder['balance_type'];
+            $sms_content["contact_id"] = $reminder['contact_info']['id'];
             $sms_content["contact_name"] = $reminder['contact_info']['name'];
             $sms_content["contact_mobile"] = $reminder['contact_info']['mobile'];
             $dueTrackerSmsService = app()->make(DueTrackerSmsService::class);
