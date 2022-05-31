@@ -298,7 +298,7 @@ class Job extends BaseModel implements MorphCommentable
      * @param bool $price_only
      * @return $this
      */
-    public function calculate($price_only = false)
+    public function calculate($price_only = false, $flag = null)
     {
         $is_old_order = $this->id < config('sheba.last_job_before_commission');
         /**
@@ -313,7 +313,7 @@ class Job extends BaseModel implements MorphCommentable
         /**
          * CALCULATING THE PRICES
          */
-        $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->getServicePrice());
+        $this->servicePrice = $flag ? formatTaka(($this->service_unit_price * $this->service_quantity) + $this->getServicePrice($flag)) : formatTaka(($this->service_unit_price * $this->service_quantity) + $this->getServicePrice());
         $this->materialPrice = formatTaka($this->calculateMaterialPrice());
         $this->deliveryPrice = floatval($this->delivery_charge) ?: floatval($this->logistic_charge);
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice + $this->delivery_charge);
@@ -408,11 +408,12 @@ class Job extends BaseModel implements MorphCommentable
         return $this;
     }
 
-    private function getServicePrice()
+    private function getServicePrice($flag = null)
     {
         $total_service_price = 0;
         $total_service_surcharge = 0;
-        foreach ($this->jobServices as $jobService) {
+        $job_services = $flag ? JobService::where('job_id', $this->id)->get() : $this->jobServices;
+        foreach ($job_services as $jobService) {
             $surcharge_amount = $jobService->surcharge_percentage ? ($jobService->unit_price * $jobService->surcharge_percentage) / 100 : 0;
             $unit_price_with_surcharge = $jobService->unit_price + $surcharge_amount;
             $total_service_price += ($jobService->min_price > ($unit_price_with_surcharge * $jobService->quantity) ?
@@ -1278,5 +1279,34 @@ class Job extends BaseModel implements MorphCommentable
         return $this->delivery_charge
             - (($this->delivery_charge / $this->totalPriceWithoutVat) * $partner_contribution_without_service_discount_contribution)
             - $this->deliveryDiscountPartnerContribution;
+    }
+
+    public function getVoucher()
+    {
+        return $this->partnerOrder->order->voucher;
+    }
+
+    public function hasDiscountInPercentage()
+    {
+        return $this->discount_percentage && $this->discount_percentage != "0.00";
+    }
+
+    public function calculateDiscountAmountWhenPercentage()
+    {
+        return $this->totalPrice * $this->discount_percentage / 100;
+    }
+
+    public function calculateOwnDiscountAmount($flag = null)
+    {
+        if (!$this->isCalculated) $flag ? $this->calculate(true, $flag) : $this->calculate(true);
+        if ($voucher = $this->getVoucher())
+            return $voucher->getApplicableAmount($this->totalPrice);
+
+        return $this->hasDiscountInPercentage() ? $this->calculateDiscountAmountWhenPercentage() : $this->ownDiscount;
+    }
+
+    public function calculateTotalDiscountAmount($flag = null)
+    {
+        return $flag ? $this->calculateOwnDiscountAmount($flag) + $this->otherDiscounts : $this->calculateOwnDiscountAmount() + $this->otherDiscounts;
     }
 }

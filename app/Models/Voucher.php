@@ -173,4 +173,12 @@ class Voucher extends Model
     {
         return PosOrder::where('voucher_id', $this->id)->count();
     }
+
+    public function getApplicableAmount($target_amount)
+    {
+        $discount = $this->is_amount_percentage ? ($target_amount * $this->amount / 100) : $this->amount;
+        $discount = $this->is_amount_percentage && $this->cap ? min($discount, $this->cap) : $discount;
+
+        return min($discount, $target_amount);
+    }
 }
