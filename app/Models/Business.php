@@ -20,6 +20,7 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
+use Sheba\Reward\Rewardable;
 use Sheba\Transactions\Types;
 use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
@@ -31,7 +32,7 @@ use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
 use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
 
-class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
+class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction, Rewardable
 {
     use Wallet, ModificationFields, TopUpTrait;
 

@@ -1,6 +1,5 @@
 <?php namespace App\Http\Middleware;
 
-use App\Exceptions\NotFoundException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;

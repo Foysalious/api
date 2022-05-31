@@ -1,7 +1,6 @@
 <?php namespace Sheba\Business\ShiftSetting\ShiftAssign;
 
 use Sheba\Helpers\HasErrorCodeAndMessage;
-use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 
 class Requester
 {
@@ -17,11 +16,11 @@ class Requester
     private $isShiftActivated;
     private $colorCode;
     private $repeat;
-    private $repeat_type;
-    private $repeat_range;
+    private $repeatType;
+    private $repeatRange;
     private $days;
-    private $end_date;
-    private $calender_data = [];
+    private $endDate;
+    private $calenderData = [];
 
     public function setShiftId($shiftId)
     {
@@ -124,24 +123,24 @@ class Requester
 
     public function setRepeatType($repeat_type)
     {
-        $this->repeat_type = $repeat_type;
+        $this->repeatType = $repeat_type;
         return $this;
     }
 
     public function getRepeatType()
     {
-        return $this->repeat_type;
+        return $this->repeatType;
     }
 
     public function setRepeatRange($repeat_range)
     {
-        $this->repeat_range = $repeat_range;
+        $this->repeatRange = $repeat_range;
         return $this;
     }
 
     public function getRepeatRange()
     {
-        return $this->repeat_range;
+        return $this->repeatRange;
     }
 
     public function setRepeatDays($days)
@@ -157,13 +156,13 @@ class Requester
 
     public function setEndDate($end_date)
     {
-        $this->end_date = $end_date;
+        $this->endDate = $end_date;
         return $this;
     }
 
     public function getEndDate()
     {
-        return $this->end_date;
+        return $this->endDate;
     }
 
     public function setColorCode($color_code)
@@ -179,13 +178,13 @@ class Requester
 
     public function setData($calender_data)
     {
-        $this->calender_data[] = $calender_data;
+        $this->calenderData[] = $calender_data;
         return $this;
     }
 
     public function getData()
     {
-        return $this->calender_data;
+        return $this->calenderData;
     }
 
     public function setShiftAssignError($message)
@@ -196,11 +195,11 @@ class Requester
     public function getShiftSettings()
     {
         $shift_settings = [
-            'repeat'        => $this->getRepeat(),
-            'repeat_type'   => $this->getRepeatType(),
-            'repeat_range'  => $this->getRepeatRange(),
-            'days'          => $this->getRepeatDays(),
-            'end_date'      => $this->getEndDate()
+            'repeat'        => $this->repeat,
+            'repeat_type'   => $this->repeatType,
+            'repeat_range'  => $this->repeatRange,
+            'days'          => $this->days,
+            'end_date'      => $this->endDate
         ];
         return json_encode($shift_settings);
     }
