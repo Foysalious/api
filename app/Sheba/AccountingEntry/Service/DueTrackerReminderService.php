@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Service;
 
+use App\Models\Partner;
 use App\Sheba\AccountingEntry\Notifications\ReminderNotificationHandler;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use Illuminate\Support\Facades\Log;
@@ -219,6 +220,7 @@ class DueTrackerReminderService
      */
     public function sendReminderPush(array $reminder): bool
     {
+        $partner = Partner::where('id', $this->partnerId)->first();
         (new ReminderNotificationHandler())->setReminder($reminder)->handler();
         $smsStatus = 'failed';
         if ($reminder['should_send_sms'] == 1) {
@@ -227,6 +229,7 @@ class DueTrackerReminderService
             $sms_content["contact_id"] = $reminder['contact_info']['id'];
             $sms_content["contact_name"] = $reminder['contact_info']['name'];
             $sms_content["contact_mobile"] = $reminder['contact_info']['mobile'];
+            /** @var DueTrackerSmsService $dueTrackerSmsService */
             $dueTrackerSmsService = app()->make(DueTrackerSmsService::class);
             $response = $dueTrackerSmsService->setPartnerId($reminder['partner_id'])
                 ->setContactType($reminder['contact_type'])
@@ -235,7 +238,8 @@ class DueTrackerReminderService
                 $smsStatus = 'success';
             }
         }
-        $this->setReminderId($reminder['id'])
+        $this->setPartner($partner)
+            ->setReminderId($reminder['id'])
             ->setSms($reminder['should_send_sms'])
             ->setReminderDate($reminder['reminder_at'])
             ->setReminderStatus('success')
