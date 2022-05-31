@@ -4,6 +4,10 @@ namespace Sheba\ResellerPayment\Statics;
 
 class ResellerPaymentGeneralStatic
 {
+    const OLD_BASE_URL = "v1/partners/merchant-on-boarding/category";
+    const NEW_BASE_URL = "v1/partners/dynamic-form/section";
+
+
     public static function notificationSubmitValidation(): array
     {
         return [
