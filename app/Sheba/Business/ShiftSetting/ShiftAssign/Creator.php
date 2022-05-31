@@ -4,12 +4,12 @@ use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 
 class Creator
 {
-    /*** @var ShiftAssignmentRepository */
+    /*** @var ShiftAssignmentRepository  $shiftAssignmentRepository*/
     private $shiftAssignmentRepository;
 
-    public function __construct()
+    public function __construct(ShiftAssignmentRepository $shiftAssignmentRepository)
     {
-        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
+        $this->shiftAssignmentRepository = $shiftAssignmentRepository;
     }
 
     /** @var Requester $shiftCalenderRequester */
@@ -24,7 +24,10 @@ class Creator
     public function update($shift_calender)
     {
         $data = $this->makeData();
-        $this->shiftAssignmentRepository->update($shift_calender, $data);
+        foreach ($shift_calender as $calender_data)
+        {
+            $this->shiftAssignmentRepository->update($calender_data, $data);
+        }
     }
 
     private function makeData()
@@ -36,6 +39,7 @@ class Creator
             'end_time' => $this->shiftCalenderRequester->getEndTime(),
             'is_half_day' => $this->shiftCalenderRequester->getIsHalfDayActivated(),
             'is_general' => $this->shiftCalenderRequester->getIsGeneralActivated(),
+            'shift_settings' => $this->shiftCalenderRequester->getShiftSettings(),
             'is_unassigned' => $this->shiftCalenderRequester->getIsUnassignedActivated(),
             'is_shift' => $this->shiftCalenderRequester->getIsShiftActivated(),
             'color_code' => $this->shiftCalenderRequester->getColorCode()

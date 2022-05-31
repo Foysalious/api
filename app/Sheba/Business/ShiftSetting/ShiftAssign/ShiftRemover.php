@@ -1,15 +1,16 @@
 <?php namespace Sheba\Business\ShiftSetting\ShiftAssign;
 
+use Sheba\Business\ShiftSetting\ShiftAssign\Requester;
 use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 
 class ShiftRemover
 {
-    /*** @var ShiftAssignmentRepository */
+    /*** @var ShiftAssignmentRepository  $shiftAssignmentRepository */
     private $shiftAssignmentRepository;
 
-    public function __construct()
+    public function __construct(ShiftAssignmentRepository $shiftAssignmentRepository)
     {
-        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
+        $this->shiftAssignmentRepository = $shiftAssignmentRepository;
     }
 
     /** @var Requester $shiftCalenderRequester */
@@ -37,6 +38,7 @@ class ShiftRemover
             'is_half_day' => $this->shiftCalenderRequester->getIsHalfDayActivated(),
             'is_general' => $this->shiftCalenderRequester->getIsGeneralActivated(),
             'is_unassigned' => $this->shiftCalenderRequester->getIsUnassignedActivated(),
+            'shift_settings' => NULL,
             'is_shift' => $this->shiftCalenderRequester->getIsShiftActivated(),
             'color_code' => $this->shiftCalenderRequester->getColorCode()
         ];
