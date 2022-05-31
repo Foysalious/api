@@ -36,6 +36,7 @@ class ShiftRemover
             'end_time' => $this->shiftCalenderRequester->getEndTime(),
             'is_half_day' => $this->shiftCalenderRequester->getIsHalfDayActivated(),
             'is_general' => $this->shiftCalenderRequester->getIsGeneralActivated(),
+            'is_unassigned' => $this->shiftCalenderRequester->getIsUnassignedActivated(),
             'is_shift' => $this->shiftCalenderRequester->getIsShiftActivated(),
             'color_code' => $this->shiftCalenderRequester->getColorCode()
         ];

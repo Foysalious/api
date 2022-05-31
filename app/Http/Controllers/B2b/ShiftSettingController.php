@@ -93,7 +93,8 @@ class ShiftSettingController extends Controller
         $shift_calender = $shift_assignment_repo->where('shift_id', $business_shift->id)->where('date', '>', Carbon::now()->addDay()->toDateString())->get();
         $business_shift->delete();
         $shift_calendar_requester
-            ->setIsGeneralActivated(1)
+            ->setIsUnassignedActivated(1)
+            ->setIsGeneralActivated(0)
             ->setIsShiftActivated(0);
 
         foreach($shift_calender as $shift)
