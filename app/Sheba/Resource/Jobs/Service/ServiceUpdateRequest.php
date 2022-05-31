@@ -7,6 +7,7 @@ use App\Models\Job;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\JobMaterial\JobMaterial;
 use Sheba\Dal\JobService\JobService;
+use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\Response;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
@@ -17,6 +18,7 @@ use Sheba\Resource\Jobs\Material\Updater as MaterialUpdater;
 
 class ServiceUpdateRequest
 {
+    use ModificationFields;
     /** @var array */
     private $newServices;
     /** @var array */
@@ -112,6 +114,7 @@ class ServiceUpdateRequest
                     $this->updater->setJobService($job_service)->setQuantity($quantity['quantity'])->update();
                 }
             }
+            $this->updateJobDiscount($this->job, 1);
 
             $this->response->setSuccessfulCode()->setSuccessfulMessage();
         });
@@ -135,6 +138,17 @@ class ServiceUpdateRequest
     private function canUpdate()
     {
         return $this->policy->setJob($this->job)->setPartner($this->job->partnerOrder->partner)->canUpdate();
+    }
+
+    /**
+     * SERVICE UNIT PRICE UPDATE, RECALCULATE DISCOUNT.
+     *
+     * @param Job $job
+     */
+    private function updateJobDiscount(Job $job, $flag = null)
+    {
+        $discount = $flag ? $job->calculateTotalDiscountAmount($flag) : $job->calculateTotalDiscountAmount();
+        $job->update($this->withUpdateModificationField(['discount' => $discount]));
     }
 
 }
