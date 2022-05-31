@@ -197,7 +197,8 @@ class ShiftSettingController extends Controller
 
         $this->shiftRequester->setBusiness($business)
             ->setShift($business_shift)
-            ->setName($request->name);
+            ->setName($request->name)
+            ->setName($request->title);
         $this->shiftRequester->checkUniqueName();
         if ($this->shiftRequester->hasError()) return api_response($request, null, $this->shiftRequester->getErrorCode(), ['message' => $this->shiftRequester->getErrorMessage()]);
         $this->shiftRequester->setTitle($request->title)
