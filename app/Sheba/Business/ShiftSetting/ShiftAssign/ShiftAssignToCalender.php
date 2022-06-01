@@ -84,38 +84,27 @@ dd($dates);
         $dates = [];
         $end_date = Carbon::parse($end_date)->toDateString();
         $date = $start_date;
-        while($date != $end_date)
-        {
-            foreach ($days as $d)
-            {
-                if ($d == "Saturday" && Carbon::parse($date)->isSaturday())  $dates[] = $date;
-                if ($d == "Sunday" && Carbon::parse($date)->isSunday())  $dates[] = $date;
-                if ($d == "Monday" && Carbon::parse($date)->isMonday())  $dates[] = $date;
-                if ($d == "Tuesday" && Carbon::parse($date)->isTuesday())  $dates[] = $date;
-                if ($d == "Wednesday" && Carbon::parse($date)->isWednesday())  $dates[] = $date;
-                if ($d == "Thursday" && Carbon::parse($date)->isThursday())  $dates[] = $date;
-                if ($d == "Friday" && Carbon::parse($date)->isFriday())  $dates[] = $date;
-            }
-            $date = Carbon::parse($date)->addDay()->toDateString();
-        }
-
-//        dd($dates);
-//
-//
-//
-//
-//
-//
-//
-//        foreach ($days as $day) {
-//            $day = date('N', strtotime($day));
-//            $start_date = Carbon::parse($start_date)->next($day);
-////            dd($start_date->copy());
-//            for ($date = $start_date->copy(); $date->lte($end_date); $date->addWeeks($repeat)) {
-//                $dates[] = $date->format('Y-m-d');
+//        while($date != $end_date)
+//        {
+//            foreach ($days as $d)
+//            {
+//                if ($d == "Saturday" && Carbon::parse($date)->isSaturday())  $dates[] = $date;
+//                if ($d == "Sunday" && Carbon::parse($date)->isSunday())  $dates[] = $date;
+//                if ($d == "Monday" && Carbon::parse($date)->isMonday())  $dates[] = $date;
+//                if ($d == "Tuesday" && Carbon::parse($date)->isTuesday())  $dates[] = $date;
+//                if ($d == "Wednesday" && Carbon::parse($date)->isWednesday())  $dates[] = $date;
+//                if ($d == "Thursday" && Carbon::parse($date)->isThursday())  $dates[] = $date;
+//                if ($d == "Friday" && Carbon::parse($date)->isFriday())  $dates[] = $date;
 //            }
+//            $date = Carbon::parse($date)->addDay()->toDateString();
 //        }
-//        dd($dates);
+        foreach ($days as $day) {
+            $day = Carbon::parse($day)->dayOfWeek;
+            $start_date = Carbon::parse($start_date)->next($day);
+            for ($date = $start_date->copy(); $date->lte($end_date); $date->addWeeks($repeat)) {
+                $dates[] = $date->format('Y-m-d');
+            }
+        }
         return $dates;
     }
 }
