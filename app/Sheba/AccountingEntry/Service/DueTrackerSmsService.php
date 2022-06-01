@@ -12,6 +12,7 @@ use App\Sheba\Partner\PackageFeatureCount;
 use Exception;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
+use Sheba\AccountingEntry\Exceptions\InsufficientSmsForDueTrackerTagada;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\FraudDetection\TransactionSources;
@@ -128,8 +129,7 @@ class DueTrackerSmsService
      * @return bool
      * @throws AccountingEntryServerError
      * @throws ContactDoesNotExistInDueTracker
-     * @throws InsufficientBalance
-     * @throws WalletDebitForbiddenException
+     * @throws Exception
      */
     public function sendSingleSmsToContact(): bool
     {
@@ -139,8 +139,6 @@ class DueTrackerSmsService
     }
 
     /**
-     * @throws WalletDebitForbiddenException
-     * @throws InsufficientBalance
      * @throws Exception
      */
     private function sendSMS($sms_content)
@@ -148,11 +146,21 @@ class DueTrackerSmsService
         $data = $this->generateSmsDataForContactType($sms_content);
         /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSmsHandler($data);
-        $sms_count = $sms->getSmsCountAndEstimationCharge();
-        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-        if (config('sms.is_on')) {
-            $sms->shoot();
+        $sms_count = $sms->getSmsCountAndEstimationCharge()['sms_count'];
+        $packageFeatureCount = app()->make(PackageFeatureCount::class)
+            ->setPartner($this->partner)
+            ->setFeature(PackageFeatureCount::SMS);
+
+        if ($packageFeatureCount->eligible($sms_count)) {
+            $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
+            if (config('sms.is_on')) {
+                $sms->shoot();
+                $packageFeatureCount->decrementFeatureCount($sms_count);
+            }
+        } else {
+            throw new InsufficientSmsForDueTrackerTagada();
         }
+
     }
 
     /**
@@ -177,7 +185,7 @@ class DueTrackerSmsService
         return [$sms, $log];
     }
 
-    private function generateSmsDataForContactType(array $sms_content)
+    private function generateSmsDataForContactType(array $sms_content): array
     {
         $partner_info = $this->getPartnerInfo();
         $data =[
@@ -227,9 +235,9 @@ class DueTrackerSmsService
         dispatch(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
     }
 
+
     /**
-     * @throws WalletDebitForbiddenException
-     * @throws InsufficientBalance
+     * @throws Exception
      */
     public function sendBulkSmsToContacts()
     {
@@ -247,7 +255,7 @@ class DueTrackerSmsService
 
     /**
      * @throws WalletDebitForbiddenException
-     * @throws InsufficientBalance
+     * @throws InsufficientBalance|Exception
      */
     public function sendSmsForReminder(array $sms_content): bool
     {
@@ -299,20 +307,14 @@ class DueTrackerSmsService
         ];
     }
 
-    /**
-     * @throws InsufficientBalance
-     * @throws WalletDebitForbiddenException
-     * @throws Exception
-     */
     public function checkSmsBalanceAndSubscription(): string
     {
 
-        $packageFeatureCount = app()->make(PackageFeatureCount::class);
-        $free_sms = $packageFeatureCount->setPartner($this->partner)
-            ->setFeature(PackageFeatureCount::SMS)->featureCurrentCount();
-        dd($free_sms);
+        $packageFeatureCount = app()->make(PackageFeatureCount::class)
+            ->setPartner($this->partner)
+            ->setFeature(PackageFeatureCount::SMS);
+
         $total_sms_count = 0;
-        $package_sms_count = 1;
         $user_count = count($this->contactIds);
         $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $sms_content) {
@@ -322,8 +324,8 @@ class DueTrackerSmsService
             $sms_estimation = $sms->getSmsCountAndEstimationCharge();
             $total_sms_count += $sms_estimation['sms_count'];
         }
-        if($total_sms_count <= $package_sms_count) {
-            return en2bnNumber($user_count)  . BulkSmsDialogue::FREE_SMS_DIALOGUE;
+        if ($packageFeatureCount->eligible($total_sms_count)) {
+            return en2bnNumber($user_count) . BulkSmsDialogue::FREE_SMS_DIALOGUE;
         } else {
             return en2bnNumber($user_count) . BulkSmsDialogue::SHORTAGE_OF_SMS;
         }

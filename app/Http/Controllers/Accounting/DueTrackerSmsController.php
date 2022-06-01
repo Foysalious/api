@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
+use Sheba\AccountingEntry\Exceptions\InsufficientSmsForDueTrackerTagada;
 use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 
 class DueTrackerSmsController extends Controller
@@ -47,8 +48,6 @@ class DueTrackerSmsController extends Controller
      * @return JsonResponse
      * @throws AccountingEntryServerError
      * @throws ContactDoesNotExistInDueTracker
-     * @throws InsufficientBalance
-     * @throws WalletDebitForbiddenException
      */
     public function sendSingleSmsToContact(Request $request): JsonResponse
     {
@@ -60,7 +59,7 @@ class DueTrackerSmsController extends Controller
                 ->sendSingleSmsToContact();
             return http_response($request, null, 200, ['data' => $response]);
         }  catch (Exception $e) {
-            if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
+            if ( $e instanceof InsufficientSmsForDueTrackerTagada) {
                 return http_response($request, null, $e->getCode(), ['data' => $e->getMessage()]);
             } else {
                 throw $e;

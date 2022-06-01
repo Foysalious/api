@@ -8,5 +8,6 @@ class BulkSmsDialogue
 {
     use ConstGetter;
     const FREE_SMS_DIALOGUE = ' জন কাস্টমারের নিকট তাগাদা পাঠানো হবে!';
-    const SHORTAGE_OF_SMS = ' জন কাস্টমারের নিকট তাগাদা পাঠানোr jonno porjapto sms nei';
+    const SHORTAGE_OF_SMS_WITH_CUSTOMER_COUNT = ' জন কাস্টমারের নিকট তাগাদা পাঠানোর জন্য পর্যাপ্ত এসএমএস নেই ';
+    const SHORTAGE_OF_SMS = 'তাগাদা পাঠানোর জন্য পর্যাপ্ত এসএমএস নেই';
 }
