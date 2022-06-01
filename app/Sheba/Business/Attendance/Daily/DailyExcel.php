@@ -28,6 +28,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
     private $lateNote;
     private $leftEarlyNote;
     private $overtime;
+    private $officeName;
 
     public function __construct(array $daily_data, $date)
     {
@@ -44,6 +45,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
         $this->checkInTime = '-';
         $this->checkInStatus = '-';
         $this->checkInLocation = '-';
+        $this->officeName = '-';
         $this->checkInAddress = '-';
         $this->checkOutTime = '-';
         $this->checkOutStatus = '-';
@@ -76,8 +78,10 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
                 }
                 if ($attendance['check_in']['is_remote']) {
                     $this->checkInLocation = "Remote";
-                } else {
+                } else if ($attendance['check_in']['is_in_wifi']) {
                     $this->checkInLocation = "Office IP";
+                } else if ($attendance['check_in']['is_geo']) {
+                    $this->checkInLocation = "Geo Location";
                 }
 
                 $this->checkInAddress = $attendance['check_in']['address'];
@@ -92,8 +96,10 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
                     }
                     if ($attendance['check_out']['is_remote']) {
                         $this->checkOutLocation = "Remote";
-                    } else {
+                    } else if ($attendance['check_out']['is_in_wifi']) {
                         $this->checkOutLocation = "Office IP";
+                    } else if ($attendance['check_out']['is_geo']) {
+                        $this->checkOutLocation = "Geo Location";
                     }
                     $this->checkOutAddress = $attendance['check_out']['address'];
                 }
@@ -115,8 +121,8 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
                 }
             }
 
-            array_push($data, [
-                'date' => $attendance['date'] ? $attendance['date'] : $this->date,
+            $this->data[] = [
+                'date' => $attendance['date'] ?: $this->date,
                 'employee_id' => $attendance['employee_id'],
                 'employee_name' => $attendance['member']['name'],
                 'department' => $attendance['department']['name'],
@@ -136,7 +142,7 @@ class DailyExcel implements FromCollection, WithHeadings, ShouldAutoSize, WithSt
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
                 'attendance_reconciled' => !isset($attendance['is_attendance_reconciled']) ? '-' : ($attendance['is_attendance_reconciled'] ? 'Yes' : 'No')
-            ]);
+            ];
         }
 
         return collect($data);

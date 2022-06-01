@@ -22,10 +22,12 @@ return [
     /**
      * EMI CONFIGURATION FOR MANAGER
      */
-    'manager'      => [
-        'minimum_emi_amount'  => (double)env('MANAGER_MINIMUM_EMI_AMOUNT', 5000),
+    'manager' => [
+        'minimum_emi_amount' => (double)env('MANAGER_MINIMUM_EMI_AMOUNT', 5000),
         'bank_fee_percentage' => (double)env('MANAGER_BANK_FEE_PERCENTAGE', 2),
-        'breakdowns'          => $breakdowns,
-        'valid_months'        => array_map(function ($item) { return $item['month']; }, $breakdowns)
+        'breakdowns' => $breakdowns,
+        'valid_months' => array_map(function ($item) {
+            return $item['month'];
+        }, $breakdowns)
     ]
 ];

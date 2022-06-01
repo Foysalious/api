@@ -10,6 +10,7 @@ use App\Models\Profile;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Models\Order;
+use Illuminate\Support\Facades\Log;
 use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\InfoCall\InfoCallRepository;
 use Sheba\Dal\InfoCall\Statuses;
@@ -200,6 +201,7 @@ class InfoCallController extends Controller
         $info_call = $this->infoCallRepository->create($data);
         return api_response($request, $info_call, 200, ['message'=>'Successful','info_call' => $info_call]);
     }
+
     public function show(Request $request, $id)
     {
         /** @var AuthUser $auth_user */
