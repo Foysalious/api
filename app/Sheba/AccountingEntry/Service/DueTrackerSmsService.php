@@ -296,7 +296,7 @@ class DueTrackerSmsService
         if ($packageFeatureCount->iseligible($total_sms_count)) {
             return en2bnNumber($user_count) . BulkSmsDialogue::FREE_SMS_DIALOGUE;
         } else {
-            return BulkSmsDialogue::SHORTAGE_OF_SMS;
+           throw new InsufficientSmsForDueTrackerTagada();
         }
     }
 
