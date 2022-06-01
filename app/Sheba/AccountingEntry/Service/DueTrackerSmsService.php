@@ -13,14 +13,9 @@ use Exception;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
 use Sheba\AccountingEntry\Exceptions\InsufficientSmsForDueTrackerTagada;
-use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
-use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
-use Sheba\FraudDetection\TransactionSources;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
-use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
-use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class DueTrackerSmsService
 {
@@ -144,45 +139,39 @@ class DueTrackerSmsService
     private function sendSMS($sms_content)
     {
         $data = $this->generateSmsDataForContactType($sms_content);
-        /** @var SmsHandlerRepo $sms */
-        list($sms, $log) = $this->getSmsHandler($data);
+        $sms = $this->getSmsHandler($data);
         $sms_count = $sms->getSmsCountAndEstimationCharge()['sms_count'];
-        $packageFeatureCount = app()->make(PackageFeatureCount::class)
-            ->setPartner($this->partner)
+        $sms_package = app()->make(PackageFeatureCount::class)
+            ->setPartnerId($this->partner->id)
             ->setFeature(PackageFeatureCount::SMS);
-
-        if ($packageFeatureCount->eligible($sms_count)) {
+        if ($sms_package->isEligible($sms_count)) {
             $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-            if (config('sms.is_on')) {
+            if (config('sms.is_on') || true) {
                 $sms->shoot();
-                $packageFeatureCount->decrementFeatureCount($sms_count);
+                $sms_package->decrementFeatureCount($sms_count);
             }
         } else {
             throw new InsufficientSmsForDueTrackerTagada();
         }
-
     }
 
     /**
      * @throws Exception
      */
-    public function getSmsHandler($data)
+    public function getSmsHandler($data): SmsHandlerRepo
     {
-        $log = ' BDT has been deducted for sending ';
         $event_name = 'due-tracker-inform-' . $this->contactType;
         if ($data['type'] == 'due') {
             $event_name .=   '-due';
-            $log .= "due details";
         } else {
             $event_name .= '-deposit';
-            $log .= "deposit details";
         }
         $sms = (new SmsHandlerRepo($event_name));
         $sms->setMobile($data['mobile'])
             ->setMessage($data)
             ->setFeatureType(FeatureType::DUE_TRACKER)
             ->setBusinessType(BusinessType::SMANAGER);
-        return [$sms, $log];
+        return $sms;
     }
 
     private function generateSmsDataForContactType(array $sms_content): array
@@ -204,25 +193,6 @@ class DueTrackerSmsService
         return $data;
     }
 
-    /**
-     * @throws AccountingEntryServerError
-     * @throws WalletDebitForbiddenException
-     * @throws InvalidSourceException
-     * @throws KeyNotFoundException
-     */
-    private function deductSmsCostFromWallet($sms_cost, $log)
-    {
-        $transaction = (new WalletTransactionHandler())
-            ->setModel($this->partner)
-            ->setAmount($sms_cost)
-            ->setType(Types::debit())
-            ->setLog($sms_cost . $log)
-            ->setTransactionDetails([])
-            ->setSource(TransactionSources::SMS)
-            ->store();
-        $this->dueTrackerRepo->storeJournalForSmsSending($this->partner, $transaction);
-    }
-
 
     public function getBulkSmsContactList()
     {
@@ -241,7 +211,6 @@ class DueTrackerSmsService
      */
     public function sendBulkSmsToContacts()
     {
-        /* Todo need to check the wallet for sms charge calculation before job */
         $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $each_sms) {
             $this->sendSMS($each_sms);
@@ -269,7 +238,7 @@ class DueTrackerSmsService
             $this->sendSMS($sms_content);
             return true;
         } catch (Exception $e){
-            if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
+            if ( $e instanceof InsufficientSmsForDueTrackerTagada) {
                 return true;
             } else {
                 throw $e;

@@ -6,14 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
 use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
-use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
 use Sheba\AccountingEntry\Exceptions\InsufficientSmsForDueTrackerTagada;
-use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 
 class DueTrackerSmsController extends Controller
 {
@@ -86,17 +84,26 @@ class DueTrackerSmsController extends Controller
             'contact_type' => 'required|string|in:' . implode(',', ContactType::get()),
             'contact_ids' => 'required|array'
         ]);
-        $this->dueTrackerSmsService
-            ->setPartner($request->partner)
-            ->setContactIds($request->contact_ids)
-            ->setContactType($request->contact_type)
-            ->sendBulkSmsThroughJob();
-        return http_response($request, null, 200, ['data' => true ]);
+        try {
+            $this->dueTrackerSmsService
+                ->setPartner($request->partner)
+                ->setContactIds($request->contact_ids)
+                ->setContactType($request->contact_type)
+                ->sendBulkSmsThroughJob();
+            return http_response($request, null, 200, ['data' => true ]);
+        }  catch (Exception $e) {
+            if ( $e instanceof InsufficientSmsForDueTrackerTagada) {
+                return http_response($request, null, $e->getCode(), ['data' => $e->getMessage()]);
+            } else {
+                throw $e;
+            }
+        }
     }
 
     /**
-     * @throws InsufficientBalance
-     * @throws WalletDebitForbiddenException
+     * @param Request $request
+     * @return JsonResponse
+     * @throws Exception
      */
     public function checkSmsBalanceAndSubscription(Request $request): JsonResponse
     {
@@ -112,7 +119,7 @@ class DueTrackerSmsController extends Controller
                 ->checkSmsBalanceAndSubscription();
             return http_response($request, null, 200, ['data' => $response  ]);
         } catch (Exception $e) {
-            if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
+            if ( $e instanceof InsufficientSmsForDueTrackerTagada) {
                 return http_response($request, null, $e->getCode(), ['data' => $e->getMessage()]);
             } else {
                 throw $e;
