@@ -455,7 +455,6 @@ class PaymentService
          //QR gateway off until app live
         $qrData = $this->getQRGateways($completion);
         $allData = array_merge($pgwData, $qrData);
-        $allData = $pgwData;
         return $banner ?
             array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
     }
