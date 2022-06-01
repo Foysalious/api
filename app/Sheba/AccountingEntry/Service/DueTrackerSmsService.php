@@ -146,10 +146,8 @@ class DueTrackerSmsService
             ->setFeature(PackageFeatureCount::SMS);
         if ($sms_package->isEligible($sms_count)) {
             $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-            if (config('sms.is_on')) {
                 $sms->shoot();
                 $sms_package->decrementFeatureCount($sms_count);
-            }
         } else {
             throw new InsufficientSmsForDueTrackerTagada();
         }
