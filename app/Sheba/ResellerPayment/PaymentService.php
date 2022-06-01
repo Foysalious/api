@@ -101,21 +101,23 @@ class PaymentService
         $qr_gateway = QRGateway::where('method_name', $this->key)->first();
         if (!$qr_gateway) throw new InvalidQRKeyException();
         $this->getResellerPaymentStatus(true);
-        if (json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status == 19) {
-            return [
-                'banner' => PaymentMethodStatics::getMtbBannerURL(),
-                'faq' => PaymentMethodStatics::detailsFAQ(),
-                'status' => 'completed' ?? null,
-                'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : 'আবেদন সফল হয়েছে !',
-                'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
-                'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
-                'details' => [
-                    'id' => $qr_gateway->id,
-                    'key' => $qr_gateway->key,
-                    'name_bn' => $qr_gateway->name_bn,
-                    'icon' => $qr_gateway->icon
-                ]
-            ];
+        if (isset(json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status)) {
+            if (json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status == 19) {
+                return [
+                    'banner' => PaymentMethodStatics::getMtbBannerURL(),
+                    'faq' => PaymentMethodStatics::detailsFAQ(),
+                    'status' => 'completed' ?? null,
+                    'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : 'আবেদন সফল হয়েছে !',
+                    'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
+                    'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
+                    'details' => [
+                        'id' => $qr_gateway->id,
+                        'key' => $qr_gateway->key,
+                        'name_bn' => $qr_gateway->name_bn,
+                        'icon' => $qr_gateway->icon
+                    ]
+                ];
+            }
         }
         return [
             'banner' => PaymentMethodStatics::getMtbBannerURL(),
@@ -453,8 +455,9 @@ class PaymentService
             $pgwData[] = $this->makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status);
         }
          //QR gateway off until app live
-        $qrData = $this->getQRGateways($completion);
-        $allData = array_merge($pgwData, $qrData);
+//        $qrData = $this->getQRGateways($completion);
+//        $allData = array_merge($pgwData, $qrData);
+        $allData = $pgwData;
         return $banner ?
             array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
     }
