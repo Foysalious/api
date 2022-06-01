@@ -22,7 +22,7 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
      */
     public function getFeaturesCurrentCount(Request $request, $partner): JsonResponse
     {
-        $features_count = $this->packageFeatureCount->setPartner($partner)->featuresCurrentCountList();
+        $features_count = $this->packageFeatureCount->setPartnerId($partner)->featuresCurrentCountList();
         if (! $features_count) {
             return api_response($request, null, 404, ['message' => 'Partner not found']);
         }
