@@ -11,12 +11,14 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\InventoryService\InventoryServerClient;
+use App\Sheba\Partner\PackageFeatureCount;
 use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use App\Sheba\UserMigration\Modules;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Dingo\Api\Routing\Helpers;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
@@ -31,6 +33,7 @@ use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
+use Sheba\Partner\Feature;
 use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
@@ -421,9 +424,14 @@ class OrderController extends Controller
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
+     * @throws Exception
      */
     public function sendSmsV2(Request $request, Updater $updater)
     {
+        $isEligible = $this->checkEligibility($request, Feature::SMS);
+        if (!$isEligible) {
+            return http_response($request, null, 403, ['message' => 'আপনার নির্ধারিত প্যাকেজের ফ্রি এসএমএস সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে প্যাকেজ আপগ্রেড করুন অথবা পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন।']);
+        }
         $this->sendSmsCore($request, $updater);
         return http_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
     }
@@ -656,6 +664,15 @@ class OrderController extends Controller
         if($result) $message = 'Pos Order Payment remove successfully';
         else $message = 'There is no Pos Order Payment';
         return api_response($request, true, 200, ['message' => $message]);
+    }
+
+    private function checkEligibility(Request $request, string $feature): bool
+    {
+        $partner = resolvePartnerFromAuthMiddleware($request);
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class);
+        $count = $packageFeatureCount->setPartnerId($partner->id)->setFeature($feature)->featureCurrentCount();
+        return $packageFeatureCount->isEligible($count);
     }
 
 }
