@@ -11,8 +11,7 @@ class UrlShortenerServerClient
 
     public function __construct(Client $client)
     {
-//        $this->client = $client;
-        $this->client = new Client(['verify' => false]);
+        $this->client = $client;
         $this->baseUrl = rtrim(config('url_shortener.api_url'), '/');
     }
 
