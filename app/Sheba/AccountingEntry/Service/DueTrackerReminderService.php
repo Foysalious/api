@@ -220,7 +220,7 @@ class DueTrackerReminderService
     public function sendReminderPush(array $reminder): bool
     {
         (new ReminderNotificationHandler())->setReminder($reminder)->handler();
-        $smsStatus = 'failed';
+        $smsStatus = 'pending';
         if ($reminder['should_send_sms'] == 1) {
             $sms_content["balance"] = $reminder['balance'];
             $sms_content["balance_type"] = $reminder['balance_type'];
@@ -231,6 +231,7 @@ class DueTrackerReminderService
             $response = $dueTrackerSmsService->setPartnerId($reminder['partner_id'])
                 ->setContactType($reminder['contact_type'])
                 ->sendSmsForReminder($sms_content);
+            $smsStatus = 'failed';
             if($response){
                 $smsStatus = 'success';
             }

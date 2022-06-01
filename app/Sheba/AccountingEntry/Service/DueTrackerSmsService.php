@@ -239,7 +239,7 @@ class DueTrackerSmsService
             return true;
         } catch (Exception $e){
             if ( $e instanceof InsufficientSmsForDueTrackerTagada) {
-                return true;
+                return false;
             } else {
                 throw $e;
             }
