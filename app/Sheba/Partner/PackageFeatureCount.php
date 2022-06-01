@@ -18,12 +18,12 @@ class PackageFeatureCount
     }
 
     /**
-     * @param $partner
+     * @param $partner_id
      * @return $this
      */
-    public function setPartner($partner)
+    public function setPartnerId($partner_id)
     {
-        $this->partner = $partner;
+        $this->partner = $partner_id;
         return $this;
     }
 
@@ -61,7 +61,7 @@ class PackageFeatureCount
      * @return bool
      * @throws Exception
      */
-    public function eligible(int $count = 1): bool
+    public function isEligible(int $count = 1): bool
     {
         return $this->featureCounter->isEligible($this->feature, $this->partner, $count);
     }
