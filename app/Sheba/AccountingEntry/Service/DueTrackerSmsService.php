@@ -289,15 +289,14 @@ class DueTrackerSmsService
         $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $sms_content) {
             $data = $this->generateSmsDataForContactType($sms_content);
-            /** @var SmsHandlerRepo $sms */
-            list($sms, $log) = $this->getSmsHandler($data);
+            $sms = $this->getSmsHandler($data);
             $sms_estimation = $sms->getSmsCountAndEstimationCharge();
             $total_sms_count += $sms_estimation['sms_count'];
         }
-        if ($packageFeatureCount->eligible($total_sms_count)) {
+        if ($packageFeatureCount->iseligible($total_sms_count)) {
             return en2bnNumber($user_count) . BulkSmsDialogue::FREE_SMS_DIALOGUE;
         } else {
-            return en2bnNumber($user_count) . BulkSmsDialogue::SHORTAGE_OF_SMS;
+            return BulkSmsDialogue::SHORTAGE_OF_SMS;
         }
     }
 
