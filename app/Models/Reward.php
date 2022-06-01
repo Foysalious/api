@@ -85,6 +85,14 @@ class Reward extends Model
         return $this->amount;
     }
 
+    public function calculateAmountWRTActionValue($value)
+    {
+        if (!$this->is_amount_percentage) return $this->amount;
+
+        $amount = ($this->amount * $value) / 100;
+        return $this->cap ? min($amount, $this->cap) : $amount;
+    }
+
     public function setActionEvent(array $params)
     {
         /** @var ActionEventInitiator $initiator */
@@ -168,5 +176,21 @@ class Reward extends Model
         $end = $user_filters["registration_within"]['end'];
 
         return (new TimeFrame())->forDateRange($start, $end);
+    }
+
+    /**
+     * @return Carbon
+     */
+    public function getCashbackValidity()
+    {
+        $valid_till = null;
+
+        if ($this->valid_till_date) {
+            $valid_till = $this->valid_till_date;
+        } elseif ($this->valid_till_day) {
+            $valid_till = Carbon::now()->addDays($this->valid_till_day);
+        }
+
+        return $valid_till->endOfDay();
     }
 }
