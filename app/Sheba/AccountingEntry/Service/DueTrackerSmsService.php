@@ -274,11 +274,14 @@ class DueTrackerSmsService
         ];
     }
 
+    /**
+     * @throws Exception
+     */
     public function checkSmsBalanceAndSubscription(): string
     {
 
         $packageFeatureCount = app()->make(PackageFeatureCount::class)
-            ->setPartner($this->partner)
+            ->setPartnerId($this->partner->id)
             ->setFeature(PackageFeatureCount::SMS);
 
         $total_sms_count = 0;
