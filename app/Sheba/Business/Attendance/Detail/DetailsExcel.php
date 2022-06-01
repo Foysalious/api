@@ -117,7 +117,7 @@ class DetailsExcel implements FromCollection, WithHeadings, ShouldAutoSize, With
                     $this->status = "On leave: half day";
                 }
             }
-            $this->data[] = [
+            $data->push([
                 'date' => $this->date,
                 'status' => $this->status,
 

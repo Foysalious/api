@@ -1,4 +1,4 @@
-FROM php:7.3-fpm
+FROM php:7.0-fpm AS api-base-php-fpm-70
 
 ARG APP_ENV
 
@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     nginx git \
     libsasl2-dev  libssl-dev \
     libjpeg62-turbo-dev libfreetype6-dev libpng-dev libxpm-dev libvpx-dev \
-    libxml2-dev libicu-dev zlib1g-dev
+    libxml2-dev libicu-dev zlib1g-dev \
     libgmp-dev libmhash-dev
 
 # Clear cache
