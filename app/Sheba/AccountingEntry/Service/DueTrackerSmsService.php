@@ -4,20 +4,18 @@ use App\Jobs\Partner\DueTrackerBulkSmsSend;
 use App\Models\Partner;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\AccountingEntry\Constants\BalanceType;
+use App\Sheba\AccountingEntry\Constants\BulkSmsDialogue;
 use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use App\Sheba\Partner\PackageFeatureCount;
 use Exception;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
-use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
-use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
-use Sheba\FraudDetection\TransactionSources;
+use Sheba\AccountingEntry\Exceptions\InsufficientSmsForDueTrackerTagada;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
-use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
-use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class DueTrackerSmsService
 {
@@ -126,8 +124,7 @@ class DueTrackerSmsService
      * @return bool
      * @throws AccountingEntryServerError
      * @throws ContactDoesNotExistInDueTracker
-     * @throws InsufficientBalance
-     * @throws WalletDebitForbiddenException
+     * @throws Exception
      */
     public function sendSingleSmsToContact(): bool
     {
@@ -137,48 +134,45 @@ class DueTrackerSmsService
     }
 
     /**
-     * @throws WalletDebitForbiddenException
-     * @throws InsufficientBalance
      * @throws Exception
      */
     private function sendSMS($sms_content)
     {
         $data = $this->generateSmsDataForContactType($sms_content);
-        /** @var SmsHandlerRepo $sms */
-        list($sms, $log) = $this->getSmsHandler($data);
-        $sms_cost = $sms->estimateCharge();
-        if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance();
-        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
-        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-        if (config('sms.is_on')) {
-            $sms->shoot();
+        $sms = $this->getSmsHandler($data);
+        $sms_count = $sms->getSmsCountAndEstimationCharge()['sms_count'];
+        $sms_package = app()->make(PackageFeatureCount::class)
+            ->setPartnerId($this->partner->id)
+            ->setFeature(PackageFeatureCount::SMS);
+        if ($sms_package->isEligible($sms_count)) {
+            $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
+                $sms->shoot();
+                $sms_package->decrementFeatureCount($sms_count);
+        } else {
+            throw new InsufficientSmsForDueTrackerTagada();
         }
-        $this->deductSmsCostFromWallet($sms_cost,$log);
     }
 
     /**
      * @throws Exception
      */
-    public function getSmsHandler($data)
+    public function getSmsHandler($data): SmsHandlerRepo
     {
-        $log = ' BDT has been deducted for sending ';
         $event_name = 'due-tracker-inform-' . $this->contactType;
         if ($data['type'] == 'due') {
             $event_name .=   '-due';
-            $log .= "due details";
         } else {
             $event_name .= '-deposit';
-            $log .= "deposit details";
         }
         $sms = (new SmsHandlerRepo($event_name));
         $sms->setMobile($data['mobile'])
             ->setMessage($data)
             ->setFeatureType(FeatureType::DUE_TRACKER)
             ->setBusinessType(BusinessType::SMANAGER);
-        return [$sms, $log];
+        return $sms;
     }
 
-    private function generateSmsDataForContactType(array $sms_content)
+    private function generateSmsDataForContactType(array $sms_content): array
     {
         $partner_info = $this->getPartnerInfo();
         $data =[
@@ -197,25 +191,6 @@ class DueTrackerSmsService
         return $data;
     }
 
-    /**
-     * @throws AccountingEntryServerError
-     * @throws WalletDebitForbiddenException
-     * @throws InvalidSourceException
-     * @throws KeyNotFoundException
-     */
-    private function deductSmsCostFromWallet($sms_cost, $log)
-    {
-        $transaction = (new WalletTransactionHandler())
-            ->setModel($this->partner)
-            ->setAmount($sms_cost)
-            ->setType(Types::debit())
-            ->setLog($sms_cost . $log)
-            ->setTransactionDetails([])
-            ->setSource(TransactionSources::SMS)
-            ->store();
-        $this->dueTrackerRepo->storeJournalForSmsSending($this->partner, $transaction);
-    }
-
 
     public function getBulkSmsContactList()
     {
@@ -228,19 +203,14 @@ class DueTrackerSmsService
         dispatch(new DueTrackerBulkSmsSend($this->partner, $this->contactIds, $this->contactType));
     }
 
+
     /**
-     * @throws WalletDebitForbiddenException
-     * @throws InsufficientBalance
+     * @throws Exception
      */
     public function sendBulkSmsToContacts()
     {
-        /* Todo need to check the wallet for sms charge calculation before job */
-
-        $sms_sending_lists = $this->dueTrackerRepo->setPartner($this->partner)
-            ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
+        $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $each_sms) {
-            $each_sms['web_report_link'] = $this->getWebReportLink($this->partner->id,
-                $each_sms['contact_id'], $this->contactType);
             $this->sendSMS($each_sms);
         }
     }
@@ -252,7 +222,7 @@ class DueTrackerSmsService
 
     /**
      * @throws WalletDebitForbiddenException
-     * @throws InsufficientBalance
+     * @throws InsufficientBalance|Exception
      */
     public function sendSmsForReminder(array $sms_content): bool
     {
@@ -266,8 +236,8 @@ class DueTrackerSmsService
             $this->sendSMS($sms_content);
             return true;
         } catch (Exception $e){
-            if ( $e instanceof InsufficientBalance || $e instanceof WalletDebitForbiddenException) {
-                return true;
+            if ( $e instanceof InsufficientSmsForDueTrackerTagada) {
+                return false;
             } else {
                 throw $e;
             }
@@ -304,46 +274,40 @@ class DueTrackerSmsService
         ];
     }
 
-    /**
-     * @throws InsufficientBalance
-     * @throws WalletDebitForbiddenException
-     */
-    public function checkSmsBalanceAndSubscription(array $contact_ids): string
+    public function checkSmsBalanceAndSubscription(): string
     {
-        /*
-        $sms_cost = 0;
-        $total_sms_count = 0;
-        $sms_sending_lists = $this->dueTrackerRepo
-            ->setPartner($this->partner)
-            ->getBulkSmsContactListByContactIds($this->contactType, $contact_ids);
 
-        foreach ($sms_sending_lists as &$each_sms) {
+        $packageFeatureCount = app()->make(PackageFeatureCount::class)
+            ->setPartner($this->partner)
+            ->setFeature(PackageFeatureCount::SMS);
+
+        $total_sms_count = 0;
+        $user_count = count($this->contactIds);
+        $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
+        foreach ($sms_sending_lists as $sms_content) {
+            $data = $this->generateSmsDataForContactType($sms_content);
+            /** @var SmsHandlerRepo $sms */
+            list($sms, $log) = $this->getSmsHandler($data);
+            $sms_estimation = $sms->getSmsCountAndEstimationCharge();
+            $total_sms_count += $sms_estimation['sms_count'];
+        }
+        if ($packageFeatureCount->eligible($total_sms_count)) {
+            return en2bnNumber($user_count) . BulkSmsDialogue::FREE_SMS_DIALOGUE;
+        } else {
+            return en2bnNumber($user_count) . BulkSmsDialogue::SHORTAGE_OF_SMS;
+        }
+    }
+
+    private function getSmsContentsForBulkSmsSending()
+    {
+        $bulk_sms_contents_by_contacts = $this->dueTrackerRepo
+            ->setPartner($this->partner)
+            ->getBulkSmsContactListByContactIds($this->contactType, $this->contactIds);
+
+        foreach ($bulk_sms_contents_by_contacts as &$each_sms) {
             $each_sms['web_report_link'] = $this->getWebReportLink($this->partner->id,$each_sms['contact_id'],
                 $this->contactType);
         }
-
-        foreach ($sms_sending_lists as $sms_content) {
-            $data = $this->generateSmsDataForContactType($sms_content);
-            list($sms, $log) = $this->getSmsHandler($data);
-            $sms_estimation = $sms->getSmsCountAndEstimationCharge();
-            $sms_cost += $sms_estimation['total_charge'];
-            $total_sms_count += $sms_estimation['sms_count'];
-        }
-        */
-
-        $free_sms = rand(0,3);
-        $sms_cost = 2.5;
-        $sms_count = count($contact_ids);
-
-        if ((double)$this->partner->wallet < $sms_cost) throw new InsufficientBalance('আপনার অ্যাকাউন্টে পর্যাপ্ত ব্যালেন্স না থাকায় তাগাদা পাঠানো সম্ভব নয়।');
-        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
-
-        if($free_sms >= $sms_count) {
-            return "$sms_count জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে!";
-        } elseif ($free_sms > 0) {
-            return $sms_count - $free_sms. " জন কাস্টমারের নিকট ফ্রী তে তাগাদা পাঠানো হবে, বাকি টাকা আপনার একাউন্ট থেকে চার্জ করা হবে";
-        } else {
-            return "$sms_count জন কাস্টমারের নিকট তাগাদা পাঠাতে আপনার অ্যাকাউন্ট থেকে চার্জ করা হবে!";
-        }
+        return $bulk_sms_contents_by_contacts;
     }
 }
