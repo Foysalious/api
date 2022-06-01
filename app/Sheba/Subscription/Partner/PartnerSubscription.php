@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use App\Sheba\Partner\PackageFeatureCount;
 use Sheba\ModificationFields;
 use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 
@@ -74,6 +75,7 @@ class PartnerSubscription
         // two api for current subscription. DashboardController@getCurrentPackage is another one
         return [
             'current_package'            => $partner_subscription_package,
+            'package_feature_count_list' => $this->packageFeatureCount($partner->id),
             'billing_type'               => $partner->billing_type,
             'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
             'next_billing_date'          => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d'): null,
@@ -149,6 +151,27 @@ class PartnerSubscription
         $partner->subscription_renewal_warning = isset($data['subscription_renewal_warning']) ? $data['subscription_renewal_warning'] :  $partner->subscription_renewal_warning;
         $partner->renewal_warning_days = isset($data['renewal_warning_days']) ? $data['renewal_warning_days'] :  $partner->renewal_warning_days;
         return $partner->save();
+    }
+
+    /**
+     * @param $partner_id
+     * @return array
+     */
+    public function packageFeatureCount($partner_id)
+    {
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class);
+        $features_count = $packageFeatureCount->setPartnerId($partner_id)->featuresCurrentCountList();
+
+        if (! $features_count) {
+            return [];
+        }
+
+        return [
+            "topup" => $features_count->topup,
+            "sms" => $features_count->sms,
+            "delivery" => $features_count->delivery,
+        ];
     }
 
 }
