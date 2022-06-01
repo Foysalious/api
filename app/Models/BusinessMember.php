@@ -17,6 +17,7 @@ use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use Sheba\Dal\Salary\Salary;
+use Sheba\Dal\ShiftAssignment\ShiftAssignment;
 use Sheba\Dal\TrackingLocation\TrackingLocation;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
@@ -97,6 +98,7 @@ class BusinessMember extends Model
 
     public function attendanceOfToday()
     {
+
         return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
     }
 
@@ -332,5 +334,25 @@ class BusinessMember extends Model
             $query->where('date', '<=', $to_date);
         });
         return $tracking_locations->orderBy('created_at', 'desc');
+    }
+
+    public function shift()
+    {
+        return $this->hasMany(ShiftAssignment::class);
+    }
+
+    public function generalShift()
+    {
+        return $this->shift()->where('is_general', 1);
+    }
+
+    public function shiftToday()
+    {
+        return $this->shift()->where('date', Carbon::now()->toDateString())->first();
+    }
+
+    public function nextShift()
+    {
+        return $this->shift()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
     }
 }
