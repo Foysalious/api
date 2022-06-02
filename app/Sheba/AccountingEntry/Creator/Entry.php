@@ -84,8 +84,12 @@ class Entry
 
     }
 
+    /**
+     * @throws \Exception
+     */
     private function getContactDetails(): array
     {
+        /** @var DueTrackerContactResolver $contact_resolver */
         $contact_resolver = app()->make(DueTrackerContactResolver::class);
         return $contact_resolver->setContactType($this->entryDto->contact_type)
             ->setContactId($this->entryDto->contact_id)

@@ -56,6 +56,9 @@ class DueTrackerContactResolver
         } else {
             throw new Exception('Unknown contact type for due tracker');
         }
+        if (!$contact_detail) {
+            return [];
+        }
         return [
             'contact_id' => $contact_detail->id,
             'contact_name' => $contact_detail->name,
