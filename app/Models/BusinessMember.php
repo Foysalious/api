@@ -117,6 +117,11 @@ class BusinessMember extends Model
         return $this->belongsTo(BusinessMember::class, 'manager_id');
     }
 
+    public function isManager(): bool
+    {
+        return $this->business->getActiveBusinessMember()->where('manager_id', $this->id)->count() > 0;
+    }
+
     public function tackingLocations()
     {
         return $this->hasMany(TrackingLocation::class);
@@ -354,5 +359,10 @@ class BusinessMember extends Model
     public function nextShift()
     {
         return $this->shift()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
+    }
+
+    public function previousShift()
+    {
+        return $this->shift()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
     }
 }
