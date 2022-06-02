@@ -34,6 +34,7 @@ class Creator
         return [
             'shift_id' => $this->shiftCalenderRequester->getShiftId(),
             'shift_name' => $this->shiftCalenderRequester->getShiftName(),
+            'shift_title' => $this->shiftCalenderRequester->getShiftTitle(),
             'start_time' => $this->shiftCalenderRequester->getStartTime(),
             'end_time' => $this->shiftCalenderRequester->getEndTime(),
             'is_half_day' => $this->shiftCalenderRequester->getIsHalfDayActivated(),

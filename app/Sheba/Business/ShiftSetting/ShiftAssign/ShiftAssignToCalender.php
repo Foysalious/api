@@ -1,7 +1,9 @@
 <?php namespace Sheba\Business\ShiftSetting\ShiftAssign;
 
+use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
+use Sheba\Helpers\TimeFrame;
 
 class ShiftAssignToCalender
 {
@@ -11,10 +13,12 @@ class ShiftAssignToCalender
     /** @var Requester $shiftCalenderRequester */
     private $shiftCalenderRequester;
     private $errorCount = 0;
+    private $timeFrame;
 
-    public function __construct(ShiftAssignmentRepository $shift_assignment_repository)
+    public function __construct(ShiftAssignmentRepository $shift_assignment_repository, TimeFrame $time_frame)
     {
         $this->shiftAssignmentRepository = $shift_assignment_repository;
+        $this->timeFrame = $time_frame;
     }
 
     public function checkShiftRepeat($request, $shift_calender, $business_member, Requester $shift_calender_requester)
@@ -107,5 +111,31 @@ class ShiftAssignToCalender
             }
         }
         return $dates;
+    }
+
+    public function generalToUnassign($shift_calender, Requester $shift_calender_requester)
+    {
+        $this->shiftCalenderRequester = $shift_calender_requester;
+        $this->shiftCalenderRequester->setIsGeneralActivated(0)
+                                     ->setIsUnassignedActivated(1);
+        return $this->shiftAssignmentRepository->where('is_general', 1)
+                                                                 ->where('business_member_id', $shift_calender->business_member_id)
+                                                                 ->where('date', '>', $shift_calender->date)->get();
+    }
+
+    public function shiftToUnassign($shift_calender, Requester $shift_calender_requester, Request $request)
+    {
+        if($request->repeat) {
+            $this->shiftCalenderRequester->setIsHalfDayActivated(0)
+                                         ->setIsUnassignedActivated(1)
+                                         ->setIsShiftActivated(0);
+
+            $end_date = $request->end_date;
+            $time_frame = $this->timeFrame->forDateRange($shift_calender->date, $end_date);
+            return $this->shiftAssignmentRepository->where('is_shift', 1)
+                ->where('business_member_id', $shift_calender->business_member_id)
+                ->whereBetween('date', [$time_frame->start, $time_frame->end])->get();
+        }
+        return [];
     }
 }

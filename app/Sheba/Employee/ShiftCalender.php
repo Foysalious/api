@@ -43,7 +43,7 @@ class ShiftCalender
                 $shifts[] = $this->makeShiftData($employeeShift->id, $employeeShift->shift->title, $employeeShift->color_code, $employeeShift->shift->start_time, $employeeShift->shift->end_time);
             }
             elseif($employeeShift->is_unassigned){
-                $temp_calender['shift_name'] = 'Unassigned';
+                $temp_calender['shift_name'] = null;
                 $temp_calender['shift_start'] = null;
                 $temp_calender['shift_end'] = null;
             }

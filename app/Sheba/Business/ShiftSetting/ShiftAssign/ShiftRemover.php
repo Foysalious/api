@@ -25,7 +25,9 @@ class ShiftRemover
     public function update($shift_calender)
     {
         $data = $this->makeData();
-        $this->shiftAssignmentRepository->update($shift_calender, $data);
+        foreach ($shift_calender as $calender_data) {
+            $this->shiftAssignmentRepository->update($calender_data, $data);
+        }
     }
 
     private function makeData()
@@ -33,6 +35,7 @@ class ShiftRemover
         return [
             'shift_id' => $this->shiftCalenderRequester->getShiftId(),
             'shift_name' => $this->shiftCalenderRequester->getShiftName(),
+            'shift_title' => $this->shiftCalenderRequester->getShiftTitle(),
             'start_time' => $this->shiftCalenderRequester->getStartTime(),
             'end_time' => $this->shiftCalenderRequester->getEndTime(),
             'is_half_day' => $this->shiftCalenderRequester->getIsHalfDayActivated(),

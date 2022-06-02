@@ -8,6 +8,7 @@ class Requester
 
     private $shiftId;
     private $name;
+    private $title;
     private $startTime;
     private $endTime;
     private $isHalfDayActivated;
@@ -42,6 +43,17 @@ class Requester
     public function getShiftName()
     {
         return $this->name;
+    }
+
+    public function setShiftTitle($title)
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function getShiftTitle()
+    {
+        return $this->title;
     }
 
     public function setStartTime($start_time)

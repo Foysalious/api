@@ -107,8 +107,16 @@ class ShiftAssignmentController extends Controller
         if (!$business_shift) return api_response($request, null, 404);
         $shift_calender = $this->shiftAssignmentRepository->find($calender_id);
 
+        $general_to_unassign_data = $this->shiftAssignToCalender->generalToUnassign($shift_calender, $this->shiftCalenderRequester);
+        $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($general_to_unassign_data);
+
+        $shift_to_unassign_data = $this->shiftAssignToCalender->shiftToUnassign($shift_calender, $this->shiftCalenderRequester, $request);
+        $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_to_unassign_data);
+//        dd($shift_to_unassign_data);
+
         $this->shiftCalenderRequester->setShiftId($request->shift_id)
             ->setShiftName($business_shift->name)
+            ->setShiftTitle($business_shift->title)
             ->setStartTime($business_shift->start_time)
             ->setEndTime($business_shift->end_time)
             ->setIsHalfDayActivated($business_shift->is_halfday_enable)
@@ -146,10 +154,7 @@ class ShiftAssignmentController extends Controller
             ->setIsGeneralActivated(1)
             ->setIsShiftActivated(0);
 
-        foreach($shift_calender as $as_shift)
-        {
-            $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($as_shift);
-        }
+        $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_calender);
         return api_response($request, null, 200);
     }
 
