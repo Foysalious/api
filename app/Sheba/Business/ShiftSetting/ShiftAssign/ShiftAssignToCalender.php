@@ -5,8 +5,9 @@ use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 
 class ShiftAssignToCalender
 {
-    /** @var ShiftAssignmentRepository $shiftCalenderRequester */
+    /** @var ShiftAssignmentRepository $shiftAssignmentRepository */
     private $shiftAssignmentRepository;
+
     /** @var Requester $shiftCalenderRequester */
     private $shiftCalenderRequester;
     private $errorCount = 0;
@@ -27,7 +28,7 @@ class ShiftAssignToCalender
         $dates = [];
         if($request->repeat_type == 'days') $dates = $this->getDatesFromDayRepeat($shift_calender->date, $request->end_date, $request->repeat_range);
         elseif ($request->repeat_type == 'weeks') $dates = $this->getDatesFromWeekRepeat($shift_calender->date, $request->end_date, $request->repeat_range, $request->days);
-dd($dates);
+
         foreach ($dates as $date)
         {
             $shift_calender = $this->shiftAssignmentRepository->where('business_member_id', $business_member->id)->where('date', $date)->first();

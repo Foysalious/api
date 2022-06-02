@@ -6,18 +6,17 @@ class Creator
 {
     /*** @var ShiftAssignmentRepository  $shiftAssignmentRepository*/
     private $shiftAssignmentRepository;
+    /** @var Requester $shiftCalenderRequester */
+    private $shiftCalenderRequester;
 
     public function __construct(ShiftAssignmentRepository $shift_assignment_repository)
     {
         $this->shiftAssignmentRepository = $shift_assignment_repository;
     }
 
-    /** @var Requester $shiftCalenderRequester */
-    private $shiftCalenderRequester;
-
-    public function setShiftCalenderRequester(Requester $shiftCalenderRequester)
+    public function setShiftCalenderRequester(Requester $shift_calender_requester)
     {
-        $this->shiftCalenderRequester = $shiftCalenderRequester;
+        $this->shiftCalenderRequester = $shift_calender_requester;
         return $this;
     }
 

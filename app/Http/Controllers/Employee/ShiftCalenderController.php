@@ -16,9 +16,9 @@ class ShiftCalenderController extends Controller
     /*** @var ShiftAssignmentRepository*/
     private $shiftAssignmentRepository;
 
-    public function __construct()
+    public function __construct(ShiftAssignmentRepository $shift_assignment_repo)
     {
-        $this->shiftAssignmentRepository = app(ShiftAssignmentRepository::class);
+        $this->shiftAssignmentRepository = $shift_assignment_repo;
     }
 
     public function index(Request $request, TimeFrame $time_frame)
