@@ -217,7 +217,8 @@ class DueTrackerSmsService
 
     public function getWebReportLink(int $partner_id, string $contact_id, string $contact_type): string
     {
-        return DueTrackerReportService::getWebReportLink($partner_id, $contact_id, $contact_type);
+        $reportLink = DueTrackerReportService::getWebReportLink($partner_id, $contact_id, $contact_type);
+        return $reportLink ?? '';
     }
 
     /**
