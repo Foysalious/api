@@ -168,9 +168,25 @@ class EmployeeController extends Controller
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
+        /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $member = $this->getMember($request);
+
+        $today_shift = $business_member->shiftToday();
+        $next_shift =$business_member->nextShift();
+        $today_shift_start_time = Carbon::createFromFormat('Y-m-d H:i:s', $today_shift->date.' '.$today_shift->start_time);
+        $today_shift_end_time = Carbon::createFromFormat('Y-m-d H:i:s', $today_shift->date.' '.$today_shift->end_time);
+        $next_shift_start_time = Carbon::createFromFormat('Y-m-d H:i:s', $next_shift->date.' '.$next_shift->start_time);
+        $next_shift_end_time = Carbon::createFromFormat('Y-m-d H:i:s', $next_shift->date.' '.$next_shift->end_time);
+        $diff = $today_shift_start_time->diffInHours(Carbon::parse($next_shift_start_time));
+        if ( $diff < 16) {
+            $adjacent_shift_avg_time = $diff / 2;
+            $can_check_in = ($today_shift_end_time->addHours($adjacent_shift_avg_time) >= Carbon::now()) ? 0 : 1;
+        }else if ($diff >= 16) {
+            $can_check_in = $today_shift_end_time->addHours(8) >= Carbon::now() ? 0 : 1;
+        }
+        dd($can_check_in);
 
         $department = $business_member->department();
         $profile = $business_member->profile();
