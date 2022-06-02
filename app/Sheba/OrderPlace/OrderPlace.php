@@ -397,6 +397,7 @@ class OrderPlace
                 $order = $this->createOrder();
                 $partner_order = $this->createPartnerOrder($order);
                 $job = $this->createJob($partner_order);
+                $order->update($this->withUpdateModificationField(['active_job_id'=>$job->id]));
                 if ($this->infoCallId) $this->changeInfoCallStatusToConverted();
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);

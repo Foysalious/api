@@ -139,6 +139,11 @@ class Job extends BaseModel implements MorphCommentable
         return $this->hasOne(CarRentalJobDetail::class);
     }
 
+    public function order()
+    {
+        return $this->hasOne(Order::class);
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);

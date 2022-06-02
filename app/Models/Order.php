@@ -50,6 +50,11 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
         return $this->hasManyThrough(Job::class, PartnerOrder::class);
     }
 
+    public function activeJob()
+    {
+        return $this->belongsTo(Job::class, 'active_job_id');
+    }
+
     public function partnerOrders()
     {
         return $this->hasMany(PartnerOrder::class);
