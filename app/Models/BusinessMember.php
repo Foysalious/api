@@ -115,6 +115,11 @@ class BusinessMember extends Model
         return $this->belongsTo(BusinessMember::class, 'manager_id');
     }
 
+    public function isManager(): bool
+    {
+        return $this->business->getActiveBusinessMember()->where('manager_id', $this->id)->count() > 0;
+    }
+
     public function tackingLocations()
     {
         return $this->hasMany(TrackingLocation::class);
