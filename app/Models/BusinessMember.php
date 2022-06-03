@@ -356,6 +356,11 @@ class BusinessMember extends Model
         return $this->shift()->where('date', Carbon::now()->toDateString())->first();
     }
 
+    public function shiftYesterday()
+    {
+        return $this->shift()->where('date', Carbon::now()->subDay()->toDateString())->first();
+    }
+
     public function nextShift()
     {
         return $this->shift()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
