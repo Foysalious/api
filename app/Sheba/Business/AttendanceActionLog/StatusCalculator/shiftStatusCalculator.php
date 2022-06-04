@@ -16,12 +16,19 @@ abstract class shiftStatusCalculator
     protected $newCheckinTime;
     protected $newCheckoutTime;
     /*** @var BusinessMember */
-    private $businessMember;
+    protected $businessMember;
+    protected $shiftAssignment;
 
 
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
+        return $this;
+    }
+
+    public function setShiftAssignment($shift_assignment)
+    {
+        $this->shiftAssignment = $shift_assignment;
         return $this;
     }
     /**

@@ -1,6 +1,8 @@
 <?php namespace App\Models;
 
+use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Jenssegers\Mongodb\Eloquent\HybridRelations;
+use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\BusinessMemberBkashInfo\BusinessMemberBkashInfo;
@@ -369,5 +371,27 @@ class BusinessMember extends Model
     public function previousShift()
     {
         return $this->shift()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
+    }
+
+    public function calculationTodayLastCheckOutTime($which_half, $shift_assignment)
+    {
+        if ($which_half) {
+            $time_diff = Carbon::parse($shift_assignment->start_time)->diffInHours($shift_assignment->end_time);
+            if ($which_half == HalfDayType::FIRST_HALF) {
+                # If A Employee Has Leave On First_Half, Office Start Time Will Be Second_Half Start_Time
+                $last_checkin_time = Carbon::parse($shift_assignment->start_time)->addHours($time_diff/2)->toTimeString();
+                if ($shift_assignment->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
+                return $last_checkin_time;
+            }
+            if ($which_half == HalfDayType::SECOND_HALF) {
+                $last_checkin_time = Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
+                if ($this->officeHour->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
+                return $last_checkin_time;
+            }
+        } else {
+            $last_checkin_time = (new TimeByBusiness())->getOfficeStartTimeByBusiness();
+            if (is_null($last_checkin_time)) return null;
+            return Carbon::parse($last_checkin_time);
+        }
     }
 }

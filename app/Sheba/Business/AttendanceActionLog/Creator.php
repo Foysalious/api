@@ -178,7 +178,7 @@ class Creator
     {
         if ($this->action == Actions::CHECKIN){
             if (!$this->shiftAssignment  || $this->shiftAssignment && $this->shiftAssignment->is_general) $status = $this->checkinStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
-            else $status = $this->shiftCheckinStatusCalculator->setBusinessMember($this->businessMember)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
+            else $status = $this->shiftCheckinStatusCalculator->setBusinessMember($this->businessMember)->setShiftAssignment($this->shiftAssignment)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
         }
         else
             $status = $this->checkoutStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();

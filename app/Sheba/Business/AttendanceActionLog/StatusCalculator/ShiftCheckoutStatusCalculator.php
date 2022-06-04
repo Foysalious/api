@@ -7,7 +7,7 @@ class ShiftCheckoutStatusCalculator extends ShiftStatusCalculator
 {
     public function calculate()
     {
-        $checkout_time = $this->checkoutTime ?: $this->business->calculationTodayLastCheckOutTime($this->whichHalfDay);
+        $checkout_time = $this->businessMember->calculationTodayLastCheckOutTime($this->whichHalfDay, $this->shiftAssignment);
         if (is_null($checkout_time)) return Statuses::LEFT_TIMELY;
         $today_checkout_date = $this->newCheckoutTime ? Carbon::parse($this->attendance->date . ' ' . $this->newCheckoutTime): Carbon::now();
         $last_checkout_time = $this->checkoutTime ?: Carbon::parse($today_checkout_date->toDateString() . ' ' . $checkout_time);
