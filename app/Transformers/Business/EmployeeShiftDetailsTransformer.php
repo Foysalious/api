@@ -2,32 +2,32 @@
 
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\ShiftCalender\ShiftCalender;
+use Sheba\Dal\ShiftAssignment\ShiftAssignment;
 
 class EmployeeShiftDetailsTransformer extends TransformerAbstract
 {
-    public function transform(ShiftCalender $shiftCalender)
+    public function transform(ShiftAssignment $shiftAssignement)
     {
         $shift_details = [
-            'id'                        => $shiftCalender->id,
-            'business_member_id'        => $shiftCalender->business_member_id,
-            'shift_id'                  => $shiftCalender->shift_id,
-            'shift_name'                => $shiftCalender->shift_name,
-            'date'                      => Carbon::parse($shiftCalender->date)->format('d-m-Y'),
-            'start_time'                => Carbon::parse($shiftCalender->start_time)->format('h:i A'),
-            'end_time'                  => Carbon::parse($shiftCalender->end_time)->format('h:i A'),
-            'is_half_day'               => $shiftCalender->is_half_day,
-            'color_code'                => $shiftCalender->color_code,
-            'is_general'                => $shiftCalender->is_general,
-            'is_unassigned'             => $shiftCalender->is_unassigned,
-            'is_shift'                  => $shiftCalender->is_shift,
-            'shift_settings'            => $shiftCalender->shift_settings,
-            'created_by'                => $shiftCalender->created_by,
-            'created_by_name'           => $shiftCalender->created_by_name,
-            'updated_by'                => $shiftCalender->updated_by,
-            'updated_by_name'           => $shiftCalender->updated_by_name
+            'id'                        => $shiftAssignement->id,
+            'business_member_id'        => $shiftAssignement->business_member_id,
+            'shift_id'                  => $shiftAssignement->shift_id,
+            'shift_name'                => $shiftAssignement->shift_name,
+            'date'                      => Carbon::parse($shiftAssignement->date)->format('d-m-Y'),
+            'start_time'                => Carbon::parse($shiftAssignement->start_time)->format('h:i A'),
+            'end_time'                  => Carbon::parse($shiftAssignement->end_time)->format('h:i A'),
+            'is_half_day'               => $shiftAssignement->is_half_day,
+            'color_code'                => $shiftAssignement->color_code,
+            'is_general'                => $shiftAssignement->is_general,
+            'is_unassigned'             => $shiftAssignement->is_unassigned,
+            'is_shift'                  => $shiftAssignement->is_shift,
+            'shift_settings'            => $shiftAssignement->shift_settings,
+            'created_by'                => $shiftAssignement->created_by,
+            'created_by_name'           => $shiftAssignement->created_by_name,
+            'updated_by'                => $shiftAssignement->updated_by,
+            'updated_by_name'           => $shiftAssignement->updated_by_name
         ];
-        if($shiftCalender->is_shift) $shift_details['title'] = $shiftCalender->shift->title;
+        if($shiftAssignement->is_shift) $shift_details['title'] = $shiftAssignement->shift->title;
         return $shift_details;
     }
 }
