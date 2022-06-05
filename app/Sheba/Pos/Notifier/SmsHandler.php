@@ -2,12 +2,14 @@
 
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use App\Sheba\Partner\PackageFeatureCount;
 use Exception;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
 use Sheba\AccountingEntry\Exceptions\KeyNotFoundException;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Partner\Feature;
 use Sheba\Sms\BusinessType;
 use Sheba\Sms\FeatureType;
 use Sheba\Transactions\Types;
@@ -48,20 +50,18 @@ class SmsHandler {
     {
         $sms = $this->getSms();
         $sms_cost = $sms->estimateCharge();
-        WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
+        $smsCount = $sms->getSmsCountAndEstimationCharge();
         if ((double)$this->data['wallet'] > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
             try {
                 $sms->setBusinessType(BusinessType::SMANAGER)
                     ->setFeatureType(FeatureType::POS)
                     ->shoot();
-            } catch(\Throwable $e) {
+                /** @var PackageFeatureCount $packageFeatureCount */
+                $packageFeatureCount = app(PackageFeatureCount::class);
+                $packageFeatureCount->setPartnerId($this->partner->id)->setFeature(Feature::SMS)->decrementFeatureCount($smsCount['sms_count']);
+            } catch (Throwable $e) {
             }
-            $transaction =  (new WalletTransactionHandler())->setModel($this->data['model'])->setAmount($sms_cost)
-                ->setType(Types::debit())
-                ->setLog($sms_cost . $this->data['log'])->setTransactionDetails([])
-                ->setSource(TransactionSources::SMS)->store();
-            $this->storeJournal($this->partner, $transaction);
         }
     }
 
@@ -85,7 +85,7 @@ class SmsHandler {
      * @return SmsHandlerRepo
      * @throws Exception
      */
-    private function getSms()
+    public function getSms()
     {
         return (new SmsHandlerRepo($this->data['template']))->setMobile($this->data['mobile'])->setFeatureType($this->data['feature_type'])
             ->setBusinessType($this->data['business_type'])->setMessage($this->data['message']);

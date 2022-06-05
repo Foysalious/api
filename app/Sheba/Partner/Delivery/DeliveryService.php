@@ -651,6 +651,15 @@ class DeliveryService
         return true;
     }
 
+    /**
+     * @return bool
+     */
+    public function cancelOrderV3()
+    {
+        $this->client->post('delivery-orders/cancel', ['uid' => $this->deliveryReqId]);
+        return true;
+    }
+
 
     private function updatePosOrder()
     {

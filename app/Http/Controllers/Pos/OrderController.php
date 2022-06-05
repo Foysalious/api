@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Exceptions\DoNotReportException;
+use App\Exceptions\PackageRestrictionException;
 use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
 use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Exceptions\Pos\Order\NotEnoughStockException;
@@ -11,6 +12,7 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use App\Sheba\InventoryService\InventoryServerClient;
+use App\Sheba\Partner\PackageFeatureCount;
 use App\Sheba\Pos\Order\Invoice\InvoiceService;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use App\Sheba\UserMigration\Modules;
@@ -18,6 +20,7 @@ use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use Dingo\Api\Routing\Helpers;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
@@ -35,6 +38,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
+use Sheba\Partner\Feature;
 use Sheba\PartnerStatusAuthentication;
 use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
@@ -45,6 +49,8 @@ use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Jobs\WebstoreOrderSms;
+use Sheba\Pos\Notifier\SmsDataGenerator;
+use Sheba\Pos\Notifier\SmsHandler;
 use Sheba\Pos\Notifier\WebstorePushNotificationHandler;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
@@ -431,11 +437,17 @@ class OrderController extends Controller
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
+     * @throws Exception
      */
     public function sendSmsV2(Request $request, Updater $updater)
     {
-        $this->sendSmsCore($request, $updater);
-        return http_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+        try {
+            $this->sendSmsCore($request, $updater);
+            return http_response($request, null, 200, ['msg' => 'SMS Send Successfully']);
+        } catch (Exception $e) {
+            return http_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+
     }
 
     /**
@@ -608,10 +620,27 @@ class OrderController extends Controller
         return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
     }
 
+    /**
+     * @throws PackageRestrictionException
+     */
     private function sendSmsCore(Request $request, Updater $updater)
     {
         $partner = resolvePartnerFromAuthMiddleware($request);
         $this->setModifier(resolveManagerResourceFromAuthMiddleware($request));
+
+        /** @var SmsDataGenerator $smaData */
+        $smaData = app(SmsDataGenerator::class);
+        $data = $smaData->setPartner($partner)->setOrderId($request->order)->getData();
+
+        /** @var SmsHandler $smsHandler */
+        $smsHandler = app(SmsHandler::class);
+        $sms = $smsHandler->setPartner($partner)->setData($data)->getSms();
+        $smsCount = $sms->getSmsCountAndEstimationCharge();
+
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class);
+        $isEligible = $packageFeatureCount->setPartnerId($partner->id)->setFeature(Feature::SMS)->isEligible($smsCount['sms_count']);
+        if (!$isEligible) throw new PackageRestrictionException('আপনার নির্ধারিত প্যাকেজের ফ্রি এসএমএস সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে প্যাকেজ আপগ্রেড করুন অথবা পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন।', 403);
         $this->dispatch(new OrderBillSms($partner, $request->order));
     }
 
