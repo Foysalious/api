@@ -174,13 +174,14 @@ class Requester
         $employee_count = 0;
         foreach ($shift_calendar as $calendar)
         {
-            $unique_Shifts = $this->shiftAssignmentRepository->where('business_member_id', $calendar->business_member_id)->where('is_shift', 1)->groupBy('shift_id')->get();
+            $unique_Shifts = $this->shiftAssignmentRepository->where('business_member_id', $calendar->business_member_id)->where('date', Carbon::now()->addDay()->toDateString())->where('is_shift', 1)->groupBy('shift_id')->get();
 
             foreach ($unique_Shifts as $shift)
             {
-                if ($shift->start_time >= $this->startTime && $shift->start_time <= $this->endTime || $shift->end_time >= $this->startTime && $shift->end_time <= $this->endTime) $employee_count++;
+                if ($this->shift->id != $shift->shift_id && ($shift->start_time >= $this->startTime && $shift->start_time <= $this->endTime || $shift->end_time >= $this->startTime && $shift->end_time <= $this->endTime)) $employee_count++;
             }
         }
+
         if ($employee_count < 1) return false;
         $this->setError(400, $this->title.' edit unsuccessful as '.$employee_count.' employee(s) has conflicting shifts with the newly proposed shift timing.');
     }

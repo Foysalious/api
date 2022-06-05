@@ -168,10 +168,12 @@ class EmployeeController extends Controller
     {
         /** @var Business $business */
         $business = $this->getBusiness($request);
+        if (!$business) return api_response($request, null, 404);
+        /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $member = $this->getMember($request);
 
+        $member = $this->getMember($request);
         $department = $business_member->department();
         $profile = $business_member->profile();
         $designation = $business_member->role()->first();
@@ -188,36 +190,35 @@ class EmployeeController extends Controller
             $is_note_required = $note_data['is_note_required'];
             $note_action = $note_data['note_action'];
         }
-
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
         $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
-
-        $pending_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::CREATED, Status::STARTED, Status::REACHED])->where('schedule_date', '<=', Carbon::now()->toDateString() . ' 22:59:59');
-        $pending_visit_count = $pending_visit->count();
-
-        $current_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->whereIn('status', [Status::STARTED, Status::REACHED])->first();
-
-        $today = Carbon::now()->format('Y-m-d');
-        $today_visit = $visit_repository->where('visitor_id', $business_member->id)
-            ->where('status', Status::CREATED)
-            ->whereBetween('schedule_date', [$today . ' 00:00:00', $today . ' 23:59:59']);
-        $today_visit_count = $today_visit->count();
-
-        /** Check Employee Already Get a Badge or Not */
-        $start_date = Carbon::now()->startOfMonth();
-        $end_date = Carbon::now()->endOfMonth();
-        $business_member_badge = $this->badgeRepo->where('business_member_id', $business_member->id)
-            ->whereBetween('end_date', [$start_date, $end_date])->first();
-        $is_badge_seen = $business_member_badge ? $business_member_badge->is_seen : 0;
-
-        $manager = $business ? $business->getActiveBusinessMember()->where('manager_id', $business_member->id)->count() : null;
-        $is_manager = $manager ? 1 : 0;
+        $single_pending_visit = $visit_repository->getFirstPendingVisit($business_member->id);
+        $pending_visit_count = $visit_repository->getPendingVisitCount($business_member->id);
+        $current_visit = $visit_repository->getCurrentVisit($business_member->id);
+        $today_visit_count = $visit_repository->getTodayVisitCount($business_member->id);
+        $is_badge_seen = (int)$this->badgeRepo->isBadgeSeenOnCurrentMonth($business_member->id);
+        $is_manager = (int)$business_member->isManager();
 
         /** @var  LiveTrackingSettings $live_tracking_settings */
         $live_tracking_settings = $business->liveTrackingSettings;
+/*
+        $today_shift = $business_member->shiftToday();
+        $next_shift =$business_member->nextShift();
+        $today_shift_start_time = Carbon::createFromFormat('Y-m-d H:i:s', $today_shift->date.' '.$today_shift->start_time);
+        $today_shift_end_time = Carbon::createFromFormat('Y-m-d H:i:s', $today_shift->date.' '.$today_shift->end_time);
+        $next_shift_start_time = Carbon::createFromFormat('Y-m-d H:i:s', $next_shift->date.' '.$next_shift->start_time);
+        $next_shift_end_time = Carbon::createFromFormat('Y-m-d H:i:s', $next_shift->date.' '.$next_shift->end_time);
+        $diff = $today_shift_start_time->diffInHours(Carbon::parse($next_shift_start_time));
+        if ( $diff < 16) {
+            $adjacent_shift_avg_time = $diff / 2;
+            $can_check_in = !$attendance && ($today_shift_end_time->addHours($adjacent_shift_avg_time) < Carbon::now()) ? 1 : 0;
+            $can_check_out = $attendance && ($today_shift_end_time->addHours($adjacent_shift_avg_time) < Carbon::now()) ? 1 : 0;
+        }else if ($diff >= 16) {
+            $can_check_in = !$attendance && $today_shift_end_time->addHours(8) < Carbon::now() ? 1 : 0;
+            $can_check_out = $attendance && $today_shift_end_time->addHours(8) < Carbon::now() ? 1 : 0;
+        }
+        dd($can_check_in, $can_check_out);*/
 
         $data = [
             'id' => $member->id,
@@ -247,8 +248,8 @@ class EmployeeController extends Controller
             'pending_visit_count' => $pending_visit_count,
             'today_visit_count' => $today_visit_count,
             'single_visit' => $pending_visit_count === 1 ? [
-                'id' => $pending_visit->first()->id,
-                'title' => $pending_visit->first()->title
+                'id' => $single_pending_visit->id,
+                'title' => $single_pending_visit->title
             ] : null,
             'currently_on_visit' => $current_visit ? $current_visit->id : null,
             'is_badge_seen' => $is_badge_seen,

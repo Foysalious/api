@@ -8,6 +8,7 @@ class Requester
 
     private $shiftId;
     private $name;
+    private $title;
     private $startTime;
     private $endTime;
     private $isHalfDayActivated;
@@ -15,6 +16,12 @@ class Requester
     private $isUnassignedActivated;
     private $isShiftActivated;
     private $colorCode;
+    private $repeat;
+    private $repeatType;
+    private $repeatRange;
+    private $days;
+    private $endDate;
+    private $calenderData = [];
 
     public function setShiftId($shiftId)
     {
@@ -36,6 +43,17 @@ class Requester
     public function getShiftName()
     {
         return $this->name;
+    }
+
+    public function setShiftTitle($title)
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function getShiftTitle()
+    {
+        return $this->title;
     }
 
     public function setStartTime($start_time)
@@ -104,6 +122,61 @@ class Requester
         return $this->isShiftActivated;
     }
 
+    public function setRepeat($repeat)
+    {
+        $this->repeat = $repeat;
+        return $this;
+    }
+
+    public function getRepeat()
+    {
+        return $this->repeat;
+    }
+
+    public function setRepeatType($repeat_type)
+    {
+        $this->repeatType = $repeat_type;
+        return $this;
+    }
+
+    public function getRepeatType()
+    {
+        return $this->repeatType;
+    }
+
+    public function setRepeatRange($repeat_range)
+    {
+        $this->repeatRange = $repeat_range;
+        return $this;
+    }
+
+    public function getRepeatRange()
+    {
+        return $this->repeatRange;
+    }
+
+    public function setRepeatDays($days)
+    {
+        $this->days = $days;
+        return $this;
+    }
+
+    public function getRepeatDays()
+    {
+        return $this->days;
+    }
+
+    public function setEndDate($end_date)
+    {
+        $this->endDate = $end_date;
+        return $this;
+    }
+
+    public function getEndDate()
+    {
+        return $this->endDate;
+    }
+
     public function setColorCode($color_code)
     {
         $this->colorCode = $color_code;
@@ -115,8 +188,31 @@ class Requester
         return $this->colorCode;
     }
 
-    public function setShiftAssignError()
+    public function setData($calender_data)
     {
-        $this->setError(400, "Could not assign shift because it overlaps with another shift.");
+        $this->calenderData[] = $calender_data;
+        return $this;
+    }
+
+    public function getData()
+    {
+        return $this->calenderData;
+    }
+
+    public function setShiftAssignError($message)
+    {
+        $this->setError(400, $message);
+    }
+
+    public function getShiftSettings()
+    {
+        $shift_settings = [
+            'repeat'        => $this->repeat,
+            'repeat_type'   => $this->repeatType,
+            'repeat_range'  => $this->repeatRange,
+            'days'          => $this->days,
+            'end_date'      => $this->endDate
+        ];
+        return json_encode($shift_settings);
     }
 }
