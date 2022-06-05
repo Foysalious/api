@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use League\Fractal\Resource\Item;
 use App\Models\BusinessMember;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
+use Sheba\Dal\ShiftAssignment\ShiftAssignmentRepository;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
@@ -89,7 +90,7 @@ class AttendanceController extends Controller
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function takeAction(Request $request, AttendanceAction $attendance_action)
+    public function takeAction(Request $request, AttendanceAction $attendance_action, ShiftAssignmentRepository $shift_assignment_repository)
     {
         $validation_data = [
             'action' => 'required|string|in:' . implode(',', Actions::get()),
@@ -114,14 +115,14 @@ class AttendanceController extends Controller
         }
         #$this->validate($request, $validation_data);
         $this->setModifier($business_member->member);
-
         $attendance_action->setBusinessMember($business_member)
             ->setAction($request->action)
             ->setBusiness($business_member->business)
             ->setDeviceId($request->device_id)
             ->setRemoteMode($request->remote_mode)
             ->setLat($request->lat)
-            ->setLng($request->lng);
+            ->setLng($request->lng)
+            ->setShiftAssignmentId($request->shift_assignment_id);
         $action = $attendance_action->doAction();
 
         $result = $action->getResult();
