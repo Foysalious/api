@@ -11,9 +11,28 @@ class TPRequest
     private $method;
     private $input = [];
     private $headers = [];
+    private $auth = [];
     private $readTimeout = 60;
     private $connectTimeout = 60;
     private $timeout = 60;
+
+    /**
+     * @return array
+     */
+    public function getAuth(): array
+    {
+        return $this->auth;
+    }
+
+    /**
+     * @param array $auth
+     * @return TPRequest
+     */
+    public function setAuth(array $auth): TPRequest
+    {
+        $this->auth = $auth;
+        return $this;
+    }
 
     /**
      * @return array
@@ -24,7 +43,8 @@ class TPRequest
             'url' => $this->getUrl(),
             'headers' => $this->getHeaders(),
             'input' => $this->getInput(),
-            'method' => $this->getMethod()
+            'method' => $this->getMethod(),
+            'auth' => $this->getAuth()
         ];
     }
 
