@@ -1,5 +1,4 @@
 <?php $job = $partner_order->order->lastJob()->calculate(true); ?>
-
 <thead>
     <tr>
         <th class="desc">SERVICE NAME</th>
@@ -13,7 +12,7 @@
 @if($job->status != "Cancelled")
     @forelse($job->jobServices as $service)
         <tr>
-            <td class="">
+            <td >
                 <h3>{{ $service->name }}</h3>
                 <span>
                     @foreach(json_decode($service->variables ) as $key => $serviceVariable)

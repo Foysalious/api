@@ -25,19 +25,14 @@ trait PayrollCommonCalculation
         return false;
     }
 
-    public function nextPayslipGenerationDay(Business $business)
+    public function nextPayslipGenerationDay(Business $business, $pay_day_type = null)
     {
         $payroll_setting = $business->payrollSetting;
-        $pay_day_type = $payroll_setting->pay_day_type;
-        $next_pay_day = null;
-        if ($pay_day_type == PayDayType::FIXED_DATE) {
-            $next_pay_day = Carbon::now()->addMonth()->day($payroll_setting->pay_day)->format('Y-m-d');
-        } elseif ($pay_day_type == PayDayType::LAST_WORKING_DAY){
-            $last_day_of_month = Carbon::now()->next()->lastOfMonth();
-            $last_day_of_month = $this->lastWorkingDayOfMonth($business, $last_day_of_month);
-            $next_pay_day = $last_day_of_month->format('Y-m-d');
-        }
-        return $next_pay_day;
+        $pay_day_type = $pay_day_type ?: $payroll_setting->pay_day_type;
+        if ($pay_day_type == PayDayType::FIXED_DATE) return Carbon::now()->addMonth()->day($payroll_setting->pay_day)->format('Y-m-d');
+        $last_day_of_month = Carbon::now()->next()->lastOfMonth();
+        $last_day_of_month = $this->lastWorkingDayOfMonth($business, $last_day_of_month);
+        return $last_day_of_month->format('Y-m-d');
     }
 
     public function getFixPayAmountCalculation($business_member, $package, $on_what, $amount)

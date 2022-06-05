@@ -1,15 +1,13 @@
 <?php namespace Sheba\Reports;
 
+use Sheba\LocationService\StartPriceCalculation;
 use Sheba\Dal\Service\Service;
 use Excel;
 use Illuminate\Support\Facades\Storage;
-use Sheba\Repositories\DiscountRepository;
-use Sheba\Repositories\ServiceRepository;
+use Sheba\Service\ServiceDeeplinkGenerator;
 
 class Product
 {
-    private $serviceRepo;
-    private $discountRepo;
     private $services;
     private $viewFileName;
     private $uploadFileName;
@@ -19,8 +17,6 @@ class Product
 
     public function __construct(ExcelHandler $excel)
     {
-        $this->serviceRepo = new ServiceRepository();
-        $this->discountRepo = new DiscountRepository();
         $this->services = [];
         $this->viewFileName = "products";
         $this->uploadFileName = 'products.csv';
@@ -30,42 +26,36 @@ class Product
 
     public function calculate()
     {
-        $services = Service::published()->get();
+        $services = Service::published()->isNotCrossSaleService()->whereHas('locationServices', function ($q) {
+            $q->where('location_service.location_id', 4);
+        })->whereHas('category', function ($q) {
+            $q->published();
+        })->with(['locationServices' => function ($q) {
+            $q->where('location_service.location_id', 4);
+        }, 'category' => function ($q) {
+            $q->select('id', 'parent_id','name')->with(['parent' => function ($q) {
+                $q->select('id', 'name');
+            }]);
+        }])->select('id', 'name', 'short_description', 'publication_status', 'min_quantity', 'variable_type', 'category_id', 'thumb', 'slug', 'app_thumb', 'catalog_thumb', 'google_product_category', 'facebook_product_category', 'catalog_price')->get();
         foreach ($services as $service) {
-            $calculated_service = Service::with(['partners' => function ($q) {
-                $q->where([
-                    ['is_published', 1],
-                    ['is_verified', 1],
-                    ['partners.status', 'Verified']
-                ])->whereHas('locations', function ($query) {
-                    $query->where('id', 4);
-                });
-            }])->where('id', $service->id)->first();
+            $start_price = app()->make(StartPriceCalculation::class)->getStartPrice($service);
+            if ($start_price === false) continue;
 
-            $partners = $calculated_service->partners;
-            if (count($partners) > 0) {
-                $start_price = null;
-                if ($service->variable_type == 'Options') {
-                    $price = [];
-                    foreach ($partners as $partner) {
-                        $min = min((array)json_decode($partner->pivot->prices));
-                        $partner['prices'] = $min;
-                        $calculate_partner = $this->discountRepo->addDiscountToPartnerForService($partner);
-                        array_push($price, $calculate_partner['discounted_price']);
-                    }
-                    $start_price = min($price);
-                } elseif ($service->variable_type == 'Fixed') {
-                    $price = [];
-                    foreach ($partners as $partner) {
-                        $partner['prices'] = (float)$partner->pivot->prices;
-                        $calculate_partner = $this->discountRepo->addDiscountToPartnerForService($partner);
-                        array_push($price, $calculate_partner['discounted_price']);
-                    }
-                    $start_price = min($price);
-                }
-                array_add($service, 'start_price', $start_price);
-                array_forget($service, 'partners');
-            }
+            $deeplink = (new ServiceDeeplinkGenerator())->getDeeplink($service);
+            $deeplink_without_zxing = (new ServiceDeeplinkGenerator())->getDeeplink($service, false);
+            array_add($service, 'android_url', $deeplink["android"]);
+            array_add($service, 'ios_url', $deeplink["ios"]);
+            array_add($service, 'android_url_without_zxing', $deeplink_without_zxing["android"]);
+            array_add($service, 'ios_url_without_zxing', $deeplink_without_zxing["ios"]);
+            array_add($service, 'sub_link', $deeplink_without_zxing["sub_link"]);
+            array_add($service, 'ios_app_name', config('sheba.ios_app_name'));
+            array_add($service, 'ios_app_store_id', config('sheba.ios_app_store_id'));
+            array_add($service, 'android_app_name', config('sheba.android_app_name'));
+            array_add($service, 'android_app_store_id', config('sheba.android_app_store_id'));
+            array_add($service, 'web_link', $service->getSlug());
+            array_add($service, 'web_deeplink', 'sub-category_service_detail/service-details/'.$service->id.'?category_id='.$service->category->id);
+            array_add($service, 'start_price', $start_price);
+            removeRelationsAndFields($service);
         }
         $this->services = $services;
         return $this;

@@ -23,16 +23,24 @@ use App\Sheba\Customer\Listeners\PartnerPosCustomerCreateListener;
 use App\Sheba\Customer\Listeners\PartnerPosCustomerUpdateListener;
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Illuminate\Http\Request;
+use Monolog\Formatter\JsonFormatter;
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+use Psy\Util\Json;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberCreatedListener;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberUpdatedListener;
 use Sheba\Business\BusinessMember\Listeners\BusinessMemberDeletedListener;
+use Sheba\Helpers\Logger\ApiLogger;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumberEvent;
 use Sheba\TopUp\Listeners\TopUpRequestOfBlockedNumber;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Profile\Listeners\ProfilePasswordUpdatedListener;
+use Sheba\UserAgentInformation;
+use Symfony\Component\HttpFoundation\Response;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -41,44 +49,45 @@ class EventServiceProvider extends ServiceProvider
      *
      * @var array
      */
-    protected $listen = [
-        PartnerPosCustomerCreatedEvent::class => [
-            PartnerPosCustomerCreateListener::class
-        ],
-        PartnerPosCustomerUpdatedEvent::class => [
-            PartnerPosCustomerUpdateListener::class
-        ],
-        TopUpRequestOfBlockedNumberEvent::class => [
-            TopUpRequestOfBlockedNumber::class
-        ],
-        WebstoreBannerUpdate::class => [
-            WebstoreBannerListener::class
-        ],
-        ProfilePasswordUpdated::class => [
-            ProfilePasswordUpdatedListener::class
-        ],
-        BusinessMemberCreated::class => [
-            BusinessMemberCreatedListener::class
-        ],
-        BusinessMemberUpdated::class => [
-            BusinessMemberUpdatedListener::class
-        ],
-        BusinessMemberDeleted::class => [
-            BusinessMemberDeletedListener::class
-        ],
-        PartnerUpdatedEvent::class => [
-            PartnerUpdatedListener::class,
-        ],
-        PosSettingCreatedEvent::class => [
-            PosSettingCreatedListener::class
-        ],
-        PosSettingUpdatedEvent::class => [
-            PosSettingUpdatedListener::class
-        ],
-        UserMigrationStatusUpdatedByHookEvent::class => [
-            UserMigrationStatusUpdatedByHookListener::class
-        ],
-    ];
+    protected $listen
+        = [
+            PartnerPosCustomerCreatedEvent::class        => [
+                PartnerPosCustomerCreateListener::class
+            ],
+            PartnerPosCustomerUpdatedEvent::class        => [
+                PartnerPosCustomerUpdateListener::class
+            ],
+            TopUpRequestOfBlockedNumberEvent::class      => [
+                TopUpRequestOfBlockedNumber::class
+            ],
+            WebstoreBannerUpdate::class                  => [
+                WebstoreBannerListener::class
+            ],
+            ProfilePasswordUpdated::class                => [
+                ProfilePasswordUpdatedListener::class
+            ],
+            BusinessMemberCreated::class                 => [
+                BusinessMemberCreatedListener::class
+            ],
+            BusinessMemberUpdated::class                 => [
+                BusinessMemberUpdatedListener::class
+            ],
+            BusinessMemberDeleted::class                 => [
+                BusinessMemberDeletedListener::class
+            ],
+            PartnerUpdatedEvent::class                   => [
+                PartnerUpdatedListener::class,
+            ],
+            PosSettingCreatedEvent::class                => [
+                PosSettingCreatedListener::class
+            ],
+            PosSettingUpdatedEvent::class                => [
+                PosSettingUpdatedListener::class
+            ],
+            UserMigrationStatusUpdatedByHookEvent::class => [
+                UserMigrationStatusUpdatedByHookListener::class
+            ],
+        ];
 
     /**
      * Register any other events for your application.
@@ -89,7 +98,13 @@ class EventServiceProvider extends ServiceProvider
     public function boot(DispatcherContract $events)
     {
         parent::boot($events);
-
+        $events->listen("kernel.handled", function ( $request,  $response) {
+            try{
+                (new ApiLogger($request, $response))->log();
+            }catch (\Throwable $e){
+                \Log::error($e->getMessage());
+            }
+        });
         //
     }
 }

@@ -45,7 +45,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             'voucher_title' => $target_type == 'voucher' ? $offer->voucher ? $offer->voucher->title : null : null,
             'is_amount_percent' => $this->isAmountPercent($offer, $target_type),
             'has_cap' => $this->getCapStatus($offer, $target_type),
-            'category_id' => $category_id,
+            'category_id' => !is_null($category_id) ? (string)$category_id : null,
             'category_slug' => $category ? $category->slug : null,
             'slug' => $offer->isCategory() || $offer->isService() ? $offer->target->getSlug() : null,
             'is_category_master' => $category ? !$category->parent_id : false,

@@ -161,6 +161,18 @@ class DiscountCalculation
         $this->discountedPrice = $this->discountedPrice < 0 ? 0 : $this->discountedPrice;
     }
 
+    public function calculateLatestDiscountedPrice()
+    {
+        if(!$this->locationService) {
+            $this->serviceDiscount = null;
+            return;
+        }
+        $this->serviceDiscount = $this->locationService->discounts()->running()->first();
+        if (!$this->serviceDiscount) return;
+        $this->discountedPrice = $this->calculateDiscountedPrice();
+        $this->discountedPrice = $this->discountedPrice < 0 ? 0 : $this->discountedPrice;
+    }
+
     private function calculateDiscountedPrice()
     {
         $this->discount = $this->serviceDiscount->amount;

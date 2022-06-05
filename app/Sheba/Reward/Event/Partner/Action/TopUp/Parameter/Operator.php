@@ -7,10 +7,7 @@ use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
 class Operator extends ActionEventParameter
 {
-    public function validate()
-    {
-        if (empty($this->value)) throw new ParameterTypeMismatchException("Operators can't be empty");
-    }
+    public function validate(){}
 
     /**
      * @param array $params

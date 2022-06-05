@@ -66,6 +66,14 @@ $ebl            = [
     'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/Visa+Master.png',
     'cash_in_charge' => 0
 ];
+$upay           = [
+    'name'           => 'Upay',
+    'name_bn'        => 'উপায়',
+    'asset'          => 'upay',
+    'method_name'    => 'upay',
+    'icon'           => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/payments/upay.png',
+    'cash_in_charge' => 0
+];
 
 return [
     PaymentStrategy::WALLET         => $wallet,
@@ -78,5 +86,6 @@ return [
     PaymentStrategy::PORT_WALLET    => $online,
     PaymentStrategy::OK_WALLET      => $ok_wallet,
     PaymentStrategy::NAGAD          => $nagad,
-    PaymentStrategy::EBL            => $ebl
+    PaymentStrategy::EBL            => $ebl,
+    PaymentStrategy::UPAY           => $upay
 ];

@@ -31,6 +31,7 @@ class ActionRewardDispatcher
             ->leftJoin('reward_actions', 'rewards.detail_id', '=', 'reward_actions.id')
             ->where('rewards.detail_type', 'App\Models\RewardAction')
             ->where('reward_actions.event_name', $event)
+            ->where('rewards.target_type', get_class($rewardable))
             ->where('rewards.start_time', '<=', Carbon::now())
             ->where('rewards.end_time', '>=', Carbon::now())
             ->select('rewards.*')

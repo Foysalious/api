@@ -23,6 +23,7 @@ class DailyExcel
     private $lateNote;
     private $leftEarlyNote;
     private $overtime;
+    private $officeName;
 
     private function initializeData()
     {
@@ -33,6 +34,7 @@ class DailyExcel
         $this->checkInTime = '-';
         $this->checkInStatus = '-';
         $this->checkInLocation = '-';
+        $this->officeName = '-';
         $this->checkInAddress = '-';
         $this->checkOutTime = '-';
         $this->checkOutStatus = '-';
@@ -96,8 +98,10 @@ class DailyExcel
                 }
                 if ($attendance['check_in']['is_remote']) {
                     $this->checkInLocation = "Remote";
-                } else {
+                } else if ($attendance['check_in']['is_in_wifi']) {
                     $this->checkInLocation = "Office IP";
+                } else if ($attendance['check_in']['is_geo']) {
+                    $this->checkInLocation = "Geo Location";
                 }
 
                 $this->checkInAddress = $attendance['check_in']['address'];
@@ -112,8 +116,10 @@ class DailyExcel
                     }
                     if ($attendance['check_out']['is_remote']) {
                         $this->checkOutLocation = "Remote";
-                    } else {
+                    } else if ($attendance['check_out']['is_in_wifi']) {
                         $this->checkOutLocation = "Office IP";
+                    } else if ($attendance['check_out']['is_geo']) {
+                        $this->checkOutLocation = "Geo Location";
                     }
                     $this->checkOutAddress = $attendance['check_out']['address'];
                 }
@@ -135,8 +141,8 @@ class DailyExcel
                 }
             }
 
-            array_push($this->data, [
-                'date' => $attendance['date'] ? $attendance['date'] : $this->date,
+            $this->data[] = [
+                'date' => $attendance['date'] ?: $this->date,
                 'employee_id' => $attendance['employee_id'],
                 'employee_name' => $attendance['member']['name'],
                 'department' => $attendance['department']['name'],
@@ -156,7 +162,7 @@ class DailyExcel
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
                 'attendance_reconciled' => !isset($attendance['is_attendance_reconciled']) ? '-' : ($attendance['is_attendance_reconciled'] ? 'Yes' : 'No')
-            ]);
+            ];
         }
     }
 

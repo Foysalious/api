@@ -766,6 +766,13 @@ class Job extends BaseModel implements MorphCommentable
         });
     }
 
+    public function allComplainsCustomer()
+    {
+        return $this->complains()->whereHas('accessor', function ($query) {
+            $query->whereIn('model_name', [Customer::class, Resource::class]);
+        });
+    }
+
     public function hasStatus(array $status)
     {
         foreach ($status as $key => $value) {

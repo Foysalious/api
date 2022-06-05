@@ -1,11 +1,12 @@
 <?php namespace App\Http\Controllers;
 
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\LocationService\StartPriceCalculation;
 use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroupCategory;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
@@ -370,7 +371,7 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request,
                                 PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator, ServiceSubscriptionDiscount $subscriptionDiscount)
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator, ServiceSubscriptionDiscount $subscriptionDiscount, StartPriceCalculation $startPriceCalculation)
     {
         ini_set('memory_limit', '2048M');
         $subscription_faq = null;
@@ -494,6 +495,7 @@ class CategoryController extends Controller
                 $min_max_price->setService($service)->setLocationService($location_service);
                 $service['max_price'] = $min_max_price->getMax();
                 $service['min_price'] = $min_max_price->getMin();
+                $service['start_price'] = $startPriceCalculation->getStartPrice($service);
                 $service['addon'] = $service->crossSaleService ? [
                     'title' => $service->crossSaleService->title,
                     'description' => $service->crossSaleService->description,
