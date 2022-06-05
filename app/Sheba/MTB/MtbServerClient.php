@@ -8,17 +8,19 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use Mpdf\Tag\Q;
 use Sheba\ModificationFields;
+use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPRequest;
 
 class MtbServerClient
 {
     use ModificationFields;
 
-    protected $client;
+    protected $tpClient;
     public $baseUrl;
 
-    public function __construct(Client $client)
+    public function __construct(TPProxyClient $tp_client)
     {
-        $this->client = $client;
+        $this->tpClient = $tp_client;
         $this->baseUrl = rtrim(config('mtb.api_url'), '/');
     }
 
@@ -26,12 +28,13 @@ class MtbServerClient
      * @param $uri
      * @param $auth_type
      * @return mixed
-     * @throws MtbServiceServerError
-     * @throws NotFoundAndDoNotReportException
+     * @throws \Sheba\TPProxy\TPProxyServerError
      */
     public function get($uri, $auth_type)
     {
-        return $this->call('get', $uri, $auth_type);
+        if ($auth_type != AuthTypes::NO_AUTH) list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
+        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
+        return $this->tpClient->call($request);
     }
 
 
@@ -93,21 +96,9 @@ class MtbServerClient
      * @param $auth_type
      * @return array
      */
-    private function getOptions($auth_type, $data = null, $multipart = false): array
+    private function getOptions($data = null, $multipart = false): array
     {
-        $options['headers'] = [
-            'Accept' => 'application/json',
-        ];
-        if ($auth_type === AuthTypes::BARER_TOKEN) {
-            $options['headers'] = (array_merge($options['headers'], ['Authorization' => 'Bearer ' . $this->getMtbBearerToken()]));
-        } elseif ($auth_type === AuthTypes::BASIC_AUTH_TYPE) {
-            $orgId = config('mtb.sheba_organization_id');
-            $username = config('mtb.sheba_username');
-            $password = config('mtb.sheba_password');
-            $options['headers'] = (array_merge($options['headers'], ['OrgId' => $orgId]));
-            $options['auth'] = [$username, $password];
-        }
-
+        $options = [];
         if (!$data) return $options;
         if ($multipart) {
             $options['multipart'] = $data;
@@ -118,31 +109,32 @@ class MtbServerClient
         return $options;
     }
 
+    /**
+     * @throws \Sheba\TPProxy\TPProxyServerError
+     */
     public function post($uri, $data, $auth_type, $multipart = false)
     {
-        return $this->call('post', $uri, $auth_type, $data, $multipart);
+        $data = $this->getOptions($data, $multipart);
+        if ($auth_type != AuthTypes::NO_AUTH) list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
+        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setInput($data)->setHeaders($headers);
+        return $this->tpClient->call($request);
     }
 
-    /**
-     * @param $uri
-     * @param $data
-     * @param bool $multipart
-     * @return array|object|string|null
-     * @throws MtbServiceServerError|NotFoundAndDoNotReportException
-     */
-    public function put($uri, $data, $multipart = false)
+    private function getHeadersAndAuth($auth_type): array
     {
-        return $this->call('put', $uri, $data, $multipart);
+        $headers = ['Accept' => 'application/json'];
+        $auth = [];
+        if ($auth_type === AuthTypes::BARER_TOKEN) {
+            $headers = (array_merge($headers, ['Authorization' => 'Bearer ' . $this->getMtbBearerToken()]));
+        } elseif ($auth_type === AuthTypes::BASIC_AUTH_TYPE) {
+            $orgId = config('mtb.sheba_organization_id');
+            $username = config('mtb.sheba_username');
+            $password = config('mtb.sheba_password');
+            $headers = (array_merge($headers, ['OrgId' => $orgId]));
+            $auth = [$username, $password];
+        }
+        return [$headers, $auth];
     }
 
-    /**
-     * @param $uri
-     * @return array|object|string|null
-     * @throws MtbServiceServerError|NotFoundAndDoNotReportException
-     */
-    public function delete($uri, $auth_type)
-    {
-        return $this->call('DELETE', $uri, $auth_type);
-    }
 
 }
