@@ -6,12 +6,19 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Reward\ActionEventInitiator;
 use Sheba\Reward\CampaignEventInitiator;
 use Sheba\Dal\RewardTargets\Model as RewardTargets;
+use Sheba\Reward\Event\Action;
+use Sheba\Reward\Event\Campaign;
 
 class Reward extends Model
 {
     protected $guarded = ['id'];
     protected $dates = ['start_time', 'end_time', 'valid_till_date'];
     protected $casts = ['amount' => 'double'];
+
+    /** @var Action */
+    public $actionEvent;
+    /** @var Campaign */
+    public $campaignEvents;
 
     public function detail()
     {
@@ -31,6 +38,16 @@ class Reward extends Model
     public function noConstraints()
     {
         return $this->hasMany(RewardNoConstraint::class);
+    }
+
+    public function categoryConstraints()
+    {
+        return $this->hasMany(RewardConstraint::class)->where('constraint_type', 'Sheba\\Dal\\Category\\Category');
+    }
+
+    public function categoryNoConstraints()
+    {
+        return $this->hasMany(RewardNoConstraint::class)->where('constraint_type', 'Sheba\\Dal\\Category\\Category');
     }
 
     public function isCampaign()
@@ -134,6 +151,31 @@ class Reward extends Model
     private function isPercentageble()
     {
         return $this->is_amount_percentage && $this->detail_type == constants('REWARD_DETAIL_TYPE')['Action'];
+    }
+
+    public function offer()
+    {
+        return $this->hasMany(OfferShowcase::class, 'target_id')->where('target_type', 'App\\Models\\Reward');
+    }
+
+    /**
+     * @param $query
+     * @param  Carbon  $data_time
+     * @return mixed
+     */
+    public function scopeOngoingBySpecificDateAndTime($query, Carbon $data_time)
+    {
+        return $query->where([['start_time', '<=', $data_time], ['end_time', '>=', $data_time]]);
+    }
+
+    /**
+     * @param $query
+     * @param  Carbon  $data_time
+     * @return mixed
+     */
+    public function scopeInvalidBySpecificDateAndTime($query, Carbon $data_time)
+    {
+        return $query->where('start_time', '>', $data_time)->orWhere('end_time', '<', $data_time);
     }
 
     public function isCustomer()
