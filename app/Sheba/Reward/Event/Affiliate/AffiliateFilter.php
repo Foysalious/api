@@ -1,7 +1,7 @@
 <?php namespace Sheba\Reward\Event\Affiliate;
 
 
-use Sheba\Dal\RewardAffiliates\Contract as RewardAffiliates;
+use Sheba\Dal\RewardAffiliates\Model as RewardAffiliates;
 
 trait AffiliateFilter
 {
