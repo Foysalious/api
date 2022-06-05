@@ -34,7 +34,7 @@ class MtbServerClient
     public function get($uri, $auth_type)
     {
         list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
-        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers)->setAuth($auth);
+        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_GET)->setHeaders($headers)->setAuth($auth);
         return $this->tpClient->call($request);
     }
 
