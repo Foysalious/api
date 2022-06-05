@@ -2,6 +2,7 @@
 
 use App\Exceptions\DoNotReportException;
 use App\Exceptions\HttpException;
+use App\Exceptions\PackageRestrictionException;
 use App\Http\Controllers\Controller;
 use App\Sheba\Partner\Delivery\DeliveryService;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryCancelRequestError;
@@ -9,11 +10,14 @@ use App\Sheba\Partner\Delivery\Exceptions\DeliveryServiceServerError;
 use App\Sheba\Partner\Delivery\Exceptions\DeliveryServiceServerHttpError;
 use App\Sheba\Partner\Delivery\Methods;
 use App\Sheba\Partner\Delivery\OrderPlace;
+use App\Sheba\Partner\PackageFeatureCount;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Sheba\ModificationFields;
+use Sheba\Partner\Feature;
 use Throwable;
 
 
@@ -155,8 +159,7 @@ class DeliveryController extends Controller
      * @param Request $request
      * @param OrderPlace $orderPlace
      * @return JsonResponse
-     * @throws DeliveryServiceServerError
-     * @throws DeliveryServiceServerHttpError
+     * @throws PackageRestrictionException
      */
     public function orderPlace(Request $request, OrderPlace $orderPlace)
     {
@@ -170,9 +173,11 @@ class DeliveryController extends Controller
         }
     }
 
+
     /**
-     * @throws DeliveryServiceServerError
-     * @throws DeliveryServiceServerHttpError
+     * @param Request $request
+     * @param OrderPlace $orderPlace
+     * @return JsonResponse
      */
     public function orderPlaceV2(Request $request, OrderPlace $orderPlace)
     {
@@ -183,9 +188,15 @@ class DeliveryController extends Controller
             list($http_code, $message) = $this->resolveError($e);
             if ($http_code > 399 && $http_code < 500) return http_response($request, null, $http_code, ['message' => $message]);
             return http_response($request, null, $http_code, ['message' => $e->getMessage()]);
+        } catch (Exception $e) {
+            return http_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         }
     }
 
+    /**
+     * @throws PackageRestrictionException
+     * @throws Exception
+     */
     public function orderPlaceCore(Request $request, OrderPlace $orderPlace)
     {
         $this->validate($request, [
@@ -205,6 +216,12 @@ class DeliveryController extends Controller
             'pos_order_id' => 'required'
         ]);
         $partner = $request->auth_user->getPartner();
+
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class);
+        $isEligible = $packageFeatureCount->setPartnerId($partner->id)->setFeature(Feature::DELIVERY)->isEligible();
+        if (!$isEligible) throw new PackageRestrictionException('আপনার নির্ধারিত প্যাকেজের এস-ডেলিভারি সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন অথবা', 403);
+
         $orderPlaceInfo = $orderPlace
             ->setPartner($partner)
             ->setToken($this->bearerToken($request))
@@ -222,6 +239,13 @@ class DeliveryController extends Controller
             ->setPickupThana($request->pickup_thana)
             ->orderPlace();
 
+        $packageFeatureCount->decrementFeatureCount();
+        $isEligibleAfterDecrement = $packageFeatureCount->setPartnerId($partner->id)->setFeature(Feature::DELIVERY)->isEligible();
+        if (!$isEligibleAfterDecrement) {
+            /** @var DeliveryService $delivery_service */
+            $delivery_service = app(DeliveryService::class);
+            $delivery_service->setPartner($partner)->setVendorName(Methods::OWN_DELIVERY)->updateVendorInformation();
+        }
         $orderPlace->setPartner($partner)->setPosOrder($request->pos_order_id)->storeDeliveryInformation($orderPlaceInfo['data']);
         return $orderPlaceInfo;
     }
@@ -240,15 +264,31 @@ class DeliveryController extends Controller
 
     public function vendorUpdateV2(Request $request, DeliveryService $delivery_service)
     {
-        $this->vendorUpdateCore($request,$delivery_service);
-        return http_response($request, null, 200);
+        try {
+            $this->vendorUpdateCore($request,$delivery_service);
+            return http_response($request, null, 200);
+        } catch (Exception $e) {
+            return http_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+
     }
 
+    /**
+     * @param Request $request
+     * @param DeliveryService $delivery_service
+     * @throws PackageRestrictionException
+     */
     private function vendorUpdateCore(Request $request, DeliveryService $delivery_service)
     {
         $this->validate($request, [
             'vendor_name' => 'required|in:' . implode(',', Methods::get())
         ]);
+        if ($request->vendor_name != Methods::OWN_DELIVERY) {
+            /** @var PackageFeatureCount $packageFeatureCount */
+            $packageFeatureCount = app(PackageFeatureCount::class);
+            $isEligible = $packageFeatureCount->setPartnerId($request->partner_id)->setFeature(Feature::DELIVERY)->isEligible();
+            if (!$isEligible) throw new PackageRestrictionException('আপনার নির্ধারিত প্যাকেজের এস-ডেলিভারি সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন অথবা', 403);
+        }
         $partner = $request->auth_user->getPartner();
         $delivery_service->setPartner($partner)->setVendorName($request->vendor_name)->updateVendorInformation();
     }
@@ -486,6 +526,23 @@ class DeliveryController extends Controller
         $partner = $request->auth_user->getPartner();
         $delivery_service->setPartner($partner)->setToken($this->bearerToken($request))->setPosOrder($request->pos_order_id)->cancelOrderv2();
         return http_response($request, null, 200, ['messages' => 'ডেলিভারি অর্ডারটি বাতিল করা হয়েছে']);
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function cancelOrderV3(Request $request, DeliveryService $delivery_service)
+    {
+        $this->validate($request, [
+            'uid' => 'required',
+            'partner_id' => 'required',
+        ]);
+        $delivery_service->setDeliveryReqId($request->uid)->cancelOrderv3();
+
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class);
+        $packageFeatureCount->setPartnerId($request->partner_id)->setFeature(Feature::DELIVERY)->incrementFeatureCount();
+        return http_response($request, null, 200, ['message' => 'ডেলিভারি অর্ডারটি বাতিল করা হয়েছে']);
     }
 
     public function paperflyDeliveryCharge(Request $request, DeliveryService $delivery_service)

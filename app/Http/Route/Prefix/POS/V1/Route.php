@@ -198,6 +198,7 @@ class Route
                 $api->get('/upzillas/{district_name}/district', 'Pos\\DeliveryController@getUpzillasV2');
                 $api->get('/paperfly-delivery-charge', 'Pos\\DeliveryController@paperflyDeliveryChargeV2');
                 $api->post('/delivery-status-update','Pos\\DeliveryController@deliveryStatusUpdateV2');
+                $api->post('/delivery-orders-cancel', 'Pos\\DeliveryController@cancelOrderV3');
             });
             $api->group(['prefix' => 'delivery', 'middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('registration-info', 'Pos\\DeliveryController@getInfoForRegistrationV2');
