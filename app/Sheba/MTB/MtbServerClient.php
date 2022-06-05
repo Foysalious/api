@@ -83,6 +83,7 @@ class MtbServerClient
         if ($mtbJwt)
             return $mtbJwt;
         else {
+            dd($this->generateMtbBearerToken());
             $mtbJwt = $this->generateMtbBearerToken()['access_token'];
             Redis::set('mtb_jwt', $mtbJwt);
             Redis::expire('mtb_jwt', 250);
@@ -114,9 +115,15 @@ class MtbServerClient
      */
     public function post($uri, $data, $auth_type, $multipart = false)
     {
+        $request = (new TPRequest())->setUrl($this->makeUrl(QRPaymentStatics::MTB_TOKEN_GENERATE))
+            ->setMethod(TPRequest::METHOD_POST)->setHeaders(['Accept' => 'application/json'])->setInput( ['username' => config('mtb.mtb_username'),
+                'password' => config('mtb.mtb_password'), 'grant_type' => config('mtb.mtb_grant_type')]);
+        dd($this->tpClient->call($request));
         $data = $this->getOptions($data, $multipart);
+        $headers = ['Accept' => 'application/json'];
         if ($auth_type != AuthTypes::NO_AUTH) list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
-        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setInput($data)->setHeaders($headers);
+        dump($data,$headers);
+        $request = (new TPRequest())->setUrl($this->makeUrl($uri))->setMethod(TPRequest::METHOD_POST)->setInput($data)->setHeaders($headers);
         return $this->tpClient->call($request);
     }
 
