@@ -530,46 +530,19 @@ class DueTrackerRepository extends BaseRepository
         /** @var PackageFeatureCount $packageFeatureCount */
         $packageFeatureCount = app(PackageFeatureCount::class);
         $isEligible = $packageFeatureCount
-            ->setPartner($request->partner)
+            ->setPartnerId($request->partner)
             ->setFeature('sms')
-            ->eligible($sms_cost['sms_count']);
+            ->isEligible($sms_cost['sms_count']);
         if ($isEligible) {
             $sms->shoot();
             $packageFeatureCount
-                ->setPartner($request->partner)
+                ->setPartnerId($request->partner)
                 ->setFeature('sms')
                 ->decrementFeatureCount($sms_cost['sms_count']);
             return true;
         }
         return false;
 
-//        if ((double)$request->partner->wallet < $sms_cost) throw new InsufficientBalance();
-//          freeze money amount check
-//        WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $sms_cost, 'এস-এম-এস পাঠানোর');
-//        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
-//        if (config('sms.is_on')) $sms->shoot();
-//        $transaction = (new WalletTransactionHandler())
-//            ->setModel($request->partner)
-//            ->setAmount($sms_cost)
-//            ->setType(Types::debit())
-//            ->setLog($sms_cost . $log)
-//            ->setTransactionDetails([])
-//            ->setSource(TransactionSources::SMS)
-//            ->store();
-//        $this->storeJournal($request->partner, $transaction);
-
-    }
-
-    private function storeJournal($partner, $transaction)
-    {
-        (new JournalCreateRepository())->setTypeId($partner->id)
-            ->setSource($transaction)
-            ->setAmount($transaction->amount)
-            ->setDebitAccountKey(SmsPurchase::SMS_PURCHASE_FROM_SHEBA)
-            ->setCreditAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
-            ->setDetails("Due tracker sms sent charge")
-            ->setReference("")
-            ->store();
     }
 
     public function getSms($data)
