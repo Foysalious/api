@@ -1,11 +1,11 @@
 <?php
 
 $breakdowns = [
-    ['month' => 3, 'interest' => 0.0],
-    ['month' => 6, 'interest' => 0.00],
-    ['month' => 9, 'interest' => 0.00],
-    ['month' => 12, 'interest' => 0.00],
-    ['month' => 18, 'interest' => 00.00]
+    ['month' => 3, 'interest' => 4.0],
+    ['month' => 6, 'interest' => 5.50],
+    ['month' => 9, 'interest' => 7.50],
+    ['month' => 12, 'interest' => 9.50],
+    ['month' => 18, 'interest' => 12.50]
 ];
 
 return [
