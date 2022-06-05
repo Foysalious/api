@@ -3,16 +3,15 @@
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Sheba\Partner\PackageFeatureCount;
-use Illuminate\Validation\ValidationException;
+use Sheba\Subscription\Partner\PartnerSubscription;
 
 class PartnerSubscriptionPackageFeatureCountController extends Controller
 {
-    private $packageFeatureCount;
+    private $partnerSubscription;
 
-    public function __construct(PackageFeatureCount $packageFeatureCount)
+    public function __construct(PartnerSubscription $partnerSubscription)
     {
-        $this->packageFeatureCount = $packageFeatureCount;
+        $this->partnerSubscription = $partnerSubscription;
     }
 
     /**
@@ -22,16 +21,10 @@ class PartnerSubscriptionPackageFeatureCountController extends Controller
      */
     public function getFeaturesCurrentCount(Request $request, $partner): JsonResponse
     {
-        $features_count = $this->packageFeatureCount->setPartner($partner)->featuresCurrentCountList();
+        $features_count = $this->partnerSubscription->packageFeatureCount($partner);
         if (! $features_count) {
             return api_response($request, null, 404, ['message' => 'Partner not found']);
         }
-
-        $features_count = [
-            "topup" => $features_count->topup,
-            "sms" => $features_count->sms,
-            "delivery" => $features_count->delivery,
-        ];
 
         return api_response($request, null, 200, ['data' => $features_count]);
     }
