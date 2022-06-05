@@ -112,7 +112,6 @@ class ShiftAssignmentController extends Controller
 
         $shift_to_unassign_data = $this->shiftAssignToCalender->shiftToUnassign($shift_calender, $this->shiftCalenderRequester, $request);
         $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_to_unassign_data);
-//        dd($shift_to_unassign_data);
 
         $this->shiftCalenderRequester->setShiftId($request->shift_id)
             ->setShiftName($business_shift->name)
