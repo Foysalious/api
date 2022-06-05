@@ -367,11 +367,15 @@ class JobController extends Controller
             if ($jobService->service->is_inspection_service) $has_inspection_service = 1;
             break;
         }
-
+        $is_cancelled_job = $job->status == constants('JOB_STATUSES')['Cancelled'];
+        $total_price = $is_cancelled_job? (double)($partnerOrder->_calculateThisJobsForBillsDetails()->totalPriceForCancelledOrder + $partnerOrder->_calculateThisJobsForBillsDetails()->totalLogisticChargeForCancelledOrder) : (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
+        if ($is_cancelled_job && $job->isRentCar()) $original_price = (double)$job->servicePrice;
+        else $original_price = (double)$job->totalServiceSurcharge ? (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge : (double)$partnerOrder->jobPrices;
         $bill = collect();
-        $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
+        $partnerOrder = $partnerOrder->calculate();
+        $bill['total'] = $total_price;
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
-        $bill['original_price'] = (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge;
+        $bill['original_price'] = $original_price;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
         $bill['due'] = (double)$partnerOrder->dueWithLogistic;
         $bill['material_price'] = (double)$job->materialPrice;
