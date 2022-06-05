@@ -528,17 +528,13 @@ class DueTrackerRepository extends BaseRepository
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getSmsCountAndEstimationCharge();
         /** @var PackageFeatureCount $packageFeatureCount */
-        $packageFeatureCount = app(PackageFeatureCount::class);
+        $packageFeatureCount = app(PackageFeatureCount::class)->setPartnerId($request->partner->id)
+            ->setFeature('sms');
         $isEligible = $packageFeatureCount
-            ->setPartnerId($request->partner)
-            ->setFeature('sms')
             ->isEligible($sms_cost['sms_count']);
         if ($isEligible) {
             $sms->shoot();
-            $packageFeatureCount
-                ->setPartnerId($request->partner)
-                ->setFeature('sms')
-                ->decrementFeatureCount($sms_cost['sms_count']);
+            $packageFeatureCount->decrementFeatureCount($sms_cost['sms_count']);
             return true;
         }
         return false;
