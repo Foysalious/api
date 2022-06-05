@@ -34,8 +34,8 @@ class MtbServerClient
     public function get($uri, $auth_type)
     {
         list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
-        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_GET)->setHeaders($headers)->setAuth($auth);
-        return $this->tpClient->call($request);
+        $request = (new TPRequest())->setUrl($this->makeUrl($uri))->setMethod(TPRequest::METHOD_GET)->setHeaders($headers)->setAuth($auth);
+        return (array)$this->tpClient->call($request);
     }
 
 
@@ -84,7 +84,6 @@ class MtbServerClient
         if ($mtbJwt)
             return $mtbJwt;
         else {
-            dd($this->generateMtbBearerToken());
             $mtbJwt = $this->generateMtbBearerToken()['access_token'];
             Redis::set('mtb_jwt', $mtbJwt);
             Redis::expire('mtb_jwt', 250);
@@ -119,7 +118,7 @@ class MtbServerClient
 //        $data = $this->getOptions($data, $multipart);
         list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
         $request = (new TPRequest())->setUrl($this->makeUrl($uri))->setMethod(TPRequest::METHOD_POST)->setInput($data)->setAuth($auth)->setHeaders($headers);
-        return $this->tpClient->call($request);
+        return (array)$this->tpClient->call($request);
     }
 
     private function getHeadersAndAuth($auth_type): array
@@ -134,6 +133,7 @@ class MtbServerClient
             $password = config('mtb.sheba_password');
             $headers = (array_merge($headers, ['OrgId' => $orgId]));
             $auth = [$username, $password];
+            $headers['Authorization'] = "Basic " . base64_encode("$username:$password");
         }
         return [$headers, $auth];
     }
