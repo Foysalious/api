@@ -35,7 +35,8 @@ class MtbServerClient
     {
         list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
         $request = (new TPRequest())->setUrl($this->makeUrl($uri))->setMethod(TPRequest::METHOD_GET)->setHeaders($headers)->setAuth($auth);
-        return (array)$this->tpClient->call($request);
+        $res = $this->tpClient->call($request);
+        return json_decode(json_encode($res), true);
     }
 
 
@@ -118,7 +119,8 @@ class MtbServerClient
 //        $data = $this->getOptions($data, $multipart);
         list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
         $request = (new TPRequest())->setUrl($this->makeUrl($uri))->setMethod(TPRequest::METHOD_POST)->setInput($data)->setAuth($auth)->setHeaders($headers);
-        return (array)$this->tpClient->call($request);
+        $res = $this->tpClient->call($request);
+        return json_decode(json_encode($res), true);
     }
 
     private function getHeadersAndAuth($auth_type): array
