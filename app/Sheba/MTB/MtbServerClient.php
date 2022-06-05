@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Redis;
 use Mpdf\Tag\Q;
 use Sheba\ModificationFields;
 use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPRequest;
 
 class MtbServerClient
@@ -28,12 +29,12 @@ class MtbServerClient
      * @param $uri
      * @param $auth_type
      * @return mixed
-     * @throws \Sheba\TPProxy\TPProxyServerError
+     * @throws TPProxyServerError
      */
     public function get($uri, $auth_type)
     {
-        if ($auth_type != AuthTypes::NO_AUTH) list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
-        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
+        list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
+        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers)->setAuth($auth);
         return $this->tpClient->call($request);
     }
 
@@ -110,13 +111,13 @@ class MtbServerClient
     }
 
     /**
-     * @throws \Sheba\TPProxy\TPProxyServerError
+     * @throws TPProxyServerError
      */
     public function post($uri, $data, $auth_type, $multipart = false)
     {
         $data = $this->getOptions($data, $multipart);
-        if ($auth_type != AuthTypes::NO_AUTH) list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
-        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setInput($data)->setHeaders($headers);
+        list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
+        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setInput($data)->setAuth($auth)->setHeaders($headers);
         return $this->tpClient->call($request);
     }
 
