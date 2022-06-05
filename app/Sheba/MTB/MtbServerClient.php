@@ -84,6 +84,7 @@ class MtbServerClient
         if ($mtbJwt)
             return $mtbJwt;
         else {
+            dd($this->generateMtbBearerToken());
             $mtbJwt = $this->generateMtbBearerToken()['access_token'];
             Redis::set('mtb_jwt', $mtbJwt);
             Redis::expire('mtb_jwt', 250);
@@ -115,15 +116,15 @@ class MtbServerClient
      */
     public function post($uri, $data, $auth_type, $multipart = false)
     {
-        $data = $this->getOptions($data, $multipart);
+//        $data = $this->getOptions($data, $multipart);
         list($headers, $auth) = $this->getHeadersAndAuth($auth_type);
-        $request = (new TPRequest())->setUrl($uri)->setMethod(TPRequest::METHOD_POST)->setInput($data)->setAuth($auth)->setHeaders($headers);
+        $request = (new TPRequest())->setUrl($this->makeUrl($uri))->setMethod(TPRequest::METHOD_POST)->setInput($data)->setAuth($auth)->setHeaders($headers);
         return $this->tpClient->call($request);
     }
 
     private function getHeadersAndAuth($auth_type): array
     {
-        $headers = ['Accept' => 'application/json'];
+        $headers = ['Content-Type' => 'application/json'];
         $auth = [];
         if ($auth_type === AuthTypes::BARER_TOKEN) {
             $headers = (array_merge($headers, ['Authorization' => 'Bearer ' . $this->getMtbBearerToken()]));
