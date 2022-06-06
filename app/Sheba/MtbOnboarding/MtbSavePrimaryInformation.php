@@ -221,7 +221,7 @@ class MtbSavePrimaryInformation
 
     private function sendPushNotification($partner)
     {
-        $topic = config('sheba.push_notification_topic_name.manager_new') . $partner;
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
         $event_type = 'MtbAccountCreate';
