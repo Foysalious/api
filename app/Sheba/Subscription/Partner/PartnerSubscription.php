@@ -179,9 +179,18 @@ class PartnerSubscription
         }
 
         return [
-            "topup" => $features_count->topup,
-            "sms" => $features_count->sms,
-            "delivery" => $features_count->delivery,
+            [
+                "feature" => "টপ-আপ",
+                "count" => $features_count->topup
+            ],
+            [
+                "feature" => "ফ্রি SMS",
+                "count" => $features_count->sms
+            ],
+            [
+                "feature" => "ডেলিভারি অর্ডার",
+                "count" => $features_count->delivery
+            ]
         ];
     }
 
