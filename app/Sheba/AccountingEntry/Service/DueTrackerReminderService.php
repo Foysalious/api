@@ -5,9 +5,12 @@ namespace App\Sheba\AccountingEntry\Service;
 use App\Models\Partner;
 use App\Sheba\AccountingEntry\Notifications\ReminderNotificationHandler;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Support\Facades\Log;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
 
 class DueTrackerReminderService
 {
@@ -216,7 +219,8 @@ class DueTrackerReminderService
     /**
      * @param array $reminder
      * @return bool
-     * @throws AccountingEntryServerError|InvalidOptionsException
+     * @throws AccountingEntryServerError
+     * @throws InvalidOptionsException
      */
     public function sendReminderPush(array $reminder): bool
     {
@@ -226,9 +230,9 @@ class DueTrackerReminderService
         if ($reminder['should_send_sms'] == 1) {
             $sms_content["balance"] = $reminder['balance'];
             $sms_content["balance_type"] = $reminder['balance_type'];
-            $sms_content["contact_id"] = $reminder['contact_info']['id'];
-            $sms_content["contact_name"] = $reminder['contact_info']['name'];
-            $sms_content["contact_mobile"] = $reminder['contact_info']['mobile'];
+            $sms_content["contact_id"] = $reminder['contact_details']['id'];
+            $sms_content["contact_name"] = $reminder['contact_details']['name'];
+            $sms_content["contact_mobile"] = $reminder['contact_details']['mobile'];
             /** @var DueTrackerSmsService $dueTrackerSmsService */
             $dueTrackerSmsService = app()->make(DueTrackerSmsService::class);
             $response = $dueTrackerSmsService->setPartnerId($reminder['partner_id'])
