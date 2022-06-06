@@ -119,6 +119,10 @@ class ShiftAssignmentController extends Controller
             ->setStartTime($business_shift->start_time)
             ->setEndTime($business_shift->end_time)
             ->setIsHalfDayActivated($business_shift->is_halfday_enable)
+            ->setIsCheckinGraceEnable($business_shift->checkin_grace_enable)
+            ->setIsCheckoutGraceEnable($business_shift->checkout_grace_enable)
+            ->setCheckinGraceTime($business_shift->checkin_grace_time)
+            ->setCheckoutGraceTime($business_shift->checkout_grace_time)
             ->setIsGeneralActivated(0)
             ->setIsUnassignedActivated(0)
             ->setRepeat($request->repeat)
@@ -171,7 +175,6 @@ class ShiftAssignmentController extends Controller
 
         if ($this->shiftCalenderRequester->hasError()) return api_response($request, null, $this->shiftCalenderRequester->getErrorCode(), ['message' => $this->shiftCalenderRequester->getErrorMessage()]);
 
-//        dd($shift_to_unassign_data);
         $this->setModifier($request->manager_member);
         $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_to_unassign_data);
         return api_response($request, null, 200);
