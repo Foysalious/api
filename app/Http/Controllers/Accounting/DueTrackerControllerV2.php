@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Usage\Usage;
@@ -63,6 +64,32 @@ class DueTrackerControllerV2 extends Controller
         $response = $this->dueTrackerService->setPartner($request->partner)->setEntryDto($entry_dto)->storeEntry();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
         return http_response($request, null, 201, ['data' => $response]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function update(Request $request, int $entry_id): JsonResponse
+    {
+        if ($request->has('date') && $request->date) {
+            $request->merge(['date' => b2EnDateFormatter($request->date)]);
+        }
+        $this->validate($request, [
+            'amount'                   => 'required',
+            'entry_type'               => 'required|in:due,deposit',
+            'account_key'              => 'required',
+            'customer_id'              => 'required',
+            'date'                     => 'required|date_format:Y-m-d H:i:s',
+            'attachment_should_remove' => 'sometimes|array',
+            'attachments'              => 'sometimes|array',
+            'attachments.*'            => 'sometimes|mimes:jpg,jpeg,png,bmp|max:20000'
+        ]);
+        $request->merge(['entry_id' => $entry_id]);
+        $dueTrackerRepo = app()->make(AccountingDueTrackerRepository::class);
+        $response = $dueTrackerRepo->setPartner($request->partner)->storeEntry($request, $request->entry_type, true);
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_ENTRY_UPDATE)->create($request->auth_user);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
     /**
