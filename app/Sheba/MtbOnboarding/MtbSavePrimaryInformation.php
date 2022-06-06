@@ -221,19 +221,6 @@ class MtbSavePrimaryInformation
 
     private function sendPushNotification($partner)
     {
-//        $topic = config('sheba.push_notification_topic_name.manager_new') . $partner;
-//        $channel          = config('sheba.push_notification_channel_name.manager');
-//        $sound = config('sheba.push_notification_sound.manager');
-//        $event_type       = 'DueTracker';
-//        $notification_data = [
-//            "title" => 'New Online Store Order',
-//            "message" => "Test",
-//            "sound" => $sound,
-//            "event_type" => 'MtbAccountCreate',
-//            "event_id" => $partner
-//        ];
-//        (new PushNotificationHandler())->send($topic, null, $notification_data, 'high');
-
         $topic = config('sheba.push_notification_topic_name.manager_new') . $partner;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
@@ -248,7 +235,13 @@ class MtbSavePrimaryInformation
             "sound" => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
-
+        $partner = Partner::find($this->reminder['partner_id']);
+        notify()->partner($partner)->send([
+            "title"       => $title,
+            "description" => $message,
+            "type" => "Info",
+            "event_type" => "MtbAccountCreate"
+        ]);
     }
 
     public function validateMtbAccountStatus($merchant_id)
