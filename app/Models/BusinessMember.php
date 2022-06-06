@@ -363,14 +363,19 @@ class BusinessMember extends Model
         return $this->shift()->where('date', Carbon::now()->subDay()->toDateString())->first();
     }
 
+    public function shiftTomorrow()
+    {
+        return $this->shift()->where('date', Carbon::now()->addDay()->toDateString())->first();
+    }
+
     public function nextShift()
     {
-        return $this->shift()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
+        return $this->shift()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
     }
 
     public function previousShift()
     {
-        return $this->shift()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
+        return $this->shift()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
     }
 
     public function calculationTodayLastCheckInTime($which_half, $shift_assignment): string

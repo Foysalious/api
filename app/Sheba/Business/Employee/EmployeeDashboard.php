@@ -102,6 +102,46 @@ class EmployeeDashboard
         return $this->approvalRequestRepo->countApprovalRequestByBusinessMember($this->businessMember) > 0;
     }
 
+    public function getAttendanceInfo(): array
+    {
+        $can_checkin = 0;
+        $shift = null;
+        $yesterday_shift = $this->businessMember->shiftYesterday();
+        $today_shift = $this->businessMember->shiftToday();
+
+        if ($today_shift) {
+            if ($today_shift->is_general) {
+                $can_checkin = 1;
+                $shift = $today_shift;
+            } else if ($today_shift->is_shift) {
+                if (Carbon::now()->toTimeString() < $today_shift->start_time){
+                    if ($yesterday_shift && $yesterday_shift->is_shift) {
+                        $can_checkin = 1;
+                        $shift = $yesterday_shift;
+                    }
+                } else {
+                    $can_checkin = 1;
+                    $shift = $today_shift;
+                }
+            }
+        }
+
+        if ($can_checkin){
+            $next_shift = $this->businessMember->nextShift();
+            $diff = 16;
+            $shift_start_time = Carbon::parse($shift->date.' '.$shift->start_time);
+            $shift_end_time = $shift->start_time > $shift->end_time ? Carbon::parse(Carbon::parse($shift->date)->addDay()->toDateString().' '.$shift->end_time) : $shift->date.' '.$shift->end_time;
+            if ($next_shift) $diff = Carbon::parse($next_shift->date.' '.$next_shift->start_time)->diffInHours($shift_end_time);
+            if ($next_shift && $diff >= 16){
+                if (Carbon::now() > $shift_end_time || Carbon::now() < $shift_start_time->subHours(8)) $can_checkin = 0;
+            } else if ($next_shift && $diff < 16){
+                if (Carbon::now() > $shift_end_time || Carbon::now() < $shift_start_time->subHours($diff/2)) $can_checkin = 0;
+            }
+        }
+
+        return ['shift' => $this->getShift($shift), 'can_checkin' => $can_checkin, 'can_checkout' => !$can_checkin];
+    }
+
     public function canCheckIn(): bool
     {
         return !$this->attendanceOfToday || $this->attendanceOfToday->canTakeThisAction(Actions::CHECKIN);
@@ -135,5 +175,15 @@ class EmployeeDashboard
         if ($last_attendance_log['action'] == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequiredForSpecificDate($this->lastAttendance['date'], $this->lastAttendance['checkout_time'])) return Actions::CHECKOUT;
 
         return null;
+    }
+
+    private function getShift($shift): array
+    {
+        return [
+            'id' => $shift->id,
+            'title' => $shift->shift_title,
+            'start_time' => $shift->start_time,
+            'end_time' => $shift->end_time
+        ];
     }
 }
