@@ -128,6 +128,7 @@ class ReportsController extends Controller
         return api_response($request, $response, 200, ['data' => $response]);
 
     }
+
     public function getTransactionList(Request $request): JsonResponse
     {
         $partner = $request->auth_user->getPartner();
@@ -135,5 +136,12 @@ class ReportsController extends Controller
             ->setTransactionType($request->transaction_type)->setReconcile($request->reconcile)->setGateway($request->gateway)->setQ($request->q)
             ->transactionList($partner->id);
         return api_response($request, $data, 200, ['data' => $data]);
+    }
+
+    public function getTranactionDetails(Request $request, $id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $details = $this->accountingReportRepository->tranactionDetails($request->id, $partner->id);
+        return api_response($request, $details, 200, ['data' => $details]);
     }
 }

@@ -191,4 +191,9 @@ class AccountingReportRepository extends BaseRepository
             . ($this->startDate ? "&start_date={$this->startDate}" : "") . ($this->endDate ? "&end_date={$this->endDate}" : "") . ($this->transactionType ? "&transaction_type={$this->transactionType}" : "")
             . ($this->reconcile ? "&reconcile={$this->reconcile}" : "") . ($this->gateway ? "&gateway={$this->gateway}" : "") . ($this->q ? "&q={$this->q}+" : ""));
     }
+
+    public function tranactionDetails($transactionId, $userId, $userType = UserType::PARTNER)
+    {
+        return $this->client->setUserType($userType)->setUserId($userId)->get('api/entries/' . $transactionId);
+    }
 }

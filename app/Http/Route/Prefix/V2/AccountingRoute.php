@@ -50,6 +50,7 @@ class AccountingRoute
                 $api->get('/pos/product-wise', 'Accounting\\ReportsController@getProductWiseReport');
                 $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
                 $api->get('online-transactions', 'Accounting\\ReportsController@getTransactionList');
+                $api->get('online-transactions/{id}', 'Accounting\\ReportsController@getTranactionDetails');
                 $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
             });
         });
