@@ -1,9 +1,7 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
-use App\Models\District;
-use App\Models\Division;
+
 use App\Models\Partner;
-use App\Models\Thana;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
@@ -15,6 +13,7 @@ use App\Sheba\ResellerPayment\MORServiceClient;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
+use Sheba\PushNotification\PushNotificationHandler;
 
 
 class MtbSavePrimaryInformation
@@ -220,10 +219,22 @@ class MtbSavePrimaryInformation
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
     }
 
+    private function sendPushNotification($partner)
+    {
+        $topic = config('sheba.push_notification_topic_name.manager_new') . $partner;
+        $sound = config('sheba.push_notification_sound.manager');
+        $notification_data = [
+            "title" => 'New Online Store Order',
+            "message" => "Test",
+            "sound" => $sound,
+        ];
+        (new PushNotificationHandler())->send($topic, null, $notification_data, 'high');
+    }
 
     public function validateMtbAccountStatus($merchant_id)
     {
         $partner = Partner::where('id', $merchant_id)->first();
         App::make(PaymentService::class)->getMtbAccountStatus($partner->partnerMefInformation);
+        $this->sendPushNotification($partner->id);
     }
 }
