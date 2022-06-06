@@ -319,6 +319,7 @@ class BidController extends Controller
             },
             'procurement'
         ]);
+        /** @var Procurement $procurement */
         $procurement = $bid->procurement;
         $price_quotation = $bid->items->where('type', 'price_quotation')->first();
         $technical_evaluation = $bid->items->where('type', 'technical_evaluation')->first();
@@ -337,7 +338,7 @@ class BidController extends Controller
             ],
             'proposal' => $bid->proposal,
 
-            'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
+            'title' => $procurement->title ?: substr($procurement->long_description, 0, 20),
             'type' => $bid->procurement->type,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'payment_options' => $procurement->payment_options,

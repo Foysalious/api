@@ -124,7 +124,7 @@ class BusinessMember extends Model
         return $this->business->getActiveBusinessMember()->where('manager_id', $this->id)->count() > 0;
     }
 
-    public function tackingLocations()
+    public function trackingLocations()
     {
         return $this->hasMany(TrackingLocation::class);
     }
@@ -329,14 +329,14 @@ class BusinessMember extends Model
      */
     public function liveLocationFilterByDate($date = null)
     {
-        $tracking_locations = $this->tackingLocations()->orderBy('created_at', 'desc');
+        $tracking_locations = $this->trackingLocations()->orderBy('created_at', 'desc');
         if ($date) return $tracking_locations->where('date', $date);
         return $tracking_locations;
     }
 
     public function liveLocationForADateRange($from_date, $to_date)
     {
-        $tracking_locations = $this->tackingLocations()->where(function ($query) use ($from_date, $to_date){
+        $tracking_locations = $this->trackingLocations()->where(function ($query) use ($from_date, $to_date){
             $query->where('date', '>=', $from_date);
             $query->where('date', '<=', $to_date);
         });
@@ -373,25 +373,32 @@ class BusinessMember extends Model
         return $this->shift()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->first();
     }
 
-    public function calculationTodayLastCheckOutTime($which_half, $shift_assignment)
+    public function calculationTodayLastCheckInTime($which_half, $shift_assignment): string
     {
-        if ($which_half) {
+        if ($which_half == HalfDayType::FIRST_HALF) {
             $time_diff = Carbon::parse($shift_assignment->start_time)->diffInHours($shift_assignment->end_time);
-            if ($which_half == HalfDayType::FIRST_HALF) {
-                # If A Employee Has Leave On First_Half, Office Start Time Will Be Second_Half Start_Time
-                $last_checkin_time = Carbon::parse($shift_assignment->start_time)->addHours($time_diff/2)->toTimeString();
-                if ($shift_assignment->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
-                return $last_checkin_time;
-            }
-            if ($which_half == HalfDayType::SECOND_HALF) {
-                $last_checkin_time = Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
-                if ($this->officeHour->is_start_grace_time_enable) return $last_checkin_time->addMinutes($this->officeHour->start_grace_time);
-                return $last_checkin_time;
-            }
+            # If A Employee Has Leave On First_Half, Office Start Time Will Be Second_Half Start_Time
+            $last_checkin_time = Carbon::parse($shift_assignment->start_time)->addHours($time_diff / 2);
+            if ($shift_assignment->checkin_grace_enable) return $last_checkin_time->addMinutes($shift_assignment->checkin_grace_time)->toTimeString();
+            return $last_checkin_time->toTimeString();
         } else {
-            $last_checkin_time = (new TimeByBusiness())->getOfficeStartTimeByBusiness();
-            if (is_null($last_checkin_time)) return null;
-            return Carbon::parse($last_checkin_time);
+            $last_checkin_time = Carbon::parse($shift_assignment->start_time);
+            if ($shift_assignment->checkin_grace_enable) return $last_checkin_time->addMinutes($shift_assignment->checkin_grace_time)->toTimeString();
+            return $last_checkin_time->toTimeString();
+        }
+    }
+
+    public function calculationTodayLastCheckOutTime($which_half_day, $shift_assignment): string
+    {
+        if ($which_half_day == HalfDayType::SECOND_HALF) {
+            $time_diff = Carbon::parse($shift_assignment->start_time)->diffInHours($shift_assignment->end_time);
+            $checkout_time = Carbon::parse($shift_assignment->start_time)->addHours($time_diff / 2);
+            if ($shift_assignment->checkout_grace_enable) return $checkout_time->subMinutes($shift_assignment->checkout_grace_time)->toTimeString();
+            return $checkout_time->toTimeString();
+        } else {
+            $checkout_time = Carbon::parse($shift_assignment->end_time);
+            if ($shift_assignment->checkout_grace_enable) return $checkout_time->subMinutes($shift_assignment->checkout_grace_time)->toTimeString();
+            return $checkout_time->toTimeString();
         }
     }
 }
