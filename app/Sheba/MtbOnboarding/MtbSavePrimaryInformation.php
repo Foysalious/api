@@ -13,7 +13,7 @@ use App\Sheba\ResellerPayment\MORServiceClient;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
-use Sheba\PushNotification\PushNotificationHandler;
+use Sheba\PushNotificationHandler;
 
 
 class MtbSavePrimaryInformation
@@ -221,16 +221,34 @@ class MtbSavePrimaryInformation
 
     private function sendPushNotification($partner)
     {
+//        $topic = config('sheba.push_notification_topic_name.manager_new') . $partner;
+//        $channel          = config('sheba.push_notification_channel_name.manager');
+//        $sound = config('sheba.push_notification_sound.manager');
+//        $event_type       = 'DueTracker';
+//        $notification_data = [
+//            "title" => 'New Online Store Order',
+//            "message" => "Test",
+//            "sound" => $sound,
+//            "event_type" => 'MtbAccountCreate',
+//            "event_id" => $partner
+//        ];
+//        (new PushNotificationHandler())->send($topic, null, $notification_data, 'high');
+
         $topic = config('sheba.push_notification_topic_name.manager_new') . $partner;
+        $channel = config('sheba.push_notification_channel_name.manager');
         $sound = config('sheba.push_notification_sound.manager');
-        $notification_data = [
-            "title" => 'New Online Store Order',
-            "message" => "Test",
-            "sound" => $sound,
-            "event_type" => 'MtbAccountCreate',
-            "event_id" => $partner
-        ];
-        (new PushNotificationHandler())->send($topic, null, $notification_data, 'high');
+        $event_type = 'MtbAccountCreate';
+
+        $title = "Due Tracker Reminder";
+        $message = "No message has been given";
+        (new PushNotificationHandler())->send([
+            "title" => $title,
+            "message" => $message,
+            "event_type" => $event_type,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel, $sound);
+
     }
 
     public function validateMtbAccountStatus($merchant_id)
