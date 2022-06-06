@@ -248,31 +248,6 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
         $due_list = $result['list'];
-        $pos_orders = [];
-        /*
-        collect($due_list)->each(function ($each) use (&$pos_orders) {
-            if (!is_null($each['source_id']) && $each['source_type'] == EntryTypes::POS) {
-                $pos_orders [] = $each['source_id'];
-            }
-        });
-        if (count($pos_orders) > 0) {
-            $orders = $this->getPartnerWisePosOrders($pos_orders)['orders'];
-        }
-        foreach ($due_list as $key => &$item) {
-            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && isset($orders[$item['source_id']])) {
-                $order = $orders[$item['source_id']];
-                $item['partner_wise_order_id'] = $order['partner_wise_order_id'];
-                $item['source_type'] = 'PosOrder';
-                $item['head'] = 'POS sales';
-                $item['head_bn'] = 'সেলস';
-                if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
-                    $item['source_type'] = 'Webstore Order';
-                    $item['head'] = 'Webstore sales';
-                    $item['head_bn'] = 'ওয়েবস্টোর সেলস';
-                }
-            }
-        }
-        */
         return [
             'list' => $due_list
         ];
