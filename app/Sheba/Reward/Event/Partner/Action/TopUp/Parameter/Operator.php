@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
+<?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
 use Sheba\Reward\Exception\ParameterTypeMismatchException;
@@ -15,14 +13,9 @@ class Operator extends ActionEventParameter
      */
     public function check(array $params): bool
     {
+        if (is_null($this->value) || in_array("All", $this->value)) return true;
+
         $topup_order = $params[0];
-        if($this->value) {
-            foreach ($this->value as $operator)
-                if($operator == "All" || $operator == $topup_order->vendor->name) return true;
-
-            return false;
-        }
-
-        return true;
+        return in_array($topup_order->vendor->name, $this->value);
     }
 }
