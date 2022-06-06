@@ -228,7 +228,7 @@ class MtbSavePrimaryInformation
             "message" => "Test",
             "sound" => $sound,
             "event_type" => 'MtbAccountCreate',
-            "event_id" => $partner->id
+            "event_id" => $partner
         ];
         (new PushNotificationHandler())->send($topic, null, $notification_data, 'high');
     }
