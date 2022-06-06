@@ -235,6 +235,6 @@ class MtbSavePrimaryInformation
     {
         $partner = Partner::where('id', $merchant_id)->first();
         App::make(PaymentService::class)->getMtbAccountStatus($partner->partnerMefInformation);
-        $this->sendPushNotification($partner->id);
+//        $this->sendPushNotification($partner->id);
     }
 }
