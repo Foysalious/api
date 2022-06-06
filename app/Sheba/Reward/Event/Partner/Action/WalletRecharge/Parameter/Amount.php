@@ -18,12 +18,10 @@ class Amount extends ActionEventParameter
      */
     public function check(array $params)
     {
+        if ($this->value == null) return true;
+
         /** @var Payable $payable */
         $payable = $params[1];
-        if ($this->value != null) {
-            return $payable->amount >= $this->value;
-        }
-
-        return true;
+        return $payable->amount == $this->value;
     }
 }
