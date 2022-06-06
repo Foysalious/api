@@ -29,6 +29,6 @@ class SubscriptionFeatureMessage
             $features_length--;
         }
 
-        return [];
+        return $message;
     }
 }

@@ -1,14 +1,17 @@
 <?php namespace App\Sheba\Partner;
 
 use Exception;
+use Sheba\Helpers\ConstGetter;
 
 class PackageFeatureCount
 {
+    use ConstGetter;
+
     const TOPUP = 'topup';
     const SMS = 'sms';
     const DELIVERY = 'delivery';
 
-    private $partner;
+    private $partner_id;
     private $feature;
     private $featureCounter;
 
@@ -21,9 +24,9 @@ class PackageFeatureCount
      * @param $partner_id
      * @return $this
      */
-    public function setPartnerId($partner_id)
+    public function setPartnerId(int $partner_id)
     {
-        $this->partner = $partner_id;
+        $this->partner_id = $partner_id;
         return $this;
     }
 
@@ -42,10 +45,11 @@ class PackageFeatureCount
 
     /**
      * @return mixed
+     * @throws Exception
      */
     public function featureCurrentCount()
     {
-        return $this->featureCounter->getCurrentCount($this->feature, $this->partner);
+        return $this->featureCounter->getCurrentCount($this->feature, $this->partner_id);
     }
 
     /**
@@ -53,7 +57,7 @@ class PackageFeatureCount
      */
     public function featuresCurrentCountList()
     {
-        return $this->featureCounter->getAllFeaturesCurrentCount($this->partner);
+        return $this->featureCounter->getAllFeaturesCurrentCount($this->partner_id);
     }
 
     /**
@@ -63,7 +67,7 @@ class PackageFeatureCount
      */
     public function isEligible(int $count = 1): bool
     {
-        return $this->featureCounter->isEligible($this->feature, $this->partner, $count);
+        return $this->featureCounter->isEligible($this->feature, $this->partner_id, $count);
     }
 
     /**
@@ -73,7 +77,7 @@ class PackageFeatureCount
      */
     public function incrementFeatureCount(int $count=1)
     {
-        return $this->featureCounter->incrementCount($this->feature, $this->partner, $count);
+        return $this->featureCounter->incrementCount($this->feature, $this->partner_id, $count);
     }
 
     /**
@@ -83,7 +87,7 @@ class PackageFeatureCount
      */
     public function decrementFeatureCount(int $count=1)
     {
-        return $this->featureCounter->decrementCount($this->feature, $this->partner, $count);
+        return $this->featureCounter->decrementCount($this->feature, $this->partner_id, $count);
     }
 
     /**
