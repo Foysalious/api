@@ -426,6 +426,7 @@ class BusinessRoute
                         $api->get('/', 'B2b\ShiftAssignmentController@details');
                         $api->post('/assign-shift', 'B2b\ShiftAssignmentController@assignShift');
                         $api->post('/assign-general-attendance', 'B2b\ShiftAssignmentController@assignGeneralAttendance');
+                        $api->post('/unassign-shift', 'B2b\ShiftAssignmentController@unassignShift');
                     });
                 });
 

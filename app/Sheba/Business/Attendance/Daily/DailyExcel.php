@@ -67,7 +67,7 @@ class DailyExcel
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:R1', function ($cells) {
+                $sheet->cell('A1:S1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
@@ -161,7 +161,8 @@ class DailyExcel
                 'overtime' => $this->overtime,
                 'late_check_in_note' => $this->lateNote,
                 'left_early_note' => $this->leftEarlyNote,
-                'attendance_reconciled' => !isset($attendance['is_attendance_reconciled']) ? '-' : ($attendance['is_attendance_reconciled'] ? 'Yes' : 'No')
+                'attendance_reconciled' => !isset($attendance['is_attendance_reconciled']) ? '-' : ($attendance['is_attendance_reconciled'] ? 'Yes' : 'No'),
+                'shift_name' => !isset($attendance['shift_name']) ? '-' : $attendance['shift_name']
             ];
         }
     }
@@ -171,6 +172,7 @@ class DailyExcel
         return ['Date', 'Employee ID', 'Employee Name', 'Department',
             'Status', 'Check in time', 'Check in status', 'Check in location',
             'Check in address', 'Check out time', 'Check out status',
-            'Check out location', 'Check out address', 'Total Hours', 'Overtime', 'Late check in note', 'Left early note', 'Attendance Reconciliation'];
+            'Check out location', 'Check out address', 'Total Hours', 'Overtime',
+            'Late check in note', 'Left early note', 'Attendance Reconciliation', 'Shift Name'];
     }
 }

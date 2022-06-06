@@ -308,7 +308,7 @@ class AttendanceList
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
         $attendances = $this->attendanceRepositoryInterface->builder()
-            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'overtime_in_minutes', 'status', 'date', 'is_attendance_reconciled')
+            ->select('id', 'business_member_id', 'checkin_time', 'checkout_time', 'staying_time_in_minutes', 'overtime_in_minutes', 'status', 'date', 'is_attendance_reconciled', 'shift_assignment_id')
             ->whereIn('business_member_id', $business_member_ids)
             ->where('date', '>=', $this->startDate->toDateString())
             ->where('date', '<=', $this->endDate->toDateString())
@@ -473,7 +473,7 @@ class AttendanceList
                             'is_in_wifi' => $is_in_wifi,
                             'address' => $action->is_remote ?
                                 $action->location ?
-                                    json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
+                                    json_decode($action->location)->address ?: json_decode($action->location)->lat . ', ' . json_decode($action->location)->lng
                                     : null
                                 : $business_office_name,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
@@ -489,7 +489,7 @@ class AttendanceList
                             'is_in_wifi' => $is_in_wifi,
                             'address' => $action->is_remote ?
                                 $action->location ?
-                                    json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
+                                    json_decode($action->location)->address ?: json_decode($action->location)->lat . ', ' . json_decode($action->location)->lng
                                     : null
                                 : $business_office_name,
                             'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
@@ -501,7 +501,7 @@ class AttendanceList
 
                 if ($attendance->overrideLogs) {
                     foreach ($attendance->overrideLogs as $override_log) {
-                        if ($override_log->action == Actions::CHECKIN ) $check_in_overridden = 1;
+                        if ($override_log->action == Actions::CHECKIN) $check_in_overridden = 1;
                         if ($override_log->action == Actions::CHECKOUT) $check_out_overridden = 1;
                     }
                 }
@@ -526,7 +526,8 @@ class AttendanceList
                         'override' => [
                             'is_check_in_overridden' => $check_in_overridden,
                             'is_check_out_overridden' => $check_out_overridden
-                        ]
+                        ],
+                        'shift_name' => $this->getShiftAssignmentInfo($attendance)
                     ];
             }
         }
@@ -608,8 +609,8 @@ class AttendanceList
                     'id' => $business_member->id,
                     'check_in' => null,
                     'check_out' => null,
-                    'overtime_in_minutes' =>  0,
-                    'overtime' =>  null,
+                    'overtime_in_minutes' => 0,
+                    'overtime' => null,
                     'active_hours' => null,
                     'is_absent' => $is_weekend_or_holiday ? 0 : 1,
                     'is_on_leave' => 0,
@@ -689,8 +690,8 @@ class AttendanceList
                     'check_in' => null,
                     'check_out' => null,
                     'active_hours' => null,
-                    'overtime_in_minutes' =>  0,
-                    'overtime' =>  null,
+                    'overtime_in_minutes' => 0,
+                    'overtime' => null,
                     'date' => null,
                     'is_absent' => 0,
                     'is_on_leave' => 1,
@@ -843,6 +844,16 @@ class AttendanceList
             break;
         }
         return $holiday_name;
+    }
+
+    /**
+     * @param $attendance
+     * @return mixed|null
+     */
+    private function getShiftAssignmentInfo($attendance)
+    {
+        $shift_assignment = $attendance->shiftAssignment;
+        return $shift_assignment ? $shift_assignment->shift_title : null;
     }
 
 }
