@@ -6,6 +6,7 @@ use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\RequestResponseLog\MarketplaceRequestResponseLogMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
+use App\Http\Middleware\B2B\EmployeeAuthMiddleware;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
@@ -143,5 +144,6 @@ class Kernel extends HttpKernel
         'topup409Debug' => TopUp409DebugMiddleware::class,
         'userMigration.check_status' => CheckUserMigrationRunningMiddleware::class,
         'job.concurrent_serve_collect' => ConcurrentOrderServeCollectMiddleware::class,
+        'employee.auth' => EmployeeAuthMiddleware::class
     ];
 }

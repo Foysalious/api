@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\EmployeeDashboardPresenter;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
@@ -11,7 +12,7 @@ use App\Sheba\Business\CoWorker\ProfileInformation\OfficialInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\PersonalInfoUpdater;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileRequester;
 use App\Sheba\Business\CoWorker\ProfileInformation\ProfileUpdater;
-use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
+use Sheba\Business\Employee\EmployeeDashboard;
 use Sheba\Gender\Gender;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\Business\EmergencyContactInfoTransformer;
@@ -21,10 +22,8 @@ use App\Transformers\Business\PersonalInfoTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Redis;
 use Intervention\Image\Image;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -37,11 +36,7 @@ use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
-use Sheba\Dal\Attendance\Model as Attendance;
-use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
-use Sheba\Dal\BusinessMemberBadge\BusinessMemberBadgeRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -63,16 +58,10 @@ class EmployeeController extends Controller
 
     /** @var MemberRepositoryInterface $repo */
     private $repo;
-    /** @var ApprovalRequestRepositoryInterface $approvalRequestRepo */
-    private $approvalRequestRepo;
     /** @var AccountServer $accounts */
     private $accounts;
-    /*** @var BusinessMember */
-    private $businessMember;
     /*** @var ProfileRequester $profileRequester */
     private $profileRequester;
-    /** @var BusinessMemberBadgeRepository $badgeRepo */
-    private $badgeRepo;
 
     /**
      * EmployeeController constructor.
@@ -80,16 +69,11 @@ class EmployeeController extends Controller
      * @param ApprovalRequestRepositoryInterface $approval_request_repository
      * @param AccountServer $accounts
      */
-    public function __construct(MemberRepositoryInterface          $member_repository,
-                                ApprovalRequestRepositoryInterface $approval_request_repository,
-                                AccountServer                      $accounts)
+    public function __construct(MemberRepositoryInterface $member_repository, AccountServer $accounts)
     {
         $this->repo = $member_repository;
-        $this->approvalRequestRepo = $approval_request_repository;
         $this->accounts = $accounts;
-        $this->businessMember = app(BusinessMember::class);
         $this->profileRequester = app(ProfileRequester::class);
-        $this->badgeRepo = app(BusinessMemberBadgeRepository::class);
     }
 
     public function me(Request $request)
@@ -163,107 +147,10 @@ class EmployeeController extends Controller
      * @param VisitRepository $visit_repository
      * @return JsonResponse
      */
-    public function getDashboard(Request                     $request, ActionProcessor $action_processor,
-                                 ProfileCompletionCalculator $completion_calculator, VisitRepository $visit_repository)
+    public function getDashboard(Request $request, EmployeeDashboard $employee_dashboard)
     {
-        /** @var Business $business */
-        $business = $this->getBusiness($request);
-        if (!$business) return api_response($request, null, 404);
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-
-        $member = $this->getMember($request);
-        $department = $business_member->department();
-        $profile = $business_member->profile();
-        $designation = $business_member->role()->first();
-
-        /** @var Attendance $attendance */
-        $attendance = $business_member->attendanceOfToday();
-        /** @var Attendance $last_attendance */
-        $last_attendance = $business_member->lastAttendance();
-        $last_attendance_log = $last_attendance ? $last_attendance->actions()->get()->sortByDesc('id')->first() : null;
-        $is_note_required = 0;
-        $note_action = null;
-        if ($last_attendance_log && !$last_attendance_log['note']) {
-            $note_data = $this->checkNoteRequired($last_attendance, $last_attendance_log, $action_processor);
-            $is_note_required = $note_data['is_note_required'];
-            $note_action = $note_data['note_action'];
-        }
-        $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
-        $pending_approval_requests_count = $this->approvalRequestRepo->countPendingLeaveApprovalRequests($business_member);
-        $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
-        $single_pending_visit = $visit_repository->getFirstPendingVisit($business_member->id);
-        $pending_visit_count = $visit_repository->getPendingVisitCount($business_member->id);
-        $current_visit = $visit_repository->getCurrentVisit($business_member->id);
-        $today_visit_count = $visit_repository->getTodayVisitCount($business_member->id);
-        $is_badge_seen = (int)$this->badgeRepo->isBadgeSeenOnCurrentMonth($business_member->id);
-        $is_manager = (int)$business_member->isManager();
-
-        /** @var  LiveTrackingSettings $live_tracking_settings */
-        $live_tracking_settings = $business->liveTrackingSettings;
-/*
-        $today_shift = $business_member->shiftToday();
-        $next_shift =$business_member->nextShift();
-        $today_shift_start_time = Carbon::createFromFormat('Y-m-d H:i:s', $today_shift->date.' '.$today_shift->start_time);
-        $today_shift_end_time = Carbon::createFromFormat('Y-m-d H:i:s', $today_shift->date.' '.$today_shift->end_time);
-        $next_shift_start_time = Carbon::createFromFormat('Y-m-d H:i:s', $next_shift->date.' '.$next_shift->start_time);
-        $next_shift_end_time = Carbon::createFromFormat('Y-m-d H:i:s', $next_shift->date.' '.$next_shift->end_time);
-        $diff = $today_shift_start_time->diffInHours(Carbon::parse($next_shift_start_time));
-        if ( $diff < 16) {
-            $adjacent_shift_avg_time = $diff / 2;
-            $can_check_in = !$attendance && ($today_shift_end_time->addHours($adjacent_shift_avg_time) < Carbon::now()) ? 1 : 0;
-            $can_check_out = $attendance && ($today_shift_end_time->addHours($adjacent_shift_avg_time) < Carbon::now()) ? 1 : 0;
-        }else if ($diff >= 16) {
-            $can_check_in = !$attendance && $today_shift_end_time->addHours(8) < Carbon::now() ? 1 : 0;
-            $can_check_out = $attendance && $today_shift_end_time->addHours(8) < Carbon::now() ? 1 : 0;
-        }
-        dd($can_check_in, $can_check_out);*/
-
-        $data = [
-            'id' => $member->id,
-            'business_id' => $business->id,
-            'business_member_id' => $business_member->id,
-            'department_id' => $department ? $department->id : null,
-            'notification_count' => $member->notifications()->unSeen()->count(),
-            'attendance' => [
-                'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
-                'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-            ],
-            'note_data' => [
-                'date' => $last_attendance ? Carbon::parse($last_attendance['date'])->format('jS F Y') : null,
-                'is_note_required' => $is_note_required,
-                'note_action' => $note_action
-            ],
-            'is_remote_enable' => $business->isRemoteAttendanceEnable($business_member->id),
-            'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
-            'approval_requests' => ['pending_request' => $pending_approval_requests_count],
-            'is_profile_complete' => $profile_completion_score ? 1 : 0,
-            'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
-                'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
-            ] : null,
-            'is_sheba_platform' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL')) ? 1 : 0,
-            'is_payroll_enable' => $business->payrollSetting->is_enable,
-            'is_enable_employee_visit' => $business->is_enable_employee_visit,
-            'pending_visit_count' => $pending_visit_count,
-            'today_visit_count' => $today_visit_count,
-            'single_visit' => $pending_visit_count === 1 ? [
-                'id' => $single_pending_visit->id,
-                'title' => $single_pending_visit->title
-            ] : null,
-            'currently_on_visit' => $current_visit ? $current_visit->id : null,
-            'is_badge_seen' => $is_badge_seen,
-            'is_manager' => $is_manager,
-            'user_profile' => [
-                'name' => $profile->name ?: null,
-                'pro_pic' => $profile->pro_pic ?: null,
-                'designation' => $designation ? ucwords($designation->name) : null
-            ],
-            'is_live_track_enable' => $live_tracking_settings && $live_tracking_settings->is_enable ? $business_member->is_live_track_enable : 0,
-            'location_fetch_interval_in_minutes' => $live_tracking_settings ? $live_tracking_settings->location_fetch_interval_in_minutes : null
-        ];
-
-        return api_response($request, $business_member, 200, ['info' => $data]);
+        $employee_dashboard->setBusinessMember($request->business_member);
+        return api_response($request, $request->business_member, 200, (new EmployeeDashboardPresenter($employee_dashboard))->toArray());
     }
 
     /**
@@ -461,7 +348,7 @@ class EmployeeController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
+        $employee = BusinessMember::find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -474,7 +361,7 @@ class EmployeeController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
+        $employee = BusinessMember::find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -529,7 +416,7 @@ class EmployeeController extends Controller
 
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
+        $employee = BusinessMember::find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
         $member = $this->repo->find($business_member['member_id']);
         $this->setModifier($member);
@@ -557,7 +444,7 @@ class EmployeeController extends Controller
 
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
+        $employee = BusinessMember::find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
         $member = $this->repo->find($business_member['member_id']);
         $this->setModifier($member);
@@ -578,7 +465,7 @@ class EmployeeController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
+        $employee = BusinessMember::find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -591,7 +478,7 @@ class EmployeeController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
+        $employee = BusinessMember::find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -615,7 +502,7 @@ class EmployeeController extends Controller
 
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $employee = $this->businessMember->find($business_member_id);
+        $employee = BusinessMember::find($business_member_id);
         if (!$employee) return api_response($request, null, 404);
         $member = $this->repo->find($business_member['member_id']);
         $this->setModifier($member);
@@ -645,49 +532,5 @@ class EmployeeController extends Controller
     {
         if ($file instanceof Image || $file instanceof UploadedFile) return true;
         return false;
-    }
-
-    /**
-     * @param $approval_requests
-     * @return int
-     */
-    private function countPendingApprovalRequests($approval_requests)
-    {
-        $pending_leave_count = 0;
-        foreach ($approval_requests as $approval_request) {
-            $requestable = $approval_request->requestable;
-            if ($requestable->status === 'pending') {
-                $pending_leave_count++;
-            }
-        }
-        return $pending_leave_count;
-    }
-
-    /**
-     * @param $last_attendance
-     * @param $last_attendance_log
-     * @param ActionProcessor $action_processor
-     * @return array
-     */
-    private function checkNoteRequired($last_attendance, $last_attendance_log, ActionProcessor $action_processor)
-    {
-        $is_note_required = 0;
-        $note_action = null;
-
-        $checkin = $action_processor->setActionName(Actions::CHECKIN)->getAction();
-        $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
-        if ($last_attendance_log['action'] == Actions::CHECKIN && $checkin->isLateNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkin_time'])) {
-            $is_note_required = 1;
-            $note_action = Actions::CHECKIN;
-        }
-        if ($last_attendance_log['action'] == Actions::CHECKOUT && $checkout->isLeftEarlyNoteRequiredForSpecificDate($last_attendance['date'], $last_attendance['checkout_time'])) {
-            $is_note_required = 1;
-            $note_action = Actions::CHECKOUT;
-        }
-
-        return [
-            'is_note_required' => $is_note_required,
-            'note_action' => $note_action
-        ];
     }
 }
