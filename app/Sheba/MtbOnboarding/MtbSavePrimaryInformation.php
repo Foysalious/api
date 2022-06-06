@@ -227,6 +227,8 @@ class MtbSavePrimaryInformation
             "title" => 'New Online Store Order',
             "message" => "Test",
             "sound" => $sound,
+            "event_type" => 'MtbAccountCreate',
+            "event_id" => $partner->id
         ];
         (new PushNotificationHandler())->send($topic, null, $notification_data, 'high');
     }
@@ -235,6 +237,6 @@ class MtbSavePrimaryInformation
     {
         $partner = Partner::where('id', $merchant_id)->first();
         App::make(PaymentService::class)->getMtbAccountStatus($partner->partnerMefInformation);
-//        $this->sendPushNotification($partner->id);
+        $this->sendPushNotification($partner->id);
     }
 }
