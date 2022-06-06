@@ -235,7 +235,7 @@ class MtbSavePrimaryInformation
             "sound" => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
-        $partner = Partner::find($this->reminder['partner_id']);
+        $partner = Partner::find($partner);
         notify()->partner($partner)->send([
             "title"       => $title,
             "description" => $message,
