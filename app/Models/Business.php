@@ -556,4 +556,14 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $this->liveTrackingSettings->intervalSettingLogs()->where('end_date', null)->latest()->first();
     }
 
+    public function isEligibleForLunch(): bool
+    {
+        return in_array($this->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH'));
+    }
+
+    public function isShebaPlatform(): bool
+    {
+        return in_array($this->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL'));
+    }
+
 }
