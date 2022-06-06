@@ -14,6 +14,7 @@ use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\ResellerPayment\MORServiceClient;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\App;
 
 
 class MtbSavePrimaryInformation
@@ -217,5 +218,12 @@ class MtbSavePrimaryInformation
         $morClient = app(MORServiceClient::class);
         $morClient->post("api/v1/application/users/" . $this->partner->id, $this->makeDataForMorStore());
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
+    }
+
+
+    public function validateMtbAccountStatus($merchant_id)
+    {
+        $partner = Partner::where('id', $merchant_id)->first();
+        App::make(PaymentService::class)->getMtbAccountStatus($partner->partnerMefInformation);
     }
 }

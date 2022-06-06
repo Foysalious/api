@@ -141,7 +141,7 @@ class PaymentService
      * @throws NotFoundAndDoNotReportException
      * @throws MtbServiceServerError
      */
-    private function getMtbAccountStatus($mtb_information)
+    public function getMtbAccountStatus($mtb_information)
     {
         if (isset($mtb_information->mtb_account_status)) {
             $mtb_status = $mtb_information;
