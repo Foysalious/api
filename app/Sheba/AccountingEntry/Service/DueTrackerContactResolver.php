@@ -49,7 +49,7 @@ class DueTrackerContactResolver
         if ($this->contactType == ContactType::CUSTOMER) {
             $posCustomerResolver = app(PosCustomerResolver::class);
             $contact_detail = $posCustomerResolver->setCustomerId($this->contactId)->setPartner($this->partner)->get();
-        } else if ($this->contactType == ContactType::SUPPLIER) {
+        } elseif ($this->contactType == ContactType::SUPPLIER) {
             /* @var $posSupplierResolver SupplierResolver */
             $posSupplierResolver = app(SupplierResolver::class);
             $contact_detail = $posSupplierResolver->setSupplierId($this->contactId)->setPartner($this->partner)->get();
