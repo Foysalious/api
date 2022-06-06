@@ -19,14 +19,15 @@ class Event extends Action implements AmountCalculator
     private $topUpOrder;
 
     /**
-     * @param BaseRule $rule
+     * @param  BaseRule  $rule
      * @return Action
      * @throws RulesTypeMismatchException
      */
     public function setRule(BaseRule $rule)
     {
-        if (!($rule instanceof Rule))
-            throw new RulesTypeMismatchException("Affiliate top up event must have a top up rules");
+        if (!($rule instanceof Rule)) {
+            throw new RulesTypeMismatchException("Partner daily usage event must have a daily usage rules");
+        }
 
         return parent::setRule($rule);
     }
@@ -36,7 +37,7 @@ class Event extends Action implements AmountCalculator
         parent::setParams($params);
         $this->topUpOrder = $this->params[0];
         if ($this->topUpOrder->isAgentAffiliate()) {
-            $this->affiliate = Affiliate::find($this->topUpOrder->agent_id);
+            $this->affiliate = $this->topUpOrder->agent;
         }
     }
 

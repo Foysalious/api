@@ -1,7 +1,6 @@
 <?php namespace Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
-use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
 class Operator extends ActionEventParameter
 {
