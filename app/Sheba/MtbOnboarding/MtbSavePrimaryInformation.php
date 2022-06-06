@@ -226,8 +226,8 @@ class MtbSavePrimaryInformation
         $sound = config('sheba.push_notification_sound.manager');
         $event_type = 'MtbAccountCreate';
 
-        $title = "Due Tracker Reminder";
-        $message = "No message has been given";
+        $title = "একাউন্ট ওপেনিং সফল হয়েছে";
+        $message = "এমটিবি তে আপনার একাউন্ট সফলভাবে তৈরি হয়েছে। একাউন্ট সম্পর্কে বিস্তারিত জানতে এখানে ক্লিক করুন";
         (new PushNotificationHandler())->send([
             "title" => $title,
             "message" => $message,
@@ -235,13 +235,6 @@ class MtbSavePrimaryInformation
             "sound" => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
-        $partner = Partner::find($partner);
-        notify()->partner($partner)->send([
-            "title"       => $title,
-            "description" => $message,
-            "type" => "Info",
-            "event_type" => "MtbAccountCreate"
-        ]);
     }
 
     public function validateMtbAccountStatus($merchant_id)
