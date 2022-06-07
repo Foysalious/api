@@ -338,7 +338,7 @@ class BidController extends Controller
             ],
             'proposal' => $bid->proposal,
 
-            'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
+            'title' => $procurement->title ?: substr($procurement->long_description, 0, 20),
             'type' => $bid->procurement->type,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'payment_options' => $procurement->payment_options,

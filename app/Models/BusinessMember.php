@@ -105,7 +105,12 @@ class BusinessMember extends Model
         return $this->belongsTo(BusinessMember::class, 'manager_id');
     }
 
-    public function tackingLocations()
+    public function isManager(): bool
+    {
+        return $this->business->getActiveBusinessMember()->where('manager_id', $this->id)->count() > 0;
+    }
+
+    public function trackingLocations()
     {
         return $this->hasMany(TrackingLocation::class);
     }
@@ -310,14 +315,14 @@ class BusinessMember extends Model
      */
     public function liveLocationFilterByDate($date = null)
     {
-        $tracking_locations = $this->tackingLocations()->orderBy('created_at', 'desc');
+        $tracking_locations = $this->trackingLocations()->orderBy('created_at', 'desc');
         if ($date) return $tracking_locations->where('date', $date);
         return $tracking_locations;
     }
 
     public function liveLocationForADateRange($from_date, $to_date)
     {
-        $tracking_locations = $this->tackingLocations()->where(function ($query) use ($from_date, $to_date){
+        $tracking_locations = $this->trackingLocations()->where(function ($query) use ($from_date, $to_date){
             $query->where('date', '>=', $from_date);
             $query->where('date', '<=', $to_date);
         });
