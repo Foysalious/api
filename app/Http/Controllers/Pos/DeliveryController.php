@@ -283,13 +283,13 @@ class DeliveryController extends Controller
         $this->validate($request, [
             'vendor_name' => 'required|in:' . implode(',', Methods::get())
         ]);
+        $partner = $request->auth_user->getPartner();
         if ($request->vendor_name != Methods::OWN_DELIVERY) {
             /** @var PackageFeatureCount $packageFeatureCount */
             $packageFeatureCount = app(PackageFeatureCount::class);
-            $isEligible = $packageFeatureCount->setPartnerId($request->partner_id)->setFeature(Feature::DELIVERY)->isEligible();
+            $isEligible = $packageFeatureCount->setPartnerId($partner->id)->setFeature(Feature::DELIVERY)->isEligible();
             if (!$isEligible) throw new PackageRestrictionException('আপনার নির্ধারিত প্যাকেজের এস-ডেলিভারি সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন অথবা', 403);
         }
-        $partner = $request->auth_user->getPartner();
         $delivery_service->setPartner($partner)->setVendorName($request->vendor_name)->updateVendorInformation();
     }
 
