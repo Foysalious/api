@@ -1,18 +1,14 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
-use App\Sheba\AccountingEntry\Creator\Entry as EntryCreator;
+use App\Sheba\AccountingEntry\Entry\Creator as EntryCreator;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
+use App\Sheba\AccountingEntry\Entry\Updater as EntryUpdater;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
-use App\Sheba\Pos\Order\PosOrderObject;
-use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
-use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
-use Sheba\Pos\Order\PosOrderResolver;
-use Exception;
 
 class DueTrackerService
 {
@@ -322,33 +318,14 @@ class DueTrackerService
         return implode('&', $query_strings);
     }
 
-    /**
-     * @param $pos_orders
-     * @return mixed
-     * @throws PosOrderServiceServerError
-     */
-    private function getPartnerWisePosOrders($pos_orders)
+    public function updateEntry()
     {
-        /** @var OrderServiceAlias $orderService */
-        $orderService = app(OrderServiceAlias::class);
-        return $orderService->getPartnerWiseOrderIds('[' . implode(",", $pos_orders) . ']', 0, count($pos_orders));
+        return app()->make(EntryUpdater::class)
+            ->setEntryDto($this->entryDTO)
+            ->setPartner($this->partner)
+            ->updateEntry();
     }
 
-    /**
-     * @param $partner
-     * @param $partnerWiseOrderId
-     * @return PosOrderObject
-     */
-    private function posOrderByPartnerWiseOrderId($partner, $partnerWiseOrderId)
-    {
-        try {
-            /** @var PosOrderResolver $posOrderResolver */
-            $posOrderResolver = app(PosOrderResolver::class);
-            return $posOrderResolver->setPartnerWiseOrderId($partner->id, $partnerWiseOrderId)->get();
-        } catch (Exception $e) {
-            return null;
-        }
-    }
 
     /**
      * @throws AccountingEntryServerError
