@@ -33,7 +33,7 @@ class ManagerAuthMiddleware extends AccessTokenMiddleware
      */
     private function handleRememberToken(Request $request, Closure $next)
     {
-        if (!$request->has('remember_token')) {
+        if (!$request->filled('remember_token')) {
             return api_response($request, null, 400, ["message" => "Authentication token is missing from the request."]);
         }
 
