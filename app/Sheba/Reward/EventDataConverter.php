@@ -552,83 +552,145 @@ class EventDataConverter
     private function getAffiliateEvents()
     {
         return [
-            'campaign' => [
-                'topup' => [
-                    'name' => 'TopUp',
-                    'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\Topup\Event',
-                    'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\Topup\Rule',
-                    'parameters' => [
-                        'target' => [
-                            'type' => 'number',
-                            'min' => 0
-                        ],
-                        'topup_status' => [
-                            'type' => 'select',
-                            'possible_value' => ['Successful' => 'Successful'],
-                            'is_multi_selectable' => 0
-                        ],
-                        'operator' => [
-                            'type' => 'select',
-                            'possible_value' => $this->operator,
-                            'is_multi_selectable' => 1
-                        ]
-                    ]
-                ],
+            'campaign' => $this->getAffiliateCampaigns(),
+            'action' => $this->getAffiliateActions(),
+        ];
+    }
 
-                'topup_otf' => [
-                    'name' => 'TopUp-OTF',
-                    'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Event',
-                    'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Rule',
-                    'parameters' => [
-                        'target' => [
-                            'type' => 'number',
-                            'min' => 0
-                        ],
-                        'quantity' => [
-                            'type' => 'number',
-                            'min' => 0,
-                            'warning' => 'Quantity is recommended to be a higher number. User gets reward very easily if quantity is low',
-                        ],
-                        'topup_status' => [
-                            'type' => 'select',
-                            'possible_value' => ['Successful' => 'Successful'],
-                            'is_multi_selectable' => 0
-                        ],
-                        'operator' => [
-                            'type' => 'select',
-                            'possible_value' => $this->operator,
-                            'is_multi_selectable' => 1
-                        ],
-                        'sim_type' => [
-                            'type' => 'select',
-                            'possible_value' => ['prepaid' => 'Prepaid', 'postpaid' => 'Postpaid'],
-                            'is_multi_selectable' => 1
-                        ]
+    private function getAffiliateCampaigns()
+    {
+        return [
+            'topup' => [
+                'name' => 'TopUp',
+                'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\Topup\Event',
+                'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\Topup\Rule',
+                'parameters' => [
+                    'target' => [
+                        'type' => 'number',
+                        'min' => 0
+                    ],
+                    'topup_status' => [
+                        'type' => 'select',
+                        'possible_value' => ['Successful' => 'Successful'],
+                        'is_multi_selectable' => 0
+                    ],
+                    'operator' => [
+                        'type' => 'select',
+                        'possible_value' => $this->operator,
+                        'is_multi_selectable' => 1
                     ]
-                ],
-
-                'wallet_recharge' => [
-                    'name' => 'Point Recharge',
-                    'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Event',
-                    'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Rule',
-                    'parameters' => [
-                        'target' => [
-                            'type' => 'number',
-                            'min' => 0
-                        ],
-                        'gateway' => [
-                            'type' => 'select',
-                            'possible_value' => ['all' => 'All', 'bkash' => 'bKash', 'nagad' => 'Nagad'],
-                            'is_multi_selectable' => 1
-                        ],
-                        'recharge_status' => [
-                            'type' => 'select',
-                            'possible_value' => ['completed' => 'Successful'],
-                            'is_multi_selectable' => 0,
-                        ]
-                    ]
-                ],
+                ]
             ],
+
+            'topup_otf' => [
+                'name' => 'TopUp-OTF',
+                'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Event',
+                'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Rule',
+                'parameters' => [
+                    'target' => [
+                        'type' => 'number',
+                        'min' => 0
+                    ],
+                    'quantity' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'warning' => 'Quantity is recommended to be a higher number. User gets reward very easily if quantity is low',
+                    ],
+                    'topup_status' => [
+                        'type' => 'select',
+                        'possible_value' => ['Successful' => 'Successful'],
+                        'is_multi_selectable' => 0
+                    ],
+                    'operator' => [
+                        'type' => 'select',
+                        'possible_value' => $this->operator,
+                        'is_multi_selectable' => 1
+                    ],
+                    'sim_type' => [
+                        'type' => 'select',
+                        'possible_value' => ['prepaid' => 'Prepaid', 'postpaid' => 'Postpaid'],
+                        'is_multi_selectable' => 1
+                    ]
+                ]
+            ],
+
+            'wallet_recharge' => [
+                'name' => 'Point Recharge',
+                'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Event',
+                'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Rule',
+                'parameters' => [
+                    'target' => [
+                        'type' => 'number',
+                        'min' => 0
+                    ],
+                    'gateway' => [
+                        'type' => 'select',
+                        'possible_value' => ['all' => 'All', 'bkash' => 'bKash', 'nagad' => 'Nagad'],
+                        'is_multi_selectable' => 1
+                    ],
+                    'recharge_status' => [
+                        'type' => 'select',
+                        'possible_value' => ['completed' => 'Successful'],
+                        'is_multi_selectable' => 0,
+                    ]
+                ]
+            ],
+        ];
+    }
+
+    private function getAffiliateActions()
+    {
+        return [
+            'wallet_recharge' => [
+                'name' => 'Wallet Recharge',
+                'event_class' => \Sheba\Reward\Event\Affiliate\Action\WalletRecharge\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Affiliate\Action\WalletRecharge\Rule::class,
+                'parameters' => [
+                    'amount' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'class' => \Sheba\Reward\Event\Affiliate\Action\WalletRecharge\Parameter\Amount::class
+                    ]
+                ]
+            ],
+            'top_up' => [
+                'name' => 'Top Up',
+                'event_class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Rule::class,
+                'parameters' => [
+                    'amount_greater_than' => [
+                        'type' => 'number',
+                        'min' => 1,
+                        'class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter\AmountGreaterThan::class
+                    ],
+                    'fixed_amount' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter\FixedAmount::class
+                    ],
+                    'operator' => [
+                        'type' => 'select',
+                        'possible_value' => $this->operator,
+                        'is_multi_selectable' => 1,
+                        'class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter\Operator::class
+                    ],
+                    'lifetime_topup_count' => [
+                        'type' => 'number',
+                        'min' => 0,
+                        'class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter\LifetimeTopupCount::class
+                    ],
+                    'topup_day_count' => [
+                        'type' => 'range',
+                        'min' => 0,
+                        'class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter\TopupDayCount::class
+                    ],
+                    'no_topup_day_count' => [
+                        'type' => 'number',
+                        'min' => 1,
+                        'class' => \Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter\NoTopupDayCount::class
+                    ]
+                ]
+            ]
         ];
     }
 
