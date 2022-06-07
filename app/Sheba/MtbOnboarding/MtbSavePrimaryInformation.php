@@ -88,7 +88,7 @@ class MtbSavePrimaryInformation
         return $name;
     }
 
-    private function separateDivisionDistrictThana($separator)
+    public function separateDivisionDistrictThana($separator)
     {
         return preg_split("/\,/", $separator);
     }
