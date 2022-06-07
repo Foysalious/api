@@ -92,17 +92,18 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
+        $address = null;
 
         if ($request->filled('address_id') && !empty($request->address_id)) {
             $address = $this->customer->delivery_addresses()->withTrashed()->where('id', (int)$request->address_id)->first();
-            if ($address->mobile != formatMobile(trim($request->mobile))) {
+            if ($address && $address->mobile != formatMobile(trim($request->mobile))) {
                 $new_address = $address->replicate();
                 $new_address->mobile = formatMobile(trim($request->mobile));
                 $new_address->name = trim($request->name);
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-        if(empty($address->geo_informations)) {
+        if($address && empty($address->geo_informations)) {
             throw new InvalidAddressException();;
         }
         if (!$request->filled('location')) {
@@ -120,7 +121,7 @@ class Checkout
             $this->orderData['location'] = Location::find($this->partnerListRequest->location);
             $data = $this->makeOrderData($request);
             if ($request->filled('address_id') && !empty($request->address_id)) {
-                $data['address_id'] = $address->id;
+                $data['address_id'] = $address ? $address->id : null;
             }
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $this->partnerListRequest->selectedServices, $data);
@@ -156,11 +157,11 @@ class Checkout
     private function makeOrderData($request)
     {
         $data['customer_id'] = $this->customer->id;
-        if ($request->filled('resource')) {
+        if ($request->has('resource')) {
             $data['resource_id'] = $request->resource;
         }
         $data['delivery_mobile'] = formatMobile(trim($request->mobile));
-        $data['delivery_name'] = $request->filled('name') ? $request->name : '';
+        $data['delivery_name'] = $request->has('name') ? $request->name : '';
         $data['sales_channel'] = $request->sales_channel;
         $data['date'] = $request->date;
         $data['time'] = $request->time;
@@ -169,30 +170,30 @@ class Checkout
         $data['category_answers'] = $request->category_answers;
         $data['info_call_id'] = $this->_setInfoCallId($request);
         $data['affiliation_id'] = $this->_setAffiliationId($request);
-        $data['is_on_premise'] = $request->filled('is_on_premise') ? (int)$request->is_on_premise : 0;
+        $data['is_on_premise'] = $request->has('is_on_premise') ? (int)$request->is_on_premise : 0;
         $data['site'] = $data['is_on_premise'] ? 'partner' : 'customer';
-        if ($request->filled('address')) {
+        if ($request->has('address')) {
             $data['address'] = $request->address;
         }
-        if ($request->filled('address_id')) {
+        if ($request->has('address_id')) {
             $data['address_id'] = (int)$request->address_id;
         }
-        if ($request->filled('email')) {
+        if ($request->has('email')) {
             $data['email'] = $request->email;
         }
-        if ($request->filled('voucher')) {
+        if ($request->has('voucher')) {
             $data['voucher'] = $request->voucher;
         }
-        if ($request->filled('partner_id')) {
+        if ($request->has('partner_id')) {
             $data['partner_id'] = $request->partner_id;
         }
-        if ($request->filled('business_id')) $data['business_id'] = $request->business_id;
-        $data['vendor_id'] = $request->filled('vendor_id') ? $request->vendor_id : null;
+        if ($request->has('business_id')) $data['business_id'] = $request->business_id;
+        $data['vendor_id'] = $request->has('vendor_id') ? $request->vendor_id : null;
         $data['payer_id'] = $this->payer_id;
         $data['payer_type'] = $this->payer_type;
-        $data['pap_visitor_id'] = $request->filled('pap_visitor_id') ? $request->pap_visitor_id : null;
-        $data['created_by'] = $created_by = $request->filled('created_by') ? $request->created_by : $this->customer->id;
-        $data['created_by_name'] = $created_by_name = $request->filled('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
+        $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
+        $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
+        $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
         $this->orderData = array_merge($this->orderData, $data);
 
         return $this->orderData;
@@ -441,7 +442,7 @@ class Checkout
 
     private function _setInfoCallId(Request $request)
     {
-        if ($request->filled('info_call_id')) {
+        if ($request->has('info_call_id')) {
             $info_call_id = $request->info_call_id;
             if ($info_call_id != '' && $info_call_id != null) {
                 $info_call = InfoCall::find($info_call_id);
@@ -457,7 +458,7 @@ class Checkout
 
     private function _setAffiliationId(Request $request)
     {
-        if ($request->filled('affiliation_id')) {
+        if ($request->has('affiliation_id')) {
             $affiliation_id = $request->affiliation_id;
             if ($affiliation_id != '' && $affiliation_id != null) {
                 $affiliation = Affiliation::find($affiliation_id);
