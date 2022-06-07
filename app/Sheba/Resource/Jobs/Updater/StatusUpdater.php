@@ -70,7 +70,10 @@ class StatusUpdater
                     'ip' => $this->userAgentInformation->getIp()
                 ]
             ]);
-        return (new StatusUpdateResponse())->setResponse(json_decode($res->getBody(), 1));
+        $responseBody = json_decode($res->getBody(), 1);
+        $statusResponse = (new StatusUpdateResponse())->setResponse($responseBody);
+        if ($responseBody['code'] === 422 && isset($responseBody['msg'])) $statusResponse->setMessage($responseBody['msg']);
+        return $statusResponse;
     }
 
     private function hasError()
