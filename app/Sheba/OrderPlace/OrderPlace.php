@@ -685,7 +685,7 @@ class OrderPlace
     private function calculateOrderAmount($job_services)
     {
         $this->orderAmountWithoutDeliveryCharge = $job_services->map(function ($job_service) {
-            return $job_service->unit_price * $job_service->quantity;
+            return $job_service->surcharge_percentage? $job_service->unit_price * $job_service->quantity + ($job_service->unit_price * $job_service->surcharge_percentage) : $job_service->unit_price * $job_service->quantity;
         })->sum();
         $this->orderAmount = $this->orderAmountWithoutDeliveryCharge + (double)$this->category->delivery_charge;
     }
