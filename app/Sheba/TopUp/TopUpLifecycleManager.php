@@ -1,9 +1,9 @@
 <?php namespace Sheba\TopUp;
 
 
+use App\Sheba\Partner\PackageFeatureCount;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
-use Sheba\Dal\TopupOrder\FailedReason;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Gateway\HasIpn;
 use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
@@ -26,6 +26,7 @@ class TopUpLifecycleManager extends TopUpManager
             $this->statusChanger->failed(FailDetails::buildFromIpnFailResponse($fail_response));
             if ($this->topUpOrder->isAgentDebited()) $this->refund();
             $this->getVendor()->refill($this->topUpOrder->amount);
+            if ($this->topUpOrder->isAgentPartner()) $this->incrementPackageCounter();
         });
     }
 
@@ -77,5 +78,12 @@ class TopUpLifecycleManager extends TopUpManager
         $key = 'Topup::' . ($ipn_response instanceof FailResponse ? "Failed:failed" : "Success:success") . "_";
         $key .= Carbon::now()->timestamp . '_' . $ipn_response->getTopUpOrder()->id;
         Redis::set($key, json_encode($request_data));
+    }
+
+    private function incrementPackageCounter()
+    {
+        /** @var PackageFeatureCount $package_feature_count */
+        $package_feature_count = app(PackageFeatureCount::class);
+        $package_feature_count->setPartnerId($this->topUpOrder->agent_id)->setFeature(PackageFeatureCount::TOPUP)->incrementFeatureCount();
     }
 }

@@ -434,7 +434,7 @@ class PaymentService
      * @throws InvalidKeyException
      * @throws NotFoundAndDoNotReportException
      */
-    public function getPaymentGateways($completion, $header_message, $partnerId, $banner): array
+    public function getPaymentGateways($completion, $header_message, $partnerId, $banner, $version_code): array
     {
         $pgwData = [];
         $status = '';

@@ -75,7 +75,7 @@ class PackageFeatureCount
      * @return string
      * @throws Exception
      */
-    public function incrementFeatureCount(int $count=1)
+    public function incrementFeatureCount(int $count = 1)
     {
         return $this->featureCounter->incrementCount($this->feature, $this->partner_id, $count);
     }
@@ -85,7 +85,7 @@ class PackageFeatureCount
      * @return string
      * @throws Exception
      */
-    public function decrementFeatureCount(int $count=1)
+    public function decrementFeatureCount(int $count = 1)
     {
         return $this->featureCounter->decrementCount($this->feature, $this->partner_id, $count);
     }
