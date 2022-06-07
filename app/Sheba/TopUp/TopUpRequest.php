@@ -3,6 +3,7 @@
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
+use App\Sheba\Partner\PackageFeatureCount;
 use Exception;
 use Illuminate\Support\Facades\Event;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
@@ -30,6 +31,8 @@ class TopUpRequest
     private $topUpBlockNumberRepository;
     /** @var TopUpAgentBlocker */
     private $agentBlocker;
+    /** @var PackageFeatureCount */
+    private $packageFeatureCount;
     protected $userAgent;
     private $lat;
     private $long;
@@ -37,11 +40,12 @@ class TopUpRequest
     private $otfAmountCheck;
     private $isOtfAllow;
 
-    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository, TopUpAgentBlocker $agent_blocker)
+    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository, TopUpAgentBlocker $agent_blocker, PackageFeatureCount $package_feature_count)
     {
         $this->vendorFactory = $vendor_factory;
         $this->topUpBlockNumberRepository = $top_up_block_number_repository;
         $this->agentBlocker = $agent_blocker;
+        $this->packageFeatureCount = $package_feature_count;
     }
 
     /**
@@ -195,12 +199,12 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Business && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
+        if ($this->isAgentBusiness() && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
         }
 
-        if ($this->agent instanceof Business && $this->isPrepaidAmountLimitExceed($this->agent)) {
+        if ($this->isAgentBusiness() && $this->isPrepaidAmountLimitExceed($this->agent)) {
             $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
             return 1;
         }
@@ -211,7 +215,17 @@ class TopUpRequest
             return 1;
         }
 
+        if ($this->isAgentPartner() && $this->isNotEligibleForSubscription()) {
+            $this->errorMessage = "You have exceeded your top up limit of your subscription package.";
+            return 1;
+        }
+
         return 0;
+    }
+
+    private function isNotEligibleForSubscription()
+    {
+        return !$this->packageFeatureCount->setPartnerId($this->agent->id)->setFeature(PackageFeatureCount::TOPUP)->isEligible();
     }
 
     private function doesAgentNotHaveBalance()
@@ -222,13 +236,13 @@ class TopUpRequest
 
     private function isAgentNotVerified()
     {
-        return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified())) ||
-            ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
+        return ($this->isAgentPartner() && !$this->agent->isNIDVerified())
+            || ($this->isAgentAffiliate() && $this->agent->isNotVerified());
     }
 
     private function isCanTopUpNo()
     {
-        return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
+        return $this->isAgentPartner() && !$this->agent->canTopUp();
     }
 
     /**
@@ -318,5 +332,20 @@ class TopUpRequest
     public function getLong()
     {
         return $this->long;
+    }
+
+    private function isAgentPartner()
+    {
+        return $this->agent instanceof Partner;
+    }
+
+    private function isAgentBusiness()
+    {
+        return $this->agent instanceof Business;
+    }
+
+    private function isAgentAffiliate()
+    {
+        return $this->agent instanceof Affiliate;
     }
 }
