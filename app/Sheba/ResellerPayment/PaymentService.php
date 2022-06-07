@@ -119,6 +119,7 @@ class PaymentService
                         'mid' => $account_details->Mid,
                         'account_number' => $account_details->AccountNum,
                         'customer_number' => $account_details->CustomerNum,
+                        'name' => $this->partner->getFirstAdminResource()->profile->name
                     ]
                 ];
             }
@@ -138,6 +139,7 @@ class PaymentService
                 'mid' => $account_details->Mid ?? null,
                 'account_number' => $account_details->AccountNum ?? null,
                 'customer_number' => $account_details->CustomerNum ?? null,
+                'name' => $this->partner->getFirstAdminResource()->profile->name
             ]
         ];
 
