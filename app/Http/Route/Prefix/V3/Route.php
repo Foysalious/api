@@ -1,7 +1,5 @@
 <?php namespace App\Http\Route\Prefix\V3;
 
-use App\Http\Route\Prefix\V3\PaymentLinkRoute;
-
 class Route
 {
     public function set($api)
