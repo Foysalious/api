@@ -1,9 +1,8 @@
-<?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
+<?php namespace Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
-use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
-class AmountGreaterThan extends ActionEventParameter
+class FixedAmount extends ActionEventParameter
 {
     public function validate(){}
 
@@ -16,6 +15,6 @@ class AmountGreaterThan extends ActionEventParameter
         if (is_null($this->value)) return true;
 
         $topup_order = $params[0];
-        return $topup_order->amount > $this->value;
+        return $topup_order->amount == $this->value;
     }
 }
