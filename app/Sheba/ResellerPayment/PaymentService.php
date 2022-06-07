@@ -101,6 +101,7 @@ class PaymentService
         $qr_gateway = QRGateway::where('method_name', $this->key)->first();
         if (!$qr_gateway) throw new InvalidQRKeyException();
         $this->getResellerPaymentStatus(true);
+        $account_details = json_decode($this->partner->partnerMefInformation->mtb_account_status);
         if (isset(json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status)) {
             if (json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status == 19) {
                 return [
@@ -114,7 +115,10 @@ class PaymentService
                         'id' => $qr_gateway->id,
                         'key' => $qr_gateway->key,
                         'name_bn' => $qr_gateway->name_bn,
-                        'icon' => $qr_gateway->icon
+                        'icon' => $qr_gateway->icon,
+                        'mid' => $account_details->Mid,
+                        'account_number' => $account_details->AccountNum,
+                        'customer_number' => $account_details->CustomerNum,
                     ]
                 ];
             }
@@ -130,7 +134,10 @@ class PaymentService
                 'id' => $qr_gateway->id,
                 'key' => $qr_gateway->key,
                 'name_bn' => $qr_gateway->name_bn,
-                'icon' => $qr_gateway->icon
+                'icon' => $qr_gateway->icon,
+                'mid' => $account_details->Mid ?? null,
+                'account_number' => $account_details->AccountNum ?? null,
+                'customer_number' => $account_details->CustomerNum ?? null,
             ]
         ];
 
