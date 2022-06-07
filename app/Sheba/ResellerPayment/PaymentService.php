@@ -434,7 +434,7 @@ class PaymentService
      * @throws InvalidKeyException
      * @throws NotFoundAndDoNotReportException
      */
-    public function getPaymentGateways($completion, $header_message, $partnerId, $banner): array
+    public function getPaymentGateways($completion, $header_message, $partnerId, $banner, $version_code): array
     {
         $pgwData = [];
         $status = '';
@@ -464,9 +464,12 @@ class PaymentService
             $pgwData[] = $this->makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status);
         }
         //QR gateway off until app live
-//        $qrData = $this->getQRGateways($completion);
-//        $allData = array_merge($pgwData, $qrData);
-        $allData = $pgwData;
+        if (intval($version_code) < 300600) {
+            $allData = $pgwData;
+        } else {
+            $qrData = $this->getQRGateways($completion);
+            $allData = array_merge($pgwData, $qrData);
+        }
         return $banner ?
             array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
     }
