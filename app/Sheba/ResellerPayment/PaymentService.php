@@ -8,6 +8,7 @@ use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbMappedAccountStatus;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\MTB\Validation\ApplyValidation;
+use App\Sheba\MtbOnboarding\MtbSavePrimaryInformation;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\ResellerPayment\Exceptions\UnauthorizedRequestFromMORException;
 use Illuminate\Support\Facades\App;
@@ -83,6 +84,18 @@ class PaymentService
         return $this;
     }
 
+    private function getMtbBranchName($division, $district, $thana)
+    {
+        $branch = "";
+        $thanaInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
+        for ($i = 0; $i < count($thanaInformation); $i++) {
+            if ($thanaInformation[$i]->thana == $thana && $thanaInformation[$i]->district == $district) {
+                $branch = $thanaInformation[$i]->branch_name;
+            }
+        }
+        return $branch;
+    }
+
     /**
      * @return array
      * @throws Exceptions\MORServiceServerError
@@ -104,8 +117,11 @@ class PaymentService
         $account_details = json_decode($this->partner->partnerMefInformation->mtb_account_status);
         if (isset(json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status)) {
             if (json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status == 19) {
-                return [
-                    'banner' => PaymentMethodStatics::getMtbBannerURL(),
+
+                $mtb_information = App::make(MtbSavePrimaryInformation::class);
+                $partner_mtb_address_information = $mtb_information->separateDivisionDistrictThana(json_decode($this->partner->partnerMefInformation->partner_information)->presentDivision);
+                $branch_name = $this->getMtbBranchName($partner_mtb_address_information[0], $partner_mtb_address_information[1], $partner_mtb_address_information[2]);
+                return ['banner' => PaymentMethodStatics::getMtbBannerURL(),
                     'faq' => PaymentMethodStatics::detailsFAQ(),
                     'status' => 'completed' ?? null,
                     'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : 'আবেদন সফল হয়েছে !',
@@ -119,7 +135,8 @@ class PaymentService
                         'mid' => $account_details->Mid,
                         'account_number' => $account_details->AccountNum,
                         'customer_number' => $account_details->CustomerNum,
-                        'name' => $this->partner->getFirstAdminResource()->profile->name
+                        'name' => $this->partner->getFirstAdminResource()->profile->name,
+                        'branch_name' => "আপনার নিকটস্থ MTB এর শাখা " . $branch_name . " গিয়ে আপনার ATM Card সংগ্রহ করুন।"
                     ]
                 ];
             }
@@ -139,7 +156,8 @@ class PaymentService
                 'mid' => $account_details->Mid ?? null,
                 'account_number' => $account_details->AccountNum ?? null,
                 'customer_number' => $account_details->CustomerNum ?? null,
-                'name' => $this->partner->getFirstAdminResource()->profile->name
+                'name' => $this->partner->getFirstAdminResource()->profile->name,
+                'branch_name' => $branch_name ?? null
             ]
         ];
 
@@ -150,7 +168,7 @@ class PaymentService
      * @throws NotFoundAndDoNotReportException
      * @throws MtbServiceServerError
      */
-    public function getMtbAccountStatus($mtb_information)
+    private function getMtbAccountStatus($mtb_information)
     {
         if (isset($mtb_information->mtb_account_status)) {
             $mtb_status = $mtb_information;
@@ -434,7 +452,7 @@ class PaymentService
      * @throws InvalidKeyException
      * @throws NotFoundAndDoNotReportException
      */
-    public function getPaymentGateways($completion, $header_message, $partnerId, $banner): array
+    public function getPaymentGateways($completion, $header_message, $partnerId, $banner, $version_code): array
     {
         $pgwData = [];
         $status = '';
@@ -464,8 +482,12 @@ class PaymentService
             $pgwData[] = $this->makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status);
         }
         //QR gateway off until app live
-        $qrData = $this->getQRGateways($completion);
-        $allData = array_merge($pgwData, $qrData);
+        if (intval($version_code) < 300600) {
+            $allData = $pgwData;
+        } else {
+            $qrData = $this->getQRGateways($completion);
+            $allData = array_merge($pgwData, $qrData);
+        }
         return $banner ?
             array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
     }
