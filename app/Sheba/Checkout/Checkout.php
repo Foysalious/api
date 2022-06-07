@@ -131,6 +131,7 @@ class Checkout
             $data['category_id'] = $this->category->id;
             $this->calculateOrderAmount($data['job_services']);
             $data = $this->getVoucherData($data);
+            $data['is_credit_limit_adjustable'] = $this->category->is_credit_limit_adjustable;
 
             if ($order = $this->storeInDB($data, $this->partnerListRequest->selectedServices)) {
                 if (isset($data['email'])) {
@@ -296,6 +297,7 @@ class Checkout
         $order->payer_id = isset($data['payer_id']) ? $data['payer_id'] : null;
         $customer_delivery_address = $this->getDeliveryAddress($data);
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
+        $order->is_credit_limit_adjustable = isset($data['is_credit_limit_adjustable']) ? $data['is_credit_limit_adjustable'] : 0;
         $order->fill((new RequestIdentification())->get());
         $order->save();
         $order = $this->getAuthor($order, $data);
