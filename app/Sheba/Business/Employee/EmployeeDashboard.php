@@ -35,6 +35,7 @@ class EmployeeDashboard
     private $attendanceOfToday;
     /** @var Attendance */
     private $lastAttendance;
+    private $shift;
 
     public function __construct(ActionProcessor $action_processor, ProfileCompletionCalculator $completion_calculator,
                                 VisitRepository $visit_repository, ApprovalRequestRepositoryInterface $approval_request_repository,
@@ -104,42 +105,10 @@ class EmployeeDashboard
 
     public function getAttendanceInfo(): array
     {
-        $can_checkin = 0;
-        $shift = null;
-        $yesterday_shift = $this->businessMember->shiftYesterday();
-        $today_shift = $this->businessMember->shiftToday();
+        $can_checkin = $this->calculateCanCheckin();
+        $can_checkout = $this->calculateCanCheckout($can_checkin);
 
-        if ($today_shift) {
-            if ($today_shift->is_general) {
-                $can_checkin = 1;
-                $shift = $today_shift;
-            } else if ($today_shift->is_shift) {
-                if (Carbon::now()->toTimeString() < $today_shift->start_time){
-                    if ($yesterday_shift && $yesterday_shift->is_shift) {
-                        $can_checkin = 1;
-                        $shift = $yesterday_shift;
-                    }
-                } else {
-                    $can_checkin = 1;
-                    $shift = $today_shift;
-                }
-            }
-        }
-
-        if ($can_checkin){
-            $next_shift = $this->businessMember->nextShift();
-            $diff = 16;
-            $shift_start_time = Carbon::parse($shift->date.' '.$shift->start_time);
-            $shift_end_time = $shift->start_time > $shift->end_time ? Carbon::parse(Carbon::parse($shift->date)->addDay()->toDateString().' '.$shift->end_time) : $shift->date.' '.$shift->end_time;
-            if ($next_shift) $diff = Carbon::parse($next_shift->date.' '.$next_shift->start_time)->diffInHours($shift_end_time);
-            if ($next_shift && $diff >= 16){
-                if (Carbon::now() > $shift_end_time || Carbon::now() < $shift_start_time->subHours(8)) $can_checkin = 0;
-            } else if ($next_shift && $diff < 16){
-                if (Carbon::now() > $shift_end_time || Carbon::now() < $shift_start_time->subHours($diff/2)) $can_checkin = 0;
-            }
-        }
-
-        return ['shift' => $this->getShift($shift), 'can_checkin' => $can_checkin, 'can_checkout' => !$can_checkin];
+        return ['shift' => $this->getShift(), 'can_checkin' => $can_checkin, 'can_checkout' => $can_checkin];
     }
 
     public function canCheckIn(): bool
@@ -177,13 +146,107 @@ class EmployeeDashboard
         return null;
     }
 
-    private function getShift($shift): array
+    private function getShift()
     {
-        return [
-            'id' => $shift->id,
-            'title' => $shift->shift_title,
-            'start_time' => $shift->start_time,
-            'end_time' => $shift->end_time
-        ];
+        return $this->shift ? [
+            'id' => $this->shift->id,
+            'title' => $this->shift->shift_title,
+            'start_time' => $this->shift->start_time,
+            'end_time' => $this->shift->end_time
+        ] : null;
+    }
+
+    private function calculateCanCheckin(): bool
+    {
+        $knownDate = Carbon::create(2022, 6, 8, 21, 20);
+        Carbon::setTestNow($knownDate);
+        $can_checkin = 0;
+        $shift = null;
+        $yesterday_shift = $this->businessMember->shiftYesterday();
+        $today_shift = $this->businessMember->shiftToday();
+        $is_already_checked_in = $today_shift->start_time > $today_shift->end_time ? $this->businessMember->attendanceOfYesterday() : $this->businessMember->attendanceOfToday();
+        if (!$is_already_checked_in) return 0;
+
+        if ($today_shift) {
+            if ($today_shift->is_general) {
+                $can_checkin = 1;
+                $shift = $today_shift;
+            } else if ($today_shift->is_shift) {
+                if (Carbon::now()->toTimeString() < $today_shift->start_time){
+                    if ($yesterday_shift && $yesterday_shift->is_shift) {
+                        $can_checkin = 1;
+                        $shift = $yesterday_shift;
+                    }
+                } else {
+                    $can_checkin = 1;
+                    $shift = $today_shift;
+                }
+            }
+        }
+        if ($can_checkin){
+            $next_shift = $this->businessMember->nextShift();
+            $diff = 16;
+            $shift_start_time = $shift->date.' '.$shift->start_time;
+            $shift_end_time = $shift->start_time > $shift->end_time ? Carbon::parse($shift->date)->addDay()->toDateString().' '.$shift->end_time : $shift->date.' '.$shift->end_time;
+            if ($next_shift) $diff = Carbon::parse($next_shift->date.' '.$next_shift->start_time)->diffInHours(Carbon::parse($shift_end_time));
+            if ($next_shift && $diff >= 16){
+                if (Carbon::now() > Carbon::parse($shift_end_time) || Carbon::now() < Carbon::parse($shift_start_time)->subHours(8)) {
+                    $can_checkin = 0;
+                    $shift = null;
+                }
+            } else if ($next_shift && $diff < 16){
+                if (Carbon::now() > Carbon::parse($shift_end_time) || Carbon::now() < Carbon::parse($shift_start_time)->subHours($diff/2)) {
+                    $can_checkin = 0;
+                    $shift = null;
+                }
+            }
+        }
+        $this->shift = $shift;
+        return $can_checkin;
+    }
+
+    private function calculateCanCheckout($can_checkin)
+    {
+        if (!$can_checkin) return 0;
+        $can_checkout = 0;
+        $yesterday_shift = $this->businessMember->shiftYesterday();
+        $today_shift = $this->businessMember->shiftToday();
+        $is_already_checked_in = $today_shift->start_time > $today_shift->end_time ? $this->businessMember->attendanceOfYesterday() : $this->businessMember->attendanceOfToday();
+        if (!$is_already_checked_in) return 0;
+
+        if ($today_shift) {
+            if ($today_shift->is_general) {
+                $can_checkout = 1;
+                $shift = $today_shift;
+            } else if ($today_shift->is_shift) {
+                if (Carbon::now()->toTimeString() < $today_shift->start_time){
+                    if ($yesterday_shift && $yesterday_shift->is_shift) {
+                        $can_checkout = 1;
+                        $shift = $yesterday_shift;
+                    }
+                } else {
+                    $can_checkout = 1;
+                    $shift = $today_shift;
+                }
+            }
+        }
+        if ($can_checkout){
+            $next_shift = $this->businessMember->nextShift();
+            $diff = 16;
+            $shift_start_time = $shift->date.' '.$shift->start_time;
+            $shift_end_time = $shift->start_time > $shift->end_time ? Carbon::parse($shift->date)->addDay()->toDateString().' '.$shift->end_time : $shift->date.' '.$shift->end_time;
+            if ($next_shift) $diff = Carbon::parse($next_shift->date.' '.$next_shift->start_time)->diffInHours(Carbon::parse($shift_end_time));
+            if ($next_shift && $diff >= 16){
+                if (Carbon::now() > Carbon::parse($shift_end_time) || Carbon::now() < Carbon::parse($shift_start_time)->subHours(8)) {
+                    $can_checkout = 0;
+                    $shift = null;
+                }
+            } else if ($next_shift && $diff < 16){
+                if (Carbon::now() > Carbon::parse($shift_end_time) || Carbon::now() < Carbon::parse($shift_start_time)->subHours($diff/2)) {
+                    $can_checkout = 0;
+                    $shift = null;
+                }
+            }
+        }
     }
 }
