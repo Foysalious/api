@@ -130,7 +130,7 @@ class TopUpRechargeManager extends TopUpManager
             $this->orderRepo->update($this->topUpOrder, [ 'is_agent_debited' => 1 ]);
         });
 
-        if ($this->topUpOrder->isAgentPartner()) {
+        if ($this->topUpOrder->isSuccess()) {
             app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $this->topUpOrder);
         }
         $this->isSuccessful = true;

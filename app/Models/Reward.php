@@ -6,12 +6,19 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\Reward\ActionEventInitiator;
 use Sheba\Reward\CampaignEventInitiator;
 use Sheba\Dal\RewardTargets\Model as RewardTargets;
+use Sheba\Reward\Event\Action;
+use Sheba\Reward\Event\Campaign;
 
 class Reward extends Model
 {
     protected $guarded = ['id'];
     protected $dates = ['start_time', 'end_time', 'valid_till_date'];
     protected $casts = ['amount' => 'double'];
+
+    /** @var Action */
+    public $actionEvent;
+    /** @var Campaign */
+    public $campaignEvents;
 
     public function detail()
     {
@@ -31,6 +38,16 @@ class Reward extends Model
     public function noConstraints()
     {
         return $this->hasMany(RewardNoConstraint::class);
+    }
+
+    public function categoryConstraints()
+    {
+        return $this->hasMany(RewardConstraint::class)->where('constraint_type', 'Sheba\\Dal\\Category\\Category');
+    }
+
+    public function categoryNoConstraints()
+    {
+        return $this->hasMany(RewardNoConstraint::class)->where('constraint_type', 'Sheba\\Dal\\Category\\Category');
     }
 
     public function isCampaign()
@@ -85,6 +102,14 @@ class Reward extends Model
         return $this->amount;
     }
 
+    public function calculateAmountWRTActionValue($value)
+    {
+        if (!$this->is_amount_percentage) return $this->amount;
+
+        $amount = ($this->amount * $value) / 100;
+        return $this->cap ? min($amount, $this->cap) : $amount;
+    }
+
     public function setActionEvent(array $params)
     {
         /** @var ActionEventInitiator $initiator */
@@ -130,6 +155,31 @@ class Reward extends Model
         return $this->is_amount_percentage && $this->detail_type == constants('REWARD_DETAIL_TYPE')['Action'];
     }
 
+    public function offer()
+    {
+        return $this->hasMany(OfferShowcase::class, 'target_id')->where('target_type', 'App\\Models\\Reward');
+    }
+
+    /**
+     * @param $query
+     * @param  Carbon  $data_time
+     * @return mixed
+     */
+    public function scopeOngoingBySpecificDateAndTime($query, Carbon $data_time)
+    {
+        return $query->where([['start_time', '<=', $data_time], ['end_time', '>=', $data_time]]);
+    }
+
+    /**
+     * @param $query
+     * @param  Carbon  $data_time
+     * @return mixed
+     */
+    public function scopeInvalidBySpecificDateAndTime($query, Carbon $data_time)
+    {
+        return $query->where('start_time', '>', $data_time)->orWhere('end_time', '<', $data_time);
+    }
+
     public function isCustomer()
     {
         return $this->target_type == Customer::class;
@@ -164,8 +214,25 @@ class Reward extends Model
         $user_filters = $this->getUserFilters();
         if (!array_key_exists("registration_within", $user_filters)) return null;
 
-        $start = $user_filters["registration_within"]['start'] . " 00:00:00";
-        $end = $user_filters["registration_within"]['end'] . " 23:59:59";
-        return new TimeFrame($start, $end);
+        $start = $user_filters["registration_within"]['start'];
+        $end = $user_filters["registration_within"]['end'];
+
+        return (new TimeFrame())->forDateRange($start, $end);
+    }
+
+    /**
+     * @return Carbon
+     */
+    public function getCashbackValidity()
+    {
+        $valid_till = null;
+
+        if ($this->valid_till_date) {
+            $valid_till = $this->valid_till_date;
+        } elseif ($this->valid_till_day) {
+            $valid_till = Carbon::now()->addDays($this->valid_till_day);
+        }
+
+        return $valid_till->endOfDay();
     }
 }

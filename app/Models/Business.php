@@ -9,6 +9,8 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\BusinessPayslip\BusinessPayslip;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
+use Sheba\Dal\LiveTrackingSettings\Contract;
+use Sheba\Dal\LiveTrackingSettings\LiveTrackingSettings;
 use Sheba\Dal\OfficePolicy\OfficePolicy;
 use Sheba\Dal\OfficePolicy\Type;
 use Sheba\Dal\OfficePolicyRule\OfficePolicyRule;
@@ -17,6 +19,7 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
+use Sheba\Reward\Rewardable;
 use Sheba\Transactions\Types;
 use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
@@ -28,7 +31,7 @@ use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
 use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
 
-class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
+class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction, Rewardable
 {
     use Wallet, ModificationFields, TopUpTrait;
 
@@ -48,6 +51,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function announcements()
     {
         return $this->hasMany(Announcement::class);
+    }
+
+    public function departments()
+    {
+        return $this->hasMany(BusinessDepartment::class);
     }
 
     public function members()
@@ -511,6 +519,45 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function checkinCheckoutPolicy()
     {
         return $this->policy()->where('policy_type', Type::LATE_CHECKIN_EARLY_CHECKOUT)->orderBy('from_days');
+    }
+
+    public function liveTrackingSettings()
+    {
+        return $this->hasOne(LiveTrackingSettings::class);
+    }
+
+    public function getTrackLocationActiveBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('is_live_track_enable', 1)->where('status', Statuses::ACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
+    public function currentIntervalSetting()
+    {
+        return $this->liveTrackingSettings->intervalSettingLogs()->where('end_date', null)->latest()->first();
+    }
+
+    public function isEligibleForLunch(): bool
+    {
+        return in_array($this->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH'));
+    }
+
+    public function isShebaPlatform(): bool
+    {
+        return in_array($this->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL'));
     }
 
 }

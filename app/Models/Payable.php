@@ -1,13 +1,17 @@
 <?php namespace App\Models;
 
 use App\Sheba\PaymentLink\PaymentLinkOrder;
+use App\Sheba\QRPayment\Complete\AccountingDueComplete;
+use App\Sheba\QRPayment\Complete\PosOrderComplete;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use InvalidArgumentException;
 use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\PayableType;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Utility\UtilityOrder;
+use Sheba\Dal\QRPayable\Model as QRPayable;
 
 class Payable extends Model
 {
@@ -21,7 +25,8 @@ class Payable extends Model
      */
     public function setTypeAttribute($type)
     {
-        if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
+        if ($type !== null)
+            if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
 
         $this->attributes['type'] = $type;
     }
@@ -119,8 +124,11 @@ class Payable extends Model
             $class_name .= 'ProcurementComplete';
         } else if ($this->completion_type == 'partner_bank_loan') {
             $class_name .= 'LoanRepaymentComplete';
+        } else if ($this->completion_type == 'pos_order') {
+            return app(PosOrderComplete::class);
+        } else if ($this->completion_type == 'accounting_due') {
+            return app(AccountingDueComplete::class);
         }
-
         return app($class_name);
     }
 
@@ -172,6 +180,11 @@ class Payable extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function qrPayable()
+    {
+        return $this->hasOne(QRPayable::class);
     }
 
     public function getPaymentAttribute()
@@ -230,5 +243,13 @@ class Payable extends Model
         }
 
         return $model;
+    }
+
+    public function payee()
+    {
+        Relation::morphMap([
+            'partner' => 'App\Models\Partner'
+        ]);
+        return $this->morphTo('payee', 'payee_type', 'payee_id');
     }
 }

@@ -73,7 +73,7 @@ class PartnerRepository extends BaseRepository implements PartnerRepositoryInter
     {
         notify()->partner($partner)->send([
             "title" => $notification,
-            "link" => config('sheba.partners_url') . $partner->sub_domain . "/finance",
+            "link" => config('sheba.partners_url') .'/'. $partner->sub_domain . "/finance",
             "type" => notificationType('Info'),
         ]);
 
