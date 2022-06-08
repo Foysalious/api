@@ -2,6 +2,7 @@
 
 namespace App\Sheba\AccountingEntry\Helper;
 
+use Illuminate\Http\UploadedFile;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 
@@ -18,10 +19,9 @@ trait FileUploader
 
     private function uploadFiles($files): array
     {
-        $attachments = [];
-        if (!empty($files) && request()->hasFile('attachments')) {
-            foreach (request()->file('attachments') as $key => $file) {
-                if (!empty($file)) {
+        if (!empty($files)) {
+            foreach ($files as $key => $file) {
+                if (!empty($file) && $file instanceof UploadedFile) {
                     list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
                     $attachments[] = $this->saveFileToCDN($file, getDueTrackerAttachmentsFolder(), $filename);
                 }

@@ -28,7 +28,8 @@ class ResourceWalletController extends Controller
         }
         $wallet = [
             'balance' => $resource->totalWalletAmount(),
-            'max_withdrawal_limit' => config('sheba.resource_max_withdraw_limit'),
+            'min_withdrawal_limit' => constants('WITHDRAW_LIMIT')['bkash']['min'],
+            'max_withdrawal_limit' => constants('WITHDRAW_LIMIT')['bkash']['max'],
             'tag' => $status['tag'],
             'message' => $status['message']
         ];

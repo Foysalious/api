@@ -48,10 +48,10 @@ class MonthlyStat
 
     /**
      * @param $attendances
-     * @param $shifts
+     * @param int $shift_count
      * @return array
      */
-    public function transform($attendances, $shift_count)
+    public function transform($attendances, $shift_count = 0)
     {
         $data = [];
         $check_weekend = new CheckWeekend();
