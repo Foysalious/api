@@ -189,7 +189,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
                     }]);
             }, 'attendances' => function ($q) {
                 $q->with('actions');
-            }
+            },'shifts'
         ]);
     }
 
