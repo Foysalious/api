@@ -286,13 +286,14 @@ class DueTrackerSmsService
             ->setFeature(PackageFeatureCount::SMS);
 
         $total_sms_count = 0;
-        $user_count = count($this->contactIds);
+        $user_count = 0;
         $sms_sending_lists = $this->getSmsContentsForBulkSmsSending();
         foreach ($sms_sending_lists as $sms_content) {
             $data = $this->generateSmsDataForContactType($sms_content);
             $sms = $this->getSmsHandler($data);
             $sms_estimation = $sms->getSmsCountAndEstimationCharge();
             $total_sms_count += $sms_estimation['sms_count'];
+            $user_count++;
         }
         if ($packageFeatureCount->iseligible($total_sms_count)) {
             return en2bnNumber($user_count) . BulkSmsDialogue::FREE_SMS_DIALOGUE;
