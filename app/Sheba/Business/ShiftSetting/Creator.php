@@ -4,6 +4,7 @@ use Sheba\Dal\BusinessShift\BusinessShiftRepository;
 
 class Creator
 {
+    const DEFAULT_COLOR = '#F4C2C2';
     /*** @var BusinessShiftRepository  */
     private $businessShiftRepository;
 
@@ -49,6 +50,6 @@ class Creator
         $colors = config('b2b.SHIFT_COLORS');
         $existing_colors = $this->businessShiftRepository->where('business_id', $this->shiftRequester->getBusiness()->id)->groupBy('color_code')->pluck('color_code')->toArray();
         $unique_colors = array_diff($colors,$existing_colors);
-        return $unique_colors[array_rand($unique_colors)];
+        return empty($unique_colors) ? self::DEFAULT_COLOR : $unique_colors[array_rand($unique_colors)];
     }
 }
