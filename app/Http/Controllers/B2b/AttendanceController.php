@@ -15,6 +15,7 @@ use App\Sheba\Business\OfficeSetting\PolicyTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\ChangesLogsTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\Creator;
 use App\Sheba\Business\OfficeSettingChangesLogs\Requester;
+use App\Transformers\Business\AttendanceMonthlyListTransformer;
 use App\Sheba\Business\PolicyHistory\PolicyHistory;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -22,6 +23,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
@@ -33,6 +35,7 @@ use Sheba\Business\Attendance\Setting\Creator as SettingCreator;
 use Sheba\Business\Attendance\Setting\Deleter as SettingDeleter;
 use Sheba\Business\Attendance\Setting\Updater as SettingUpdater;
 use Sheba\Business\Attendance\Type\Updater as TypeUpdater;
+use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
 use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
 use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Sheba\Business\Holiday\HolidayList;
@@ -59,34 +62,39 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class AttendanceController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
+
     const FIRST_DAY_OF_MONTH = 1;
 
     /** @var BusinessHolidayRepoInterface $holidayRepository */
     private $holidayRepository;
-    /*** @var OfficeSettingChangesLogsRepository $officeSettingChangesLogsRepo*/
+    /*** @var OfficeSettingChangesLogsRepository $officeSettingChangesLogsRepo */
     private $officeSettingChangesLogsRepo;
     /*** @var Requester */
     private $officeSettingChangesLogsRequester;
     /*** @var Creator */
     private $officeSettingChangesLogsCreator;
     private $businessWeekendRepo;
-    /*** @var BusinessOfficeRepoInterface $businessOfficeRepo*/
+    /*** @var BusinessOfficeRepoInterface $businessOfficeRepo */
     private $businessOfficeRepo;
+    /**  @var CoWorkerInfoFilter $coWorkerInfoFilter */
+    private $coWorkerInfoFilter;
 
     /**
      * AttendanceController constructor.
      * @param BusinessHolidayRepoInterface $business_holidays_repo
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @param BusinessOfficeRepoInterface $business_office_repo
+     * @param CoWorkerInfoFilter $co_worker_info_filter
      */
-    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepoInterface $business_office_repo)
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepoInterface $business_office_repo, CoWorkerInfoFilter $co_worker_info_filter)
     {
         $this->holidayRepository = $business_holidays_repo;
         $this->officeSettingChangesLogsRepo = app(OfficeSettingChangesLogsRepository::class);
         $this->officeSettingChangesLogsRequester = new Requester();
         $this->officeSettingChangesLogsCreator = new Creator();
-        $this->businessWeekendRepo =  $business_weekend_repo;
+        $this->businessWeekendRepo = $business_weekend_repo;
         $this->businessOfficeRepo = $business_office_repo;
+        $this->coWorkerInfoFilter = $co_worker_info_filter;
     }
 
     /**
@@ -135,7 +143,7 @@ class AttendanceController extends Controller
             ->get();
 
         if ($request->sort && $request->sort_column === 'overtime') {
-            $attendances = $this->attendanceSortOnOvertime( collect($attendances), $request->sort)->values()->toArray();
+            $attendances = $this->attendanceSortOnOvertime(collect($attendances), $request->sort)->values()->toArray();
         }
 
         $count = count($attendances);
@@ -181,7 +189,7 @@ class AttendanceController extends Controller
             });
         }
 
-        if($request->filled('status')) {
+        if ($request->has('status')) {
             $business_members = $business_members->where('status', $request->status);
         }
 
@@ -196,6 +204,8 @@ class AttendanceController extends Controller
                 $start_date = Carbon::now()->startOfMonth()->toDateString();
                 $end_date = Carbon::now()->endOfMonth()->toDateString();
             }
+
+
             $member = $business_member->member;
             $profile = $member->profile;
             $member_name = $profile->name;
@@ -212,7 +222,12 @@ class AttendanceController extends Controller
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, false))->transform($attendances);
+            $shifts_counts = 0;
+            if ($business_member->isShiftEnable())
+                $shifts_counts = $business_member->shifts()->where('is_general', 0)->whereBetween('date', $time_frame->getArray())->count();
+
+            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday,
+                $weekend_settings, $business_member_leave, false, $business_member->isShiftEnable()))->transform($attendances,$shifts_counts);
 
             $all_employee_attendance[] = [
                 'business_member_id' => $business_member->id,
@@ -256,6 +271,46 @@ class AttendanceController extends Controller
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
 
+    public function getMonthlyStatsV2($business, Request $request, AttendanceRepoInterface $attendance_repo,
+                                      TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+                                      BusinessWeekendSettingsRepo $business_weekend_settings_repo, Excel $monthly_excel)
+    {
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
+
+        $this->validate($request, [
+            'start_date' => 'date|required',
+            'end_date' => 'date|required',
+            'file' => 'string|in:excel'
+        ]);
+
+        list($offset, $limit) = calculatePagination($request);
+        /** @var Business $business */
+        $business = $request->business;
+
+        $business_members = $business->getAllBusinessMemberExceptInvited();
+
+        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
+
+
+        $business_holiday = $business_holiday_repo->getAllByBusiness($business);
+        $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
+
+        dd($weekend_settings);
+
+        $attendance_monthly_list_transformer = new AttendanceMonthlyListTransformer();
+        $attendance_monthly_list_transformer->setDateRange($request->start_date, $request->end_date);
+
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($business_members->get(), $attendance_monthly_list_transformer);
+        $attendance_monthly_lists = $manager->createData($employees)->toArray()['data'];
+
+        return api_response($request, $attendance_monthly_lists, 200, ['attendance_monthly_lists' => $attendance_monthly_lists]);
+    }
+
     /**
      * @param $business
      * @param $member
@@ -282,7 +337,7 @@ class AttendanceController extends Controller
         $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
         $business_member_joining_date = $business_member->join_date;
         $joining_date = null;
-        if ($this->checkJoiningDate($business_member_joining_date, $request->start_date, $request->end_date)){
+        if ($this->checkJoiningDate($business_member_joining_date, $request->start_date, $request->end_date)) {
             $joining_date = $business_member_joining_date->format('d F');
             $start_date = $business_member_joining_date;
             $end_date = $request->end_date;
@@ -326,7 +381,7 @@ class AttendanceController extends Controller
                 'designation' => $business_member->role ? $business_member->role->name : null,
                 'department' => $business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null,
             ],
-            'joining_date' =>   $joining_date
+            'joining_date' => $joining_date
         ]);
     }
 
@@ -537,13 +592,13 @@ class AttendanceController extends Controller
         $holiday = $this->holidayRepository->find((int)$holiday);
 
         $this->officeSettingChangesLogsRequester->setBusiness($request->business)
-                                                ->setExistingHolidayStart($holiday->start_date)
-                                                ->setExistingHolidayEnd($holiday->end_date)
-                                                ->setExistingHolidayName($holiday->title)
-                                                ->setHolidayStartDate($request->start_date)
-                                                ->setHolidayEndDate($request->end_date)
-                                                ->setHolidayName($request->title);
-        
+            ->setExistingHolidayStart($holiday->start_date)
+            ->setExistingHolidayEnd($holiday->end_date)
+            ->setExistingHolidayName($holiday->title)
+            ->setHolidayStartDate($request->start_date)
+            ->setHolidayEndDate($request->end_date)
+            ->setHolidayName($request->title);
+
         $updater_request = $creator_request->setBusiness($request->business)
             ->setMember($manager_member)
             ->setStartDate($request->start_date)
@@ -662,7 +717,7 @@ class AttendanceController extends Controller
                     ->setType($attendance_type->type)
                     ->setAction($attendance_type->action)
                     ->update();
-                if($attendance_type->action == 'checked') $new_attendance_type[] = $attendance_type->type;
+                if ($attendance_type->action == 'checked') $new_attendance_type[] = $attendance_type->type;
             }
             $this->officeSettingChangesLogsRequester->setPreviousAttendanceType($previous_attendance_type)->setNewAttendanceType($new_attendance_type);
             $this->officeSettingChangesLogsCreator->setOfficeSettingChangesLogsRequester($this->officeSettingChangesLogsRequester)->createAttendanceTypeLogs();
@@ -794,15 +849,15 @@ class AttendanceController extends Controller
     public function updateAttendanceOfficeSettings(Request $request, AttendaceSettingUpdater $updater, PolicyRuleRequester $requester, PolicyRuleUpdater $policy_updater)
     {
         $validation_data = [
-                'office_hour_type' => 'required',
-                'start_time' => 'date_format:H:i:s',
-                'end_time' => 'date_format:H:i:s|after:start_time',
-                'half_day' => 'required', 'half_day_config' => 'string',
-                'is_start_grace_period_allow" => "required',
-                'is_end_grace_period_allow" => "required',
-                'is_grace_policy_enable' => 'required',
-                'is_checkin_checkout_policy_enable' => 'required',
-            ];
+            'office_hour_type' => 'required',
+            'start_time' => 'date_format:H:i:s',
+            'end_time' => 'date_format:H:i:s|after:start_time',
+            'half_day' => 'required', 'half_day_config' => 'string',
+            'is_start_grace_period_allow" => "required',
+            'is_end_grace_period_allow" => "required',
+            'is_grace_policy_enable' => 'required',
+            'is_checkin_checkout_policy_enable' => 'required',
+        ];
         if ($request->is_grace_policy_enable == 1) $data['grace_policy_rules'] = 'required';
         if ($request->is_checkin_checkout_policy_enable == 1) $data['checkin_checkout_policy_rules'] = 'required';
         $this->validate($request, $validation_data, [
@@ -847,20 +902,20 @@ class AttendanceController extends Controller
         (new PolicyHistory())->setRequest($request)->setBusiness($business)->createPolicies();
 
         if ($office_timing) {
-             $requester->setBusiness($request->business)
-                            ->setIsEnable($request->is_grace_policy_enable)
-                            ->setPolicyType(Type::GRACE_PERIOD)
-                            ->setRules($request->grace_policy_rules);
+            $requester->setBusiness($request->business)
+                ->setIsEnable($request->is_grace_policy_enable)
+                ->setPolicyType(Type::GRACE_PERIOD)
+                ->setRules($request->grace_policy_rules);
             $grace_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
 
         if ($grace_policy) {
-             $requester->setBusiness($request->business)
-                            ->setIsEnable($request->is_checkin_checkout_policy_enable)
-                            ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
-                            ->setForLateCheckIn($request->for_checkin)
-                            ->setForEarlyCheckOut($request->for_checkout)
-                            ->setRules($request->checkin_checkout_policy_rules);
+            $requester->setBusiness($request->business)
+                ->setIsEnable($request->is_checkin_checkout_policy_enable)
+                ->setPolicyType(Type::LATE_CHECKIN_EARLY_CHECKOUT)
+                ->setForLateCheckIn($request->for_checkin)
+                ->setForEarlyCheckOut($request->for_checkout)
+                ->setRules($request->checkin_checkout_policy_rules);
             $checkin_checkout_policy = $policy_updater->setPolicyRuleRequester($requester)->update();
         }
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
@@ -891,10 +946,10 @@ class AttendanceController extends Controller
         if (!$business) return api_response($request, null, 403, ['message' => 'You Are not authorized to show this settings']);
         $this->setModifier($request->manager_member);
         $requester->setBusiness($business)
-                        ->setIsEnable($request->is_enable)
-                        ->setPenaltyComponent($request->component)
-                        ->setPolicyType($request->policy_type)
-                        ->setRules($request->rules);
+            ->setIsEnable($request->is_enable)
+            ->setPenaltyComponent($request->component)
+            ->setPolicyType($request->policy_type)
+            ->setRules($request->rules);
         if ($requester->getError()) return api_response($request, null, 400, ['message' => $requester->getError()]);
         $updater->setPolicyRuleRequester($requester)->update();
         # Store Policy History
@@ -1038,6 +1093,7 @@ class AttendanceController extends Controller
         if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
         return $business_member_joining_date->format('Y-m-d') >= $start_date && $business_member_joining_date->format('Y-m-d') <= $end_date;
     }
+
     /**
      * @param $employee_attendance
      * @param Request $request

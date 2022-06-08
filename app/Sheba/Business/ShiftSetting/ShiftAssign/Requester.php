@@ -11,6 +11,10 @@ class Requester
     private $title;
     private $startTime;
     private $endTime;
+    private $checkinGraceTime;
+    private $checkoutGraceTime;
+    private $isCheckinGraceTimeEnable;
+    private $isCheckoutGraceTimeEnable;
     private $isHalfDayActivated;
     private $isGeneralActivated;
     private $isUnassignedActivated;
@@ -22,6 +26,10 @@ class Requester
     private $days;
     private $endDate;
     private $calenderData = [];
+    private $isCheckinGraceEnable;
+    private $isCheckoutGraceEnable;
+    private $checkinGraceTime;
+    private $checkoutGraceTime;
 
     public function setShiftId($shiftId)
     {
@@ -78,6 +86,50 @@ class Requester
         return $this->endTime;
     }
 
+    public function setCheckinGraceTime($checkin_grace_time)
+    {
+        $this->checkinGraceTime = $checkin_grace_time;
+        return $this;
+    }
+
+    public function getCheckinGraceTime()
+    {
+        return $this->checkinGraceTime;
+    }
+
+    public function setCheckoutGraceTime($checkout_grace_time)
+    {
+        $this->checkoutGraceTime = $checkout_grace_time;
+        return $this;
+    }
+
+    public function getCheckoutGraceTime()
+    {
+        return $this->checkoutGraceTime;
+    }
+
+    public function setIsCheckinGraceTimeEnabled($is_checkin_grace_time_enabled)
+    {
+        $this->isCheckinGraceTimeEnable = $is_checkin_grace_time_enabled;
+        return $this;
+    }
+
+    public function getIsCheckinGraceTimeEnabled()
+    {
+        return $this->isCheckinGraceTimeEnable;
+    }
+
+    public function setIsCheckoutGraceTimeEnabled($is_checkout_grace_time_enabled)
+    {
+        $this->isCheckoutGraceTimeEnable = $is_checkout_grace_time_enabled;
+        return $this;
+    }
+
+    public function getIsCheckoutGraceTimeEnabled()
+    {
+        return $this->isCheckoutGraceTimeEnable;
+    }
+
     public function setIsHalfDayActivated($is_half_day_activated)
     {
         $this->isHalfDayActivated = $is_half_day_activated;
@@ -87,6 +139,50 @@ class Requester
     public function getIsHalfDayActivated()
     {
         return $this->isHalfDayActivated;
+    }
+
+    public function setIsCheckinGraceEnable($is_checkin_grace_enable)
+    {
+        $this->isCheckinGraceEnable = $is_checkin_grace_enable;
+        return $this;
+    }
+
+    public function getIsCheckinGraceEnable()
+    {
+        return $this->isCheckinGraceEnable;
+    }
+
+    public function setIsCheckoutGraceEnable($is_checkout_grace_enable)
+    {
+        $this->isCheckoutGraceEnable = $is_checkout_grace_enable;
+        return $this;
+    }
+
+    public function getIsCheckoutGraceEnable()
+    {
+        return $this->isCheckoutGraceEnable;
+    }
+
+    public function setCheckinGraceTime($checkin_grace_time)
+    {
+        $this->checkinGraceTime = $checkin_grace_time;
+        return $this;
+    }
+
+    public function getCheckinGraceTime()
+    {
+        return $this->checkinGraceTime;
+    }
+
+    public function setCheckoutGraceTime($checkout_grace_time)
+    {
+        $this->checkoutGraceTime = $checkout_grace_time;
+        return $this;
+    }
+
+    public function getCheckoutGraceTime()
+    {
+        return $this->checkoutGraceTime;
     }
 
     public function setIsGeneralActivated($is_general_activated)

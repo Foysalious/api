@@ -1,11 +1,9 @@
 <?php namespace Sheba\Business\AttendanceActionLog\StatusCalculator;
 
-
-use App\Models\Business;
 use App\Models\BusinessMember;
 use Sheba\Dal\Attendance\Model as Attendance;
 
-abstract class shiftStatusCalculator
+abstract class ShiftStatusCalculator
 {
     /** @var Attendance $attendance */
     protected $attendance;
