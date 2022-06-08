@@ -118,10 +118,6 @@ class ShiftAssignmentController extends Controller
             ->setShiftTitle($business_shift->title)
             ->setStartTime($business_shift->start_time)
             ->setEndTime($business_shift->end_time)
-            ->setIsCheckinGraceTimeEnabled($business_shift->checkin_grace_enable)
-            ->setCheckinGraceTime($business_shift->checkin_grace_time)
-            ->setIsCheckoutGraceTimeEnabled($business_shift->checkout_grace_enable)
-            ->setCheckoutGraceTime($business_shift->checkout_grace_time)
             ->setIsHalfDayActivated($business_shift->is_halfday_enable)
             ->setIsCheckinGraceEnable($business_shift->checkin_grace_enable)
             ->setIsCheckoutGraceEnable($business_shift->checkout_grace_enable)
@@ -154,7 +150,11 @@ class ShiftAssignmentController extends Controller
         if (!$business_member) return api_response($request, null, 401);
 
         $shift_calender = $this->shiftAssignmentRepository->find($calender_id);
-        $shift_calender = $this->shiftAssignmentRepository->where('business_member_id', $shift_calender->business_member_id)->where('is_shift', 1)->where('id', '>=', $calender_id)->get();
+        $date = Carbon::now();
+        $shift_date = Carbon::parse($shift_calender->date);
+        if($shift_date->lte($date)) $shift_date = $date->addDay();
+
+        $shift_calender = $this->shiftAssignmentRepository->where('business_member_id', $shift_calender->business_member_id)->where('is_shift', 1)->where('date', '>=', $shift_date)->get();
 
         $this->setModifier($request->manager_member);
         $this->shiftCalenderRequester->setIsHalfDayActivated(0)
