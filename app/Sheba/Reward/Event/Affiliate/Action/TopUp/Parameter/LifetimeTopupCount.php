@@ -1,4 +1,4 @@
-<?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
+<?php namespace Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter;
 
 use App\Models\TopUpOrder;
 use Sheba\Reward\Event\ActionEventParameter;
