@@ -107,6 +107,9 @@ class ShiftAssignmentController extends Controller
         if (!$business_shift) return api_response($request, null, 404);
         $shift_calender = $this->shiftAssignmentRepository->find($calender_id);
 
+        $this->shiftAssignToCalender->checkShiftStartDate($shift_calender->date, $this->shiftCalenderRequester);
+        if ($this->shiftCalenderRequester->hasError()) return api_response($request, null, $this->shiftCalenderRequester->getErrorCode(), ['message' => $this->shiftCalenderRequester->getErrorMessage()]);
+
         $general_to_unassign_data = $this->shiftAssignToCalender->generalToUnassign($shift_calender, $this->shiftCalenderRequester);
         $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($general_to_unassign_data);
 
@@ -150,12 +153,10 @@ class ShiftAssignmentController extends Controller
         if (!$business_member) return api_response($request, null, 401);
 
         $shift_calender = $this->shiftAssignmentRepository->find($calender_id);
-        $date = Carbon::now();
-        $shift_date = Carbon::parse($shift_calender->date);
-        if($shift_date->lte($date)) $shift_date = $date->addDay();
+        $this->shiftAssignToCalender->checkShiftStartDate($shift_calender->date, $this->shiftCalenderRequester);
+        if ($this->shiftCalenderRequester->hasError()) return api_response($request, null, $this->shiftCalenderRequester->getErrorCode(), ['message' => $this->shiftCalenderRequester->getErrorMessage()]);
 
-        $shift_calender = $this->shiftAssignmentRepository->where('business_member_id', $shift_calender->business_member_id)->where('is_shift', 1)->where('date', '>=', $shift_date)->get();
-
+        $shift_calender = $this->shiftAssignmentRepository->where('business_member_id', $shift_calender->business_member_id)->where('is_shift', 1)->where('date', '>=', $shift_calender->date)->get();
         $this->setModifier($request->manager_member);
         $this->shiftCalenderRequester->setIsHalfDayActivated(0)
             ->setIsGeneralActivated(1)
@@ -175,10 +176,10 @@ class ShiftAssignmentController extends Controller
         if (!$business_member) return api_response($request, null, 401);
 
         $shift_calender = $this->shiftAssignmentRepository->find($calender_id);
-        $shift_to_unassign_data = $this->shiftAssignToCalender->shiftToUnassign($shift_calender, $this->shiftCalenderRequester, $request);
-
+        $this->shiftAssignToCalender->checkShiftStartDate($shift_calender->date, $this->shiftCalenderRequester);
         if ($this->shiftCalenderRequester->hasError()) return api_response($request, null, $this->shiftCalenderRequester->getErrorCode(), ['message' => $this->shiftCalenderRequester->getErrorMessage()]);
 
+        $shift_to_unassign_data = $this->shiftAssignToCalender->shiftToUnassign($shift_calender, $this->shiftCalenderRequester, $request);
         $this->setModifier($request->manager_member);
         $this->shiftRemover->setShiftCalenderRequester($this->shiftCalenderRequester)->update($shift_to_unassign_data);
         return api_response($request, null, 200);
