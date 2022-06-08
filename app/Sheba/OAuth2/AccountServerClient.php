@@ -79,6 +79,12 @@ class AccountServerClient
      */
     private function call($method, $uri, $options = [])
     {
+        $request_timeout_settings = [
+            'timeout' => 10,
+            'connect_timeout' => 10,
+            'read_timeout' => 10
+        ];
+        $options += $request_timeout_settings;
         try {
             $res = $this->httpClient->request(strtoupper($method), $this->makeUrl($uri), $options);
             $res = decodeGuzzleResponse($res);
