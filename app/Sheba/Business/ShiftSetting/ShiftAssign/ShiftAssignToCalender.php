@@ -104,9 +104,12 @@ class ShiftAssignToCalender
         $this->shiftCalenderRequester = $shift_calender_requester;
         $this->shiftCalenderRequester->setIsGeneralActivated(0)
                                      ->setIsUnassignedActivated(1);
+        $current_date = Carbon::now();
+        $start_date = Carbon::parse($shift_calender->date);
+        if($start_date->lte($current_date)) $start_date = $current_date->addDay();
         return $this->shiftAssignmentRepository->where('is_general', 1)
                                                                  ->where('business_member_id', $shift_calender->business_member_id)
-                                                                 ->where('date', '>', $shift_calender->date)->get();
+                                                                 ->where('date', '>', $start_date->toDateString())->get();
     }
 
     public function shiftToUnassign($shift_calender, Requester $shift_calender_requester, Request $request)
