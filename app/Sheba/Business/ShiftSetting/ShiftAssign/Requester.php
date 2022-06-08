@@ -11,6 +11,10 @@ class Requester
     private $title;
     private $startTime;
     private $endTime;
+    private $checkinGraceTime;
+    private $checkoutGraceTime;
+    private $isCheckinGraceTimeEnable;
+    private $isCheckoutGraceTimeEnable;
     private $isHalfDayActivated;
     private $isGeneralActivated;
     private $isUnassignedActivated;
@@ -80,6 +84,50 @@ class Requester
     public function getEndTime()
     {
         return $this->endTime;
+    }
+
+    public function setCheckinGraceTime($checkin_grace_time)
+    {
+        $this->checkinGraceTime = $checkin_grace_time;
+        return $this;
+    }
+
+    public function getCheckinGraceTime()
+    {
+        return $this->checkinGraceTime;
+    }
+
+    public function setCheckoutGraceTime($checkout_grace_time)
+    {
+        $this->checkoutGraceTime = $checkout_grace_time;
+        return $this;
+    }
+
+    public function getCheckoutGraceTime()
+    {
+        return $this->checkoutGraceTime;
+    }
+
+    public function setIsCheckinGraceTimeEnabled($is_checkin_grace_time_enabled)
+    {
+        $this->isCheckinGraceTimeEnable = $is_checkin_grace_time_enabled;
+        return $this;
+    }
+
+    public function getIsCheckinGraceTimeEnabled()
+    {
+        return $this->isCheckinGraceTimeEnable;
+    }
+
+    public function setIsCheckoutGraceTimeEnabled($is_checkout_grace_time_enabled)
+    {
+        $this->isCheckoutGraceTimeEnable = $is_checkout_grace_time_enabled;
+        return $this;
+    }
+
+    public function getIsCheckoutGraceTimeEnabled()
+    {
+        return $this->isCheckoutGraceTimeEnable;
     }
 
     public function setIsHalfDayActivated($is_half_day_activated)
