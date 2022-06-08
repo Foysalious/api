@@ -69,6 +69,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'attendances'], function ($api) {
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
+                    $api->get('monthly-list', 'B2b\AttendanceController@getMonthlyStatsV2');
                     $api->post('reconciliation', 'B2b\AttendanceReconciliationController@create');
                     $api->post('bulk-reconciliation', 'B2b\AttendanceReconciliationController@bulkReconciliation');
                 });
@@ -427,6 +428,7 @@ class BusinessRoute
                         $api->get('/', 'B2b\ShiftAssignmentController@details');
                         $api->post('/assign-shift', 'B2b\ShiftAssignmentController@assignShift');
                         $api->post('/assign-general-attendance', 'B2b\ShiftAssignmentController@assignGeneralAttendance');
+                        $api->post('/unassign-shift', 'B2b\ShiftAssignmentController@unassignShift');
                     });
                 });
 

@@ -22,6 +22,7 @@ class MonthlyStat
     private $business;
     /*** @var BusinessOffice */
     private $businessOfficeRepo;
+    private $isShiftOn;
 
     /**
      * @param TimeFrame $time_frame
@@ -30,8 +31,10 @@ class MonthlyStat
      * @param $weekend_settings
      * @param $business_member_leave
      * @param bool $for_one_employee
+     * @param bool $is_shift_on
      */
-    public function __construct(TimeFrame $time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, $for_one_employee = true)
+    public function __construct(TimeFrame $time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, $for_one_employee = true,
+                                          $is_shift_on = false)
     {
         $this->timeFrame = $time_frame;
         $this->business = $business;
@@ -40,13 +43,15 @@ class MonthlyStat
         $this->businessMemberLeave = $business_member_leave;
         $this->forOneEmployee = $for_one_employee;
         $this->businessOfficeRepo = app(BusinessOffice::class);
+        $this->isShiftOn = $is_shift_on;
     }
 
     /**
      * @param $attendances
+     * @param $shifts
      * @return array
      */
-    public function transform($attendances)
+    public function transform($attendances, $shift_count)
     {
         $data = [];
         $check_weekend = new CheckWeekend();
@@ -62,8 +67,9 @@ class MonthlyStat
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $remaining_days = (($this->timeFrame->start)->diffInDays($this->timeFrame->end)) + 1;
+
         $statistics = [
-            'working_days' => $remaining_days,
+            'working_days' => $this->isShiftOn ? $shift_count : $remaining_days,
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
             Statuses::LEFT_EARLY => 0,
@@ -98,7 +104,7 @@ class MonthlyStat
                     $breakdown_data['holiday_name'] = $this->getHolidayName($date);
                 }
             }
-            if ($is_weekend_or_holiday) {
+            if ($is_weekend_or_holiday & !$this->isShiftOn) {
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
             }
             // leave calculation
@@ -136,10 +142,10 @@ class MonthlyStat
                             'is_in_wifi' => $is_in_wifi,
                             'remote_mode' => $attendance_checkin_action->remote_mode ?: null,
                             'address' => $attendance_checkin_action->is_remote ?
-                            $attendance_checkin_action->location ?
-                                json_decode($attendance_checkin_action->location)->address ?: json_decode($attendance_checkin_action->location)->lat.', '.json_decode($attendance_checkin_action->location)->lng
-                                : null
-                            : $business_office_name,
+                                $attendance_checkin_action->location ?
+                                    json_decode($attendance_checkin_action->location)->address ?: json_decode($attendance_checkin_action->location)->lat . ', ' . json_decode($attendance_checkin_action->location)->lng
+                                    : null
+                                : $business_office_name,
                         ] : null,
                         'check_out' => $attendance_checkout_action ? [
                             'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkout_action->status,
@@ -150,7 +156,7 @@ class MonthlyStat
                             'remote_mode' => $attendance_checkout_action->remote_mode ?: null,
                             'address' => $attendance_checkout_action->is_remote ?
                                 $attendance_checkout_action->location ?
-                                    json_decode($attendance_checkout_action->location)->address ?: json_decode($attendance_checkout_action->location)->lat.', '.json_decode($attendance_checkout_action->location)->lng
+                                    json_decode($attendance_checkout_action->location)->address ?: json_decode($attendance_checkout_action->location)->lat . ', ' . json_decode($attendance_checkout_action->location)->lng
                                     : null
                                 : $business_office_name,
                         ] : null,
@@ -163,7 +169,7 @@ class MonthlyStat
                     ];
                     if ($attendance->overrideLogs) {
                         foreach ($attendance->overrideLogs as $override_log) {
-                            if ($override_log->action == Actions::CHECKIN ) $breakdown_data['check_in_overridden'] = 1;
+                            if ($override_log->action == Actions::CHECKIN) $breakdown_data['check_in_overridden'] = 1;
                             if ($override_log->action == Actions::CHECKOUT) $breakdown_data['check_out_overridden'] = 1;
                         }
                     }

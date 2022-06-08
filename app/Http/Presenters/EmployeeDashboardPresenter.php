@@ -41,8 +41,9 @@ class EmployeeDashboardPresenter extends Presenter
                 'department_id' => $department ? $department->id : null,
                 'notification_count' => $this->member->notifications()->unSeen()->count(),
                 'attendance' => [
-                    'can_checkin' => (int)$this->employeeDashboard->canCheckIn(),
-                    'can_checkout' => (int)$this->employeeDashboard->canCheckOut()
+                    'can_checkin' => (int) $this->employeeDashboard->getAttendanceInfo()['can_checkin'],
+                    'can_checkout' => (int) $this->employeeDashboard->getAttendanceInfo()['can_checkout'],
+                    'shift' => $this->employeeDashboard->getAttendanceInfo()['shift']
                 ],
                 'note_data' => [
                     'date' => $this->employeeDashboard->hasLastAttendance() ? $this->employeeDashboard->getLastAttendanceDate()->format('jS F Y') : null,
