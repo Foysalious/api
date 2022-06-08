@@ -68,6 +68,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'attendances'], function ($api) {
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
+                    $api->get('monthly-list', 'B2b\AttendanceController@getMonthlyStatsV2');
                     $api->post('reconciliation', 'B2b\AttendanceReconciliationController@create');
                     $api->post('bulk-reconciliation', 'B2b\AttendanceReconciliationController@bulkReconciliation');
                 });
