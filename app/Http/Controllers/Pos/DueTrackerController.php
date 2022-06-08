@@ -227,7 +227,7 @@ class DueTrackerController extends Controller
             }
             $sendSms = $dueTrackerRepository->sendSMS($request);
             if (!$sendSms) {
-                $message = "Insufficient SMS count";
+                $message = "আপনার নির্ধারিত প্যাকেজের ফ্রি এসএমএস  সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে প্যাকেজ আপগ্রেড করুন অথবা পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন।";
                 return api_response($request, $message, 400, ['message' => $message]);
             }
             (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_SMS_SEND)->create($request->manager_resource);
