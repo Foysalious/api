@@ -4,6 +4,7 @@ namespace App\Sheba\AccountingEntry\Service;
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
 use Exception;
+use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
 use Sheba\Pos\Customer\PosCustomerResolver;
 use Sheba\Pos\Supplier\SupplierResolver;
 
@@ -46,6 +47,7 @@ class DueTrackerContactResolver
      */
     public function getContactDetails(): array
     {
+        $contact_detail = [];
         if ($this->contactType == ContactType::CUSTOMER) {
             $posCustomerResolver = app(PosCustomerResolver::class);
             $contact_detail = $posCustomerResolver->setCustomerId($this->contactId)->setPartner($this->partner)->get();
@@ -53,11 +55,9 @@ class DueTrackerContactResolver
             /* @var $posSupplierResolver SupplierResolver */
             $posSupplierResolver = app(SupplierResolver::class);
             $contact_detail = $posSupplierResolver->setSupplierId($this->contactId)->setPartner($this->partner)->get();
-        } else {
-            throw new Exception('Unknown contact type for due tracker');
         }
         if (!$contact_detail) {
-            return [];
+            throw new ContactDoesNotExistInDueTracker();
         }
         return [
             'contact_id' => $contact_detail->id,

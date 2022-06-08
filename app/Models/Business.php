@@ -69,7 +69,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         return $this->members()->select('members.id', 'profile_id', 'social_links')->with([
             'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'mobile', 'email','dob', 'blood_group','pro_pic');
+                $q->select('profiles.id', 'name', 'mobile', 'email', 'dob', 'blood_group', 'pro_pic');
             }, 'businessMember' => function ($q) {
                 $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
                     'role' => function ($q) {
@@ -202,7 +202,14 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
                         $q->select('business_departments.id', 'business_id', 'name');
                     }
                 ]);
-            }
+            }, 'leaves' => function ($q) {
+                $q->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'note', 'total_days', 'left_days', 'status')->with([
+                    'leaveType' => function ($query) {
+                        $query->withTrashed()->select('id', 'business_id', 'title', 'total_days', 'deleted_at');
+                    }]);
+            }, 'attendances' => function ($q) {
+                $q->with('actions');
+            },'shifts'
         ]);
     }
 

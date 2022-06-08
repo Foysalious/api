@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\AccountingEntry\Constants\AccountKeyTypes;
+use App\Sheba\AccountingEntry\Constants\ContactType;
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Service\DueTrackerReportService;
@@ -11,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
+use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Usage\Usage;
@@ -63,6 +65,41 @@ class DueTrackerControllerV2 extends Controller
         $response = $this->dueTrackerService->setPartner($request->partner)->setEntryDto($entry_dto)->storeEntry();
         (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->auth_user);
         return http_response($request, null, 201, ['data' => $response]);
+    }
+
+    /**
+     * @param Request $request
+     * @param int $entry_id
+     * @return JsonResponse
+     */
+    public function update(Request $request, int $entry_id): JsonResponse
+    {
+        $this->validate($request, [
+            'amount' => 'required',
+            'source_type' => 'required|in:due,deposit',
+            'account_key' => 'sometimes|string',
+            'contact_type' => 'required|string|in:' . implode(',', ContactType::get()),
+            'contact_id' => 'required',
+            'note' => 'sometimes',
+            'entry_at' => 'sometimes|date_format:Y-m-d H:i:s',
+            'attachment_should_remove' => 'sometimes|array',
+            'attachments' => 'sometimes|array',
+            'attachments.*' => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
+
+        ]);
+        $entry_dto = app()->make(EntryDTO::class);
+        $entry_dto->setAmount($request->amount)
+            ->setSourceType($request->source_type)
+            ->setAccountKey($request->account_key)
+            ->setContactType($request->contact_type)
+            ->setContactId($request->contact_id)
+            ->setEntryAt($request->entry_at)
+            ->setAttachments($request->attachments)
+            ->setNote($request->note)
+            ->setEntryId($entry_id);
+        $response = $this->dueTrackerService->setPartner($request->partner)->setEntryDto($entry_dto)->updateEntry();
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_ENTRY_UPDATE)->create($request->auth_user);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
     /**

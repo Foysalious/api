@@ -1,18 +1,14 @@
 <?php namespace App\Sheba\AccountingEntry\Service;
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
-use App\Sheba\AccountingEntry\Creator\Entry as EntryCreator;
+use App\Sheba\AccountingEntry\Entry\Creator as EntryCreator;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
+use App\Sheba\AccountingEntry\Entry\Updater as EntryUpdater;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
-use App\Sheba\Pos\Order\PosOrderObject;
-use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
-use App\Sheba\PosOrderService\Services\OrderService as OrderServiceAlias;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
-use Sheba\Pos\Order\PosOrderResolver;
-use Exception;
 
 class DueTrackerService
 {
@@ -248,31 +244,6 @@ class DueTrackerService
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
         $due_list = $result['list'];
-        $pos_orders = [];
-        /*
-        collect($due_list)->each(function ($each) use (&$pos_orders) {
-            if (!is_null($each['source_id']) && $each['source_type'] == EntryTypes::POS) {
-                $pos_orders [] = $each['source_id'];
-            }
-        });
-        if (count($pos_orders) > 0) {
-            $orders = $this->getPartnerWisePosOrders($pos_orders)['orders'];
-        }
-        foreach ($due_list as $key => &$item) {
-            if ($item['source_id'] && $item['source_type'] == EntryTypes::POS && isset($orders[$item['source_id']])) {
-                $order = $orders[$item['source_id']];
-                $item['partner_wise_order_id'] = $order['partner_wise_order_id'];
-                $item['source_type'] = 'PosOrder';
-                $item['head'] = 'POS sales';
-                $item['head_bn'] = 'সেলস';
-                if (isset($order['sales_channel']) == SalesChannels::WEBSTORE) {
-                    $item['source_type'] = 'Webstore Order';
-                    $item['head'] = 'Webstore sales';
-                    $item['head_bn'] = 'ওয়েবস্টোর সেলস';
-                }
-            }
-        }
-        */
         return [
             'list' => $due_list
         ];
@@ -322,33 +293,14 @@ class DueTrackerService
         return implode('&', $query_strings);
     }
 
-    /**
-     * @param $pos_orders
-     * @return mixed
-     * @throws PosOrderServiceServerError
-     */
-    private function getPartnerWisePosOrders($pos_orders)
+    public function updateEntry()
     {
-        /** @var OrderServiceAlias $orderService */
-        $orderService = app(OrderServiceAlias::class);
-        return $orderService->getPartnerWiseOrderIds('[' . implode(",", $pos_orders) . ']', 0, count($pos_orders));
+        return app()->make(EntryUpdater::class)
+            ->setEntryDto($this->entryDTO)
+            ->setPartner($this->partner)
+            ->updateEntry();
     }
 
-    /**
-     * @param $partner
-     * @param $partnerWiseOrderId
-     * @return PosOrderObject
-     */
-    private function posOrderByPartnerWiseOrderId($partner, $partnerWiseOrderId)
-    {
-        try {
-            /** @var PosOrderResolver $posOrderResolver */
-            $posOrderResolver = app(PosOrderResolver::class);
-            return $posOrderResolver->setPartnerWiseOrderId($partner->id, $partnerWiseOrderId)->get();
-        } catch (Exception $e) {
-            return null;
-        }
-    }
 
     /**
      * @throws AccountingEntryServerError

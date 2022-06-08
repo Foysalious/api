@@ -4,7 +4,11 @@ namespace App\Sheba\AccountingEntry\Dto;
 
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
+use App\Sheba\AccountingEntry\Helper\FileUploader;
+use Carbon\Carbon;
 use Sheba\AccountingEntry\Accounts\Accounts;
+use Sheba\ModificationFields;
+use Sheba\RequestIdentification;
 
 class EntryDTO
 {
@@ -35,6 +39,7 @@ class EntryDTO
     public $paid_by;
     public $is_due_tracker_payment_link;
     public $real_amount;
+    public $entry_id;
 
     /**
      * @param mixed $contact_id
@@ -293,6 +298,11 @@ class EntryDTO
     public function getFromAccountKey()
     {
         return $this->source_type === EntryTypes::DUE ? (new Accounts())->income->sales::DUE_SALES_FROM_DT : $this->contact_id;
+    }
+
+    public function setEntryId(int $entry_id)
+    {
+        $this->entry_id = $entry_id;
     }
 
 }

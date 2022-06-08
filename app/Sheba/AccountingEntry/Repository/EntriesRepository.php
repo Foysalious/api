@@ -107,5 +107,11 @@ class EntriesRepository extends BaseRepository
         }
     }
 
+    public function updateEntry(array $data, int $entry_id)
+    {
+        $url = "api/entries/" . $entry_id;
+        return $this->client->setUserType(UserType::PARTNER)->setUserId($this->partner->id)->post($url, $data);
+    }
+
 
 }
