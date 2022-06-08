@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Sheba\Business\Attendance\Filter;
 use App\Sheba\Business\Attendance\MonthlyStat;
 use App\Sheba\Business\Attendance\Setting\GeoLocationCreator;
 use App\Sheba\Business\Attendance\Setting\GeoLocationDeleter;
@@ -15,14 +16,12 @@ use App\Sheba\Business\OfficeSetting\PolicyTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\ChangesLogsTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\Creator;
 use App\Sheba\Business\OfficeSettingChangesLogs\Requester;
-use App\Transformers\Business\AttendanceMonthlyListTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
-use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
@@ -44,7 +43,6 @@ use Sheba\Business\OfficeSetting\OperationalSetting;
 use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
-use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
@@ -66,15 +64,17 @@ class AttendanceController extends Controller
     private $holidayRepository;
     /*** @var OfficeSettingChangesLogsRepository $officeSettingChangesLogsRepo */
     private $officeSettingChangesLogsRepo;
-    /*** @var Requester */
+    /*** @var Requester $officeSettingChangesLogsRequester */
     private $officeSettingChangesLogsRequester;
-    /*** @var Creator */
+    /*** @var Creator $officeSettingChangesLogsCreator */
     private $officeSettingChangesLogsCreator;
     private $businessWeekendRepo;
     /*** @var BusinessOfficeRepoInterface $businessOfficeRepo */
     private $businessOfficeRepo;
     /**  @var CoWorkerInfoFilter $coWorkerInfoFilter */
     private $coWorkerInfoFilter;
+    /** @var TimeFrame  $timeFrame */
+    private $timeFrame;
 
     /**
      * AttendanceController constructor.
@@ -82,28 +82,31 @@ class AttendanceController extends Controller
      * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @param BusinessOfficeRepoInterface $business_office_repo
      * @param CoWorkerInfoFilter $co_worker_info_filter
+     * @param OfficeSettingChangesLogsRepository $office_setting_changes_logs_repo
+     * @param TimeFrame $time_frame
      */
-    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeRepoInterface $business_office_repo, CoWorkerInfoFilter $co_worker_info_filter)
+    public function __construct(BusinessHolidayRepoInterface       $business_holidays_repo, BusinessWeekendRepoInterface $business_weekend_repo,
+                                BusinessOfficeRepoInterface        $business_office_repo, CoWorkerInfoFilter $co_worker_info_filter,
+                                OfficeSettingChangesLogsRepository $office_setting_changes_logs_repo, TimeFrame $time_frame)
     {
         $this->holidayRepository = $business_holidays_repo;
-        $this->officeSettingChangesLogsRepo = app(OfficeSettingChangesLogsRepository::class);
+        $this->officeSettingChangesLogsRepo = $office_setting_changes_logs_repo;
         $this->officeSettingChangesLogsRequester = new Requester();
         $this->officeSettingChangesLogsCreator = new Creator();
         $this->businessWeekendRepo = $business_weekend_repo;
         $this->businessOfficeRepo = $business_office_repo;
         $this->coWorkerInfoFilter = $co_worker_info_filter;
+        $this->timeFrame = $time_frame;
     }
 
     /**
      * @param $business
      * @param Request $request
      * @param AttendanceList $stat
-     * @param TimeFrame $time_frame
-     * @param BusinessOfficeRepoInterface $business_office_repo
+     * @param Filter $daily_filter
      * @return JsonResponse
      */
-    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame,
-                                  BusinessOfficeRepoInterface $business_office_repo)
+    public function getDailyStats($business, Request $request, AttendanceList $stat, Filter $daily_filter)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -112,12 +115,12 @@ class AttendanceController extends Controller
         ]);
 
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
-        $selected_date = $time_frame->forADay($date);
+        $selected_date = $this->timeFrame->forADay($date);
 
         $checkin_location = $checkout_location = null;
         $checkin_remote_mode = $checkout_remote_mode = null;
-        if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
-        if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
+        if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location);
+        if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location);
         if ($request->checkin_remote_mode) $checkin_remote_mode = $request->checkin_remote_mode;
         if ($request->checkout_remote_mode) $checkout_remote_mode = $request->checkout_remote_mode;
 
@@ -140,7 +143,7 @@ class AttendanceController extends Controller
             ->get();
 
         if ($request->sort && $request->sort_column === 'overtime') {
-            $attendances = $this->attendanceSortOnOvertime(collect($attendances), $request->sort)->values()->toArray();
+            $attendances = $daily_filter->attendanceSortOnOvertime(collect($attendances), $request->sort)->values()->toArray();
         }
 
         $count = count($attendances);
@@ -153,15 +156,14 @@ class AttendanceController extends Controller
      * @param $business
      * @param Request $request
      * @param AttendanceRepoInterface $attendance_repo
-     * @param TimeFrame $time_frame
-     * @param BusinessHolidayRepoInterface $business_holiday_repo
      * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @param Excel $monthly_excel
+     * @param Filter $monthly_filer
      * @return JsonResponse|void
      */
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
-                                    TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                                    BusinessWeekendSettingsRepo $business_weekend_settings_repo, Excel $monthly_excel)
+                                    BusinessWeekendSettingsRepo $business_weekend_settings_repo, Excel $monthly_excel,
+                                    Filter $monthly_filer)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
@@ -186,7 +188,7 @@ class AttendanceController extends Controller
         }
 
         $all_employee_attendance = [];
-        $business_holiday = $business_holiday_repo->getAllByBusiness($business);
+        $business_holiday = $this->holidayRepository->getAllByBusiness($business);
         $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
         foreach ($business_members->get() as $business_member) {
             if ($request->has('start_date') && $request->has('end_date')) {
@@ -211,7 +213,7 @@ class AttendanceController extends Controller
                 $joining_prorated = 1;
                 $start_date = $business_member_joining_date;
             }
-            $time_frame = $time_frame->forDateRange($start_date, $end_date);
+            $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
             $shifts_counts = 0;
@@ -219,7 +221,7 @@ class AttendanceController extends Controller
                 $shifts_counts = $business_member->shifts()->where('is_general', 0)->whereBetween('date', $time_frame->getArray())->count();
 
             $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday,
-                $weekend_settings, $business_member_leave, false, $business_member->isShiftEnable()))->transform($attendances,$shifts_counts);
+                $weekend_settings, $business_member_leave, false, $business_member->isShiftEnable()))->transform($attendances, $shifts_counts);
 
             $all_employee_attendance[] = [
                 'business_member_id' => $business_member->id,
@@ -242,14 +244,14 @@ class AttendanceController extends Controller
 
         $all_employee_attendance = collect($all_employee_attendance);
 
-        $all_employee_attendance = $this->filterInactiveCoWorkersWithData($all_employee_attendance);
+        $all_employee_attendance = $monthly_filer->filterInactiveCoWorkersWithData($all_employee_attendance);
 
-        if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
-        if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
-        if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
-        if ($request->has('sort_on_leave')) $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
-        if ($request->has('sort_on_late')) $all_employee_attendance = $this->attendanceSortOnLate($all_employee_attendance, $request->sort_on_late);
-        if ($request->has('sort_on_overtime')) $all_employee_attendance = $this->attendanceCustomSortOnOvertime($all_employee_attendance, $request->sort_on_overtime);
+        if ($request->has('search')) $all_employee_attendance = $monthly_filer->searchWithEmployeeName($all_employee_attendance, $request);
+        if ($request->has('sort_on_absent')) $all_employee_attendance = $monthly_filer->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
+        if ($request->has('sort_on_present')) $all_employee_attendance = $monthly_filer->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
+        if ($request->has('sort_on_leave')) $all_employee_attendance = $monthly_filer->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
+        if ($request->has('sort_on_late')) $all_employee_attendance = $monthly_filer->attendanceSortOnLate($all_employee_attendance, $request->sort_on_late);
+        if ($request->has('sort_on_overtime')) $all_employee_attendance = $monthly_filer->attendanceCustomSortOnOvertime($all_employee_attendance, $request->sort_on_overtime);
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
@@ -261,46 +263,6 @@ class AttendanceController extends Controller
         return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
 
-    public function getMonthlyStatsV2($business, Request $request, AttendanceRepoInterface $attendance_repo,
-                                      TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                                      BusinessWeekendSettingsRepo $business_weekend_settings_repo, Excel $monthly_excel)
-    {
-        ini_set('memory_limit', '6096M');
-        ini_set('max_execution_time', 480);
-
-        $this->validate($request, [
-            'start_date' => 'date|required',
-            'end_date' => 'date|required',
-            'file' => 'string|in:excel'
-        ]);
-
-        list($offset, $limit) = calculatePagination($request);
-        /** @var Business $business */
-        $business = $request->business;
-
-        $business_members = $business->getAllBusinessMemberExceptInvited();
-
-        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
-        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
-
-
-        $business_holiday = $business_holiday_repo->getAllByBusiness($business);
-        $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
-
-        dd($weekend_settings);
-
-        $attendance_monthly_list_transformer = new AttendanceMonthlyListTransformer();
-        $attendance_monthly_list_transformer->setDateRange($request->start_date, $request->end_date);
-
-
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($business_members->get(), $attendance_monthly_list_transformer);
-        $attendance_monthly_lists = $manager->createData($employees)->toArray()['data'];
-
-        return api_response($request, $attendance_monthly_lists, 200, ['attendance_monthly_lists' => $attendance_monthly_lists]);
-    }
-
     /**
      * @param $business
      * @param $member
@@ -309,22 +271,22 @@ class AttendanceController extends Controller
      * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @param AttendanceRepoInterface $attendance_repo
      * @param BusinessMemberRepositoryInterface $business_member_repository
-     * @param TimeFrame $time_frame
      * @param AttendanceList $list
      * @param DetailsExcel $details_excel
+     * @param Filter $daily_filer
      * @return JsonResponse|void
      */
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
                              BusinessWeekendSettingsRepo $business_weekend_settings_repo, AttendanceRepoInterface $attendance_repo,
                              BusinessMemberRepositoryInterface $business_member_repository,
-                             TimeFrame $time_frame, AttendanceList $list, DetailsExcel $details_excel)
+                             AttendanceList $list, DetailsExcel $details_excel, Filter $daily_filer)
     {
         $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
 
-        $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+        $time_frame = $this->timeFrame->forDateRange($request->start_date, $request->end_date);
         $business_member_joining_date = $business_member->join_date;
         $joining_date = null;
         if ($this->checkJoiningDate($business_member_joining_date, $request->start_date, $request->end_date)) {
@@ -347,11 +309,11 @@ class AttendanceController extends Controller
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
         });
 
-        if ($request->has('sort_on_date')) $daily_breakdowns = $this->attendanceSortOnDate($daily_breakdowns, $request->sort_on_date)->values();
-        if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
-        if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
-        if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
-        if ($request->has('sort_on_overtime')) $daily_breakdowns = $this->attendanceCustomSortOnOvertime($daily_breakdowns, $request->sort_on_overtime)->values();
+        if ($request->has('sort_on_date')) $daily_breakdowns = $daily_filer->attendanceSortOnDate($daily_breakdowns, $request->sort_on_date)->values();
+        if ($request->has('sort_on_hour')) $daily_breakdowns = $daily_filer->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
+        if ($request->has('sort_on_checkin')) $daily_breakdowns = $daily_filer->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
+        if ($request->has('sort_on_checkout')) $daily_breakdowns = $daily_filer->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
+        if ($request->has('sort_on_overtime')) $daily_breakdowns = $daily_filer->attendanceCustomSortOnOvertime($daily_breakdowns, $request->sort_on_overtime)->values();
         if ($request->file == 'excel') {
             return $details_excel->setBreakDownData($daily_breakdowns->toArray())
                 ->setBusinessMember($business_member)
@@ -379,14 +341,13 @@ class AttendanceController extends Controller
     /**
      * @param $business
      * @param Request $request
-     * @param BusinessWeekendRepoInterface $business_weekend_repo
      * @param BusinessOfficeHoursRepoInterface $office_hours
      * @return JsonResponse
      */
-    public function getOfficeTime($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
+    public function getOfficeTime($business, Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $request->business;
-        $weekends = $business_weekend_repo->getAllByBusiness($business);
+        $weekends = $this->businessWeekendRepo->getAllByBusiness($business);
         $weekend_days = $weekends->pluck('weekday_name')->toArray();
         $weekend_days = array_map('ucfirst', $weekend_days);
         $office_time = $office_hours->getOfficeTime($business);
@@ -413,8 +374,12 @@ class AttendanceController extends Controller
     public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
     {
         $this->validate($request, [
-            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array',
-            'half_day' => 'required', 'half_day_config' => 'string'
+            'office_hour_type' => 'required',
+            'start_time' => 'date_format:H:i:s',
+            'end_time' => 'date_format:H:i:s|after:start_time',
+            'weekends' => 'required|array',
+            'half_day' => 'required',
+            'half_day_config' => 'string'
         ], [
             'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
@@ -437,17 +402,13 @@ class AttendanceController extends Controller
     /**
      * @param $business
      * @param Request $request
-     * @param BusinessAttendanceTypesRepoInterface $attendance_types_repo
-     * @param BusinessOfficeRepoInterface $business_office_repo
      * @param AttendanceSettingTransformer $transformer
      * @return JsonResponse
      */
-    public function getAttendanceSetting($business, Request $request,
-                                         BusinessAttendanceTypesRepoInterface $attendance_types_repo,
-                                         BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
+    public function getAttendanceSetting($business, Request $request, AttendanceSettingTransformer $transformer)
     {
         $business = $request->business;
-        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $business_offices = $this->businessOfficeRepo->getAllByBusiness($business);
         $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
 
@@ -533,6 +494,10 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['message' => "Update Successful"]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getHolidays(Request $request)
     {
         $holiday_list = new HolidayList($request->business, $this->holidayRepository);
@@ -543,6 +508,11 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * @param Request $request
+     * @param HolidayCreator $creator
+     * @return JsonResponse
+     */
     public function storeHoliday(Request $request, HolidayCreator $creator)
     {
         $this->validate($request, [
@@ -619,6 +589,12 @@ class AttendanceController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param HalfDaySettingUpdater $updater
+     * @return JsonResponse
+     */
     public function updateHalfDaySetting($business, Request $request, HalfDaySettingUpdater $updater)
     {
         $this->validate($request, ['half_day' => 'required', 'half_day_config' => 'required|string']);
@@ -632,7 +608,10 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['message' => "Update Successful"]);
     }
 
-
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getAllHolidayDates(Request $request)
     {
         $holiday_list = new HolidayList($request->business, $this->holidayRepository);
@@ -643,24 +622,30 @@ class AttendanceController extends Controller
 
     /**
      * @param $location
-     * @param BusinessOfficeRepoInterface $business_office_repo
      * @return mixed
      */
-    public function getIpById($location, BusinessOfficeRepoInterface $business_office_repo)
+    public function getIpById($location)
     {
-        $business_office = $business_office_repo->find($location);
+        $business_office = $this->businessOfficeRepo->find($location);
         return $business_office ? $business_office->ip : null;
     }
 
-    public function getOperationalOfficeSettings($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours, AttendanceSettingTransformer $transformer, BusinessOfficeRepoInterface $business_office_repo)
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessOfficeHoursRepoInterface $office_hours
+     * @param AttendanceSettingTransformer $transformer
+     * @return JsonResponse
+     */
+    public function getOperationalOfficeSettings($business, Request $request, BusinessOfficeHoursRepoInterface $office_hours, AttendanceSettingTransformer $transformer)
     {
         $business = $request->business;
 
-        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $business_offices = $this->businessOfficeRepo->getAllByBusiness($business);
         $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
 
-        $weekends = $business_weekend_repo->getAllByBusiness($business);
+        $weekends = $this->businessWeekendRepo->getAllByBusiness($business);
         $weekend_days = $weekends->pluck('weekday_name')->toArray();
         $weekend_days = array_map('ucfirst', $weekend_days);
 
@@ -679,6 +664,19 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['office_settings_operational' => $data]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param TypeUpdater $type_updater
+     * @param SettingCreator $setting_creator
+     * @param SettingUpdater $setting_updater
+     * @param SettingDeleter $setting_deleter
+     * @param OperationalSetting $operational_setting_updater
+     * @param GeoLocationCreator $geo_location_creator
+     * @param GeoLocationUpdater $geo_location_updater
+     * @param GeoLocationDeleter $geo_location_deleter
+     * @return JsonResponse|void
+     */
     public function updateOperationalOfficeSettings($business, Request $request, TypeUpdater $type_updater,
                                                     SettingCreator $setting_creator, SettingUpdater $setting_updater,
                                                     SettingDeleter $setting_deleter, OperationalSetting $operational_setting_updater,
@@ -811,7 +809,13 @@ class AttendanceController extends Controller
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
-    public function getAttendanceOfficeSettings($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessOfficeHoursRepoInterface $office_hours
+     * @return JsonResponse
+     */
+    public function getAttendanceOfficeSettings($business, Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $request->business;
         $office_time = $office_hours->getOfficeTime($business);
@@ -837,6 +841,13 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['office_settings_attendance' => $data]);
     }
 
+    /**
+     * @param Request $request
+     * @param AttendaceSettingUpdater $updater
+     * @param PolicyRuleRequester $requester
+     * @param PolicyRuleUpdater $policy_updater
+     * @return JsonResponse|void
+     */
     public function updateAttendanceOfficeSettings(Request $request, AttendaceSettingUpdater $updater, PolicyRuleRequester $requester, PolicyRuleUpdater $policy_updater)
     {
         $validation_data = [
@@ -907,6 +918,10 @@ class AttendanceController extends Controller
         if ($checkin_checkout_policy) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getGracePolicy(Request $request)
     {
         $business = $request->business;
@@ -920,6 +935,12 @@ class AttendanceController extends Controller
         return api_response($request, $grace_policy_rules, 200, ['grace_policy_rules' => $grace_policy_rules]);
     }
 
+    /**
+     * @param Request $request
+     * @param PolicyRuleRequester $requester
+     * @param PolicyRuleUpdater $updater
+     * @return JsonResponse
+     */
     public function createUnpaidLeavePolicy(Request $request, PolicyRuleRequester $requester, PolicyRuleUpdater $updater)
     {
         $data = [
@@ -942,6 +963,11 @@ class AttendanceController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param Request $request
+     * @param BusinessOfficeHoursRepoInterface $office_hours
+     * @return JsonResponse
+     */
     public function getUnpaidLeavePolicy(Request $request, BusinessOfficeHoursRepoInterface $office_hours)
     {
         $business = $request->business;
@@ -960,6 +986,10 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getLateCheckinEarlyCheckoutPolicy(Request $request)
     {
         $business = $request->business;
@@ -973,14 +1003,18 @@ class AttendanceController extends Controller
         return api_response($request, $checkin_checkout_policy_rules, 200, ['checkin_checkout_policy_rules' => $checkin_checkout_policy_rules]);
     }
 
-    public function getOfficeSettingChangesLogs(Request $request, OfficeSettingChangesLogsRepository $office_setting_changes_logs)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getOfficeSettingChangesLogs(Request $request)
     {
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
         $business = $request->business;
         if (!$business) return api_response($request, null, 401);
-        $operational_changes_logs = $office_setting_changes_logs->where('business_id', $business->id)->orderBy('created_at', 'DESC')->get();
+        $operational_changes_logs = $this->officeSettingChangesLogsRepo->where('business_id', $business->id)->orderBy('created_at', 'DESC')->get();
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($operational_changes_logs, new ChangesLogsTransformer());
@@ -988,7 +1022,11 @@ class AttendanceController extends Controller
         return api_response($request, $operational_changes_logs, 200, ['office_setting_changes_logs' => $operational_changes_logs]);
     }
 
-    public function getOfficeLocations(Request $request, BusinessOfficeRepoInterface $business_office_repo)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getOfficeLocations(Request $request)
     {
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -996,41 +1034,9 @@ class AttendanceController extends Controller
         $business = $request->business;
         if (!$business) return api_response($request, null, 401);
         $office_id = $request->office_id;
-        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $business_offices = $this->businessOfficeRepo->getAllByBusiness($business);
         $office_locations = (new OfficeLocationFormatter($business_offices))->get($office_id);
         return api_response($request, $office_locations, 200, ['office_locations' => $office_locations]);
-    }
-
-    private function attendanceSortOnDate($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['date']);
-        });
-    }
-
-    private function attendanceSortOnHour($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['active_hours']);
-        });
-    }
-
-    private function attendanceSortOnCheckin($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['check_in']['time']);
-        });
-    }
-
-    private function attendanceSortOnCheckout($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['check_out']['time']);
-        });
     }
 
     /**
@@ -1043,6 +1049,10 @@ class AttendanceController extends Controller
         return count($errors) == count($business_offices);
     }
 
+    /**
+     * @param Business $business
+     * @return array[]|\string[][]
+     */
     private function getHalfDayTimings(Business $business)
     {
         if ($business->half_day_configuration) {
@@ -1071,125 +1081,16 @@ class AttendanceController extends Controller
         }
     }
 
+    /**
+     * @param $business_member_joining_date
+     * @param $start_date
+     * @param $end_date
+     * @return bool
+     */
     private function checkJoiningDate($business_member_joining_date, $start_date, $end_date)
     {
         if (!$business_member_joining_date) return false;
         if ($business_member_joining_date->format('d') == self::FIRST_DAY_OF_MONTH) return false;
         return $business_member_joining_date->format('Y-m-d') >= $start_date && $business_member_joining_date->format('Y-m-d') <= $end_date;
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param Request $request
-     * @return mixed
-     */
-    private function searchWithEmployeeName($employee_attendance, Request $request)
-    {
-        return $employee_attendance->filter(function ($attendance) use ($request) {
-            return str_contains(strtoupper($attendance['member']['name']), strtoupper($request->search));
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnAbsent($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['absent']);
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnPresent($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['present']);
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnLeave($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['on_leave']);
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnLate($employee_attendance, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $employee_attendance->$sort_by(function ($attendance, $key) {
-            return strtoupper($attendance['attendance']['late']);
-        });
-    }
-
-    /**
-     * @param $attendances
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceSortOnOvertime($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return $attendance['overtime_in_minutes'];
-        });
-    }
-
-    /**
-     * @param $attendances
-     * @param string $sort
-     * @return mixed
-     */
-    private function attendanceCustomSortOnOvertime($attendances, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $attendances->$sort_by(function ($attendance, $key) {
-            return $attendance['attendance']['overtime_in_minutes'];
-        });
-    }
-
-    /**
-     * @param $employee_attendance
-     * @return mixed
-     */
-    private function filterInactiveCoWorkersWithData($employee_attendance)
-    {
-        return $employee_attendance->filter(function ($attendance) {
-            if ($attendance['status'] === 'inactive') {
-                return $attendance['attendance']['present'] || $attendance['attendance']['on_leave'];
-            } else {
-                return true;
-            }
-        });
-    }
-
-    /**
-     * @param $month
-     * @param $year
-     * @return bool
-     */
-    private function isShowRunningMonthsAttendance($year, $month)
-    {
-        return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 }
