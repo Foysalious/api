@@ -347,39 +347,44 @@ class BusinessMember extends Model
         return $tracking_locations->orderBy('created_at', 'desc');
     }
 
-    public function shift()
+    public function isShiftEnable()
+    {
+        return $this->is_shift_enable;
+    }
+
+    public function shifts()
     {
         return $this->hasMany(ShiftAssignment::class);
     }
 
     public function generalShift()
     {
-        return $this->shift()->where('is_general', 1);
+        return $this->shifts()->where('is_general', 1);
     }
 
     public function shiftToday()
     {
-        return $this->shift()->where('date', Carbon::now()->toDateString())->first();
+        return $this->shifts()->where('date', Carbon::now()->toDateString())->first();
     }
 
     public function shiftYesterday()
     {
-        return $this->shift()->where('date', Carbon::now()->subDay()->toDateString())->first();
+        return $this->shifts()->where('date', Carbon::now()->subDay()->toDateString())->first();
     }
 
     public function shiftTomorrow()
     {
-        return $this->shift()->where('date', Carbon::now()->addDay()->toDateString())->first();
+        return $this->shifts()->where('date', Carbon::now()->addDay()->toDateString())->first();
     }
 
     public function nextShift()
     {
-        return $this->shift()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
+        return $this->shifts()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
     }
 
     public function previousShift()
     {
-        return $this->shift()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
+        return $this->shifts()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
     }
 
     public function calculationTodayLastCheckInTime($which_half, $shift_assignment): string

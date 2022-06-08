@@ -196,6 +196,8 @@ class AttendanceController extends Controller
                 $start_date = Carbon::now()->startOfMonth()->toDateString();
                 $end_date = Carbon::now()->endOfMonth()->toDateString();
             }
+
+
             $member = $business_member->member;
             $profile = $member->profile;
             $member_name = $profile->name;
@@ -212,7 +214,12 @@ class AttendanceController extends Controller
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, false))->transform($attendances);
+            $shifts_counts = 0;
+            if ($business_member->isShiftEnable())
+                $shifts_counts = $business_member->shifts()->where('is_general', 0)->whereBetween('date', $time_frame->getArray())->count();
+
+            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday,
+                $weekend_settings, $business_member_leave, false, $business_member->isShiftEnable()))->transform($attendances,$shifts_counts);
 
             $all_employee_attendance[] = [
                 'business_member_id' => $business_member->id,
@@ -263,7 +270,7 @@ class AttendanceController extends Controller
 
         $this->validate($request, [
             'start_date' => 'date|required',
-            'end_date'   => 'date|required',
+            'end_date' => 'date|required',
             'file' => 'string|in:excel'
         ]);
 
