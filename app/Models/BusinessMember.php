@@ -100,8 +100,12 @@ class BusinessMember extends Model
 
     public function attendanceOfToday()
     {
-
         return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->toDateString())->first();
+    }
+
+    public function attendanceOfYesterday()
+    {
+        return $this->hasMany(Attendance::class)->where('date', (Carbon::now())->subDay()->toDateString())->first();
     }
 
     public function lastAttendance()
