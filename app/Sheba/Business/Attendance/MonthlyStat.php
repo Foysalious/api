@@ -64,6 +64,7 @@ class MonthlyStat
                 $data[] = $d->format('Y-m-d');
             }
         }
+        #dd($data);
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $remaining_days = (($this->timeFrame->start)->diffInDays($this->timeFrame->end)) + 1;

@@ -16,12 +16,14 @@ use App\Sheba\Business\OfficeSetting\PolicyTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\ChangesLogsTransformer;
 use App\Sheba\Business\OfficeSettingChangesLogs\Creator;
 use App\Sheba\Business\OfficeSettingChangesLogs\Requester;
+use App\Transformers\Business\AttendanceMonthlyListTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
@@ -73,7 +75,7 @@ class AttendanceController extends Controller
     private $businessOfficeRepo;
     /**  @var CoWorkerInfoFilter $coWorkerInfoFilter */
     private $coWorkerInfoFilter;
-    /** @var TimeFrame  $timeFrame */
+    /** @var TimeFrame $timeFrame */
     private $timeFrame;
 
     /**
@@ -155,15 +157,13 @@ class AttendanceController extends Controller
     /**
      * @param $business
      * @param Request $request
-     * @param AttendanceRepoInterface $attendance_repo
      * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @param Excel $monthly_excel
      * @param Filter $monthly_filer
      * @return JsonResponse|void
      */
-    public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
-                                    BusinessWeekendSettingsRepo $business_weekend_settings_repo, Excel $monthly_excel,
-                                    Filter $monthly_filer)
+    public function getMonthlyStats($business, Request $request, BusinessWeekendSettingsRepo $business_weekend_settings_repo,
+                                    Excel $monthly_excel, Filter $monthly_filer)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
@@ -174,76 +174,22 @@ class AttendanceController extends Controller
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
 
         $business_members = $business->getAllBusinessMemberExceptInvited();
+        if ($request->has('department')) $business_members = $this->coWorkerInfoFilter->filterByDepartment($business_members, $request);
+        if ($request->has('status')) $business_members = $this->coWorkerInfoFilter->filterByStatus($business_members, $request);
 
-        if ($request->has('department_id')) {
-            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
-                $q->whereHas('businessDepartment', function ($q) use ($request) {
-                    $q->where('business_departments.id', $request->department_id);
-                });
-            });
-        }
-
-        if ($request->has('status')) {
-            $business_members = $business_members->where('status', $request->status);
-        }
-
-        $all_employee_attendance = [];
         $business_holiday = $this->holidayRepository->getAllByBusiness($business);
         $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
-        foreach ($business_members->get() as $business_member) {
-            if ($request->has('start_date') && $request->has('end_date')) {
-                $start_date = $request->start_date;
-                $end_date = $request->end_date;
-            } else {
-                $start_date = Carbon::now()->startOfMonth()->toDateString();
-                $end_date = Carbon::now()->endOfMonth()->toDateString();
-            }
 
+        $attendance_monthly_list_transformer = new AttendanceMonthlyListTransformer();
+        $attendance_monthly_list_transformer->setStartDate($request->start_date)->setEndDate($request->end_date)
+            ->setBusinessHolidays($business_holiday)->setBusinessWeekendSettings($weekend_settings);
 
-            $member = $business_member->member;
-            $profile = $member->profile;
-            $member_name = $profile->name;
-            /** @var BusinessMember $business_member */
-            $member_department = $business_member->role ? $business_member->role->businessDepartment : null;
-            $department_name = $member_department ? $member_department->name : 'N/S';
-            $department_id = $member_department ? $member_department->id : 'N/S';
-            $business_member_joining_date = $business_member->join_date;
-            $joining_prorated = null;
-            if ($this->checkJoiningDate($business_member_joining_date, $start_date, $end_date)) {
-                $joining_prorated = 1;
-                $start_date = $business_member_joining_date;
-            }
-            $time_frame = $this->timeFrame->forDateRange($start_date, $end_date);
-            $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
-            $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $shifts_counts = 0;
-            if ($business_member->isShiftEnable())
-                $shifts_counts = $business_member->shifts()->where('is_general', 0)->whereBetween('date', $time_frame->getArray())->count();
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($business_members->get(), $attendance_monthly_list_transformer);
+        $attendance_monthly_lists = $manager->createData($employees)->toArray()['data'];
 
-            $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday,
-                $weekend_settings, $business_member_leave, false, $business_member->isShiftEnable()))->transform($attendances, $shifts_counts);
-
-            $all_employee_attendance[] = [
-                'business_member_id' => $business_member->id,
-                'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
-                'email' => $profile->email,
-                'status' => $business_member->status,
-                'member' => [
-                    'id' => $member->id,
-                    'name' => $member_name,
-                ],
-                'department' => [
-                    'id' => $department_id,
-                    'name' => $department_name,
-                ],
-                'attendance' => $employee_attendance['statistics'],
-                'joining_prorated' => $joining_prorated ? 'Yes' : 'No'
-            ];
-
-        }
-
-        $all_employee_attendance = collect($all_employee_attendance);
-
+        $all_employee_attendance = collect($attendance_monthly_lists);
         $all_employee_attendance = $monthly_filer->filterInactiveCoWorkersWithData($all_employee_attendance);
 
         if ($request->has('search')) $all_employee_attendance = $monthly_filer->searchWithEmployeeName($all_employee_attendance, $request);
