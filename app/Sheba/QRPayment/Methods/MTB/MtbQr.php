@@ -9,6 +9,7 @@ use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\QRPayment\Methods\QRPaymentMethod;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Redis;
 use Sheba\QRPayment\Exceptions\QRException;
 
 class MtbQr extends QRPaymentMethod
@@ -38,10 +39,10 @@ class MtbQr extends QRPaymentMethod
         $url = QRPaymentStatics::MTB_VALIDATE_URL . http_build_query($data);
 
         $response = $this->mtbClient->get($url, AuthTypes::BASIC_AUTH_TYPE);
-
-        if(isset($response["transactions"])) {
+        Redis::set('MTB', json_encode($response));
+        if (isset($response["transactions"])) {
             $transaction = $response["transactions"];
-            if(count($transaction) > 0) return true;
+            if (count($transaction) > 0) return true;
         }
         return false;
     }
@@ -49,8 +50,8 @@ class MtbQr extends QRPaymentMethod
     private function makeApiData(): array
     {
         return array(
-            'mid'   => $this->merchantId,
-            'amt'   => $this->amount,
+            'mid' => $this->merchantId,
+            'amt' => $this->amount,
             'txndt' => Carbon::now()->format("Y-m-d")
         );
     }
@@ -67,7 +68,7 @@ class MtbQr extends QRPaymentMethod
 
         $response = $this->mtbClient->get($url, AuthTypes::BASIC_AUTH_TYPE);
 
-        if(isset($response["respCode"]) && $response["respCode"] === self::QR_GENERATE_SUCCESS_CODE) {
+        if (isset($response["respCode"]) && $response["respCode"] === self::QR_GENERATE_SUCCESS_CODE) {
             $this->qrString = $response["QRString"];
             $this->refId = $response["RefNo"];
             return $this;
@@ -79,7 +80,7 @@ class MtbQr extends QRPaymentMethod
     private function makeDataForQRGenerate(): array
     {
         return array(
-            'mid'    => $this->merchantId,
+            'mid' => $this->merchantId,
             'amount' => $this->amount
         );
     }
