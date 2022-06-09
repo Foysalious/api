@@ -163,6 +163,7 @@ class PosCustomerController extends Controller
         $supplier['updated_at'] = isset($supplier['updated_at']) ? convertTimezone($updated_at)->format('Y-m-d H:i:s') : null;
         $supplier['payable'] = isset($balance['stats']) && isset($balance['stats']['payable']) ? $balance['stats']['payable'] : 0.0;
         $supplier['receivable'] = isset($balance['stats']) && isset($balance['stats']['receivable']) ? $balance['stats']['receivable'] : 0.0;
+        $supplier['is_customer_and_supplier'] = rand(0,1);
         unset($supplier['_id']);
         return http_response($request, null, 200, ['message' => 'Successful', 'supplier' => $supplier]);
     }
