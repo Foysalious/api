@@ -192,6 +192,7 @@ class PosCustomerService
         $customer_details['is_customer_editable'] = true;
         $customer_details['note'] = $customer_info['note'] ?? null;
         $customer_details['is_supplier'] = $customer_info['is_supplier'] ?? 0;
+        $customer_details['is_customer_and_supplier'] = rand(0,1);
 
         return $customer_details;
     }
