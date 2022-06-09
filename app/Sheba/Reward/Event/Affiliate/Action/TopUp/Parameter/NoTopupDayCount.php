@@ -1,10 +1,6 @@
-<?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
+<?php namespace Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter;
 
-use App\Models\Partner;
 use App\Models\TopUpOrder;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
-use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Reward\Event\ActionEventParameter;
 use Sheba\TopUp\TopUpCounts;
 
