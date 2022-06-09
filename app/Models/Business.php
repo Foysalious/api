@@ -573,4 +573,9 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return in_array($this->id, config('b2b.BUSINESSES_IDS_FOR_REFERRAL'));
     }
 
+    public function isShiftEnabled(): bool
+    {
+        return (bool) $this->is_shift_enable;
+    }
+
 }
