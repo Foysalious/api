@@ -54,4 +54,12 @@ class MtbController extends Controller
         return http_response($request, null, 200, ['message' => 'Successful', 'mobile' => $mobile]);
     }
 
+    public function statusValidate(Request $request)
+    {
+        $this->validate($request, ['merchant_id' => 'required|string']);
+        $this->mtbSavePrimaryInformation->validateMtbAccountStatus($request->merchant_id);
+        return http_response($request, null, 200, ['message' => 'Successful']);
+
+    }
+
 }

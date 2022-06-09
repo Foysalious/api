@@ -1,9 +1,7 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
-use App\Models\District;
-use App\Models\Division;
+
 use App\Models\Partner;
-use App\Models\Thana;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
@@ -14,6 +12,8 @@ use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\ResellerPayment\MORServiceClient;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\App;
+use Sheba\PushNotificationHandler;
 
 
 class MtbSavePrimaryInformation
@@ -217,5 +217,30 @@ class MtbSavePrimaryInformation
         $morClient = app(MORServiceClient::class);
         $morClient->post("api/v1/application/users/" . $this->partner->id, $this->makeDataForMorStore());
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
+    }
+
+    private function sendPushNotification($partner)
+    {
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+        $event_type = 'MtbAccountCreate';
+
+        $title = "একাউন্ট ওপেনিং সফল হয়েছে";
+        $message = "এমটিবি তে আপনার একাউন্ট সফলভাবে তৈরি হয়েছে। একাউন্ট সম্পর্কে বিস্তারিত জানতে এখানে ক্লিক করুন";
+        (new PushNotificationHandler())->send([
+            "title" => $title,
+            "message" => $message,
+            "event_type" => $event_type,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel, $sound);
+    }
+
+    public function validateMtbAccountStatus($merchant_id)
+    {
+        $partner = Partner::where('id', $merchant_id)->first();
+        App::make(PaymentService::class)->getMtbAccountStatus($partner->partnerMefInformation);
+        $this->sendPushNotification($partner->id);
     }
 }

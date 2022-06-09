@@ -14,6 +14,7 @@ use Sheba\Dal\QRPayment\Model as QRPaymentModel;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Statuses;
+use Sheba\PushNotificationHandler;
 use Sheba\QRPayment\Exceptions\FinancialInformationNotFoundException;
 use Sheba\QRPayment\Exceptions\QRException;
 use Sheba\QRPayment\Exceptions\QRPayableNotFoundException;
@@ -78,6 +79,28 @@ class QRValidator
         return $this;
     }
 
+    public function sendNotification()
+    {
+        $date = date('m/d/Y h:i:s a', time());
+        $data = $this->makePaymentData();
+        $amount = json_decode($data['gateway_response'])->amount;
+        $event_type = 'AccountTransactionList';
+        $topic = config('sheba.push_notification_topic_name.manager') . $this->getPartnerFromMerchantId()->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+
+        $title = "পেমেন্ট সফল হয়েছে";
+        $message = "আপনার এমটিবি একাউন্টে  সফলভাবে " . $amount . " টাকা এড হয়েছে। " . $date;
+        (new PushNotificationHandler())->send([
+            "title" => $title,
+            "message" => $message,
+            "event_type" => $event_type,
+            "sound" => "notification_sound",
+            "channel_id" => $channel,
+            "event_id" => ""
+        ], $topic, $channel, $sound);
+    }
+
     /**
      * @return void
      * @throws AlreadyCompletingPayment
@@ -86,7 +109,7 @@ class QRValidator
      */
     public function complete()
     {
-        if(config('app.env') == 'production' && !$this->validated())
+        if (config('app.env') == 'production' && !$this->validated())
             throw new QRException("MTB validation failed for this transaction", 400);
 
         if (!isset($this->qrId)) {
@@ -100,6 +123,7 @@ class QRValidator
         }
         $this->storePayment();
         $this->qrPaymentComplete();
+        $this->sendNotification();
 
     }
 
@@ -182,7 +206,7 @@ class QRValidator
      */
     private function getPartnerFromMerchantId(): Partner
     {
-        if(config('app.env') !== 'production')
+        if (config('app.env') !== 'production')
             return Partner::find(38015);
         $finance_information = PartnerFinancialInformation::query()->where("mtb_merchant_id", $this->merchantId)->first();
         if (!$finance_information) throw new FinancialInformationNotFoundException();
