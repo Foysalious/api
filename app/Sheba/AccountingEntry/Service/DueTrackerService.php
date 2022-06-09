@@ -293,6 +293,9 @@ class DueTrackerService
         return implode('&', $query_strings);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function updateEntry()
     {
         return app()->make(EntryUpdater::class)

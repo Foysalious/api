@@ -7,12 +7,11 @@ use App\Sheba\AccountingEntry\Constants\EntryTypes;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Service\DueTrackerReportService;
 use App\Sheba\AccountingEntry\Service\DueTrackerService;
-use App\Sheba\AccountingEntry\Service\DueTrackerSmsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Mpdf\MpdfException;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
-use App\Sheba\AccountingEntry\Repository\AccountingDueTrackerRepository;
+
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Usage\Usage;
@@ -82,10 +81,9 @@ class DueTrackerControllerV2 extends Controller
             'contact_id' => 'required',
             'note' => 'sometimes',
             'entry_at' => 'sometimes|date_format:Y-m-d H:i:s',
-            'attachment_should_remove' => 'sometimes|array',
-            'attachments' => 'sometimes|array',
+            'delete_attachments' => 'sometimes|array',
+            'old_attachments' => 'sometimes|array',
             'attachments.*' => 'sometimes|mimes:jpg,jpeg,png,bmp|max:2048'
-
         ]);
         $entry_dto = app()->make(EntryDTO::class);
         $entry_dto->setAmount($request->amount)
@@ -95,6 +93,8 @@ class DueTrackerControllerV2 extends Controller
             ->setContactId($request->contact_id)
             ->setEntryAt($request->entry_at)
             ->setAttachments($request->attachments)
+            ->setdeleteAttachments($request->delete_attachments)
+            ->setOldAttachments($request->old_attachments)
             ->setNote($request->note)
             ->setEntryId($entry_id);
         $response = $this->dueTrackerService->setPartner($request->partner)->setEntryDto($entry_dto)->updateEntry();
