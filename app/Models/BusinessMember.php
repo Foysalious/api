@@ -399,31 +399,6 @@ class BusinessMember extends Model
         return $this->shifts()->where('is_general', 1);
     }
 
-    public function shiftToday()
-    {
-        return $this->shifts()->where('date', Carbon::now()->toDateString())->first();
-    }
-
-    public function shiftYesterday()
-    {
-        return $this->shifts()->where('date', Carbon::now()->subDay()->toDateString())->first();
-    }
-
-    public function shiftTomorrow()
-    {
-        return $this->shifts()->where('date', Carbon::now()->addDay()->toDateString())->first();
-    }
-
-    public function nextShift()
-    {
-        return $this->shifts()->where('date', '>' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
-    }
-
-    public function previousShift()
-    {
-        return $this->shifts()->where('date', '<' ,Carbon::now()->toDateString())->where('is_shift', 1)->orderBy('id', 'DESC')->first();
-    }
-
     public function calculationTodayLastCheckInTime($which_half, $shift_assignment): string
     {
         if ($which_half == HalfDayType::FIRST_HALF) {
@@ -451,5 +426,10 @@ class BusinessMember extends Model
             if ($shift_assignment->checkout_grace_enable) return $checkout_time->subMinutes($shift_assignment->checkout_grace_time)->toTimeString();
             return $checkout_time->toTimeString();
         }
+    }
+
+    public function shiftAssignmentFromYesterdayToTomorrow()
+    {
+        return $this->shift()->whereBetween('date', [Carbon::now()->subDay()->toDateString(), Carbon::now()->addDay()->toDateString()])->get();
     }
 }
