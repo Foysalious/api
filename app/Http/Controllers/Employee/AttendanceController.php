@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Http\Presenters\EmployeeActionPresenter;
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\Attendance\AttendanceCommonInfo;
+use Sheba\Business\Employee\AttendanceActionChecker;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -145,28 +147,10 @@ class AttendanceController extends Controller
         return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 
-    public function getTodaysInfo(Request $request, ActionProcessor $action_processor)
+    public function getTodaysInfo(Request $request, AttendanceActionChecker $attendance_action_checker)
     {
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
-        /** @var Attendance $attendance */
-        $attendance = $business_member->attendanceOfToday();
-        /** @var Business $business */
-        $business = $this->getBusiness($request);
-        $is_remote_enable = $business->isRemoteAttendanceEnable($business_member->id);
-        $is_geo_location_enable = $business->isGeoLocationAttendanceEnable();
-        $data = [
-            'can_checkin' => !$attendance ? 1 : ($attendance->canTakeThisAction(Actions::CHECKIN) ? 1 : 0),
-            'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
-            'checkin_time' => $attendance ? $attendance->checkin_time : null,
-            'checkout_time' => $attendance ? $attendance->checkout_time : null,
-            'is_geo_required' => $is_remote_enable ? 1 : 0,
-            'is_remote_enable' => $is_remote_enable,
-            'is_geo_location_enable' => $is_geo_location_enable,
-            'is_live_track_enable' => $business->liveTrackingSettings && $business->liveTrackingSettings->is_enable ? $business_member->is_live_track_enable : 0
-        ];
-        return api_response($request, null, 200, ['attendance' => $data]);
+        $attendance_action_checker->setBusinessMember($request->business_member);
+        return api_response($request, null, 200, ['attendance' => (new EmployeeActionPresenter($attendance_action_checker))->toArray()]);
     }
 
     public function attendanceInfo(Request $request, AttendanceCommonInfo $attendance_common_info)
