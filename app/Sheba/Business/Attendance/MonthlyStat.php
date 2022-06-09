@@ -23,27 +23,53 @@ class MonthlyStat
     /*** @var BusinessOffice */
     private $businessOfficeRepo;
     private $isShiftOn;
+    private $holidayBreakdown = [];
 
     /**
      * @param TimeFrame $time_frame
      * @param $business
-     * @param $business_holiday
      * @param $weekend_settings
      * @param $business_member_leave
      * @param bool $for_one_employee
      * @param bool $is_shift_on
      */
-    public function __construct(TimeFrame $time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave, $for_one_employee = true,
+    public function __construct(TimeFrame $time_frame, $business, $weekend_settings, $business_member_leave, $for_one_employee = true,
                                           $is_shift_on = false)
     {
         $this->timeFrame = $time_frame;
         $this->business = $business;
-        $this->businessHoliday = $business_holiday;
         $this->businessWeekendSettings = $weekend_settings;
         $this->businessMemberLeave = $business_member_leave;
         $this->forOneEmployee = $for_one_employee;
         $this->businessOfficeRepo = app(BusinessOffice::class);
         $this->isShiftOn = $is_shift_on;
+    }
+
+    /**
+     * @param $business_holidays
+     * @return $this
+     */
+    public function setBusinessHolidays($business_holidays)
+    {
+        $this->businessHoliday = $business_holidays;
+        $this->getBreakdownHolidays();
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    private function getBreakdownHolidays()
+    {
+        foreach ($this->businessHoliday as $holiday) {
+            $start_date = Carbon::parse($holiday->start_date);
+            $end_date = Carbon::parse($holiday->end_date);
+            for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
+                $this->holidayBreakdown[] = $d->format('Y-m-d');
+            }
+        }
+
+        return $this->holidayBreakdown;
     }
 
     /**
@@ -53,19 +79,11 @@ class MonthlyStat
      */
     public function transform($attendances, $shift_count = 0)
     {
-        $data = [];
         $check_weekend = new CheckWeekend();
         list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray();
         $leave_days = $late_days = $absent_days = [];
-        foreach ($this->businessHoliday as $holiday) {
-            $start_date = Carbon::parse($holiday->start_date);
-            $end_date = Carbon::parse($holiday->end_date);
-            for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
-                $data[] = $d->format('Y-m-d');
-            }
-        }
-        #dd($data);
-        $dates_of_holidays_formatted = $data;
+
+        $dates_of_holidays_formatted = $this->holidayBreakdown;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $remaining_days = (($this->timeFrame->start)->diffInDays($this->timeFrame->end)) + 1;
 
