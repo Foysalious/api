@@ -1,7 +1,6 @@
-<?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
+<?php namespace Sheba\Reward\Event\Affiliate\Action\TopUp\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
-use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
 class AmountGreaterThan extends ActionEventParameter
 {

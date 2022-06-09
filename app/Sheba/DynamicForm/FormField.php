@@ -57,7 +57,7 @@ class FormField implements Arrayable
             "max_length" => $this->max_length,
             "is_editable" => $this->is_editable,
             "mandatory" => $this->mandatory,
-            "regex"=> $this->regex,
+            "regex"=> json_decode($this->regex),
         ];
     }
 

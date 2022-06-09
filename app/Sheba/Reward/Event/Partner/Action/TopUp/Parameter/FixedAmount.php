@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
+<?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
 
 use Sheba\Reward\Event\ActionEventParameter;
 use Sheba\Reward\Exception\ParameterTypeMismatchException;
@@ -15,12 +13,9 @@ class FixedAmount extends ActionEventParameter
      */
     public function check(array $params): bool
     {
-        $topup_order = $params[0];
-        if($this->value) {
-            if ($topup_order->amount == $this->value) return true;
-            return false;
-        }
+        if (is_null($this->value)) return true;
 
-        return true;
+        $topup_order = $params[0];
+        return $topup_order->amount == $this->value;
     }
 }

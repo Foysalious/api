@@ -101,6 +101,7 @@ class PaymentService
         $qr_gateway = QRGateway::where('method_name', $this->key)->first();
         if (!$qr_gateway) throw new InvalidQRKeyException();
         $this->getResellerPaymentStatus(true);
+        $account_details = json_decode($this->partner->partnerMefInformation->mtb_account_status);
         if (isset(json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status)) {
             if (json_decode($this->partner->partnerMefInformation->mtb_account_status)->Status == 19) {
                 return [
@@ -114,7 +115,11 @@ class PaymentService
                         'id' => $qr_gateway->id,
                         'key' => $qr_gateway->key,
                         'name_bn' => $qr_gateway->name_bn,
-                        'icon' => $qr_gateway->icon
+                        'icon' => $qr_gateway->icon,
+                        'mid' => $account_details->Mid,
+                        'account_number' => $account_details->AccountNum,
+                        'customer_number' => $account_details->CustomerNum,
+                        'name' => $this->partner->getFirstAdminResource()->profile->name
                     ]
                 ];
             }
@@ -130,7 +135,11 @@ class PaymentService
                 'id' => $qr_gateway->id,
                 'key' => $qr_gateway->key,
                 'name_bn' => $qr_gateway->name_bn,
-                'icon' => $qr_gateway->icon
+                'icon' => $qr_gateway->icon,
+                'mid' => $account_details->Mid ?? null,
+                'account_number' => $account_details->AccountNum ?? null,
+                'customer_number' => $account_details->CustomerNum ?? null,
+                'name' => $this->partner->getFirstAdminResource()->profile->name
             ]
         ];
 
@@ -425,7 +434,7 @@ class PaymentService
      * @throws InvalidKeyException
      * @throws NotFoundAndDoNotReportException
      */
-    public function getPaymentGateways($completion, $header_message, $partnerId, $banner): array
+    public function getPaymentGateways($completion, $header_message, $partnerId, $banner, $version_code): array
     {
         $pgwData = [];
         $status = '';
@@ -455,9 +464,12 @@ class PaymentService
             $pgwData[] = $this->makePGWGatewayData($pgwStore, $completion, $header_message, $completionData, $status);
         }
         //QR gateway off until app live
-//        $qrData = $this->getQRGateways($completion);
-//        $allData = array_merge($pgwData, $qrData);
-        $allData = $pgwData;
+        if (intval($version_code) < 300600) {
+            $allData = $pgwData;
+        } else {
+            $qrData = $this->getQRGateways($completion);
+            $allData = array_merge($pgwData, $qrData);
+        }
         return $banner ?
             array_merge(["payment_gateway_list" => $allData], ["list_banner" => MEFGeneralStatics::LIST_PAGE_BANNER]) : $allData;
     }

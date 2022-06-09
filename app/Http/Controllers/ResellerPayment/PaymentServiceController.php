@@ -36,11 +36,11 @@ class PaymentServiceController extends Controller
     public function getPaymentGateway(Request $request): JsonResponse
     {
         $completion = $request->query('completion');
-        $banner     = $request->query('banner');
+        $banner = $request->query('banner');
         $header_message = 'সর্বাধিক ব্যবহৃত';
         $partnerId = $request->partner->id;
-
-        $pgwData = $this->paymentService->setPartner($request->partner)->getPaymentGateways($completion, $header_message, $partnerId, $banner);
+        $version_code = $request->header('version-code');
+        $pgwData = $this->paymentService->setPartner($request->partner)->getPaymentGateways($completion, $header_message, $partnerId, $banner,$version_code);
         return api_response($request, null, 200, ['data' => $pgwData]);
     }
 
@@ -92,7 +92,7 @@ class PaymentServiceController extends Controller
             $partner = $request->partner;
 
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
-            $amount       = $request->amount;
+            $amount = $request->amount;
 
             $emi_data = $this->paymentService->getEmiInfoForManager($partner, $amount);
 
@@ -149,7 +149,7 @@ class PaymentServiceController extends Controller
         $paymentService->authenticateMorRequest($request->header('access-key'));
 
         $partner = Partner::find($request->partner_id);
-        if(!$partner)
+        if (!$partner)
             throw new NotFoundException("Invalid Partner Id");
 
 
@@ -169,7 +169,7 @@ class PaymentServiceController extends Controller
         $this->validate($request, ResellerPaymentGeneralStatic::smsSendValidation());
         $paymentService->authenticateMorRequest($request->header('access-key'));
         $partner = Partner::find($request->partner_id);
-        if(!$partner)
+        if (!$partner)
             throw new NotFoundException("Invalid Partner Id");
 
         $paymentService->setKey($request->key)->setPartner($partner)->setNewStatus($request->new_status)->sendSMS($request->sms_body);
