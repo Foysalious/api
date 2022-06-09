@@ -109,8 +109,10 @@ class AttendanceMonthlyListTransformer extends TransformerAbstract
         if ($business_member->isShiftEnable())
             $shifts_counts = $business_member->shifts()->where('is_general', 0)->whereBetween('date', $this->timeFrame->getArray())->count();
 
-        $employee_attendance = (new MonthlyStat($this->timeFrame, $this->business, $this->businessHolidays,
-            $this->weekendSettings, $business_member_leave, false, $business_member->isShiftEnable()))->transform($attendances, $shifts_counts);
+
+        $employee_attendance = (new MonthlyStat($this->timeFrame, $this->business,
+            $this->weekendSettings, $business_member_leave, false, $business_member->isShiftEnable()))
+            ->setBusinessHolidays($this->businessHolidays)->transform($attendances, $shifts_counts);
 
         return [
             'business_member_id' => $business_member->id,

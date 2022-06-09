@@ -249,7 +249,9 @@ class AttendanceController extends Controller
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
 
-        $employee_attendance = (new MonthlyStat($time_frame, $business, $business_holiday, $weekend_settings, $business_member_leave))->transform($attendances);
+        $employee_attendance = (new MonthlyStat($time_frame, $business,$weekend_settings, $business_member_leave))
+            ->setBusinessHolidays($business_holiday)->transform($attendances);
+
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
         $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
             return Carbon::parse($breakdown['date'])->lessThanOrEqualTo(Carbon::today());
