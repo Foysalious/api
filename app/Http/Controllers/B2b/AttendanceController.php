@@ -223,14 +223,13 @@ class AttendanceController extends Controller
      * @return JsonResponse|void
      */
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
-                             BusinessWeekendSettingsRepo $business_weekend_settings_repo, AttendanceRepoInterface $attendance_repo,
-                             BusinessMemberRepositoryInterface $business_member_repository,
+                             BusinessWeekendSettingsRepo $business_weekend_settings_repo,
                              AttendanceList $list, DetailsExcel $details_excel, Filter $daily_filer)
     {
         $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
         /** @var BusinessMember $business_member */
-        $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
+        $business_member = $request->business_member;
 
         $time_frame = $this->timeFrame->forDateRange($request->start_date, $request->end_date);
         $business_member_joining_date = $business_member->join_date;
@@ -243,14 +242,16 @@ class AttendanceController extends Controller
         }
 
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
-
-        $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-
+        $attendances = $business_member->attendances()->whereBetween('date', $time_frame->getArray())->get();
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $weekend_settings = $business_weekend_settings_repo->getAllByBusiness($business);
 
-        $employee_attendance = (new MonthlyStat($time_frame, $business,$weekend_settings, $business_member_leave))
-            ->setBusinessHolidays($business_holiday)->transform($attendances);
+        $shifts_counts = 0;
+        if ($business_member->isShiftEnable())
+            $shifts_counts = $business_member->shifts()->where('is_general', 0)->whereBetween('date', $this->timeFrame->getArray())->count();
+
+        $employee_attendance = (new MonthlyStat($time_frame, $business, $weekend_settings, $business_member_leave, true, $business_member->isShiftEnable()))
+            ->setBusinessHolidays($business_holiday)->transform($attendances, $shifts_counts);
 
         $daily_breakdowns = collect($employee_attendance['daily_breakdown']);
         $daily_breakdowns = $daily_breakdowns->filter(function ($breakdown) {
