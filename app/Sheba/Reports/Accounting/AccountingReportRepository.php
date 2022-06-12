@@ -189,7 +189,7 @@ class AccountingReportRepository extends BaseRepository
     {
         return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . "accounting-report/payments_report?" . ($this->limit ? "limit={$this->limit}" : "") . ($this->offset ? "&offset={$this->offset}" : "&offset=0")
             . ($this->startDate ? "&start_date={$this->startDate}" : "") . ($this->endDate ? "&end_date={$this->endDate}" : "") . ($this->transactionType ? "&transaction_type={$this->transactionType}" : "")
-            . ($this->reconcile ? "&reconcile={$this->reconcile}" : "") . ($this->gateway ? "&gateway={$this->gateway}" : "") . ($this->q ? "&q={$this->q}+" : ""));
+            . ($this->reconcile ? "&reconcile={$this->reconcile}" : "") . ($this->gateway ? "&gateway={$this->gateway}" : "") . ($this->q ? "&q={$this->q}" : ""));
     }
 
     public function tranactionDetails($transactionId, $userId, $userType = UserType::PARTNER)
