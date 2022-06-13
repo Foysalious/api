@@ -6,15 +6,11 @@ namespace App\Sheba\AccountingEntry\Entry;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Helper\FileUploader;
 use App\Sheba\AccountingEntry\Repository\EntriesRepository;
-use App\Sheba\AccountingEntry\Service\DueTrackerContactResolver;
-use Carbon\Carbon;
 use Exception;
-use Sheba\ModificationFields;
-use Sheba\RequestIdentification;
 
 class Creator
 {
-    use ModificationFields;
+    use FileUploader;
     protected $entriesRepo;
     /* @var EntryDTO $entryDto */
     protected $entryDto;
@@ -50,7 +46,9 @@ class Creator
      */
     public function createEntry()
     {
-        $data = $this->entryDataMaker->setPartner($this->partner)->makeData($this->entryDto);
+        $this->entryDto->attachments = $this->entryDto->attachments ?
+            $this->uploadAttachments($this->entryDto->attachments) : json_encode([]);
+        $data = $this->entryDataMaker->setPartner($this->partner)->setEntryDto($this->entryDto)->makeData();
         return $this->entriesRepo->setPartner($this->partner)->createEntry($data);
     }
 

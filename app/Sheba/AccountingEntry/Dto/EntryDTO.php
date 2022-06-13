@@ -4,11 +4,8 @@ namespace App\Sheba\AccountingEntry\Dto;
 
 
 use App\Sheba\AccountingEntry\Constants\EntryTypes;
-use App\Sheba\AccountingEntry\Helper\FileUploader;
-use Carbon\Carbon;
 use Sheba\AccountingEntry\Accounts\Accounts;
-use Sheba\ModificationFields;
-use Sheba\RequestIdentification;
+
 
 class EntryDTO
 {
@@ -40,6 +37,8 @@ class EntryDTO
     public $is_due_tracker_payment_link;
     public $real_amount;
     public $entry_id;
+    public $old_attachments;
+    public $delete_attachments;
 
     /**
      * @param mixed $contact_id
@@ -303,6 +302,25 @@ class EntryDTO
     public function setEntryId(int $entry_id)
     {
         $this->entry_id = $entry_id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $delete_attachments
+     */
+    public function setDeleteAttachments($delete_attachments)
+    {
+        $this->delete_attachments = $delete_attachments;
+        return $this;
+    }
+
+    /**
+     * @param mixed $old_attachments
+     */
+    public function setOldAttachments($old_attachments)
+    {
+        $this->old_attachments = $old_attachments;
+        return $this;
     }
 
 }
