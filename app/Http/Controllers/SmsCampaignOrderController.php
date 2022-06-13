@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
@@ -131,5 +132,34 @@ class SmsCampaignOrderController extends Controller
     public function processQueue(CampaignSmsStatusChanger $sms_status_changer)
     {
         $sms_status_changer->processPendingSms();
+    }
+
+    /**
+     * @param Request $request
+     * @param SmsCampaign $campaign
+     * @return JsonResponse
+     */
+    public function getChargeEstimation(Request $request, SmsCampaign $campaign)
+    {
+        try {
+            $this->validate($request, [
+                'message' => 'required|string',
+                'mobile' => 'required|json',
+            ]);
+
+            $per_sms_charge = constants('SMS_CAMPAIGN.rate_per_sms');
+            $total_charge = $campaign->getEstimateCharge($request->message, $request->mobile);
+            $data = [
+                'total_charge' => $total_charge,
+                'charge_per_sms' => $per_sms_charge,
+                'sms_count' => $total_charge / $per_sms_charge
+            ];
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 }

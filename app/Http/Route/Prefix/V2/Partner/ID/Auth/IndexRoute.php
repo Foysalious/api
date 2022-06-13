@@ -259,6 +259,7 @@ class IndexRoute
                     $api->get('/history/{history_id}/details', 'SmsCampaignOrderController@getHistoryDetails');
                     $api->get('/faq', 'FaqController@getPartnerSmsCampaignFaq');
                     $api->get('/test-queue-run', 'SmsCampaignOrderController@processQueue');
+                    $api->get('/estimate-bulk-charge', 'SmsCampaignOrderController@getChargeEstimation');
                 });
             });
             $api->get('served-customers', 'PartnerController@getServedCustomers');
