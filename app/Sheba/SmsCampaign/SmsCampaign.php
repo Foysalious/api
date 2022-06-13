@@ -178,4 +178,15 @@ class SmsCampaign
             ->setSourceId($campaign_order->id)
             ->store();
     }
+
+    /**
+     * @param $message
+     * @param $mobiles
+     * @return float
+     */
+    public function getEstimateCharge($message, $mobiles): float
+    {
+        $mobileNumbers = json_decode($mobiles);
+        return $this->smsHandler->getBulkCharge($mobileNumbers, $message);
+    }
 }
