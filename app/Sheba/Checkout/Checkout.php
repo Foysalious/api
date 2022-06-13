@@ -92,17 +92,18 @@ class Checkout
     public function placeOrder($request)
     {
         $this->setModifier($this->customer);
+        $address = null;
 
         if ($request->has('address_id') && !empty($request->address_id)) {
             $address = $this->customer->delivery_addresses()->withTrashed()->where('id', (int)$request->address_id)->first();
-            if ($address->mobile != formatMobile(trim($request->mobile))) {
+            if ($address && $address->mobile != formatMobile(trim($request->mobile))) {
                 $new_address = $address->replicate();
                 $new_address->mobile = formatMobile(trim($request->mobile));
                 $new_address->name = trim($request->name);
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-        if(empty($address->geo_informations)) {
+        if($address && empty($address->geo_informations)) {
             throw new InvalidAddressException();;
         }
         if (!$request->has('location')) {
@@ -120,7 +121,7 @@ class Checkout
             $this->orderData['location'] = Location::find($this->partnerListRequest->location);
             $data = $this->makeOrderData($request);
             if ($request->has('address_id') && !empty($request->address_id)) {
-                $data['address_id'] = $address->id;
+                $data['address_id'] = $address ? $address->id : null;
             }
             $data['payment_method'] = $request->payment_method == 'cod' ? 'cash-on-delivery' : ucwords($request->payment_method);
             $data['job_services'] = $this->createJobService($partner->services, $this->partnerListRequest->selectedServices, $data);
