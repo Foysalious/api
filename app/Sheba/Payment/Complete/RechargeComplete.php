@@ -1,5 +1,4 @@
-<?php
-namespace Sheba\Payment\Complete;
+<?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\WalletRecharge\SendSmsOnWalletRecharge;
 use App\Models\Partner;
@@ -60,10 +59,12 @@ class RechargeComplete extends PaymentComplete
             throw $e;
         }
         $payable      = $this->payment->payable;
+        $payable      = $this->payment->payable;
         $payable_user = $payable->user;
+        app(ActionRewardDispatcher::class)->run('wallet_recharge', $payable_user, $payable_user, $payable);
+
         if ($payable_user instanceof Partner) {
             $this->notifyManager($this->payment, $payable_user);
-            app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
             $this->storeJournal();
         }
         return $this->payment;

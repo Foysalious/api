@@ -1,6 +1,7 @@
 <?php namespace Sheba\Reward;
 
 use App\Models\Reward;
+use App\Models\RewardAction;
 use Carbon\Carbon;
 use Exception;
 use Sheba\Reward\Disburse\DisburseHandler;
@@ -27,15 +28,11 @@ class ActionRewardDispatcher
      */
     public function run($event, Rewardable $rewardable, ...$params)
     {
-        $published_rewards = Reward::with('detail')
-            ->leftJoin('reward_actions', 'rewards.detail_id', '=', 'reward_actions.id')
-            ->where('rewards.detail_type', 'App\Models\RewardAction')
-            ->where('reward_actions.event_name', $event)
-            ->where('rewards.target_type', get_class($rewardable))
-            ->where('rewards.start_time', '<=', Carbon::now())
-            ->where('rewards.end_time', '>=', Carbon::now())
-            ->select('rewards.*')
-            ->get();
+        $published_rewards = $this->getPublishedRewards($event, $rewardable);
+
+        if ($event == 'info_call_completed') {
+            $this->disburseHandler->setPartnerOrder($params[0]);
+        }
 
         foreach ($published_rewards as $reward) {
             /**
@@ -48,5 +45,20 @@ class ActionRewardDispatcher
                 $this->disburseHandler->setReward($reward)->setEvent($event)->disburse($rewardable);
             }
         }
+    }
+
+    private function getPublishedRewards($event, Rewardable $rewardable)
+    {
+        $now = Carbon::now();
+
+        return Reward::with('detail')
+            ->leftJoin('reward_actions', 'rewards.detail_id', '=', 'reward_actions.id')
+            ->where('rewards.detail_type', RewardAction::class)
+            ->where('reward_actions.event_name', $event)
+            ->where('rewards.target_type', get_class($rewardable))
+            ->where('rewards.start_time', '<=', $now)
+            ->where('rewards.end_time', '>=', $now)
+            ->select('rewards.*')
+            ->get();
     }
 }
