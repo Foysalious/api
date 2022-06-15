@@ -203,7 +203,13 @@
     </div>
 
     </div>
-
+<style>
+    th
+     {
+        font-size: 12px;
+        font-weight: 500;
+     }
+</style>
 
 
 </body>
