@@ -1,7 +1,8 @@
 <?php namespace Sheba\Reward\Disburse;
 
+use App\Models\PartnerOrder;
+use App\Models\Job;
 use App\Models\Reward;
-use Exception;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Repository\JournalCreateRepository;
 use Sheba\Repositories\BonusRepository;
@@ -23,6 +24,8 @@ class DisburseHandler
     private $cashDisburse;
     /** @var Event $event */
     private $event;
+    /** @var PartnerOrder */
+    private $partner_order;
 
     public function __construct(RewardLogRepository $log_repository, BonusRepository $bonus_repository, PointDisburse $point_disburse, CashDisburse $cashDisburse)
     {
@@ -44,51 +47,115 @@ class DisburseHandler
         return $this;
     }
 
+    public function setPartnerOrder(PartnerOrder $partner_order)
+    {
+        $this->partner_order = $partner_order;
+        return $this;
+    }
+
     /**
      * @param Rewardable $rewardable
-     * @throws Exception
      */
     public function disburse(Rewardable $rewardable)
     {
         $amount = $this->reward->getAmount();
-        if ($amount > 0) {
-            if ($this->reward->isValidityApplicable()) {
-                $this->bonusRepo->storeFromReward($rewardable, $this->reward, $amount);
-            } else {
-                if ($this->reward->isCashType()) {
-                    $log = $amount . " BDT credited for " . $this->reward->name . " reward #" . $this->reward->id;
-                    $this->cashDisburse->setRewardable($rewardable)->credit($amount, $log);
-                    $this->storeJournal($rewardable);
-                } elseif ($this->reward->isPointType()) {
-                    $this->pointDisburse->setRewardable($rewardable)->updateRewardPoint($amount);
-                }
-            }
-        }
 
-        $reward_log = $this->generateLog($rewardable);
-        $this->storeRewardLog($rewardable, $reward_log);
+        if ($amount > 0) $this->disburseAmount($rewardable, $amount);
+
+        $this->storeRewardLog($rewardable);
     }
 
     /**
-     * @param $rewardable
-     * @param $log
+     * @param Rewardable $rewardable
+     * @param $amount
      */
-    private function storeRewardLog($rewardable, $log)
+    private function disburseAmount(Rewardable $rewardable, $amount)
     {
-        $this->rewardRepo->storeLog($this->reward, $rewardable->id, $log);
+        if ($this->reward->isValidityApplicable()) {
+            $this->disburseAsBonus($rewardable, $amount);
+        } else {
+            $this->disburseAsRegular($rewardable, $amount);
+        }
+    }
+
+    /**
+     * @param Rewardable $rewardable
+     * @param $amount
+     */
+    private function disburseAsBonus(Rewardable $rewardable, $amount)
+    {
+        $this->bonusRepo->storeFromReward($rewardable, $this->reward, $amount);
+    }
+
+    /**
+     * @param Rewardable $rewardable
+     * @param $amount
+     */
+    private function disburseAsRegular(Rewardable $rewardable, $amount)
+    {
+        if ($this->reward->isCashType()) {
+            $this->disburseCash($rewardable, $amount);
+        } elseif ($this->reward->isPointType()) {
+            $this->disbursePoint($rewardable, $amount);
+        }
+    }
+
+    /**
+     * @param Rewardable $rewardable
+     * @param $amount
+     */
+    private function disburseCash(Rewardable $rewardable, $amount)
+    {
+        $this->cashDisburse->setRewardable($rewardable);
+
+        $log = $amount . " BDT credited for " . $this->reward->name . " reward #" . $this->reward->id;
+
+        if ($this->partner_order) {
+            $job = Job::where('partner_order_id', $this->partner_order->id)->latest()->first();
+            $this->cashDisburse->creditWithJobId($amount, $log, $job->id);
+        } else {
+            $this->cashDisburse->credit($amount, $log);
+        }
+
+        $this->storeJournal($rewardable);
+    }
+
+    /**
+     * @param Rewardable $rewardable
+     * @param $amount
+     */
+    private function disbursePoint(Rewardable $rewardable, $amount)
+    {
+        $this->pointDisburse->setRewardable($rewardable)->updateRewardPoint($amount);
     }
 
     private function generateLog($rewardable)
     {
-        if ($this->event) $reward_log = $this->event->getLogEvent();
-        else $reward_log = $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $rewardable->id;
+        $to_whom = class_basename($rewardable);
 
-        return $reward_log;
+        return ($this->event)
+            ? $this->event->getLogEvent()
+            : $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on ' . $to_whom . ' id: ' . $rewardable->id;
     }
 
-    private function storeJournal($rewardable){
-        (new JournalCreateRepository())->setTypeId($rewardable->id)
-            ->setSource($this->cashDisburse->getTransaction())
+    /**
+     * @param $rewardable
+     */
+    private function storeRewardLog($rewardable)
+    {
+        $reward_log = $this->generateLog($rewardable);
+
+        $this->rewardRepo->storeLog($this->reward, $rewardable->id, $reward_log);
+    }
+
+    private function storeJournal($rewardable)
+    {
+        $transaction = $this->cashDisburse->getTransaction();
+        if (!$transaction) return;
+
+        (new JournalCreateRepository())
+            ->setTypeId($rewardable->id)
+            ->setSource($transaction)
             ->setAmount($this->reward->amount)
             ->setDebitAccountKey((new Accounts())->asset->sheba::SHEBA_ACCOUNT)
             ->setCreditAccountKey(\Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\Reward::REWARD)
