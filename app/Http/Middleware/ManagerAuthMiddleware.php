@@ -5,9 +5,12 @@ use App\Models\Resource;
 use Closure;
 use Illuminate\Http\Request;
 use App\Exceptions\NotFoundException;
+use Sheba\ModificationFields;
 
 class ManagerAuthMiddleware extends AccessTokenMiddleware
 {
+    use ModificationFields;
+
     /**
      * Handle an incoming request.
      *
@@ -54,6 +57,9 @@ class ManagerAuthMiddleware extends AccessTokenMiddleware
         }
 
         $request->merge(['manager_resource' => $manager_resource, 'partner' => $partner]);
+
+        $this->setModifier($manager_resource);
+
         return $next($request);
     }
 
@@ -70,6 +76,8 @@ class ManagerAuthMiddleware extends AccessTokenMiddleware
         if (!$partner) throw new NotFoundException('Partner not found.', 404);
 
         if (!$manager_resource->isManager($partner)) throw new NotFoundException("Forbidden. You're not a manager of this partner.", 403);
+
+        $this->setModifier($manager_resource);
 
         $request->merge(['manager_resource' => $manager_resource, 'partner' => $partner]);
     }

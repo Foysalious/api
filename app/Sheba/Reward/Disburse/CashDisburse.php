@@ -18,6 +18,13 @@ class CashDisburse
         return $this;
     }
 
+    public function creditWithJobId($amount, $log, $job_id)
+    {
+        $transaction = (new WalletTransactionHandler())->setModel($this->rewardable)->setSource(TransactionSources::BONUS)
+            ->setType('credit')->setAmount($amount)->setLog($log)->setJobId($job_id);
+        $transaction->storeForSpro();
+    }
+
     public function credit($amount, $log, $tags = null)
     {
         $transaction = (new WalletTransactionHandler())->setModel($this->rewardable)->setSource(TransactionSources::BONUS)
