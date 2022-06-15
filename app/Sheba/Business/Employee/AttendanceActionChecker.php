@@ -2,7 +2,6 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
-use Carbon\Carbon;
 use Sheba\Business\ShiftAssignment\ShiftAssignmentFinder;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -59,13 +58,6 @@ class AttendanceActionChecker
         return !$attendance || $attendance->canTakeThisAction(Actions::CHECKIN);
     }
 
-    public function hasCheckIn()
-    {
-        if (!$this->business->isShiftEnabled()) return is_null($this->lastAttendance);
-
-        return $this->canCheckInForAttendance($this->currentAssignment->attendance);
-    }
-
     /**
      * @param Attendance $attendance
      * @return bool
@@ -82,16 +74,6 @@ class AttendanceActionChecker
         return $this->canCheckOutForAttendance($this->currentAssignment->attendance);
     }
 
-    public function hasLastAttendance(): bool
-    {
-        return !is_null($this->lastAttendance);
-    }
-
-    public function getLastAttendanceDate()
-    {
-        return $this->lastAttendance ? Carbon::parse($this->lastAttendance['date']): null;
-    }
-
     /**
      * @return ShiftAssignment | null
      */
@@ -102,12 +84,16 @@ class AttendanceActionChecker
 
     public function getCheckInTime()
     {
-        return $this->attendanceOfToday->getCheckInTime();
+        if ($this->business->isShiftEnabled() && $this->hasAttendance()) return $this->currentAssignment->attendance->getCheckInTime();
+        else if ($this->hasAttendance()) return $this->attendanceOfToday->getCheckInTime();
+        return null;
     }
 
     public function getCheckOutTime()
     {
-        return $this->attendanceOfToday->getCheckOutTime();
+        if ($this->business->isShiftEnabled() && $this->hasAttendance()) return $this->currentAssignment->attendance->getCheckOutTime();
+        else if ($this->hasAttendance()) return $this->attendanceOfToday->getCheckOutTime();
+        return null;
     }
 
     public function isRemoteAttendanceEnable(): bool
@@ -124,4 +110,29 @@ class AttendanceActionChecker
     {
         return $this->business->isLiveTrackEnabled();
     }
+
+    public function hasAttendance(): bool
+    {
+        if ($this->business->isShiftEnabled() && $this->currentAssignment->attendance) return true;
+        else if ($this->attendanceOfToday) return true;
+        return false;
+    }
+
+/*
+    public function hasLastAttendance(): bool
+    {
+        return !is_null($this->lastAttendance);
+    }
+
+    public function hasCheckIn()
+    {
+        if (!$this->business->isShiftEnabled()) return is_null($this->lastAttendance);
+
+        return $this->canCheckInForAttendance($this->currentAssignment->attendance);
+    }
+
+    public function getLastAttendanceDate()
+    {
+        return $this->lastAttendance ? Carbon::parse($this->lastAttendance['date']): null;
+    }*/
 }
