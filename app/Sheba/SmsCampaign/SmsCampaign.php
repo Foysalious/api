@@ -39,6 +39,8 @@ class SmsCampaign
     private $partner;
     private $transaction;
 
+    const PREFIX_MOBILE_NUMBER = "01678";
+
     public function __construct(SmsHandler $sms, CampaignSmsStatusChanger $sms_status_changer,
                                 SmsCampaignOrderReceiverRepository $receiver_repo, SmsCampaignOrderRepository $order_repo)
     {
@@ -161,12 +163,29 @@ class SmsCampaign
 
     /**
      * @param $message
-     * @param $mobiles
+     * @param $mobile_count
      * @return float
      */
-    public function getEstimateCharge($message, $mobiles): float
+    public function getEstimateCharge($message, $mobile_count): float
     {
-        $mobileNumbers = json_decode($mobiles);
+        $mobileNumbers = $this->generateMobileNumbers($mobile_count);
         return $this->smsHandler->getBulkCharge($mobileNumbers, $message);
+    }
+
+    /**
+     * @param $mobile_count
+     * @return array
+     */
+    private function generateMobileNumbers($mobile_count): array
+    {
+        $num = 100000;
+        $numbers = array();
+
+        while ($mobile_count > 0) {
+            $num = $num + 1;
+            array_push($numbers, self::PREFIX_MOBILE_NUMBER . strval($num));
+            $mobile_count -= 1;
+        }
+        return $numbers;
     }
 }

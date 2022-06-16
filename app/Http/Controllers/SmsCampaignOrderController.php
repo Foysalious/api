@@ -144,11 +144,11 @@ class SmsCampaignOrderController extends Controller
         try {
             $this->validate($request, [
                 'message' => 'required|string',
-                'mobile' => 'required|json',
+                'mobile_count' => 'required|numeric|min:1|max:10000',
             ]);
 
             $per_sms_charge = constants('SMS_CAMPAIGN.rate_per_sms');
-            $total_charge = $campaign->getEstimateCharge($request->message, $request->mobile);
+            $total_charge = $campaign->getEstimateCharge($request->message, $request->mobile_count);
             $data = [
                 'total_charge' => $total_charge,
                 'charge_per_sms' => $per_sms_charge,
