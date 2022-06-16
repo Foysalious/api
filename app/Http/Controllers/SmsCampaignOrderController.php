@@ -60,7 +60,13 @@ class SmsCampaignOrderController extends Controller
         }
         $campaign = $campaign->formatRequest($requests);
 
-        if (!$campaign->partnerHasEnoughBalance()) api_response($request, null, 200, ['message' => 'Insufficient Balance On Partner Wallet', 'error_code' => 'insufficient_balance', 'code' => 200]);
+//        if (!$campaign->partnerHasEnoughBalance()) api_response($request, null, 200, ['message' => 'Insufficient Balance On Partner Wallet', 'error_code' => 'insufficient_balance', 'code' => 200]);
+//
+
+        if (!$campaign->checkSmsSendingEligibility(count($request->customers))) {
+            $message = "আপনার নির্ধারিত প্যাকেজের ফ্রি এসএমএস  সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে প্যাকেজ আপগ্রেড করুন অথবা পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন।";
+            return api_response($request, $message, 403, ['message' => $message]);
+        }
 
         if (!$campaign->createOrder()) api_response($request, null, 200, ['message' => 'Failed to create campaign', 'error_code' => 'unknown_error', 'code' => 500]);
 
