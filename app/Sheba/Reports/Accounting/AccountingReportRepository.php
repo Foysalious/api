@@ -143,15 +143,16 @@ class AccountingReportRepository extends BaseRepository
     }
 
 
-    public function getAccountingReportsList(): array
+    public function getAccountingReportsList($version_code): array
     {
-        return [
-            [
-                'key' => AccountingReport::DIGITAL_TRANSACTION_LIST,
-                'report_bangla_name' => 'ডিজিটাল ট্রানজেকশন লিস্ট',
-                'url' => config('sheba.api_url') . '/v2/accounting/reports/online-transactions',
-                'icon' => config('accounting_entry.icon_url') . '/' . 'digital_transaction_list_report.png'
-            ],
+
+        $list = [
+//            [
+//                'key' => AccountingReport::DIGITAL_TRANSACTION_LIST,
+//                'report_bangla_name' => 'ডিজিটাল ট্রানজেকশন লিস্ট',
+//                'url' => config('sheba.api_url') . '/v2/accounting/reports/online-transactions',
+//                'icon' => config('accounting_entry.icon_url') . '/' . 'digital_transaction_list_report.png'
+//            ],
             [
                 'key' => AccountingReport::PRODUCT_WISE_SALES_REPORT,
                 'report_bangla_name' => 'পণ্য অনুযায়ী বিক্রয় রিপোর্ট',
@@ -183,6 +184,17 @@ class AccountingReportRepository extends BaseRepository
                 'icon' => config('accounting_entry.icon_url') . '/' . 'loss_profit_report.png'
             ],
         ];
+        if (intval($version_code) < 300600) {
+            return $list;
+        } else {
+            $qr_list = [[
+                'key' => AccountingReport::DIGITAL_TRANSACTION_LIST,
+                'report_bangla_name' => 'ডিজিটাল ট্রানজেকশন লিস্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/online-transactions',
+                'icon' => config('accounting_entry.icon_url') . '/' . 'digital_transaction_list_report.png'
+            ]];
+            return array_merge($qr_list, $list);
+        }
     }
 
     public function transactionList($userId, $userType = UserType::PARTNER)
