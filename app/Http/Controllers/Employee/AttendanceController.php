@@ -138,16 +138,6 @@ class AttendanceController extends Controller
         ]);
     }
 
-    /**
-     * @param $month
-     * @param $year
-     * @return bool
-     */
-    private function isShowRunningMonthsAttendance($year, $month)
-    {
-        return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
-    }
-
     public function getTodaysInfo(Request $request, AttendanceActionChecker $attendance_action_checker)
     {
         $attendance_action_checker->setBusinessMember($request->business_member);
