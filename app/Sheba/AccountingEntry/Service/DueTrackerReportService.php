@@ -187,7 +187,8 @@ class DueTrackerReportService
     public function generatePublicReport(){
         $queryString = $this->generateQueryString();
         $data = $this->dueTrackerRepo->reportForWeb($this->partner_id,$queryString);
-
+        $balance = $data['stats']['balance'];
+        $data["list"]= $this->calculate_tathkalin_balance($data["list"],$balance);
         $data['stats']['receivable_bn'] = NumberLanguageConverter::en2bn($data['stats']['receivable']);
         $data['stats']['payable_bn'] = NumberLanguageConverter::en2bn($data['stats']['payable']);
         $data['stats']['balance_bn'] = NumberLanguageConverter::en2bn($data['stats']['balance']);
@@ -206,6 +207,26 @@ class DueTrackerReportService
         $data['contact_details']['contact_type'] = $this->contact_type;
         return $data;
     }
+
+    /**
+     * @param $list
+     * @param $balance
+     * @return mixed
+     */
+    public function calculate_tathkalin_balance($list, $balance){
+        $tathkalin_balance = $balance;
+        foreach($list as $key => $each_entry){
+            $list[$key]['balance'] = $tathkalin_balance;
+            if($each_entry['account_type'] == "payable" ){
+                $tathkalin_balance -= $each_entry["amount"];
+            }
+            elseif($each_entry['account_type'] == "receivable"){
+                $tathkalin_balance += $each_entry["amount"];
+            }
+        }
+        return $list;
+    }
+
 
     /**
      * @return string
