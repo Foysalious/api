@@ -6,6 +6,7 @@ use App\Sheba\AccountingEntry\Dto\EntryDTO;
 use App\Sheba\AccountingEntry\Entry\Updater as EntryUpdater;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
+use App\Sheba\AccountingEntry\Service\DueTrackerReportService;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
@@ -14,6 +15,7 @@ class DueTrackerService
 {
     protected $partner;
     protected $dueTrackerRepo;
+    protected $dueTrackerReport;
     protected $contact_type;
     protected $order;
     protected $order_by;
@@ -27,9 +29,10 @@ class DueTrackerService
     /* @var EntryDTO */
     protected $entryDTO;
 
-    public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo)
+    public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo, DueTrackerReportService $dueTrackerReport)
     {
         $this->dueTrackerRepo = $dueTrackerRepo;
+        $this->dueTrackerReport =$dueTrackerReport;
     }
 
     /**
@@ -238,12 +241,15 @@ class DueTrackerService
     /**
      * @return array
      * @throws AccountingEntryServerError
+     * @throws ContactDoesNotExistInDueTracker
      */
     public function dueListByContact(): array
     {
         $queryString = $this->generateQueryString();
         $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
+        $contact_balance = $this->getBalanceByContact();
         $due_list = $result['list'];
+        $due_list = $this->dueTrackerReport->calculate_tathkalin_balance($due_list,$contact_balance["stats"]["balance"]);
         return [
             'list' => $due_list
         ];
