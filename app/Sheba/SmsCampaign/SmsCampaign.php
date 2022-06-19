@@ -2,8 +2,8 @@
 
 use App\Models\Partner;
 use ReflectionException;
+use App\Sheba\Partner\PackageFeatureCount;
 use Sheba\AccountingEntry\Accounts\Accounts;
-
 use Sheba\AccountingEntry\Accounts\RootAccounts;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\InvalidSourceException;
@@ -133,6 +133,26 @@ class SmsCampaign
         //freeze money amount check
         WalletTransactionHandler::isDebitTransactionAllowed($this->partner, $charge, 'এস-এম-এস পাঠানোর');
         return $this->partner->wallet >= $charge;
+    }
+
+    /**
+     * @param $customer_count
+     * @return bool
+     * @throws \Exception
+     */
+    public function checkSmsSendingEligibility($customer_count)
+    {
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class)->setPartnerId($this->partner->id)->setFeature('sms');
+        $per_sms_charge = constants('SMS_CAMPAIGN.rate_per_sms');
+        $total_sms_count = $this->getEstimateCharge($this->message, $customer_count);
+        $sms_count = $total_sms_count/$per_sms_charge;
+
+        $isEligible = $packageFeatureCount->isEligible($sms_count);
+        if ($isEligible) {
+            return true;
+        }
+        return false;
     }
 
     private function createTransactions(SmsCampaignOrder $campaign_order, $cost)

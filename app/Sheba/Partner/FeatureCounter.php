@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Partner;
 
+use App\Exceptions\PartnerDataNotFoundException;
 use DB;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -125,7 +126,7 @@ class FeatureCounter
     private function isPartnerDataAvailable($features_count_model)
     {
         if (! $features_count_model) {
-            throw new Exception('Partner data not available');
+            throw new PartnerDataNotFoundException();
         }
         return true;
     }
