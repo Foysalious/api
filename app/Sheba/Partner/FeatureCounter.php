@@ -95,17 +95,20 @@ class FeatureCounter
         $features_count_model = $this->allFeaturesCount($partner);
         $this->isPartnerDataAvailable($features_count_model);
         $feature_count = $features_count_model[$feature];
+        $updated_count = $feature_count - $count;
 
-        try {
-            DB::transaction(function () use($feature_count, $count, $feature, $features_count_model) {
-                $updated_count = $feature_count - $count;
-                $data[$feature] = $updated_count;
-                $features_count_model->update($this->withUpdateModificationField($data));
-            });
+        if ($updated_count >= 0) {
+            try {
+                DB::transaction(function () use($updated_count, $feature, $features_count_model) {
 
-            return ucfirst($feature) . " count has updated successfully!";
-        } catch (QueryException $e) {
-            return $e->getMessage();
+                    $data[$feature] = $updated_count;
+                    $features_count_model->update($this->withUpdateModificationField($data));
+                });
+
+                return ucfirst($feature) . " count has updated successfully!";
+            } catch (QueryException $e) {
+                return $e->getMessage();
+            }
         }
     }
 
