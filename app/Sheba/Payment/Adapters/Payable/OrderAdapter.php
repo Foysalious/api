@@ -82,7 +82,7 @@ class OrderAdapter implements PayableAdapter
         $payable->type_id = $this->partnerOrder->id;
         $payable->user_id = $this->userId;
         $payable->user_type = $this->userType;
-        $due = (double)$this->partnerOrder->getCustomerPayable();
+        $due = (double)$this->partnerOrder->dueWithLogisticWithoutRoundingCutoff;
         $payable->amount = $this->calculateAmount($due);
         $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
@@ -103,6 +103,7 @@ class OrderAdapter implements PayableAdapter
 
     private function discountedAmount()
     {
+        $category_id = $this->job->jobServices->first()->service->category_id;
         $discount_checking_params = (new JobDiscountCheckingParams())
             ->setDiscountableAmount($this->partnerOrder->due)
             ->setOrderAmount($this->partnerOrder->grossAmount)
@@ -112,7 +113,7 @@ class OrderAdapter implements PayableAdapter
         $job_discount_handler->setType(DiscountTypes::ONLINE_PAYMENT)
             ->setCheckingParams($discount_checking_params)->calculate();
 
-        if ($job_discount_handler->hasDiscount()) {
+        if ($job_discount_handler->hasDiscount($category_id)) {
             return $job_discount_handler->getApplicableAmount();
         }
         return 0;

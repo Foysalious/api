@@ -60,11 +60,11 @@ class PayReportDetailsTransformer extends TransformerAbstract
     private function salaryInfo($payslip)
     {
         $salary_break_down = $payslip->salaryBreakdown()['gross_salary_breakdown'];
-        $salary_month = $payslip->schedule_date;
+        $salary_month = $payslip->businessPayslip->schedule_date;
         $net_payable = $this->calculateNetPayable($salary_break_down['gross_salary']);
         return [
-            'salary_month' => $salary_month->format('F Y'),
-            'schedule_date' => $salary_month->format('Y-m-d'),
+            'salary_month' => Carbon::parse($salary_month)->format('F Y'),
+            'schedule_date' => Carbon::parse($salary_month)->format('Y-m-d'),
             'basic_salary' => $salary_break_down['basic_salary'],
             'house_rent' => $salary_break_down['house_rent'],
             'medical_allowance' => $salary_break_down['medical_allowance'],

@@ -7,6 +7,7 @@ use Sheba\Dal\PgwStore\Model as PgwStore;
 use Sheba\MerchantEnrollment\Exceptions\InvalidMEFFormCategoryCodeException;
 use Sheba\MerchantEnrollment\PaymentMethod\PaymentMethodFactory;
 use Sheba\MerchantEnrollment\Statics\MEFGeneralStatics;
+use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\ResellerPayment\Exceptions\InvalidKeyException;
 
 class MerchantEnrollment
@@ -134,13 +135,16 @@ class MerchantEnrollment
     }
 
     /**
-     * @return mixed
-     * @throws InvalidKeyException
+     * @return array
      */
-    public function getRequiredDocuments()
+    public function getRequiredDocuments(): array
     {
-        $payment_method = $this->getPaymentMethod();
-        return $payment_method->requiredDocuments();
+        return [
+            'required_documents' => MEFGeneralStatics::required_documents()[$this->key],
+            'terms_and_condition' => PaymentLinkStatics::paymentTermsAndConditionWebview()
+        ];
+//        $payment_method = $this->getPaymentMethod();
+//        return $payment_method->requiredDocuments();
     }
 
     /**

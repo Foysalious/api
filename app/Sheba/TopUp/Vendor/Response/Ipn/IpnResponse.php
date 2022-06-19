@@ -52,14 +52,6 @@ abstract class IpnResponse
     abstract public function isFailed();
 
     /**
-     * @return string
-     */
-    public function getTransactionDetailsString(): string
-    {
-        return json_encode($this->getTransactionDetails());
-    }
-
-    /**
      * @throws \Throwable
      * @return void
      */

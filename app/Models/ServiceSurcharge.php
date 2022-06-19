@@ -19,7 +19,7 @@ class ServiceSurcharge extends Model
 
     public function scopeRunningSurcharges($query)
     {
-        return $query->where('end_date', '>=', Carbon::now());
+        return $query->where('start_date', '<=', Carbon::now())->where('end_date', '>=', Carbon::now());
     }
 
     public function isPercentage()

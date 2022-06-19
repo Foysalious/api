@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Inventory;
 use App\Http\Controllers\Controller;
 use App\Sheba\InventoryService\Repository\CollectionRepository;
 use App\Sheba\InventoryService\Services\CollectionService;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -25,7 +26,7 @@ class CollectionController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $collection = $this->collectionService->setPartnerId($partner->id)->setOffset($request->offset)->setLimit($request->limit)->getAllCollection();
+        $collection = $this->collectionService->setPartnerId($partner->id)->getAllCollection();
         if(empty($collection)) return api_response($request, "No data found!", 500, $collection);
         else return api_response($request, null, 200, $collection);
     }
@@ -58,7 +59,7 @@ class CollectionController extends Controller
         $partner = $request->auth_user->getPartner();
         try {
             $collection = $this->collectionService->setPartnerId($partner->id)->setCollectionId($collection_id)->getDetails();
-        } catch(\Exception $exception) {
+        } catch(Exception $exception) {
             return http_response($request, 'No Data found!', 500, null);
         }
         return http_response($request, null, 200, $collection);
@@ -88,5 +89,14 @@ class CollectionController extends Controller
         $partner = $request->auth_user->getPartner();
         $response = $this->collectionService->setPartnerId($partner->id)->setCollectionId($collection_id)->delete();
         return http_response($request, null, 200, $response);
+    }
+
+    public function changeStatus(Request $request)
+    {
+        $partner = $request->auth_user->getPartner();
+        return $this->collectionService->setPartnerId($partner->id)
+            ->setCollectionIds($request->collection_ids)
+            ->setIsPublished($request->is_published)
+            ->changeStatus();
     }
 }

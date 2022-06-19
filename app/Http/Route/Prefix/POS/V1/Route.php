@@ -40,6 +40,14 @@ class Route
              */
 
             /**
+             * App Secret Authentication
+             */
+            $api->get('partner-wise-order-ids', 'PosOrder\OrderController@getPartnerWiseOrderIds');
+            /**
+             * End of App Secret Authentication
+             */
+
+            /**
              * IP Whitelist Middleware
              */
             $api->group(['middleware' => ['ip.whitelist']], function ($api) {
@@ -54,6 +62,7 @@ class Route
              */
             $api->group(['middleware' => ['jwtAccessToken']], function ($api) {
                 $api->get('/orders/{order_id}/generate-invoice', 'PosOrder\OrderController@orderInvoiceDownload');
+                $api->post('/mtb-apply', 'Mtb\MtbController@apply');
                 $api->get('/webstore-banner-list', 'Pos\PartnerController@getBanner');
                 $api->group(['prefix' => 'webstore-theme-settings', 'middleware' => ['jwtAccessToken']], function ($api) {
                     $api->get('/settings', 'WebstoreSettingController@index');
@@ -75,8 +84,9 @@ class Route
                     $api->get('/', 'Inventory\CollectionController@index');
                     $api->post('/', 'Inventory\CollectionController@store');
                     $api->get('/{collection}', 'Inventory\CollectionController@show');
-                    $api->put('/{collection}', 'Inventory\CollectionController@update');
+                    $api->put('/{collection}', 'Inventory\CollectionController@update')->where('collection', '[0-9]+');
                     $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+                    $api->put('/change-status', 'Inventory\CollectionController@changeStatus');
                 });
                 $api->group(['prefix' => 'customers'], function ($api) {
                     $api->get('/{customer_id}', 'PosCustomer\PosCustomerController@show');
@@ -207,7 +217,7 @@ class Route
                 $api->get('/order-information/{order_id}', 'Pos\\DeliveryController@getOrderInformationV2');
             });
             /**
-             * End jwtAccessToken Middleware
+             * End sdelivery route
              */
         });
     }

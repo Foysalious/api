@@ -64,6 +64,9 @@ class Route
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
             });
+            $api->group(['prefix' => 'shurjopay'], function ($api) {
+                $api->get('validate', 'Payment\ShurjoPayPGWController@validatePayment');
+            });
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
                 $api->group(['prefix' => 'tokenized'], function ($api) {
@@ -106,6 +109,10 @@ class Route
                     $api->post('success', 'OkWalletController@validatePayment');
                     $api->post('fail', 'OkWalletController@validatePayment');
                     $api->post('cancel', 'OkWalletController@validatePayment');
+                });
+                $api->group(['prefix'=>'upay'],function($api){
+                    $api->get('/','Payments\\UpayController@validatePayment');
+                    $api->post('/','Payments\\UpayController@validatePayment');
                 });
             });
             $api->group(['prefix' => 'login'], function ($api) {

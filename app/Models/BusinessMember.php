@@ -1,5 +1,7 @@
 <?php namespace App\Models;
 
+use Jenssegers\Mongodb\Eloquent\HybridRelations;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Appreciation\Appreciation;
 use Sheba\Dal\BusinessMemberBkashInfo\BusinessMemberBkashInfo;
 use Sheba\Dal\BusinessMemberStatusChangeLog\Model as BusinessMemberStatusChangeLog;
@@ -15,6 +17,7 @@ use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use Sheba\Dal\Salary\Salary;
+use Sheba\Dal\TrackingLocation\TrackingLocation;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
@@ -23,6 +26,7 @@ use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 class BusinessMember extends Model
 {
     use SoftDeletes;
+    use HybridRelations;
 
     protected $guarded = ['id',];
     protected $dates = ['join_date', 'deleted_at'];
@@ -109,6 +113,21 @@ class BusinessMember extends Model
     public function manager()
     {
         return $this->belongsTo(BusinessMember::class, 'manager_id');
+    }
+
+    public function isManager(): bool
+    {
+        return $this->business->getActiveBusinessMember()->where('manager_id', $this->id)->count() > 0;
+    }
+
+    public function trackingLocations()
+    {
+        return $this->hasMany(TrackingLocation::class);
+    }
+
+    public function lastLiveLocation()
+    {
+        return $this->hasMany(TrackingLocation::class)->orderBy('created_at', 'desc')->first();
     }
 
     public function statusChangeLogs()
@@ -292,5 +311,31 @@ class BusinessMember extends Model
         $time_frame = new TimeFrame();
         $time_frame->forDateRange($start_date, $end_date);
         return $time_frame->hasDateBetween(Carbon::now());
+    }
+
+    public function isBusinessMemberActive()
+    {
+        if ($this->status == Statuses::ACTIVE) return true;
+        return false;
+    }
+
+    /**
+     * @param $date
+     * @return mixed
+     */
+    public function liveLocationFilterByDate($date = null)
+    {
+        $tracking_locations = $this->trackingLocations()->orderBy('created_at', 'desc');
+        if ($date) return $tracking_locations->where('date', $date);
+        return $tracking_locations;
+    }
+
+    public function liveLocationForADateRange($from_date, $to_date)
+    {
+        $tracking_locations = $this->trackingLocations()->where(function ($query) use ($from_date, $to_date){
+            $query->where('date', '>=', $from_date);
+            $query->where('date', '<=', $to_date);
+        });
+        return $tracking_locations->orderBy('created_at', 'desc');
     }
 }

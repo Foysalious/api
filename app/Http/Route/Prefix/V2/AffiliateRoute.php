@@ -6,6 +6,7 @@ class AffiliateRoute
     {
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
             $api->get('dashboard', 'AffiliateController@getDashboardInfo');
+            $api->get('dashboard-messages', 'AffiliateController@getDashboardMessage');
             $api->get('transaction-history-categories', 'AffiliateTransactionController@getTransactionByCategory');
             $api->get('partner-affiliates', 'PartnerAffiliationController@index');
             $api->get('services', 'AffiliateController@getServicesInfo');

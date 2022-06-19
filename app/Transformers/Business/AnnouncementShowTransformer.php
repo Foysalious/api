@@ -26,6 +26,7 @@ class AnnouncementShowTransformer extends TransformerAbstract
         return [
             'id' => $announcement->id,
             'title' => $announcement->title,
+            'short_description' => $announcement->short_description,
             'description' => $announcement->long_description,
             'type' => ucfirst($announcement->type),
             'is_published' => $announcement->is_published,

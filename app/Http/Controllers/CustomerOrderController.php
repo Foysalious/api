@@ -241,7 +241,7 @@ class CustomerOrderController extends Controller
             'original_price' => (double)$partnerOrder->jobPrices + $job->logistic_charge,
             'discount' => (double)$partnerOrder->totalDiscount,
             'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge,
-            'complain_count' => $job->customerComplains->count(),
+            'complain_count' => $job->allComplainsCustomer->count(),
             'message' => (new JobLogs($job))->getOrderMessage(),
         ));
     }

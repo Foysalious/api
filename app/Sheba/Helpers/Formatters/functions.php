@@ -208,3 +208,19 @@ if (!function_exists('isEmailValid')) {
         return preg_match($regex, $email);
     }
 }
+
+if (!function_exists('isEmailValidWithCustomExtLength')) {
+    /**
+     * Email formatting check.
+     *
+     * @param  $email
+     * @param $min_length
+     * @param $max_length
+     * @return bool
+     */
+    function isEmailValidWithCustomExtLength($email, $min_length, $max_length)
+    {
+        $regex = '/^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{'. $min_length. ','. $max_length .'})$/';
+        return preg_match($regex, $email);
+    }
+}

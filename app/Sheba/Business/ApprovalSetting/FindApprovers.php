@@ -51,20 +51,23 @@ class FindApprovers
      */
     public function calculateApprovers($approval_setting, $business_member)
     {
+
         if (!$approval_setting) {
             $approval_setting_approvers = $this->defaultApprovalSetting->getApprovalSettings()['approvers'];
             foreach ($approval_setting_approvers as $approver) {
                 if ($approver['type'] == Types::LM) {
                     /** @var BusinessMember $line_manager */
                     $line_manager = $business_member->manager()->first();
-                    if ($line_manager) $this->approvers[$approver['order']] = $line_manager->id;
+                    if ($line_manager && $line_manager->isBusinessMemberActive()) $this->approvers[$approver['order']] = $line_manager->id;
                 }
                 if ($approver['type'] == Types::HOD) {
                     $this->getHeadOfDepartment($business_member);
                     if ($this->headOfDepartment) $this->approvers[$approver['order']] = $this->headOfDepartment->id;
                 }
                 if ($approver['type'] == Types::EMPLOYEE) {
-                    $this->approvers[$approver['order']] = (int)$approver['type_id'];
+                    /** @var BusinessMember $employee */
+                    $employee = $this->getBusinessMember((int)$approver->type_id);
+                    if ($employee && $employee->isBusinessMemberActive()) $this->approvers[$approver['order']] = $employee->id;
                 }
             }
         } else {
@@ -73,7 +76,7 @@ class FindApprovers
                 if ($approver->type == Types::LM) {
                     /** @var BusinessMember $line_manager */
                     $line_manager = $business_member->manager()->first();
-                    if ($line_manager) $this->approvers[$approver->order] = $line_manager->id;
+                    if ($line_manager && $line_manager->isBusinessMemberActive()) $this->approvers[$approver->order] = $line_manager->id;
                 }
                 if ($approver->type == Types::HOD) {
                     $this->getHeadOfDepartment($business_member);
@@ -81,7 +84,9 @@ class FindApprovers
                 }
 
                 if ($approver->type == Types::EMPLOYEE) {
-                    $this->approvers[$approver->order] = (int)$approver->type_id;
+                    /** @var BusinessMember $employee */
+                    $employee = $this->getBusinessMember((int)$approver->type_id);
+                    if ($employee && $employee->isBusinessMemberActive()) $this->approvers[$approver->order] = $employee->id;
                 }
             }
         }
@@ -98,7 +103,7 @@ class FindApprovers
         /** @var BusinessMember $manager */
         $manager = $business_member->manager()->first();
 
-        if ($manager) {
+        if ($manager && $manager->isBusinessMemberActive()) {
             if (in_array($manager->id, $this->managers)) {
                 return;
             }
@@ -157,5 +162,10 @@ class FindApprovers
             ]);
         }
         return $default_approvers;
+    }
+
+    private function getBusinessMember($business_member_id)
+    {
+        return BusinessMember::find($business_member_id);
     }
 }

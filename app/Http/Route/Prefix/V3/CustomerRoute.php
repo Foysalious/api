@@ -30,5 +30,7 @@ class CustomerRoute
                 $api->post('/', 'InfoCall\InfoCallController@store');
             });
         });
+
+        $api->post('combined-product-upload', 'CombinedProductUploadController@upload');
     }
 }

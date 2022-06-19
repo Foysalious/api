@@ -29,7 +29,8 @@ class TPProxyClient
                     'url' => $request->getUrl(),
                     'method' => $request->getMethod(),
                     'input' => $request->getInput(),
-                    'headers' => $request->getHeaders()
+                    'headers' => $request->getHeaders(),
+                    'auth' => $request->getAuth()
                 ],
                 'timeout' => $request->getTimeout(),
                 'read_timeout' => $request->getReadTimeout(),

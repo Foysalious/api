@@ -130,7 +130,7 @@ class TopUpRechargeManager extends TopUpManager
             $this->orderRepo->update($this->topUpOrder, [ 'is_agent_debited' => 1 ]);
         });
 
-        if ($this->topUpOrder->isAgentPartner()) {
+        if ($this->topUpOrder->isSuccess()) {
             app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $this->topUpOrder);
         }
         $this->isSuccessful = true;
@@ -143,7 +143,7 @@ class TopUpRechargeManager extends TopUpManager
     private function updateSuccessfulTopOrder(TopUpSuccessResponse $response)
     {
         $id = $response->getTransactionId();
-        $details = $response->getTransactionDetailsAsString();
+        $details = $response->getTransactionDetails();
 
         $topup_order = $response->isPending() ?
             $this->statusChanger->pending($details, $id) :
@@ -158,7 +158,7 @@ class TopUpRechargeManager extends TopUpManager
      */
     private function updateFailedTopOrder(TopUpErrorResponse $response)
     {
-        $topup_order = $this->statusChanger->failed($response->getFailedReason(), $response->toJson());
+        $topup_order = $this->statusChanger->failed(FailDetails::buildFromErrorResponse($response));
         return $this->setAgentAndVendor($topup_order);
     }
 

@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use App\Sheba\Business\BusinessQueue;
+use Carbon\Carbon;
 use Sheba\Dal\Payslip\Payslip;
 use Sheba\PushNotificationHandler;
 
@@ -36,7 +37,7 @@ class SendPayslipDisbursePushNotificationToEmployee extends BusinessQueue
         $sound = config('sheba.push_notification_sound.employee');
         $notification_data = [
             "title" => "Payslip Disbursement",
-            "message" => "Your salary for " . $this->payslip->schedule_date->format('M Y') . " has been disbursed. Find your payslip here",
+            "message" => "Your salary for " . Carbon::parse($this->payslip->businessPayslip->schedule_date)->format('M Y') . " has been disbursed. Find your payslip here",
             "event_type" => 'payslip',
             "event_id" => $this->payslip->id,
             "sound" => "notification_sound",

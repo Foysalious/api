@@ -2,6 +2,7 @@
 
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Email\Invite;
+use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
@@ -75,6 +76,8 @@ class Creator
     private $status;
     /** @var string $password */
     private $password;
+    /*** @var SalaryRepository */
+    private $salaryRepo;
 
     /**
      * Updater constructor.
@@ -110,6 +113,7 @@ class Creator
         $this->profileBankInfoRepository = $profile_bank_information;
         $this->memberRepository = $member_repository;
         $this->businessRoleRepository = $business_role_repository;
+        $this->salaryRepo = app(SalaryRepository::class);
     }
 
     /**
@@ -161,6 +165,9 @@ class Creator
             $this->businessMember = $this->createBusinessMember($this->business, $member);
         }
 
+        if ($this->basicRequest->getGrossSalary()) {
+            $this->createBusinessMemberGrossSalary();
+        }
         (new Invite($profile->fresh()))->sendMailToAddUser();
 
         return $this->businessMember;
@@ -252,5 +259,14 @@ class Creator
     public function resetError()
     {
         return $this->errorCode = null;
+    }
+
+    private function createBusinessMemberGrossSalary()
+    {
+        $data = [
+          'business_member_id' => $this->businessMember->id,
+            'gross_salary' => $this->basicRequest->getGrossSalary()
+        ];
+        $this->salaryRepo->create($data);
     }
 }

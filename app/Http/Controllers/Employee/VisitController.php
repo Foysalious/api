@@ -6,7 +6,6 @@ use App\Sheba\EmployeeTracking\Creator;
 use App\Sheba\EmployeeTracking\Requester;
 use App\Sheba\EmployeeTracking\Updater;
 use App\Transformers\Business\AppVisitDetailsTransformer;
-use App\Transformers\Business\LeaveApprovalRequestListTransformer;
 use App\Transformers\Business\TeamVisitsTransformer;
 use App\Transformers\Business\VisitHistoryTransformer;
 use App\Transformers\CustomSerializer;
@@ -20,7 +19,6 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\Visit\Status;
 use Sheba\Dal\Visit\VisitRepository;
-use Sheba\Dal\VisitPhoto\VisitPhoto;
 use Sheba\Dal\VisitPhoto\VisitPhotoRepository;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -52,9 +50,9 @@ class VisitController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member, true);
-
+        $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member, true, true);
         $departments = array_keys($managers_data);
+
         return api_response($request, null, 200, ['employee_list' => $managers_data, 'departments' => $departments]);
     }
 
@@ -377,7 +375,10 @@ class VisitController extends Controller
      */
     public function deletePhoto($visit, $visit_photo, Request $request, VisitPhotoRepository $visit_photo_repository)
     {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
         $visit_photo = $visit_photo_repository->find($visit_photo);
+        if (!$visit_photo) return api_response($request, null, 404);
         $visit_photo->delete();
         return api_response($request, null, 200);
     }

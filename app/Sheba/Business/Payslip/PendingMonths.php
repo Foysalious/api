@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Payslip;
 
 use App\Models\Business;
+use Sheba\Dal\BusinessPayslip\BusinessPayslipRepository;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Payslip\Status;
 use Sheba\Dal\TaxHistory\TaxHistoryRepository;
@@ -17,6 +18,8 @@ class PendingMonths
     private $businessMemberIds;
     /*** @var TaxHistoryRepository $taxHistoryRepository*/
     private $taxHistoryRepository;
+    /*** @var BusinessPayslipRepository */
+    private $businessPayslipRepo;
 
 
     /**
@@ -31,6 +34,7 @@ class PendingMonths
         $this->businessMemberRepository = $business_member_repository;
         $this->payslipRepositoryInterface = $payslip_repository_interface;
         $this->taxHistoryRepository = $tax_history_repository;
+        $this->businessPayslipRepo = app(BusinessPayslipRepository::class);
     }
 
     /**
@@ -50,10 +54,10 @@ class PendingMonths
     public function get()
     {
 
-        $month_year = $this->payslipRepositoryInterface->builder()
+        $month_year = $this->businessPayslipRepo->builder()
             ->selectRaw('DATE_FORMAT(schedule_date, "%Y-%m") as formatted_date')
             ->where('status', Status::PENDING)
-            ->whereIn('business_member_id', $this->businessMemberIds)
+            ->where('business_id', $this->business->id)
             ->orderBy('schedule_date', 'DESC')
             ->distinct()
             ->get()->toArray();
@@ -78,10 +82,10 @@ class PendingMonths
         foreach ($values as $data) {
             $split_data = explode("-", $data);
             $monthName = date('F', mktime(0, 0, 0, $split_data[1], 10));
-            array_push($months_years, [
+            $months_years[] = [
                 'value' => $data,
                 'viewValue' => $monthName . ' ' . $split_data[0]
-            ]);
+            ];
         }
         return $months_years;
     }

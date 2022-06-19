@@ -4,6 +4,7 @@
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\TopupOrder\FailedReason;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Gateway\HasIpn;
 use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
@@ -22,7 +23,7 @@ class TopUpLifecycleManager extends TopUpManager
         if ($this->topUpOrder->isFailed()) return;
 
         $this->doTransaction(function () use ($fail_response) {
-            $this->statusChanger->failed(FailedReason::GATEWAY_ERROR, $fail_response->getTransactionDetailsString());
+            $this->statusChanger->failed(FailDetails::buildFromIpnFailResponse($fail_response));
             if ($this->topUpOrder->isAgentDebited()) $this->refund();
             $this->getVendor()->refill($this->topUpOrder->amount);
         });
@@ -37,10 +38,14 @@ class TopUpLifecycleManager extends TopUpManager
         if ($this->topUpOrder->isSuccess()) return;
 
         $this->doTransaction(function () use ($success_response) {
-            $details = $success_response->getTransactionDetailsString();
+            $details = $success_response->getTransactionDetails();
             $id = $success_response->getUpdatedTransactionId();
-            $this->statusChanger->successful($details, $id);
+            $this->topUpOrder = $this->statusChanger->successful($details, $id);
         });
+
+        if ($this->topUpOrder->isSuccess()) {
+            app()->make(ActionRewardDispatcher::class)->run('top_up', $this->topUpOrder->agent, $this->topUpOrder);
+        }
     }
 
     /**

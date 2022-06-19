@@ -42,7 +42,7 @@ class BusinessRoute
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
-
+                $api->get('/salary-alert', 'B2b\BusinessesController@salaryAlert');
 
                 $api->group(['prefix' => 'departments'], function ($api) {
                     $api->post('/', 'B2b\DepartmentController@store');
@@ -91,7 +91,6 @@ class BusinessRoute
                         $api->delete('/', 'B2b\AttendanceController@destroy');
                     });
                 });
-
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
@@ -374,14 +373,12 @@ class BusinessRoute
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
                 $api->group(['prefix' => 'pay-run'], function ($api) {
-                    $api->get('/', 'B2b\PayRunController@index');
                     $api->post('/update', 'B2b\PayRunController@bulkUpdate');
-                    $api->post('/disburse', 'B2b\PayRunController@disburse');
-                    $api->get('/pending-months','B2b\PayRunController@pendingMonths');
+                    $api->post('/disburse/{summary_id}', 'B2b\PayRunController@disburse');
+                    $api->get('/pending-months', 'B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
-                    $api->get('/bkash-salary-report','B2b\PayReportController@bkashSalaryReport');
-                    $api->get('/', 'B2b\PayReportController@index');
+                    $api->get('/bkash-salary-report/{id}', 'B2b\PayReportController@bkashSalaryReport');
                     $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');
 
@@ -399,12 +396,31 @@ class BusinessRoute
                     $api->post('show-tax-report-download-banner', 'B2b\TaxHistoryController@updateReportShowBanner');
                     $api->get('download-tax-certificate/{business_member_id}/tax-report/{id}', 'B2b\TaxHistoryController@downloadBusinessMemberTaxCertificate');
                 });
+                $api->group(['prefix' => 'pay-report-summary'], function ($api) {
+                    $api->get('/', 'B2b\BusinessPayReportSummaryController@index');
+                    $api->get('pay-report/{business_payslip_id}', 'B2b\PayReportController@index');
+                    $api->get('pay-run/{business_payslip_id}', 'B2b\PayRunController@index');
+                });
                 $api->group(['prefix' => 'employee-visit'], function ($api) {
                     $api->post('settings', 'B2b\VisitSettingController@settings');
                     $api->get('settings', 'B2b\VisitSettingController@getSettings');
                     $api->get('team-visits', 'B2b\VisitController@getTeamVisits');
                     $api->get('my-visits', 'B2b\VisitController@getMyVisits');
                     $api->get('/{id}', 'B2b\VisitController@show');
+                });
+
+                $api->group(['prefix' => 'live-tracking'], function ($api) {
+                    $api->post('setting', 'B2b\TrackingController@settingsAction');
+                    $api->get('setting', 'B2b\TrackingController@getSettings');
+                    $api->post('employee-setting', 'B2b\TrackingController@employeeTrackingAction');
+                    $api->get('employee-lists', 'B2b\TrackingController@employeeLists');
+                    $api->get('logs', 'B2b\TrackingController@getChangesLogs');
+                    $api->get('/', 'B2b\TrackingController@index');
+                    $api->group(['prefix' => '{id}'], function ($api) {
+                        $api->get('/', 'B2b\TrackingController@getTrackingDetails');
+                        $api->get('last-track', 'B2b\TrackingController@lastTrackedDate');
+                        $api->get('download', 'B2b\TrackingController@downloadLiveTrackingReport');
+                    });
                 });
             });
         });

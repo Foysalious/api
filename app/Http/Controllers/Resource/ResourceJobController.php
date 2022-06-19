@@ -122,13 +122,13 @@ class ResourceJobController extends Controller
     public function rescheduleJob(Job $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
     {
         try {
-            $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
+            $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string', 'schedule_change_reason' => 'string']);
             /** @var AuthUser $auth_user */
             $auth_user = $request->auth_user;
             $resource = $auth_user->getResource();
             if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
             $user_agent_information->setRequest($request);
-            $reschedule_job->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)
+            $reschedule_job->setResource($resource)->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)->setRescheduleReason($request->schedule_change_reason)
                 ->setScheduleTimeSlot($request->schedule_time_slot);
             $response = $reschedule_job->reschedule();
             return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);

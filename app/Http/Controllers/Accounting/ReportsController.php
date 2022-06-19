@@ -78,14 +78,12 @@ class ReportsController extends Controller
                 $template = 'pos_product_wise_sales';
                 $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->saveExcel($name, $template);
                 return api_response($request, $link, 200, ['link' => $link]);
-            }
-            elseif ($request->has('save_pdf')) {
+            } elseif ($request->has('save_pdf')) {
                 $name = 'Product Wise Sales Report';
                 $template = 'pos_product_wise_sales';
                 $link = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData(false)->savePdf($name, $template);
                 return api_response($request, $link, 200, ['link' => $link]);
-            }
-            else {
+            } else {
                 $data = $this->posReportRepository->getProductWise()->prepareQuery($request, $request->partner)->prepareData()->getData();
                 return api_response($request, $data, 200, ['result' => $data]);
             }
@@ -126,8 +124,24 @@ class ReportsController extends Controller
 
     public function getAccountingReportsList(Request $request): JsonResponse
     {
-        $response = $this->accountingReportRepository->getAccountingReportsList();
+        $version_code = $request->header('version-code');
+        $response = $this->accountingReportRepository->getAccountingReportsList($version_code);
         return api_response($request, $response, 200, ['data' => $response]);
+    }
 
+    public function getTransactionList(Request $request): JsonResponse
+    {
+        $partner = $request->auth_user->getPartner();
+        $data = $this->accountingReportRepository->setLimit($request->limit)->setOffset($request->offset)->setStartDate($request->start_date)->setEndDate($request->end_date)
+            ->setTransactionType($request->transaction_type)->setReconcile($request->reconcile)->setGateway($request->gateway)->setQ($request->q)
+            ->transactionList($partner->id);
+        return api_response($request, $data, 200, ['data' => $data]);
+    }
+
+    public function getTranactionDetails(Request $request, $id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $details = $this->accountingReportRepository->tranactionDetails($request->id, $partner->id);
+        return api_response($request, $details, 200, ['data' => $details]);
     }
 }

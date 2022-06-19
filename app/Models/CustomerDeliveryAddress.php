@@ -27,6 +27,11 @@ class CustomerDeliveryAddress extends Model
         return $query->where('geo_informations', '<>', null);
     }
 
+    public function scopeIsSaved($query)
+    {
+        return $query->where('is_saved', 1);
+    }
+
     public function getGeoAttribute()
     {
         return $this->geo_informations ?

@@ -109,6 +109,7 @@ class ComplainController extends Controller
 
             if ($complain) {
                 $comments = $this->formationComments($complain->comments);
+                if ($complain->status == constants('COMPLAIN_STATUSES')['Rejected']) $complain['status'] = 'Closed';
                 $complain['comments'] = $comments;
                 $complain['code'] = $complain->code();
                 return api_response($request, null, 200, ['complain' => $complain]);
@@ -197,7 +198,7 @@ class ComplainController extends Controller
             (new ComplainNotification($complain))->notifyOnCreate();
             $response = $complain->preset->response;
 
-            return api_response($request, $complain, 200, ['response' => $response]);
+            return api_response($request, $complain, 200, ['response' => $response, 'complain_id' => $complain->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');

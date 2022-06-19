@@ -271,32 +271,29 @@ if (!function_exists('array_push_on_array')) {
 
         $array[$key][] = $value;
     }
+}
 
-    if (!function_exists('convertTimezone')) {
+if (!function_exists('convertTimezone')) {
+    /**
+     * @param Carbon|null $datetime
+     * @param string $timezone
+     * @return Carbon|null
+     */
+    function convertTimezone(Carbon $datetime,  $timezone = 'Asia/Dhaka')
+    {
+        return $datetime->timezone($timezone);
 
-        /**
-         * @param Carbon|null $datetime
-         * @param string $timezone
-         * @return Carbon|null
-         */
-        function convertTimezone(Carbon $datetime,  $timezone = 'Asia/Dhaka')
-        {
-            return $datetime->timezone($timezone);
-
-        }
     }
+}
 
-    if (!function_exists('dispatchJobNow')) {
-
-        /**
-         * Dispatch a command to its appropriate handler in the current process.
-         * @param $job
-         * @return mixed
-         */
-        function dispatchJobNow($job)
-        {
-            return app(Dispatcher::class)->dispatchNow($job);
-
-        }
+if (!function_exists('dispatchJobNow')) {
+    /**
+     * Dispatch a command to its appropriate handler in the current process.
+     * @param $job
+     * @return mixed
+     */
+    function dispatchJobNow($job)
+    {
+        return app(Dispatcher::class)->dispatchNow($job);
     }
 }

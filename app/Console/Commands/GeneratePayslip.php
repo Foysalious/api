@@ -26,9 +26,8 @@ class GeneratePayslip extends Command
         $business = Business::find($business_id);
         $payroll_setting = $business->payrollSetting;
         $pay_day_type = $payroll_setting->pay_day_type;
-        $pay_day = 1;
         if ($pay_day_type == 'fixed_date') $pay_day = $payroll_setting->pay_day;
-        if ($pay_day_type == 'last_working_day') $pay_day = Carbon::now()->month($month)->lastOfMonth()->day;
+        else $pay_day = Carbon::now()->month($month)->lastOfMonth()->day;
         $period = Carbon::create($year, $month, $pay_day)->toDateString();
         $active_business_members = $business->getActiveBusinessMember()->where('join_date', '<', $period);
         $active_business_member_ids = $active_business_members;

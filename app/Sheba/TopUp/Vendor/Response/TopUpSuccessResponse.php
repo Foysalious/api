@@ -42,9 +42,9 @@ class TopUpSuccessResponse
         return $this->transactionId;
     }
 
-    public function getTransactionDetailsAsString()
+    public function getTransactionDetails()
     {
-        return json_encode($this->transactionDetails);
+        return $this->transactionDetails;
     }
 
     public function isPending()

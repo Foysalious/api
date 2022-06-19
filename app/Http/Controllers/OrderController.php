@@ -73,7 +73,7 @@ class OrderController extends Controller
             'remember_token' => 'required|string',
             'mobile' => 'required|string|mobile:bd',
             'email' => 'sometimes|email',
-            'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'date' => 'required|date_format:Y-n-j|after:' . Carbon::yesterday()->format('Y-m-d'),
             'time' => 'required|string',
             'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
             'address' => 'required_without:address_id',
@@ -222,7 +222,8 @@ class OrderController extends Controller
                         ->setBusinessType(BusinessType::MARKETPLACE)
                         ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                         ->send($customer->profile->mobile, [
-                            'order_code' => $order->code()
+                            'order_code' => $order->code(),
+                            'order_link' => config('sheba.front_url').'/od/'.$order->jobs->last()->id ?? '',
                         ]);
                 }
 

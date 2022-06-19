@@ -104,6 +104,7 @@ class LeaveTransformer extends TransformerAbstract
         $approvers = [];
         foreach ($leave->requests as $approval_request) {
             $business_member = $approval_request->approver;
+            if (!$business_member) continue;
             $member = $business_member->member;
             $profile = $member->profile;
             array_push($approvers, [

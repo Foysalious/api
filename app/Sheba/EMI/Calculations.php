@@ -61,7 +61,8 @@ class Calculations
 
     public static function getBankTransactionFeeForManager($amount, $percentage = null)
     {
-        $fee            = self::_getBankTransactionFee($amount, $percentage ?: config('emi.manager.bank_fee_percentage'));
+        $percentage = $percentage === null ? config('emi.manager.bank_fee_percentage') : $percentage;
+        $fee = self::_getBankTransactionFee($amount, $percentage);
         $partner_profit = $fee - self::_getBankTransactionFee($amount, config('emi.manager.bank_fee_percentage'));
         return [$fee, $partner_profit];
     }

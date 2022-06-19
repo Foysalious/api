@@ -9,7 +9,7 @@ return [
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
     'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
-    'services_api_url' => env('SHEBA_SERVICES_URL', 'http://services.dev-sheba.xyz'),
+    'services_api_url' => env('SHEBA_SERVICES_URL', 'https://services.dev-sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'ebl_url' => env('EBL_URL'),
@@ -171,5 +171,9 @@ return [
     'sheba_services_vendor_id' => env('SHEBA_SERVICES_VENDOR_ID', '60cb5b0f6fe71675a8564683'),
     'notification_services_app_key' => env('SHEBA_NOTIFICATION_SERVICES_APP_KEY', 'sheba1234'),
     'notification_services_app_secret' => env('SHEBA_NOTIFICATION_SERVICES_APP_SECRET', 'sheba1234'),
-    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME','')
+    'whitelisted_ip_redis_key_name' => env('WHITELISTED_IP_REDIS_KEY_NAME',''),
+    'ios_app_name' => env('IOS_APP_NAME'),
+    'ios_app_store_id' => env('IOS_APP_STORE_ID'),
+    'android_app_name' => env('ANDROID_APP_NAME'),
+    'android_app_store_id' => env('ANDROID_APP_STORE_ID'),
 ];

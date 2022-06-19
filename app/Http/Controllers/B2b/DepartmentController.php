@@ -18,6 +18,7 @@ use Throwable;
 class DepartmentController extends Controller
 {
     use ModificationFields;
+
     /** @var CreateRequest $departmentCreateRequest */
     private $departmentCreateRequest;
     /** @var Creator $creator */
@@ -50,6 +51,13 @@ class DepartmentController extends Controller
         $business_departments = new Collection($business_departments, new BusinessDepartmentListTransformer());
         $business_departments = $manager->createData($business_departments)->toArray()['data'];
 
+
+        if ($request->has('is_tagged') && $request->is_tagged == 1) {
+            $business_departments = $this->filteredUntaggedDepartment($business_departments);
+            if (count($business_departments) > 0)
+                return api_response($request, $business_departments, 200, ['departments' => collect($business_departments)->values()]);
+        }
+
         $total_business_departments = count($business_departments);
         $business_departments = collect($business_departments)->splice($offset, $limit);
 
@@ -58,6 +66,13 @@ class DepartmentController extends Controller
             'total_business_departments' => $total_business_departments
         ]);
         return api_response($request, null, 404);
+    }
+
+    private function filteredUntaggedDepartment($business_departments)
+    {
+        return collect($business_departments)->filter(function ($department) {
+            return $department['total_employee'] > 0;
+        });
     }
 
     /**

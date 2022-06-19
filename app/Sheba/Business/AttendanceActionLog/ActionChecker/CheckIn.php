@@ -21,12 +21,7 @@ class CheckIn extends ActionChecker
 
     protected function setAlreadyHasActionForTodayResponse()
     {
-        $this->setResult(ActionResultCodes::ALREADY_CHECKED_IN, ActionResultCodeMessages::ALREADY_CHECKED_IN);
-    }
-
-    protected function setSuccessfulResponseMessage()
-    {
-        $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKIN);
+        $this->setResult(ActionResult::ALREADY_CHECKED_IN);
     }
 
     protected function checkForLateAction()
@@ -38,16 +33,16 @@ class CheckIn extends ActionChecker
         $today_last_checkin_time = $this->business->calculationTodayLastCheckInTime($which_half_day);
 
         if (is_null($today_last_checkin_time)) return;
-        if (!$this->isSuccess()) return;
+        if ($this->isAlreadyFailed()) return;
 
         $today_checkin_time_without_second = Carbon::parse($date->format('Y-m-d H:i'));
         $is_full_day_leave = (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkFullDayLeave();
 
         if ($today_checkin_time_without_second->greaterThan($today_last_checkin_time)) {
             if ($weekendHoliday->isWeekendByBusiness($date) || $weekendHoliday->isHolidayByBusiness($date) || $is_full_day_leave) {
-                $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKIN);
+                $this->setResult(ActionResult::SUCCESSFUL);
             } else {
-                $this->setResult(ActionResultCodes::LATE_TODAY, ActionResultCodeMessages::LATE_TODAY);
+                $this->setResult(ActionResult::LATE_TODAY);
             }
         }
     }

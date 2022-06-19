@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Settings\Payment\PaymentSetting;
@@ -49,7 +50,13 @@ class SettingsController extends Controller
                 $info['category_name'] = trim($job->category->name);
             }
             $settings = Redis::get('customer-review-settings');
-            $settings = $settings ? json_decode($settings) : null;
+            if (!$settings) {
+                $client = new Client();
+                $res = $client->request('GET', config('sheba.admin_url') . '/api/get-customer-review-settings');
+                $settings = $res->getBody();
+            }
+            $settings = json_decode($settings);
+
             $rating = $customer->customerReviews->avg('rating') <= 5 ? $customer->customerReviews->avg('rating') : 5;
             return api_response($request, $info, 200, ['job' => $info, 'customer' => ['rating' => round($rating, 2)], 'settings' => $settings]);
         } catch (\Throwable $e) {

@@ -40,13 +40,13 @@ class Updater
 
     private function payrollSettingData()
     {
-        $pay_day = $this->payrollSettingRequest->getPayDay();
+        $pay_day_type = $this->payrollSettingRequest->getPayDayType();
         $data = [
             'is_enable' => $this->payrollSettingRequest->getIsEnable(),
-            'pay_day_type' => $this->payrollSettingRequest->getPayDayType(),
-            'pay_day' => $pay_day
+            'pay_day_type' => $pay_day_type,
+            'pay_day' => $this->payrollSettingRequest->getPayDay()
         ];
-        if ($this->payrollSetting->next_pay_day == null) $data['next_pay_day'] = $this->nextPayslipGenerationDay($this->payrollSetting->business);
+        if ($this->payrollSetting->next_pay_day == null) $data['next_pay_day'] = $this->nextPayslipGenerationDay($this->payrollSetting->business, $pay_day_type);
         return $data;
     }
 }

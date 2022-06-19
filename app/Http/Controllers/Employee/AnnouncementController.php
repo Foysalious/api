@@ -11,7 +11,9 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Announcement\AnnouncementList;
+use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\Dal\Announcement\AnnouncementTarget;
 use Sheba\Dal\Announcement\AnnouncementTypes;
 
 class AnnouncementController extends Controller
@@ -35,6 +37,7 @@ class AnnouncementController extends Controller
 
     public function index(Request $request, AnnouncementList $announcement_list)
     {
+
         $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric', 'type' => 'string|in:' . implode(',', AnnouncementTypes::get())]);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
@@ -44,6 +47,7 @@ class AnnouncementController extends Controller
         if ($request->type) $announcement_list->setType($request->type);
         $announcements = $announcement_list->get();
         if (count($announcements) == 0) return api_response($request, null, 404);
+
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $announcements = new Collection($announcements, new AnnouncementTransformer());
@@ -56,6 +60,36 @@ class AnnouncementController extends Controller
             });
         }
 
+        $announcements = $this->getFilteredAnnouncements($business_member, $announcements);
+
         return api_response($request, $announcements, 200, ['announcements' => $announcements->values()]);
+    }
+
+    /**
+     * @param $business_member
+     * @param $announcements
+     * @return \Illuminate\Support\Collection
+     */
+    private function getFilteredAnnouncements($business_member, $announcements)
+    {
+        $department = $business_member->department();
+
+        $all_announcements = [];
+        foreach ($announcements as $announcement) {
+
+            if ($announcement['target_type'] === AnnouncementTarget::ALL) {
+                $all_announcements[] = $announcement;
+            }
+            if ($announcement['target_type'] === AnnouncementTarget::DEPARTMENT && !!$business_member->department() &&in_array($department->id, $announcement['target_id'])) {
+                $all_announcements[] = $announcement;
+            }
+            if ($announcement['target_type'] === AnnouncementTarget::EMPLOYEE && in_array($business_member->id, $announcement['target_id'])) {
+                $all_announcements[] = $announcement;
+            }
+            if ($announcement['target_type'] === AnnouncementTarget::EMPLOYEE_TYPE && in_array($business_member->employee_type, $announcement['target_id'])) {
+                $all_announcements[] = $announcement;
+            }
+        }
+        return collect($all_announcements);
     }
 }

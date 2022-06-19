@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Complain;
 use App\Models\Customer;
 use App\Models\CustomerFavorite;
 use App\Models\Job;
@@ -46,6 +47,7 @@ use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
+use Sheba\Reports\PdfHandler;
 use Sheba\Services\FormatServices;
 use Sheba\UserAgentInformation;
 use Sheba\Dal\PartnerOrderPayment;
@@ -124,6 +126,7 @@ class JobController extends Controller
             if ($jobService->service->is_inspection_service) $has_inspection_service = 1;
             break;
         }
+        $job_complains = $job->complains()->whereIn('accessor_id',[1,2])->get();
 
         $job_collection = collect();
         $job_collection->put('id', $job->id);
@@ -137,7 +140,7 @@ class JobController extends Controller
         $job_collection->put('additional_information', $job->job_additional_info);
         $job_collection->put('schedule_date', $job->schedule_date);
         $job_collection->put('schedule_date_readable', (Carbon::parse($job->schedule_date))->format('jS F, Y'));
-        $job_collection->put('complains', $this->formatComplains($job->complains));
+        $job_collection->put('complains', $this->formatComplains($job_complains));
         $job_collection->put('preferred_time', $job->readable_preferred_time);
         $job_collection->put('category_id', $job->category ? $job->category->id : null);
         $job_collection->put('category_name', $job->category ? $job->category->name : null);
@@ -364,11 +367,15 @@ class JobController extends Controller
             if ($jobService->service->is_inspection_service) $has_inspection_service = 1;
             break;
         }
-
+        $is_cancelled_job = $job->status == constants('JOB_STATUSES')['Cancelled'];
+        $total_price = $is_cancelled_job? (double)($partnerOrder->_calculateThisJobsForBillsDetails()->totalPriceForCancelledOrder + $partnerOrder->_calculateThisJobsForBillsDetails()->totalLogisticChargeForCancelledOrder) : (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
+        if ($is_cancelled_job && $job->isRentCar()) $original_price = (double)$job->servicePrice;
+        else $original_price = (double)$job->totalServiceSurcharge ? (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge : (double)$partnerOrder->jobPrices;
         $bill = collect();
-        $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
+        $partnerOrder = $partnerOrder->calculate();
+        $bill['total'] = $total_price;
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
-        $bill['original_price'] = (double)$partnerOrder->jobPrices - (double)$job->totalServiceSurcharge;
+        $bill['original_price'] = $original_price;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
         $bill['due'] = (double)$partnerOrder->dueWithLogistic;
         $bill['material_price'] = (double)$job->materialPrice;
@@ -801,12 +808,15 @@ class JobController extends Controller
     public function generateInvoiceOfJob(Job $job)
     {
         $invoice = null;
-        if($job->isServed()) {
-            return [
-                'link' => $job->partnerOrder->invoice
-            ];
-        }
-        return (new InvoiceHandler($job->partnerOrder))->save('quotation');
+//        if($job->isServed()) {
+//            return [
+//                'link' => $job->partnerOrder->invoice
+//            ];
+//        }
+        $type = $job->isServed() ? 'invoice' : 'quotation';
+        $partner_order = $job->partnerOrder->calculate(true);
+        $invoice_data['partner_order'] = $partner_order;
+        return (new PdfHandler())->setData($invoice_data)->setViewFile('invoice')->saveInvoice($type, true);
     }
 
     public function rescheduleJob($customer, $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)

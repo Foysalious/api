@@ -25,7 +25,7 @@ class ChangesLogsTransformer extends TransformerAbstract
             'created_at_date' => ($created_at)->format('j M, Y'),
             'created_at_time' => ($created_at)->format('h:i A'),
             'created_by_profile' => [
-                'business_member_id' => $business_member->id,
+                'business_member_id' => $business_member ? $business_member->id : null,
                 'name' => str_replace('Member-', '', $operational_changes_logs->created_by_name),
             ]
         ];

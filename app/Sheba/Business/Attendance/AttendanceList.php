@@ -16,6 +16,7 @@ use Sheba\Dal\AttendanceActionLog\Contract as AttendanceActionLogRepositoryInter
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Dal\AttendanceActionLog\RemoteMode;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOffice;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessWeekendSettings\BusinessWeekendSettingsRepo;
 use Sheba\Dal\Leave\Model as Leave;
@@ -79,6 +80,8 @@ class AttendanceList
     private $checkOutRemoteMode;
     private $businessWeekendSettingsRepo;
     private $checkWeekend;
+    /*** @var BusinessOffice */
+    private $businessOfficeRepo;
 
     /**
      * AttendanceList constructor.
@@ -112,6 +115,7 @@ class AttendanceList
         $this->businessWeekend = $business_weekend_repo;
         $this->businessWeekendSettingsRepo = $business_weekend_settings_repo;
         $this->checkWeekend = $check_weekend;
+        $this->businessOfficeRepo = app(BusinessOffice::class);
     }
 
     /**
@@ -310,7 +314,7 @@ class AttendanceList
             ->where('date', '<=', $this->endDate->toDateString())
             ->with([
                 'actions' => function ($q) {
-                    $q->select('id', 'attendance_id', 'note', 'action', 'status', 'ip', 'is_remote', 'remote_mode', 'location', 'created_at');
+                    $q->select('id', 'attendance_id', 'note', 'action', 'status', 'ip', 'is_remote', 'remote_mode', 'is_in_wifi', 'is_geo_location', 'business_office_id', 'location', 'created_at');
                 },
                 'businessMember' => function ($q) {
                     $this->withMembers($q);
@@ -457,13 +461,21 @@ class AttendanceList
                 ) continue;
 
                 foreach ($attendance->actions as $action) {
+                    $is_in_wifi = $action->is_in_wifi;
+                    $is_geo = $action->is_geo_location;
+                    $business_office = $is_in_wifi || $is_geo ? $this->businessOfficeRepo->findWithTrashed($action->business_office_id) : null;
+                    $business_office_name = $business_office ? $business_office->name : null;
                     if ($action->action == Actions::CHECKIN) {
                         $checkin_data = collect([
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
+                            'is_geo' => $is_geo,
+                            'is_in_wifi' => $is_in_wifi,
                             'address' => $action->is_remote ?
-                                $action->location ? json_decode($action->location)->address : null
-                                : null,
+                                $action->location ?
+                                    json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
+                                    : null
+                                : $business_office_name,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a'),
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
@@ -473,9 +485,13 @@ class AttendanceList
                         $checkout_data = collect([
                             'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
+                            'is_geo' => $is_geo,
+                            'is_in_wifi' => $is_in_wifi,
                             'address' => $action->is_remote ?
-                                $action->location ? json_decode($action->location)->address : null
-                                : null,
+                                $action->location ?
+                                    json_decode($action->location)->address ?: json_decode($action->location)->lat.', '.json_decode($action->location)->lng
+                                    : null
+                                : $business_office_name,
                             'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
                             'note' => $action->note,
                             'remote_mode' => $action->remote_mode ?: null
@@ -490,7 +506,7 @@ class AttendanceList
                     }
                 }
 
-                array_push($data, $this->getBusinessMemberData($attendance->businessMember) + [
+                $data[] = $this->getBusinessMemberData($attendance->businessMember) + [
                         'id' => $attendance->id,
                         'check_in' => $checkin_data,
                         'check_out' => $checkout_data,
@@ -511,7 +527,7 @@ class AttendanceList
                             'is_check_in_overridden' => $check_in_overridden,
                             'is_check_out_overridden' => $check_out_overridden
                         ]
-                    ]);
+                    ];
             }
         }
 
