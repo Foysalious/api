@@ -2,9 +2,7 @@
 
 use App\Exceptions\PartnerDataNotFoundException;
 use DB;
-use Exception;
-use Illuminate\Database\QueryException;
-use Sheba\Dal\PartnerPackageFeatureCounter\EloquentImplementation as PartnerPackageFeatureCounter;
+use Sheba\Dal\PartnerPackageFeatureCounter\Contract as PartnerPackageFeatureCounter;
 use Sheba\ModificationFields;
 
 class FeatureCounter
@@ -22,23 +20,24 @@ class FeatureCounter
      * @param $feature
      * @param $partner
      * @return mixed
-     * @throws Exception
+     * @throws PartnerDataNotFoundException
      */
     public function getCurrentCount($feature, $partner)
     {
-        $features_count_model = $this->allFeaturesCount($partner);
-        $this->isPartnerDataAvailable($features_count_model);
+        $features_count_model = $this->partnerPackageFeatureCounter->getFeatureCountByPartner($partner);
+
+        if (!$features_count_model) throw new PartnerDataNotFoundException();
 
         return $features_count_model[$feature];
     }
 
     /**
      * @param $partner
-     * @return mixed
+     * @return \Sheba\Dal\PartnerPackageFeatureCounter\Model|null
      */
     public function getAllFeaturesCurrentCount($partner)
     {
-        return $this->allFeaturesCount($partner);
+        return $this->partnerPackageFeatureCounter->getFeatureCountByPartner($partner);
     }
 
     /**
@@ -46,94 +45,57 @@ class FeatureCounter
      * @param $partner
      * @param $count
      * @return bool
-     * @throws Exception
      */
     public function isEligible($feature, $partner, $count)
     {
-        $features_count_model = $this->allFeaturesCount($partner);
-        $this->isPartnerDataAvailable($features_count_model);
-        $feature_count = $features_count_model[$feature];
-        return $feature_count >= $count;
+        $features_count = $this->partnerPackageFeatureCounter->getFeatureCountByPartner($partner);
+
+        if (!$features_count) return false;
+
+        return $features_count->isEligible($feature, $count);
     }
 
     /**
      * @param $feature
      * @param $partner
      * @param $count
-     * @return mixed
-     * @throws Exception
+     * @throws PartnerDataNotFoundException
      */
     public function incrementCount($feature, $partner, $count)
     {
-        $features_count_model = $this->allFeaturesCount($partner);
-        $this->isPartnerDataAvailable($features_count_model);
-        $feature_count = $features_count_model[$feature];
+        $features_count = $this->partnerPackageFeatureCounter->getFeatureCountByPartner($partner);
 
-        try {
-            DB::transaction(function () use($feature_count, $count, $feature, $features_count_model) {
-                $updated_count = $feature_count + $count;
-                $data[$feature] = $updated_count;
-                $features_count_model->update($this->withUpdateModificationField($data));
-            });
+        if (!$features_count) throw new PartnerDataNotFoundException();
 
-            return ucfirst($feature) . " count has updated successfully!";
-        } catch (QueryException $e) {
-            return $e->getMessage();
-        }
+        if ($features_count->isUnlimited($feature)) return;
 
+        $this->partnerPackageFeatureCounter->update($features_count, [
+            $feature => $features_count->getCount($feature) + $count
+        ]);
     }
 
     /**
      * @param $feature
      * @param $partner
      * @param $count
-     * @return string
-     * @throws Exception
+     * @throws PartnerDataNotFoundException
      */
     public function decrementCount($feature, $partner, $count)
     {
-        $features_count_model = $this->allFeaturesCount($partner);
-        $this->isPartnerDataAvailable($features_count_model);
-        $feature_count = $features_count_model[$feature];
-        $updated_count = $feature_count - $count;
+        $features_count = $this->partnerPackageFeatureCounter->getFeatureCountByPartner($partner);
 
-        if ($updated_count >= 0) {
-            try {
-                DB::transaction(function () use($updated_count, $feature, $features_count_model) {
+        if (!$features_count) throw new PartnerDataNotFoundException();
 
-                    $data[$feature] = $updated_count;
-                    $features_count_model->update($this->withUpdateModificationField($data));
-                });
+        if ($features_count->isUnlimited($feature)) return;
 
-                return ucfirst($feature) . " count has updated successfully!";
-            } catch (QueryException $e) {
-                return $e->getMessage();
-            }
-        }
+        $updated_count = $features_count->getCount($feature) - $count;
+
+        if ($updated_count < 0) return;
+
+        $this->partnerPackageFeatureCounter->update($features_count, [
+            $feature => $updated_count
+        ]);
     }
-
-    /**
-     * @param $partner
-     * @return mixed
-     */
-    private function allFeaturesCount($partner)
-    {
-        return $this->partnerPackageFeatureCounter->where('partner_id', $partner)->first();
-    }
-
-    /**
-     * @param $features_count_model
-     * @return bool
-     * @throws Exception
-     */
-    private function isPartnerDataAvailable($features_count_model)
-    {
-        if (! $features_count_model) {
-            throw new PartnerDataNotFoundException();
-        }
-        return true;
-    }
-
 }
 
 
