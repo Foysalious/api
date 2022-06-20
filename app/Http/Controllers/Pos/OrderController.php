@@ -642,6 +642,7 @@ class OrderController extends Controller
         $isEligible = $packageFeatureCount->setPartnerId($partner->id)->setFeature(Feature::SMS)->isEligible($smsCount['sms_count']);
         if (!$isEligible) throw new PackageRestrictionException('আপনার নির্ধারিত প্যাকেজের ফ্রি এসএমএস সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে প্যাকেজ আপগ্রেড করুন অথবা পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন।', 403);
         $this->dispatch(new OrderBillSms($partner, $request->order));
+        $packageFeatureCount->setPartnerId($partner->id)->setFeature(Feature::SMS)->decrementFeatureCount($smsCount['sms_count']);
     }
 
     private function sendEmailCore(Request $request)
