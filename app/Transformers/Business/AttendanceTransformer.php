@@ -110,7 +110,9 @@ class AttendanceTransformer extends TransformerAbstract
                     'check_in' => $attendance_checkin_action ? [
                         'status' => $is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day) ? null : $attendance_checkin_action->status,
                         'time' => $attendance->checkin_time,
+                        'is_in_wifi' => $attendance_checkin_action->is_in_wifi ?: 0,
                         'is_remote' => $attendance_checkin_action->is_remote ?: 0,
+                        'is_geo_location' => $attendance_checkin_action->is_geo_location ?: 0,
                         'address' => $attendance_checkin_action->is_remote ?
                             $attendance_checkin_action->location ?
                                 json_decode($attendance_checkin_action->location)->address ?: json_decode($attendance_checkin_action->location)->lat.', '.json_decode($attendance_checkin_action->location)->lng
