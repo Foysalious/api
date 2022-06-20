@@ -14,6 +14,7 @@ use Sheba\Business\AttendanceActionLog\AttendanceAction;
 use App\Transformers\Business\AttendanceTransformer;
 use App\Sheba\Business\Attendance\Note\Updater as AttendanceNoteUpdater;
 use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOffice;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use App\Transformers\CustomSerializer;
 use App\Http\Controllers\Controller;
@@ -43,8 +44,8 @@ class AttendanceController extends Controller
      * @param BusinessWeekendSettingsRepo $business_weekend_settings_repo
      * @return JsonResponse
      */
-    public function index(Request                     $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
-                          BusinessWeekendSettingsRepo $business_weekend_settings_repo)
+    public function index(Request $request, AttendanceRepoInterface $attendance_repo, TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
+                          BusinessWeekendSettingsRepo $business_weekend_settings_repo, BusinessOffice $business_office)
     {
         $this->validate($request, ['year' => 'required|string', 'month' => 'required|string']);
         $year = $request->year;
@@ -70,7 +71,7 @@ class AttendanceController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $is_new_joiner, $business_holiday, $weekend_settings, $business_member_leave));
+        $resource = new Item($attendances, new AttendanceTransformer($time_frame, $is_new_joiner, $business_holiday, $weekend_settings, $business_member_leave, $business_office));
         $attendances_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, [
