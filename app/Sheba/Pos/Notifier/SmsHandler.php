@@ -54,10 +54,10 @@ class SmsHandler {
             try {
                 $sms->setBusinessType($this->data['business_type'])->setFeatureType($this->data['feature_type'])
                     ->shoot();
+            } catch (Throwable $e) {
                 /** @var PackageFeatureCount $packageFeatureCount */
                 $packageFeatureCount = app(PackageFeatureCount::class);
-                $packageFeatureCount->setPartnerId($this->partner->id)->setFeature(Feature::SMS)->decrementFeatureCount($smsCount['sms_count']);
-            } catch (Throwable $e) {
+                $packageFeatureCount->setPartnerId($this->partner->id)->setFeature(Feature::SMS)->incrementFeatureCount($smsCount['sms_count']);
             }
         }
     }
