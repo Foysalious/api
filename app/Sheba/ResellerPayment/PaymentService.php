@@ -157,7 +157,8 @@ class PaymentService
                 'account_number' => $account_details->AccountNum ?? null,
                 'customer_number' => $account_details->CustomerNum ?? null,
                 'name' => $this->partner->getFirstAdminResource()->profile->name,
-                'branch_name' => $branch_name ?? null
+                'branch_name' => $branch_name ?? null,
+                'description' => $account_details->Description
             ]
         ];
 
