@@ -214,6 +214,9 @@ class DynamicForm
         if ($this->type == "tradeLicenseExists") {
             return config('trade_license');
         }
+        if ($this->type == "nomineeRelation") {
+            return config('mtb_nominee_relation');
+        }
     }
 
 
