@@ -114,13 +114,17 @@
                     @if($v['account_type'] == 'receivable' )
                         <td style="width: 18% ;text-align: right; padding-right: 5px; background: #F9EDEC;color: #C92236">৳ {{ $v['amount_bn'] }}</td>
                         <td style="width: 18% ;text-align: right; padding-right: 5px; background: #EFF8F1;">&nbsp;</td>
-                        <td style="width: 18% ;text-align: right; padding-right: 5px; color: #C92236; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+
                     @elseif($v['account_type'] == 'payable' )
                         <td style="text-align: right; padding-right: 5px; background: #F9EDEC;width: 18% ;">&nbsp;</td>
                         <td style="text-align: right; padding-right: 5px; background: #EFF8F1; width: 18% ;color: #39B54A">৳ {{ $v['amount_bn'] }}</td>
-                        <td style="width: 18% ;padding-right: 5px; text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
-                    @endif()
 
+                    @endif()
+                    @if($v['balance_bn'][0] == '-')
+                        <td style="width: 18% ;text-align: right; padding-right: 5px; color: #C92236; font-size: 14px;">৳ {{str_replace("-","",$v['balance_bn'])}}</td>
+                    @else
+                        <td style="width: 18% ;padding-right: 5px; text-align: right; color: #39B54A; font-size: 14px;">৳ {{$v['balance_bn']}}</td>
+                    @endif
                 </tr>
             @elseif($data['contact_type'] == 'supplier')
                 <tr style="border: 1px solid #EAECF0;">

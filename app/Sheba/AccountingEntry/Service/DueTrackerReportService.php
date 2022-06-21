@@ -278,6 +278,7 @@ class DueTrackerReportService
      */
     private function listBnForContactPdf($data): array
     {
+        $tathkalin_balance = $data['data']['stats']['balance'];
         $list = array();
         foreach($data['data']['due_list'] as $key => $value){
             $split = explode("-",$key);
@@ -286,11 +287,19 @@ class DueTrackerReportService
                 $entry_at = date_create($v['entry_at']);
                 $created_at = date_create($v['created_at']);
                 $list[$key_bn]['list'][$key1]['amount_bn'] = NumberLanguageConverter::en2bn($v['amount']);
-                $list[$key_bn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($v['balance']);
+                $list[$key_bn]['list'][$key1]['balance_bn'] = NumberLanguageConverter::en2bn($tathkalin_balance);
                 $list[$key_bn]['list'][$key1]['entry_at_bn'] = dateEn2Bn(date_format($entry_at,"y-m-d"),'d/m');
                 $list[$key_bn]['list'][$key1]['created_at_bn'] = dateEn2Bn(date_format($created_at,"y-m-d"),'d M Y');
                 $list[$key_bn]['list'][$key1]['note'] = $v['note'];
                 $list[$key_bn]['list'][$key1]['account_type'] = $v['account_type'];
+
+                if($v['account_type'] == "payable" ){
+                    $tathkalin_balance -= $v['amount'];
+                }
+                elseif($v['account_type'] == "receivable"){
+                    $tathkalin_balance += $v['amount'];
+                }
+
             }
             $list[$key_bn]['stats']['receivable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['receivable']);
             $list[$key_bn]['stats']['payable_bn'] =  NumberLanguageConverter::en2bn($value['stats']['payable']);
