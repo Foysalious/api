@@ -288,6 +288,9 @@ class EntryDTO
      */
     public function getToAccountKey()
     {
+        if ($this->source_type === EntryTypes::DEPOSIT) {
+            return (new Accounts())->expense->cost_of_good_sold::DUE_PURCHASE_FROM_DT;
+        }
         return $this->source_type === EntryTypes::DUE ? $this->contact_id : $this->account_key;
     }
 
