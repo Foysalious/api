@@ -4,7 +4,7 @@
 namespace Sheba\AccountingEntry\Accounts\AccountTypes;
 
 
-use App\Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\CostOfGoodSold;
+use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\CostOfGoodSold;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\EmiInterest;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\LoanService;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\PaymentLinkServiceCharge;
