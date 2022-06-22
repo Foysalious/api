@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income;
+namespace Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense;
 
 use Sheba\Helpers\ConstGetter;
 
