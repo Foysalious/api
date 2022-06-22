@@ -4,6 +4,7 @@
 namespace Sheba\AccountingEntry\Accounts\AccountTypes;
 
 
+use App\Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Income\CostOfGoodSold;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\EmiInterest;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\LoanService;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\PaymentLinkServiceCharge;
@@ -21,6 +22,9 @@ class Expense extends AccountTypes
     public $paymentLinkServiceCharge;
     /** @var EmiInterest */
     public $emiInterest;
+    /**
+     * @var CostOfGoodSold
+     */
     public $cost_of_good_sold;
     public $depreciation_cost;
     public $other_expense;

@@ -1,12 +1,12 @@
-<?php namespace App\Sheba\AccountingEntry\Service;
+<?php
+namespace App\Sheba\AccountingEntry\Service;
 
 use App\Sheba\AccountingEntry\Constants\ContactType;
-use App\Sheba\AccountingEntry\Entry\Creator as EntryCreator;
 use App\Sheba\AccountingEntry\Dto\EntryDTO;
+use App\Sheba\AccountingEntry\Entry\Creator as EntryCreator;
 use App\Sheba\AccountingEntry\Entry\Updater as EntryUpdater;
 use App\Sheba\AccountingEntry\Repository\DueTrackerReminderRepository;
 use App\Sheba\AccountingEntry\Repository\DueTrackerRepositoryV2;
-use App\Sheba\AccountingEntry\Service\DueTrackerReportService;
 use Carbon\Carbon;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
 use Sheba\AccountingEntry\Exceptions\ContactDoesNotExistInDueTracker;
@@ -32,7 +32,7 @@ class DueTrackerService
     public function __construct(DueTrackerRepositoryV2 $dueTrackerRepo, DueTrackerReportService $dueTrackerReport)
     {
         $this->dueTrackerRepo = $dueTrackerRepo;
-        $this->dueTrackerReport =$dueTrackerReport;
+        $this->dueTrackerReport = $dueTrackerReport;
     }
 
     /**
@@ -156,6 +156,7 @@ class DueTrackerService
 
     /**
      * @return mixed
+     * @throws \Exception
      */
     public function storeEntry()
     {
@@ -167,12 +168,16 @@ class DueTrackerService
 
     /**
      * @throws AccountingEntryServerError
+     * @throws \Exception
      */
     public function badDebts(): string
     {
         $queryString = $this->generateQueryString();
-        $balance = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact($this->contact_id, $queryString);
-        if($balance['stats']['type'] == 'receivable') {
+        $balance = $this->dueTrackerRepo->setPartner($this->partner)->dueListBalanceByContact(
+            $this->contact_id,
+            $queryString
+        );
+        if ($balance['stats']['type'] == 'receivable') {
             $this->entryDTO->setAmount($balance['stats']['balance']);
             /* @var $creator EntryCreator */
             $creator = app()->make(EntryCreator::class);
@@ -207,7 +212,6 @@ class DueTrackerService
     {
         $queryString = $this->generateQueryString();
         return $this->dueTrackerRepo->setPartner($this->partner)->getDueListFromAcc($queryString);
-
     }
 
     /**
@@ -225,7 +229,7 @@ class DueTrackerService
         }
         $reminder = app()->make(DueTrackerReminderRepository::class)
             ->setPartner($this->partner)->reminderByContact($this->contact_id, $this->contact_type);
-        if($reminder == []){
+        if ($reminder == []) {
             $reminder = null;
         }
 
@@ -246,10 +250,16 @@ class DueTrackerService
     public function dueListByContact(): array
     {
         $queryString = $this->generateQueryString();
-        $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId($this->contact_id, $queryString);
+        $result = $this->dueTrackerRepo->setPartner($this->partner)->getDuelistByContactId(
+            $this->contact_id,
+            $queryString
+        );
         $contact_balance = $this->getBalanceByContact();
         $due_list = $result['list'];
-        $due_list = $this->dueTrackerReport->calculate_tathkalin_balance($due_list,$contact_balance["stats"]["balance"]);
+        $due_list = $this->dueTrackerReport->calculate_tathkalin_balance(
+            $due_list,
+            $contact_balance["stats"]["balance"]
+        );
         return [
             'list' => $due_list
         ];
@@ -318,10 +328,10 @@ class DueTrackerService
     public function getBalanceByContact()
     {
         $queryString = $this->generateQueryString();
-        $contact_balance =  $this->dueTrackerRepo
+        $contact_balance = $this->dueTrackerRepo
             ->setPartner($this->partner)
             ->dueListBalanceByContact($this->contact_id, $queryString);
-        if(!isset($contact_balance['contact_details'])) {
+        if (!isset($contact_balance['contact_details'])) {
             throw new ContactDoesNotExistInDueTracker();
         }
         return $contact_balance;
