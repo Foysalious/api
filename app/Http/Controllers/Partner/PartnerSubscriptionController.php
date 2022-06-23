@@ -17,6 +17,7 @@ use Sheba\Partner\StatusChanger;
 use Sheba\Subscription\Exceptions\HasAlreadyCollectedFeeException;
 use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\Partner\PartnerSubscription;
+use Sheba\Subscription\Partner\PartnerSubscriptionFeatureCount;
 use Sheba\Subscription\Partner\PurchaseHandler;
 use Sheba\Subscription\Partner\SubscriptionStatics;
 use Sheba\Transactions\Wallet\WalletDebitForbiddenException;
@@ -306,6 +307,9 @@ class PartnerSubscriptionController extends Controller
                     //freeze money amount check
                     WalletTransactionHandler::isDebitTransactionAllowed($request->partner, $partner->totalPriceRequiredForSubscription, 'প্যাকেজ কেনার');
                     $handler->purchase();
+                    // upgrade feature counts
+                    app(PartnerSubscriptionFeatureCount::class)->updateFeatureCounts($partner, $request->package_id);
+
                     DB::commit();
                     if ($grade === PartnerSubscriptionChange::RENEWED) {
                         return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে পুনর্বহাল করা হয়েছে।"], $handler->getBalance(true)));
