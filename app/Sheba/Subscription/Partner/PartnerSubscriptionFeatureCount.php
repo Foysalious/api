@@ -10,7 +10,7 @@ class PartnerSubscriptionFeatureCount
 
     /**
      * @param $partner
-     * @param $package
+     * @param $packageId
      */
     public function updateFeatureCounts($partner, $packageId)
     {
@@ -28,7 +28,7 @@ class PartnerSubscriptionFeatureCount
                 'delivery' => $feature_count_limit->sdelivery,
             ];
 
-            $features_count->create($this->withCreateModificationField($data));
+            $partnerPackageFeatureCounter->create($this->withCreateModificationField($data));
         } else {
             $data = [
                 'topup' => $this->featureCountData($features_count, $feature_count_limit, 'topup'),
