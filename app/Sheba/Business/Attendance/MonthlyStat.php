@@ -101,7 +101,9 @@ class MonthlyStat
             'left_early_note' => 0,
             'total_hours' => 0,
             'overtime_in_minutes' => 0,
-            'overtime' => 0
+            'overtime' => 0,
+            'remote_checkin' => 0,
+            'office_checkin' => 0
         ];
 
         $daily_breakdown = [];
@@ -144,11 +146,10 @@ class MonthlyStat
                 $overtime_in_minutes = (int)$attendance->overtime_in_minutes;
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
-
+                $is_in_wifi = $attendance_checkin_action->is_in_wifi;
+                $is_geo = $attendance_checkin_action->is_geo_location;
+                $business_office = $is_in_wifi || $is_geo ? $this->businessOfficeRepo->findWithTrashed($attendance_checkin_action->business_office_id) : null;
                 if ($this->forOneEmployee) {
-                    $is_in_wifi = $attendance_checkin_action->is_in_wifi;
-                    $is_geo = $attendance_checkin_action->is_geo_location;
-                    $business_office = $is_in_wifi || $is_geo ? $this->businessOfficeRepo->findWithTrashed($attendance_checkin_action->business_office_id) : null;
                     $business_office_name = $business_office ? $business_office->name : null;
                     $breakdown_data['show_attendance'] = 1;
                     $breakdown_data['attendance'] = [
@@ -202,6 +203,8 @@ class MonthlyStat
                 $statistics['left_early_note'] = (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null;
                 $statistics['total_hours'] += $attendance->staying_time_in_minutes;
                 $statistics['overtime_in_minutes'] += $overtime_in_minutes ?: 0;
+                if ($attendance_checkin_action->is_remote) $statistics['remote_checkin'] = $statistics['remote_checkin'] + 1;
+                if ($business_office) $statistics['office_checkin'] = $statistics['office_checkin'] + 1;
             }
 
             if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
