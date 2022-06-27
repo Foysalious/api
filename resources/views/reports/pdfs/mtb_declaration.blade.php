@@ -3,7 +3,7 @@
     <meta content="text/html; charset=UTF-8" http-equiv="content-type" />
 </head>
 <body style="width: 1200px; ">
-<table style="width: 60%; margin: auto;">
+<table style="width: 80%; margin: auto;">
     <tbody>
     <tr>
         <td
@@ -40,7 +40,9 @@
         text-decoration-skip-ink: none;
         font-size: 19pt;
         text-align: center;
-          ">ঘোষণাপত্র</td>
+          ">ঘোষণাপত্র
+        </td>
+
     </tr>
     <tr>
         <td style="
@@ -146,6 +148,14 @@
     <tr>
         <td style="font-weight: bold;">
             এস-ম্যানেজার
+        </td>
+    </tr>
+    <tr>
+        <td></td>
+    </tr>
+    <tr>
+        <td>
+            {{$date}}
         </td>
     </tr>
     </tbody>
