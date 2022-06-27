@@ -42,15 +42,15 @@ class MtbDocumentUpload
 
     private function makeData(): array
     {
-//        $partner = [
-//            "name" => $this->partner->getFirstAdminResource()->profile->name,
-//            "nid" => $this->partner->getFirstAdminResource()->profile->nid_no,
-//            "business_name" => $this->partner->name,
-//            "address" => $this->partner->partnerMefInformation->presentAddress
-//        ];
-//        $pdf_handler = new PdfHandler();
-//        $loan_application_name = 'mtb_declaration_letter_' . $this->partner->id;
-//        $linkToBase64 = base64_encode(file_get_contents($pdf_handler->setData($partner)->setName($loan_application_name)->setViewFile('mtb_declaration')->save(true)));
+        $partner = [
+            "name" => $this->partner->getFirstAdminResource()->profile->name,
+            "nid" => $this->partner->getFirstAdminResource()->profile->nid_no,
+            "business_name" => $this->partner->name,
+            "address" => $this->partner->partnerMefInformation->presentAddress
+        ];
+        $pdf_handler = new PdfHandler();
+        $loan_application_name = 'mtb_declaration_letter_' . $this->partner->id;
+        $linkToBase64 = base64_encode(file_get_contents($pdf_handler->setData($partner)->setName($loan_application_name)->setViewFile('mtb_declaration')->save(true)));
         $data = array(
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
@@ -58,12 +58,12 @@ class MtbDocumentUpload
                 'docImage' => base64_encode(file_get_contents($this->partner->getFirstAdminResource()->profile->nid_image_front)),
                 'docType' => MtbConstants::NID_FRONT,
             ],
-//            [
-//                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
-//                'docRefId' => $this->partner->getFirstAdminResource()->profile->nid_no,
-//                'docImage' => $linkToBase64,
-//                'docType' => MtbConstants::DECLARATION_LETTER,
-//            ],
+            [
+                'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
+                'docRefId' => $this->partner->getFirstAdminResource()->profile->nid_no,
+                'docImage' => $linkToBase64,
+                'docType' => MtbConstants::DECLARATION_LETTER,
+            ],
             [
                 'ticketId' => $this->partner->partnerMefInformation->mtb_ticket_id,
                 'docRefId' => $this->partner->getFirstAdminResource()->profile->nid_no,
