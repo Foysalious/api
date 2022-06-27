@@ -6,6 +6,7 @@ use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\MtbConstants;
 use App\Sheba\MTB\MtbServerClient;
 use App\Sheba\QRPayment\QRPaymentStatics;
+use Cassandra\Date;
 use Sheba\Reports\PdfHandler;
 
 class MtbDocumentUpload
@@ -47,6 +48,7 @@ class MtbDocumentUpload
             "nid" => $this->partner->getFirstAdminResource()->profile->nid_no,
             "business_name" => $this->partner->name,
             "partner_id" => $this->partner->id,
+            "date" => date("d/m/Y"),
             "address" => json_decode($this->partner->partnerMefInformation->partner_information)->permanentAddress
         ];
         $pdf_handler = new PdfHandler();
