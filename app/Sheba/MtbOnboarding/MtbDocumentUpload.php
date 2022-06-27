@@ -46,7 +46,8 @@ class MtbDocumentUpload
             "name" => $this->partner->getFirstAdminResource()->profile->name,
             "nid" => $this->partner->getFirstAdminResource()->profile->nid_no,
             "business_name" => $this->partner->name,
-            "address" => $this->partner->partnerMefInformation->presentAddress
+            "partner_id" => $this->partner->id,
+            "address" => json_decode($this->partner->partnerMefInformation->partner_information)->permanentAddress
         ];
         $pdf_handler = new PdfHandler();
         $loan_application_name = 'mtb_declaration_letter_' . $this->partner->id;
