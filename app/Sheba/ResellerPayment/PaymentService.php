@@ -145,7 +145,7 @@ class PaymentService
             'banner' => PaymentMethodStatics::getMtbBannerURL(),
             'faq' => PaymentMethodStatics::detailsFAQ(),
             'status' => $this->status ?? null,
-            'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : '',
+            'disclaimer_message' => isset($mtb_status) ? $mtb_status['description']. $account_details->Description : '',
             'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
             'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
             'details' => [
