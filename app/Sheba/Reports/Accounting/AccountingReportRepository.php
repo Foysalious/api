@@ -199,6 +199,6 @@ class AccountingReportRepository extends BaseRepository
 
     public function tranactionDetails($transactionId, $userId, $userType = UserType::PARTNER)
     {
-        return $this->client->setUserType($userType)->setUserId($userId)->get('api/entries/' . $transactionId);
+        return $this->client->setUserType($userType)->setUserId($userId)->get('api/entries/online-transactions/' . $transactionId);
     }
 }
