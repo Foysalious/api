@@ -485,6 +485,30 @@ class PartnerController extends Controller
     }
 
     /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getInfoV3($partner, Request $request)
+    {
+        $partner = $request->partner->load(['basicInformations']);
+            $info = collect($partner)->only([
+            'id', 'name', 'mobile'
+        ]);
+        $profile_infos = $partner->getFirstAdminResource()->profile()->select('nid_verified','pro_pic','father_name','mother_name','email','address','permanent_address','dob','nid_no','nid_image_front','nid_image_back')->first();
+
+        $info->put('cover_photo', $partner->logo);
+        $info->put('date_of_registration', $partner->created_at->toDateTimeString());
+        $info->put('profile_complete_progress', $this->partnerServiceRepository->profileCompletedProgress($profile_infos));
+        $info->put('is_nid_verified', $partner->isNIDVerified());
+        $info->put('is_profile_completed', $this->partnerServiceRepository->isProfileCompleted($profile_infos));
+        $info->put('partner_personal_info', collect($profile_infos)->only(['father_name']));
+        $info->put('partner_nid_info', collect($profile_infos)->only(['father_name']));
+
+        return api_response($request, $info, 200, ['info' => $info]);
+    }
+
+    /**
      * @param         $partner
      * @param Request $request
      * @return JsonResponse

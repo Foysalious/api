@@ -88,4 +88,39 @@ class PartnerServiceRepository
         $surcharge = PartnerServiceSurcharge::where('partner_service_id', $partner_service->id)->runningAt($schedule_date_time)->first();
         return $surcharge ? $surcharge->amount : 0;
     }
+
+    /**
+     * @param $profile_infos
+     * @return float
+     */
+    public function profileCompletedProgress($profile_infos)
+    {
+        $profile_data = $this->dataRatio($profile_infos, ['pro_pic', 'email', 'address', 'permanent_address']);
+        $nid_data = $this->dataRatio($profile_infos, ['pro_pic', 'father_name', 'mother_name', 'email', 'address', 'permanent_address', 'dob', 'nid_no', 'nid_image_front', 'nid_image_back']);
+
+        return ($profile_data * .5 + $nid_data * .5) * 100;
+    }
+
+    /**
+     * @param $profile_infos
+     * @param array $data_set
+     * @return float|int
+     */
+    private function dataRatio($profile_infos, array $data_set)
+    {
+        $count = 0;
+        foreach ($data_set as $data) {
+            if (!empty($profile_infos->$data)) $count ++;
+        }
+        return $count/sizeof($data_set);
+    }
+
+    /**
+     * @param $profile_infos
+     * @return bool
+     */
+    public function isProfileCompleted($profile_infos): bool
+    {
+        return (int) $this->profileCompletedProgress($profile_infos) == 100;
+    }
 }
