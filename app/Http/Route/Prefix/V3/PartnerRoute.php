@@ -16,6 +16,7 @@ class PartnerRoute
         });
         $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['jwtGlobalAuth']], function ($api) {
             $api->get('setting-updated-at', 'Partner\DashboardController@settingLastUpdatedDetails')->name('partner.setting-updated-at');
+            $api->get('info', 'PartnerController@getInfoV3');
         });
         $api->group(['prefix' => 'partners'], function ($api) {
             $api->get('business-types', 'PartnerController@getBusinessTypesNewList');
