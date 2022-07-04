@@ -211,7 +211,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ((int)$this->vendorId == 4 && $this->amount < 20.0) {
+        if ($this->isLessThanMinimumAmount()) {
             $this->errorMessage = "The amount have to be equal or more than 20.";
             return 1;
         }
@@ -323,5 +323,10 @@ class TopUpRequest
     public function getLong()
     {
         return $this->long;
+    }
+
+    private function isLessThanMinimumAmount(): bool
+    {
+        return ($this->vendor->getModel()->id == VendorFactory::GP || $this->vendor->getModel()->id == VendorFactory::SKITTO) && $this->amount < 20.0;
     }
 }
