@@ -215,12 +215,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->isAgentPartner() && $this->isNotEligibleForSubscription()) {
-            $this->errorMessage = "আপনার নির্ধারিত প্যাকেজের টপ সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে প্যাকেজ আপগ্রেড করুন অথবা পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন।";
-            return 1;
-        }
-
-        if ((int)$this->vendorId == 4 && $this->amount < 20.0) {
+        if ($this->isGpAndSkittoLessThanMinimumAmount()) {
             $this->errorMessage = "The amount have to be equal or more than 20.";
             return 1;
         }
@@ -339,18 +334,8 @@ class TopUpRequest
         return $this->long;
     }
 
-    private function isAgentPartner()
+    private function isGpAndSkittoLessThanMinimumAmount(): bool
     {
-        return $this->agent instanceof Partner;
-    }
-
-    private function isAgentBusiness()
-    {
-        return $this->agent instanceof Business;
-    }
-
-    private function isAgentAffiliate()
-    {
-        return $this->agent instanceof Affiliate;
+        return ($this->vendor->getModel()->id == VendorFactory::GP || $this->vendor->getModel()->id == VendorFactory::SKITTO) && $this->amount < 20.0;
     }
 }
