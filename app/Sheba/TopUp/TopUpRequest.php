@@ -211,7 +211,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->isLessThanMinimumAmount()) {
+        if ($this->isGpAndSkittoLessThanMinimumAmount()) {
             $this->errorMessage = "The amount have to be equal or more than 20.";
             return 1;
         }
@@ -325,7 +325,7 @@ class TopUpRequest
         return $this->long;
     }
 
-    private function isLessThanMinimumAmount(): bool
+    private function isGpAndSkittoLessThanMinimumAmount(): bool
     {
         return ($this->vendor->getModel()->id == VendorFactory::GP || $this->vendor->getModel()->id == VendorFactory::SKITTO) && $this->amount < 20.0;
     }
