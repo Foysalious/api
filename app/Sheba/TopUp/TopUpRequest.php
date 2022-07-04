@@ -220,6 +220,11 @@ class TopUpRequest
             return 1;
         }
 
+        if ((int)$this->vendorId == 4 && $this->amount < 20.0) {
+            $this->errorMessage = "The amount have to be equal or more than 20.";
+            return 1;
+        }
+
         return 0;
     }
 
