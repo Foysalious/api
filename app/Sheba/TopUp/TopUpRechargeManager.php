@@ -194,8 +194,8 @@ class TopUpRechargeManager extends TopUpManager
             $channel = config('sheba.push_notification_channel_name.manager');
         }
         if ($this->agent instanceof Affiliate){
-            config('sheba.push_notification_channel_name.customer') . $this->agent->id;
-            config('sheba.push_notification_channel_name.customer');
+            $topic = config('sheba.push_notification_topic_name.affiliate') . $this->agent->id;
+            $channel = config('sheba.push_notification_channel_name.affiliate');
         }
 
         $notification_data = [
