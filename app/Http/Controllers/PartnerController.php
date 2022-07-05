@@ -485,11 +485,10 @@ class PartnerController extends Controller
     }
 
     /**
-     * @param $partner
      * @param Request $request
      * @return JsonResponse
      */
-    public function getInfoV3($partner, Request $request)
+    public function getInfoV3(Request $request)
     {
         $partner = $request->partner->load(['basicInformations']);
             $info = collect($partner)->only([
