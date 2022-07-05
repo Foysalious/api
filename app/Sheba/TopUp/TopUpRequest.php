@@ -216,6 +216,7 @@ class TopUpRequest
         }
 
         if ($this->isGpAndSkittoLessThanMinimumAmount()) {
+            $this->errorCode = 412;
             $this->errorMessage = "The amount have to be equal or more than 20.";
             return 1;
         }
