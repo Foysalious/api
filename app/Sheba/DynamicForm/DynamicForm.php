@@ -196,6 +196,54 @@ class DynamicForm
 
     public function typeData($request)
     {
+        if ($request->header('version-code') < 300602) {
+            if ($this->type == "division") {
+                $division = Division::get();
+                $division = (new CollectionFormatter())->setData($division)->formatCollection();
+                $data = [
+                    'division' => ['list' => $division]
+                ];
+                return $data['division'];
+            }
+            if ($this->type == "district") {
+                if ($request->division) {
+                    $district = District::where('division_id', $request->division)->orderBy('name', 'ASC')->get();
+                    $district = (new CollectionFormatter())->setData($district)->formatCollection();
+                    $data = [
+                        'district' => ['list' => $district]
+                    ];
+                    return $data['district'];
+                }
+                $district = District::get();
+                $district = (new CollectionFormatter())->setData($district)->formatCollection();
+                $data = [
+                    'district' => ['list' => $district]
+                ];
+                return $data['district'];
+            }
+            if ($this->type == "thana") {
+                if ($request->district) {
+                    $thana = Thana::where('district_id', $request->district)->orderBY('name', 'ASC')->get();
+                    $thana = (new CollectionFormatter())->setData($thana)->formatCollection();
+                    $data = [
+                        'thana' => ['list' => $thana]
+                    ];
+                    return $data['thana'];
+                }
+                $thana = Thana::get();
+                $thana = (new CollectionFormatter())->setData($thana)->formatCollection();
+                $data = [
+                    'thana' => ['list' => $thana]
+                ];
+                return $data['thana'];
+            }
+            if ($this->type == "tradeLicenseExists") {
+                return config('trade_license');
+            }
+            if ($this->type == "nomineeRelation") {
+                return config('mtb_nominee_relation');
+            }
+        }
         if ($this->type == "division") {
             $division = Division::get();
             $division = (new CollectionFormatter())->setData($division)->formatCollectionUpdated();
