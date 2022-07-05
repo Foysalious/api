@@ -1,10 +1,14 @@
 <?php namespace Sheba\TopUp;
 
+use App\Jobs\SendTopUpPushNotification;
+use App\Models\Affiliate;
+use App\Models\Partner;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\ModificationFields;
+use Sheba\PushNotificationHandler;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -132,6 +136,7 @@ class TopUpRechargeManager extends TopUpManager
 
         if ($this->topUpOrder->isSuccess()) {
             app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $this->topUpOrder);
+            if ($this->agent instanceof Partner || $this->agent instanceof Affiliate) $this->sendPushNotification("অভিনন্দন", "অভিনন্দন, আপনার টপ-আপ রিচার্জটি সফলভাবে সম্পন্ন হয়েছে।");
         }
         $this->isSuccessful = true;
     }
@@ -159,6 +164,7 @@ class TopUpRechargeManager extends TopUpManager
     private function updateFailedTopOrder(TopUpErrorResponse $response)
     {
         $topup_order = $this->statusChanger->failed(FailDetails::buildFromErrorResponse($response));
+        if ($this->agent instanceof Partner || $this->agent instanceof Affiliate) $this->sendPushNotification("দুঃখিত", "দুঃখিত, কারিগরি ত্রুটির কারনে আপনার টপ-আপ রিচার্জ সফল হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।");
         return $this->setAgentAndVendor($topup_order);
     }
 
@@ -171,5 +177,30 @@ class TopUpRechargeManager extends TopUpManager
         $topup_order->agent = $this->agent;
         $topup_order->vendor = $this->vendorModel;
         return $topup_order;
+    }
+
+    private function sendPushNotification($title, $message)
+    {
+        try {
+            if ($this->agent instanceof Partner){
+                $topic = config('sheba.push_notification_topic_name.manager') . $this->agent->id;
+                $channel = config('sheba.push_notification_channel_name.manager');
+            }
+            if ($this->agent instanceof Affiliate){
+                $topic = config('sheba.push_notification_topic_name.affiliate') . $this->agent->id;
+                $channel = config('sheba.push_notification_channel_name.affiliate');
+            }
+
+            $notification_data = [
+                "title" => $title,
+                "message" => $message,
+                "event_type" => 'TopUp',
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ];
+            (new PushNotificationHandler())->send($notification_data, $topic, $channel);
+        } catch (Exception $e){
+            logError($e);
+        }
     }
 }
