@@ -85,10 +85,8 @@ class TopUpRechargeManager extends TopUpManager
      */
     public function recharge()
     {
-        $is_error = 0;
         if ($this->validator->validate()->hasError()) {
             $this->updateFailedTopOrder($this->validator->getError());
-            $is_error = 1;
             return;
         }
 
@@ -97,11 +95,9 @@ class TopUpRechargeManager extends TopUpManager
         $this->response = $this->vendor->recharge($this->topUpOrder);
 
         if ($this->response->hasError()) {
-            $is_error = 1;
             $this->updateFailedTopOrder($this->response->getErrorResponse());
             return;
         }
-        if ($this->agent instanceof Partner || $this->agent instanceof Affiliate) $this->sendPushNotification($is_error);
 
         $this->handleSuccessfulTopUpByVendor();
     }
@@ -140,6 +136,7 @@ class TopUpRechargeManager extends TopUpManager
 
         if ($this->topUpOrder->isSuccess()) {
             app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $this->topUpOrder);
+            if ($this->agent instanceof Partner || $this->agent instanceof Affiliate) $this->sendPushNotification("অভিনন্দন", "অভিনন্দন, আপনার টপ-আপ রিচার্জটি সফলভাবে সম্পন্ন হয়েছে।");
         }
         $this->isSuccessful = true;
     }
@@ -167,6 +164,7 @@ class TopUpRechargeManager extends TopUpManager
     private function updateFailedTopOrder(TopUpErrorResponse $response)
     {
         $topup_order = $this->statusChanger->failed(FailDetails::buildFromErrorResponse($response));
+        if ($this->agent instanceof Partner || $this->agent instanceof Affiliate) $this->sendPushNotification("দুঃখিত", "দুঃখিত, কারিগরি ত্রুটির কারনে আপনার টপ-আপ রিচার্জ সফল হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।");
         return $this->setAgentAndVendor($topup_order);
     }
 
@@ -181,30 +179,28 @@ class TopUpRechargeManager extends TopUpManager
         return $topup_order;
     }
 
-    private function sendPushNotification($is_error)
+    private function sendPushNotification($title, $message)
     {
-        $title = "অভিনন্দন";
-        $message = "অভিনন্দন, আপনার টপ-আপ রিচার্জটি সফলভাবে সম্পন্ন হয়েছে।";
-        if ($is_error) {
-            $title = "দুঃখিত";
-            $message = "দুঃখিত, কারিগরি ত্রুটির কারনে আপনার টপ-আপ রিচার্জ সফল হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।";
-        }
-        if ($this->agent instanceof Partner){
-            $topic = config('sheba.push_notification_topic_name.manager') . $this->agent->id;
-            $channel = config('sheba.push_notification_channel_name.manager');
-        }
-        if ($this->agent instanceof Affiliate){
-            $topic = config('sheba.push_notification_topic_name.affiliate') . $this->agent->id;
-            $channel = config('sheba.push_notification_channel_name.affiliate');
-        }
+        try {
+            if ($this->agent instanceof Partner){
+                $topic = config('sheba.push_notification_topic_name.manager') . $this->agent->id;
+                $channel = config('sheba.push_notification_channel_name.manager');
+            }
+            if ($this->agent instanceof Affiliate){
+                $topic = config('sheba.push_notification_topic_name.affiliate') . $this->agent->id;
+                $channel = config('sheba.push_notification_channel_name.affiliate');
+            }
 
-        $notification_data = [
-            "title" => $title,
-            "message" => $message,
-            "event_type" => 'TopUp',
-            "sound" => "notification_sound",
-            "channel_id" => $channel
-        ];
-        (new PushNotificationHandler())->send($notification_data, $topic, $channel);
+            $notification_data = [
+                "title" => $title,
+                "message" => $message,
+                "event_type" => 'TopUp',
+                "sound" => "notification_sound",
+                "channel_id" => $channel
+            ];
+            (new PushNotificationHandler())->send($notification_data, $topic, $channel);
+        } catch (Exception $e){
+            logError($e);
+        }
     }
 }
