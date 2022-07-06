@@ -252,7 +252,7 @@ class DynamicForm
             ];
             return $data['division'];
         }
-        if ($this->type == "district") {
+        if ($this->type == "district")  {
             $district = $this->getDistrict($request->division);
             $district = (new CollectionFormatter())->setData($district)->formatCollectionDistrict();
             $final = array();
