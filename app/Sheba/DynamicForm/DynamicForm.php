@@ -247,6 +247,8 @@ class DynamicForm
         if ($this->type == "division") {
             $division = Division::get();
             $division = (new CollectionFormatter())->setData($division)->formatCollectionUpdated();
+            $division[0]['name'] = 'Barisal';
+            $division[0]['key'] = 'Barisal';
             $data = [
                 'division' => ['list' => $division]
             ];
