@@ -250,7 +250,7 @@ class IndexRoute
             });
             $api->get('sales', 'Partner\SalesStatisticsController@index');
             $api->get('performance', 'Partner\PerformanceController@index');
-            $api->group(['prefix' => 'campaigns'], function ($api) {
+            $api->group(['prefix' => 'campaigns', 'middleware' => ['jwtGlobalAuth']], function ($api) {
                 $api->group(['prefix' => 'sms'], function ($api) {
                     $api->get('/settings', 'SmsCampaignOrderController@getSettings');
                     $api->post('/create', 'SmsCampaignOrderController@create');
@@ -259,6 +259,7 @@ class IndexRoute
                     $api->get('/history/{history_id}/details', 'SmsCampaignOrderController@getHistoryDetails');
                     $api->get('/faq', 'FaqController@getPartnerSmsCampaignFaq');
                     $api->get('/test-queue-run', 'SmsCampaignOrderController@processQueue');
+                    $api->get('/estimate-bulk-charge', 'SmsCampaignOrderController@getChargeEstimation');
                 });
             });
             $api->get('served-customers', 'PartnerController@getServedCustomers');

@@ -1,8 +1,8 @@
 <?php namespace Sheba\Reward\Event\Partner\Action\TopUp\Parameter;
 
-use App\Models\Partner;
 use App\Models\TopUpOrder;
 use Sheba\Reward\Event\ActionEventParameter;
+use Sheba\TopUp\TopUpCounts;
 
 class LifetimeTopupCount extends ActionEventParameter
 {
@@ -19,10 +19,6 @@ class LifetimeTopupCount extends ActionEventParameter
         /** @var TopUpOrder $topup_order */
         $topup_order = $params[0];
 
-        /** @var Partner $agent */
-        $agent = $topup_order->agent;
-        $lifetime_count = $agent->topUpOrders()->successful()->count();
-
-        return $lifetime_count == $this->value;
+        return TopUpCounts::isNthTopUpByAgent($topup_order, $this->value);
     }
 }

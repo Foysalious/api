@@ -182,6 +182,7 @@ class AccountingRepository extends BaseRepository
         $data['real_amount'] = $request->real_amount ?? null;
         $data['contact_id'] = $request->contact_id ?? null;
         $data['contact_type'] = $request->contact_type ?? null;
+        $data['target_id'] = $request->target_id ?? null;
         return $data;
     }
 }

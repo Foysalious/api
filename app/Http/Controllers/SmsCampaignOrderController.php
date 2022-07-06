@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
@@ -59,7 +60,13 @@ class SmsCampaignOrderController extends Controller
         }
         $campaign = $campaign->formatRequest($requests);
 
-        if (!$campaign->partnerHasEnoughBalance()) api_response($request, null, 200, ['message' => 'Insufficient Balance On Partner Wallet', 'error_code' => 'insufficient_balance', 'code' => 200]);
+//        if (!$campaign->partnerHasEnoughBalance()) api_response($request, null, 200, ['message' => 'Insufficient Balance On Partner Wallet', 'error_code' => 'insufficient_balance', 'code' => 200]);
+//
+
+        if (!$campaign->checkSmsSendingEligibility(count($request->customers))) {
+            $message = "আপনার নির্ধারিত প্যাকেজের ফ্রি এসএমএস  সংখ্যার লিমিট অতিক্রম করেছে। অনুগ্রহ করে প্যাকেজ আপগ্রেড করুন অথবা পরবর্তী মাস শুরু পর্যন্ত অপেক্ষা করুন।";
+            return api_response($request, $message, 403, ['message' => $message]);
+        }
 
         if (!$campaign->createOrder()) api_response($request, null, 200, ['message' => 'Failed to create campaign', 'error_code' => 'unknown_error', 'code' => 500]);
 
@@ -131,5 +138,34 @@ class SmsCampaignOrderController extends Controller
     public function processQueue(CampaignSmsStatusChanger $sms_status_changer)
     {
         $sms_status_changer->processPendingSms();
+    }
+
+    /**
+     * @param Request $request
+     * @param SmsCampaign $campaign
+     * @return JsonResponse
+     */
+    public function getChargeEstimation(Request $request, SmsCampaign $campaign)
+    {
+        try {
+            $this->validate($request, [
+                'message' => 'required|string',
+                'mobile_count' => 'required|numeric|min:1|max:10000',
+            ]);
+
+            $per_sms_charge = constants('SMS_CAMPAIGN.rate_per_sms');
+            $total_charge = $campaign->getEstimateCharge($request->message, $request->mobile_count);
+            $data = [
+                'total_charge' => $total_charge,
+                'charge_per_sms' => $per_sms_charge,
+                'sms_count' => $total_charge / $per_sms_charge
+            ];
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            return api_response($request, null, 500);
+        }
     }
 }

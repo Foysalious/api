@@ -74,18 +74,21 @@ class PartnerSubscription
         $price_bn = convertNumbersToBangla($partner->subscription->originalPrice($partner->billing_type));
         $billing_type_bn = $partner->subscription->titleTypeBn($partner->billing_type);
         $features_count = $this->packageFeatureCount($partner->id);
-        foreach ($features_count as $key => $value)
-        {
-            if ($value == 0) {
-                array_push($features, $key);
+        if ($features_count) {
+            $features_count_list = $this->formatFeatureCountList($features_count);
+            foreach ($features_count as $key => $value)
+            {
+                if ($value == 0) {
+                    array_push($features, $key);
+                }
             }
+            $features_message = (new SubscriptionFeatureMessage())->getMessage($features);
         }
-        $features_message = (new SubscriptionFeatureMessage())->getMessage($features);
         // two api for current subscription. DashboardController@getCurrentPackage is another one
         return [
             'current_package'            => $partner_subscription_package,
-            'package_feature_count_list' => $features_count,
-            'feature_message'            => $features_message,
+            'package_feature_count_list' => $features_count_list ?? null,
+            'feature_message'            => $features_message ?? null,
             'billing_type'               => $partner->billing_type,
             'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
             'next_billing_date'          => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d'): null,
@@ -184,4 +187,25 @@ class PartnerSubscription
         ];
     }
 
+    /**
+     * @param $features_count
+     * @return array[]
+     */
+    private function formatFeatureCountList($features_count): array
+    {
+        return [
+            [
+                "feature" => "টপ-আপ",
+                "count" => $features_count['topup']
+            ],
+            [
+                "feature" => "ফ্রি SMS",
+                "count" => $features_count['sms']
+            ],
+            [
+                "feature" => "ডেলিভারি অর্ডার",
+                "count" => $features_count['delivery']
+            ]
+        ];
+    }
 }

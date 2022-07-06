@@ -1,6 +1,7 @@
 <?php namespace Sheba\SmsCampaign;
 
 use App\Models\Partner;
+use App\Sheba\Partner\PackageFeatureCount;
 use Sheba\AccountingEntry\Accounts\Accounts;
 use Sheba\AccountingEntry\Accounts\AccountTypes\AccountKeys\Expense\SmsPurchase;
 use Sheba\AccountingEntry\Accounts\RootAccounts;
@@ -38,6 +39,8 @@ class SmsCampaign
     /** @var Partner $partner */
     private $partner;
     private $transaction;
+
+    const PREFIX_MOBILE_NUMBER = "01678";
 
     public function __construct(SmsHandler $sms, CampaignSmsStatusChanger $sms_status_changer,
                                 SmsCampaignOrderReceiverRepository $receiver_repo, SmsCampaignOrderRepository $order_repo)
@@ -123,6 +126,26 @@ class SmsCampaign
         return $this->partner->wallet >= $charge;
     }
 
+    /**
+     * @param $customer_count
+     * @return bool
+     * @throws \Exception
+     */
+    public function checkSmsSendingEligibility($customer_count)
+    {
+        /** @var PackageFeatureCount $packageFeatureCount */
+        $packageFeatureCount = app(PackageFeatureCount::class)->setPartnerId($this->partner->id)->setFeature('sms');
+        $per_sms_charge = constants('SMS_CAMPAIGN.rate_per_sms');
+        $total_sms_count = $this->getEstimateCharge($this->message, $customer_count);
+        $sms_count = $total_sms_count/$per_sms_charge;
+
+        $isEligible = $packageFeatureCount->isEligible($sms_count);
+        if ($isEligible) {
+            return true;
+        }
+        return false;
+    }
+
     private function createTransactions(SmsCampaignOrder $campaign_order, $cost)
     {
         $this->createExpenseTrackerEntry($campaign_order, $cost);
@@ -157,5 +180,33 @@ class SmsCampaign
             ->setSourceType(class_basename($campaign_order))
             ->setSourceId($campaign_order->id)
             ->store();
+    }
+
+    /**
+     * @param $message
+     * @param $mobile_count
+     * @return float
+     */
+    public function getEstimateCharge($message, $mobile_count): float
+    {
+        $mobileNumbers = $this->generateMobileNumbers($mobile_count);
+        return $this->smsHandler->getBulkCharge($mobileNumbers, $message);
+    }
+
+    /**
+     * @param $mobile_count
+     * @return array
+     */
+    private function generateMobileNumbers($mobile_count): array
+    {
+        $num = 100000;
+        $numbers = array();
+
+        while ($mobile_count > 0) {
+            $num = $num + 1;
+            array_push($numbers, self::PREFIX_MOBILE_NUMBER . strval($num));
+            $mobile_count -= 1;
+        }
+        return $numbers;
     }
 }

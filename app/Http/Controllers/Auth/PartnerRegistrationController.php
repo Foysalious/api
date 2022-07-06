@@ -29,6 +29,7 @@ use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
 use Sheba\Subscription\Partner\PartnerSubscription;
+use Sheba\Subscription\Partner\PartnerSubscriptionFeatureCount;
 use Sheba\Voucher\Creator\Referral;
 use Throwable;
 use Sheba\Dal\UserMigration\Model as UserMigration;
@@ -180,6 +181,8 @@ class PartnerRegistrationController extends Controller
 
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
+        // store package feature count
+        app(PartnerSubscriptionFeatureCount::class)->updateFeatureCounts($partner, $partner->package_id);
         if ($partner) {
             if (config('sms.is_on')) {
                 (new Sms())

@@ -47,8 +47,9 @@ class AccountingRoute
             $api->group(['prefix' => 'reports'], function ($api) {
                 $api->get('/pos/customer-wise', 'Accounting\\ReportsController@getCustomerWiseReport');
                 $api->get('/pos/product-wise', 'Accounting\\ReportsController@getProductWiseReport');
-                $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
                 $api->get('/', 'Accounting\\ReportsController@getAccountingReportsList');
+                $api->get('online-transactions', 'Accounting\\ReportsController@getTransactionList');
+                $api->get('/{reportType}', 'Accounting\\ReportsController@getAccountingReport');
             });
         });
     }

@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp\Commission;
 
+use App\Sheba\Partner\PackageFeatureCount;
 use App\Sheba\UserMigration\UserMigrationRepository;
 use Exception;
 use ReflectionException;
@@ -28,6 +29,7 @@ class Partner extends TopUpCommission
         $this->storeAgentsCommission();
         $this->storeExpenseIncome();
         $this->storeTopUpJournal();
+        $this->decrementPackageCounter();
     }
 
     /**
@@ -110,5 +112,12 @@ class Partner extends TopUpCommission
         $entryRepo = app(AutomaticEntryRepository::class);
         $entryRepo = $entryRepo->setPartner($partner)->setSourceType(class_basename($this->topUpOrder))->setSourceId($this->topUpOrder->id);
         $entryRepo->delete();
+    }
+
+    private function decrementPackageCounter()
+    {
+        /** @var PackageFeatureCount $package_feature_count */
+        $package_feature_count = app(PackageFeatureCount::class);
+        $package_feature_count->setPartnerId($this->agent->id)->setFeature(PackageFeatureCount::TOPUP)->decrementFeatureCount();
     }
 }

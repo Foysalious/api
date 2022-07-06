@@ -6,11 +6,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Reward\Event\ActionEventParameter;
+use Sheba\TopUp\TopUpCounts;
 
 class NoTopupDayCount extends ActionEventParameter
 {
-    use DailyFirstTopUpChecker;
-
     public function validate(){}
 
     /**
@@ -24,25 +23,8 @@ class NoTopupDayCount extends ActionEventParameter
         /** @var TopUpOrder $topup_order */
         $topup_order = $params[0];
 
-        if (!$this->isFirstTopUpToday($topup_order)) return false;
+        if (!TopUpCounts::isFirstTopUpTodayForAgent($topup_order)) return false;
 
-        return $this->getNoTopUpDayBeforeToday($topup_order->agent_id) >= $this->value;
-    }
-
-    /**
-     * @param $partner_id
-     * @return int
-     */
-    private function getNoTopUpDayBeforeToday($partner_id)
-    {
-        $result = DB::table('topup_orders')
-            ->selectRaw('MAX(DATE(created_at)) as last_topup_date')
-            ->where('agent_type', Partner::class)
-            ->where('agent_id', $partner_id)
-            ->where('status', Statuses::SUCCESSFUL)
-            ->whereDate('created_at', '<', Carbon::today())
-            ->first();
-
-        return Carbon::parse($result->last_topup_date)->diffInDays(Carbon::now()) - 1;
+        return TopUpCounts::getNoTopUpDayBeforeTodaysTopUp($topup_order) >= $this->value;
     }
 }
