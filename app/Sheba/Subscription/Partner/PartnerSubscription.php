@@ -78,7 +78,7 @@ class PartnerSubscription
             $features_count_list = $this->formatFeatureCountList($features_count);
             foreach ($features_count as $key => $value)
             {
-                if ($value == 0) {
+                if ($value != 'unlimited' && $value == 0) {
                     array_push($features, $key);
                 }
             }
