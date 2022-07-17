@@ -62,4 +62,9 @@ class MtbController extends Controller
 
     }
 
+    public function morList(Request $request)
+    {
+        return http_response($request, null, 200, ['message' => json_decode(file_get_contents(public_path() . "/morJson.json"))]);
+    }
+
 }
