@@ -215,7 +215,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->isGpAndSkittoLessThanMinimumAmount()) {
+        if ($this->isLessThanOverwrittenMinimumAmountOfVendors()) {
             $this->errorCode = 412;
             $this->errorMessage = "The amount have to be equal or more than 20.";
             return 1;
@@ -335,8 +335,18 @@ class TopUpRequest
         return $this->long;
     }
 
-    private function isGpAndSkittoLessThanMinimumAmount(): bool
+    private function isLessThanOverwrittenMinimumAmountOfVendors(): bool
     {
-        return ($this->vendor->getModel()->id == VendorFactory::GP || $this->vendor->getModel()->id == VendorFactory::SKITTO) && $this->amount < 20.0;
+        return in_array($this->vendor->getModel()->id, $this->overwrittenMinimumAmountVendors()) && $this->amount < 20.0;
+    }
+
+    private function overwrittenMinimumAmountVendors()
+    {
+        return [
+            VendorFactory::GP,
+            VendorFactory::SKITTO,
+            VendorFactory::ROBI,
+            VendorFactory::AIRTEL
+        ];
     }
 }

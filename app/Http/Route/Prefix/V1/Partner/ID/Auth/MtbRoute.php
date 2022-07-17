@@ -7,6 +7,7 @@ class MtbRoute
     public function set($api)
     {
         $api->post('/validate/mtb-account', 'Mtb\MtbController@statusValidate');
+        $api->get('/applications', 'Mtb\MtbController@morList');
         $api->group(['middleware' => ['accessToken']], function ($api) {
 
             $api->post('/partners/mtb-apply', 'Mtb\MtbController@apply');
