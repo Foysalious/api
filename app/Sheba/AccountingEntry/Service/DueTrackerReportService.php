@@ -129,7 +129,10 @@ class DueTrackerReportService
     public function getReport(): array
     {
         $queryString = $this->generateQueryString();
-        return $this->dueTrackerRepo->setPartner($this->partner)->getReportForMobile($queryString);
+        $data = $this->dueTrackerRepo->setPartner($this->partner)->getReportForMobile($queryString);
+        $balance = $data['stats']['balance'];
+        $data["due_list"] = $this->calculate_tathkalin_balance($data["due_list"],$balance);
+        return $data;
     }
 
     /**
