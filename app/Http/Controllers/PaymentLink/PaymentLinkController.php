@@ -6,6 +6,8 @@ use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Sheba\AccountingEntry\Constants\ContactType;
+use App\Sheba\AccountingEntry\Service\DueTrackerContactResolver;
 use App\Sheba\Pos\Repositories\PosClientRepository;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
@@ -442,6 +444,68 @@ class PaymentLinkController extends Controller
             } else {
                 return api_response($request, null, 200, ['data' => []]);
             }
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function createPaymentLinkForDueCollectionV3(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'amount' => 'required|numeric',
+                'customer_id' => 'sometimes',
+                'supplier_id' => 'sometimes',
+                'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+                'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+                'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
+            ]);
+            $purpose = 'Due Collection';
+            if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
+            if ($request->user instanceof Partner) {
+                $available_methods = (new AvailableMethods())->getPublishedPartnerPaymentGateways($request->user);
+                if (!count($available_methods))
+                    return api_response($request, null, 404, ['message' => "No active payment method found"]);
+            }
+            if ($request->has('customer_id') && $request->customer_id) {
+                /** @var PosCustomerResolver $posCustomerResolver */
+                $posCustomerResolver = app(PosCustomerResolver::class);
+                $customer = $posCustomerResolver->setCustomerId($request->customer_id)->setPartner($request->partner)->get();
+            }
+
+            if ($request->has('supplier_id') && $request->supplier_id) {
+                /** @var DueTrackerContactResolver $dueTrackerContactResolver */
+                $dueTrackerContactResolver = app(DueTrackerContactResolver::class);
+                $supplier = $dueTrackerContactResolver->setContactId($request->supplier_id)->setContactType(ContactType::SUPPLIER)->setPartner($request->partner)
+                    ->getContactDetails();
+            }
+
+            $this->creator->setAmount($request->amount)
+                ->setReason($purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setEmiMonth($request->emi_month ?: 0)
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                ->setTransactionFeePercentage($request->transaction_charge);
+            if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            if (isset($supplier) && !empty($supplier)) $this->creator->setPayerId($supplier['contact_id'])->setPayerType('pos_supplier');
+
+            $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
+            $payment_link_store = $this->creator->save();
+            if ($payment_link_store) {
+                $payment_link = $this->creator->getPaymentLinkData();
+                if (!$request->has('emi_month')) {
+                    $this->creator->sentSms();
+                }
+                return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);

@@ -91,6 +91,6 @@ class  PaymentLinkStatics
 
     public static function paidByTypes(): array
     {
-        return ['partner', 'customer'];
+        return ['partner', 'customer', 'supplier'];
     }
 }
