@@ -48,8 +48,7 @@ class VisitController extends Controller
      */
     public function getManagerSubordinateEmployeeList(Request $request)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $managers_data = (new ManagerSubordinateEmployeeList())->get($business_member, true, true);
         $departments = array_keys($managers_data);
 
@@ -70,8 +69,7 @@ class VisitController extends Controller
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
         ]);
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $member = $this->getMember($request);
         $this->setModifier($member);
         $requester->setBusinessMember($business_member)->setDate($request->date)
@@ -94,8 +92,7 @@ class VisitController extends Controller
             'title' => 'required|string',
             'description' => 'sometimes|required|string',
         ]);
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $employee_visit = $this->visitRepository->find($visit_id);
         if (!$employee_visit) return api_response($request, null, 404);
         $member = $this->getMember($request);
@@ -112,8 +109,7 @@ class VisitController extends Controller
      */
     public function ownOngoingVisits(Request $request)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         list($offset, $limit) = calculatePagination($request);
 
         $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
@@ -135,8 +131,7 @@ class VisitController extends Controller
      */
     public function ownVisitHistory(Request $request, VisitList $visit_list)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         list($offset, $limit) = calculatePagination($request);
 
         $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
@@ -155,8 +150,7 @@ class VisitController extends Controller
 
     public function ownVisitHistoryV2(Request $request)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         list($offset, $limit) = calculatePagination($request);
         $own_visits = $this->visitRepository->where('visitor_id', $business_member->id)
             ->whereIn('status', [Status::COMPLETED, Status::CANCELLED])
@@ -180,8 +174,7 @@ class VisitController extends Controller
      */
     public function teamVisitsList(Request $request, VisitList $visit_list, TimeFrame $time_frame)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         list($offset, $limit) = calculatePagination($request);
 
         $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member);
@@ -216,8 +209,7 @@ class VisitController extends Controller
      */
     public function teamVisitsListV2(Request $request, VisitList $visit_list, TimeFrame $time_frame)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         list($offset, $limit) = calculatePagination($request);
 
         $team_visits = $visit_list->getTeamVisits($this->visitRepository, $business_member);
@@ -253,8 +245,7 @@ class VisitController extends Controller
      */
     public function show(Request $request, $visit)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
 
         $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
@@ -280,8 +271,6 @@ class VisitController extends Controller
             'note' => 'required|string',
             'status' => 'required|string'
         ]);
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
         $member = $this->getMember($request);
         $this->setModifier($member);
 
@@ -300,8 +289,7 @@ class VisitController extends Controller
      */
     public function storePhoto(Request $request, $visit, PhotoCreator $photo_creator)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $this->validate($request, [
             'image' => 'required|file',
         ]);
@@ -339,8 +327,7 @@ class VisitController extends Controller
             'lng' => 'required|numeric'
         ];
 
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
 
         $visit = $this->visitRepository->find($visit);
         if (!$visit) return api_response($request, null, 404);
@@ -381,8 +368,7 @@ class VisitController extends Controller
      */
     public function deletePhoto($visit, $visit_photo, Request $request, VisitPhotoRepository $visit_photo_repository)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $visit_photo = $visit_photo_repository->find($visit_photo);
         if (!$visit_photo) return api_response($request, null, 404);
         $visit_photo->delete();
