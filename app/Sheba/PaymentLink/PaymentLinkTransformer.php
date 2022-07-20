@@ -2,6 +2,8 @@
 
 use App\Models\Partner;
 use App\Models\PosCustomer;
+use App\Sheba\AccountingEntry\Constants\ContactType;
+use App\Sheba\AccountingEntry\Service\DueTrackerContactResolver;
 use App\Sheba\Pos\Order\PosOrderObject;
 use Carbon\Carbon;
 use Sheba\Pos\Customer\PosCustomerObject;
@@ -160,15 +162,13 @@ class PaymentLinkTransformer
         if ($this->response->targetType == 'due_tracker') return 'due_tracker';
     }
 
-    /**
-     * @return PosCustomerObject|null
-     * @throws \Exception
-     */
+
     private function getPaymentLinkPayer()
     {
         //TODO: Only Resolving PosCustomer
 //        $model_name = "App\\Models\\";
-        if (isset($this->response->payerId)) {
+
+        if (isset($this->response->payerId) && $this->response->paidBy == ContactType::CUSTOMER) {
             /** @var PosCustomerResolver $posCustomerResolver */
             $posCustomerResolver = app(PosCustomerResolver::class);
             /** @var Partner $partner */
@@ -178,6 +178,14 @@ class PaymentLinkTransformer
 //            /** @var PosCustomer $customer */
 //            $customer = $model_name::find($this->response->payerId);
 //            return $customer ? $customer->profile : null;
+        }
+        if (isset($this->response->payerId) && $this->response->paidBy == ContactType::SUPPLIER) {
+            /** @var Partner $partner */
+            $partner = $this->getPaymentReceiver();
+            /** @var DueTrackerContactResolver $dueTrackerContactResolver */
+            $dueTrackerContactResolver = app(DueTrackerContactResolver::class);
+            return $dueTrackerContactResolver->setContactId($this->response->payerId)->setContactType(ContactType::SUPPLIER)->setPartner($partner)
+                ->getContactDetails();
         }
         return null;
     }
@@ -225,30 +233,59 @@ class PaymentLinkTransformer
         $user = $this->getPaymentReceiver();
         $payer = $this->getPayer();
         $isExternal = $this->isExternalPayment();
-        return [
-                'id' => $this->getLinkID(),
-                'identifier' => $this->getLinkIdentifier(),
-                'purpose' => $this->getReason(),
-                'amount' => $this->getAmount(),
-                'emi_month' => $this->getEmiMonth(),
-                'paid_by' => $this->getPaidBy(),
-                'partner_profit' => $this->getPartnerProfit(),
-                'is_old' => $this->isOld(),
-                'interest' => $this->getInterest(),
-                'bank_transaction_fee' => $this->getBankTransactionCharge(),
-                'payment_receiver' => [
-                    'name' => $user->name,
-                    'image' => $user->logo,
-                    'id' => $user->id,
-                ],
-                'payer' => $payer ? [
-                    'id' => $payer->id,
-                    'name' => $payer->name,
-                    'mobile' => $payer->mobile
-                ] : null,
-                'is_external_payment' => $isExternal,
-                'installment_per_month' => $this->getInstallmentPerMonth()
-            ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+        if ($this->response->paidBy == 'customer') {
+            return [
+                    'id' => $this->getLinkID(),
+                    'identifier' => $this->getLinkIdentifier(),
+                    'purpose' => $this->getReason(),
+                    'amount' => $this->getAmount(),
+                    'emi_month' => $this->getEmiMonth(),
+                    'paid_by' => $this->getPaidBy(),
+                    'partner_profit' => $this->getPartnerProfit(),
+                    'is_old' => $this->isOld(),
+                    'interest' => $this->getInterest(),
+                    'bank_transaction_fee' => $this->getBankTransactionCharge(),
+                    'payment_receiver' => [
+                        'name' => $user->name,
+                        'image' => $user->logo,
+                        'id' => $user->id,
+                    ],
+                    'payer' => $payer ? [
+                        'id' => $payer->id,
+                        'name' => $payer->name,
+                        'mobile' => $payer->mobile
+                    ] : null,
+                    'is_external_payment' => $isExternal,
+                    'installment_per_month' => $this->getInstallmentPerMonth()
+                ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+        }
+
+        if ($this->response->paidBy == 'supplier') {
+            return [
+                    'id' => $this->getLinkID(),
+                    'identifier' => $this->getLinkIdentifier(),
+                    'purpose' => $this->getReason(),
+                    'amount' => $this->getAmount(),
+                    'emi_month' => $this->getEmiMonth(),
+                    'paid_by' => $this->getPaidBy(),
+                    'partner_profit' => $this->getPartnerProfit(),
+                    'is_old' => $this->isOld(),
+                    'interest' => $this->getInterest(),
+                    'bank_transaction_fee' => $this->getBankTransactionCharge(),
+                    'payment_receiver' => [
+                        'name' => $user->name,
+                        'image' => $user->logo,
+                        'id' => $user->id,
+                    ],
+                    'payer' => $payer ? [
+                        'id' => $payer['contact_id'],
+                        'name' => $payer['contact_name'],
+                        'mobile' => $payer['contact_mobile']
+                    ] : null,
+                    'is_external_payment' => $isExternal,
+                    'installment_per_month' => $this->getInstallmentPerMonth()
+                ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+        }
 
     }
 
