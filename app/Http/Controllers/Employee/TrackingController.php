@@ -31,8 +31,7 @@ class TrackingController extends Controller
      */
     public function insertLocation(Request $request)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $business = $this->getBusiness($request);
         $manager_member = $this->getMember($request);
         $this->setModifier($manager_member);
@@ -88,8 +87,7 @@ class TrackingController extends Controller
      */
     public function getManagerSubordinateList(Request $request)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $managers = [];
         (new ManagerSubordinateEmployeeList())->getManager($business_member->id, $managers, $business_member->id);
         $managers_subordinate_ids = array_keys($managers);
@@ -148,8 +146,7 @@ class TrackingController extends Controller
     public function lastTrackedDate(Request $request, DateDropDown $date_drop_down)
     {
         /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
 
         $last_tracked_location = $business_member->liveLocationFilterByDate()->first();
         if (!$last_tracked_location) return api_response($request, null, 404);
