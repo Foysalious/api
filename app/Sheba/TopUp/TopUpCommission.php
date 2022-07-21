@@ -108,9 +108,9 @@ abstract class TopUpCommission
         } else {
             $log_message = $this->getBasicTopUpLog();
         }
-
+        $commission_amount = $this->topUpOrder->otf_id ? $this->topUpOrder->otf_agent_commission : $this->topUpOrder->agent_commission;
         $transaction = (new TopUpTransaction())
-            ->setAmount($this->amount - $this->topUpOrder->agent_commission - $this->topUpOrder->otf_agent_commission)
+            ->setAmount($this->amount -  $commission_amount)
             ->setLog($log_message)
             ->setTopUpOrder($this->topUpOrder)
             ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
