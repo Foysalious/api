@@ -45,6 +45,8 @@ class ReminderNotificationHandler
             "title"       => $title,
             "description" => $message,
             "type" => "Info",
+            'contact_type' => $this->reminder['contact_type'],
+            'contact_id' => $this->reminder['contact_details']['id'],
             "event_type" => "due_tracker"
         ]);
     }
