@@ -3,8 +3,9 @@
 namespace App\Sheba\AccountingEntry\Notifications;
 
 use App\Models\Partner;
+use App\Sheba\AccountingEntry\Constants\ContactType;
+use App\Sheba\AccountingEntry\Constants\DueTrackerPushNotificationEvent;
 use LaravelFCM\Message\Exceptions\InvalidOptionsException;
-use Sheba\PushNotification\PushNotificationHandler as PusNotificationService;
 use Sheba\PushNotificationHandler;
 
 class ReminderNotificationHandler
@@ -29,7 +30,8 @@ class ReminderNotificationHandler
         $topic            = config('sheba.push_notification_topic_name.manager') . $this->reminder['partner_id'];
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
-        $event_type       = 'DueTracker';
+        $event_type       = $this->reminder['contact_type'] == ContactType::CUSTOMER ?
+            DueTrackerPushNotificationEvent::DUE_TRACKER_CUSTOMER : DueTrackerPushNotificationEvent::DUE_TRACKER_SUPPLIER;
 
         $title = "Due Tracker Reminder";
         $message = "No message has been given";
