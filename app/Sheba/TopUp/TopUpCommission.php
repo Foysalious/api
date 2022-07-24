@@ -182,7 +182,7 @@ abstract class TopUpCommission
         }
 
         $otf_commission          = $this->topUpOrder->otf_agent_commission ?? 0;
-        $commission_amount = $this->topUpOrder->otf_id ? $otf_commission : $commission;
+        $commission_amount       = $otf_commission ?? $commission;
         $amount_after_commission = round($amount - $commission_amount, 2);
         $log                     = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
         $this->transaction       = $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
