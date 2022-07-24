@@ -1,6 +1,6 @@
 <?php namespace Sheba\TopUp\Jobs;
 
-use Redis;
+use Illuminate\Support\Facades\Redis;
 use Sheba\TopUp\TopUpAgent;
 
 class QueueConnectionManager
