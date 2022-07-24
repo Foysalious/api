@@ -199,12 +199,12 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->isAgentBusiness() && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
+        if ($this->agent instanceof Business && $this->isOtfAllow && $this->otfAmountCheck->isAmountInOtf()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
         }
 
-        if ($this->isAgentBusiness() && $this->isPrepaidAmountLimitExceed($this->agent)) {
+        if ($this->agent instanceof Business && $this->isPrepaidAmountLimitExceed($this->agent)) {
             $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
             return 1;
         }
@@ -237,13 +237,13 @@ class TopUpRequest
 
     private function isAgentNotVerified()
     {
-        return ($this->isAgentPartner() && !$this->agent->isNIDVerified())
-            || ($this->isAgentAffiliate() && $this->agent->isNotVerified());
+        return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified())) ||
+            ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
     }
 
     private function isCanTopUpNo()
     {
-        return $this->isAgentPartner() && !$this->agent->canTopUp();
+        return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
     }
 
     /**
