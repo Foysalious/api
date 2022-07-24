@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Jobs;
 
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
 use Sheba\TopUp\TopUpAgent;
 
 class QueueConnectionManager
@@ -60,7 +61,7 @@ class QueueConnectionManager
          * New connection name needs to be listened from supervisor.
          */
 
-        $top_agents = json_decode(Redis::get('topup_top_agents'));
+        $top_agents = json_decode(Cache::get('topup_top_agents'));
 
         $first_top_partner_agents = $top_agents->top_agents_partner;
         $second_top_partner_agents = $top_agents->second_top_agents_partner;
