@@ -118,10 +118,12 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin, TopUpAgentBlocker $agent_blocker)
     {
-        /** @var TopUpAgent $agent */
-        $agent = $this->getAgent($request, $user);
+        $agent = $request->user;
         $validation_data = [
-            'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id', 'password' => 'required'
+            'mobile' => 'required|string|mobile:bd',
+            'connection_type' => 'required|in:prepaid,postpaid',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'password' => 'required'
         ];
 
         if ($this->isBusiness($agent) && $this->isPrepaid($request->connection_type)) {
