@@ -50,9 +50,9 @@ class FormValidator
     {
         foreach ($this->fields as $field) {
             $form_field = (new FormField())->setFormInput(json_decode($field->data));
-            if (!$this->is_english($this->postData[$form_field->id]) && $form_field->id != "tradeLicenseExists") {
-                throw new FormValidationException("Please provide data " . $form_field->error . " in english");
-            }
+//            if (!$this->is_english($this->postData[$form_field->id]) && $form_field->id != "tradeLicenseExists") {
+//                throw new FormValidationException("Please provide data " . $form_field->error . " in english");
+//            }
             if ($form_field->mandatory) {
                 if (!isset($this->postData[$form_field->id]))
                     throw new FormValidationException($form_field->error);
