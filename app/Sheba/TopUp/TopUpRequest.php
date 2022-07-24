@@ -328,7 +328,7 @@ class TopUpRequest
 
     private function isLessThanOverwrittenMinimumAmountOfVendors(): bool
     {
-        return in_array($this->vendor->getModel()->id, $this->overwrittenMinimumAmountVendors()) && $this->amount < 20.0;
+        return in_array($this->vendor->getModel()->id, $this->overwrittenMinimumAmountVendors()) && $this->amount < 20.0 && !$this->otfAmountCheck->isAmountInOtf();
     }
 
     private function overwrittenMinimumAmountVendors()
