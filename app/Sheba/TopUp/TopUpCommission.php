@@ -97,10 +97,12 @@ abstract class TopUpCommission
             $this->topUpOrder->agent_commission = $this->getDefaultCommission($this->topUpOrder->amount);
             logError($exception);
         }
+
         $this->topUpOrder->otf_id = $otf_details['otf_id'] ?? 0;
-        $this->topUpOrder->otf_agent_commission = $this->topUpOrder->otf_id ? $otf_details['agent_commisssion'] : 0;
+        $this->topUpOrder->otf_agent_commission = $this->topUpOrder->otf_agent_commission ? $otf_details['agent_commisssion'] : 0;
         $this->topUpOrder->otf_sheba_commission = $otf_details['sheba_commisssion'] ?? 0;
         $this->topUpOrder->agent_commission = $this->topUpOrder->otf_agent_commission ? 0 : $this->topUpOrder->agent_commission;
+
         $this->topUpOrder->save();
 
         if ($this->topUpOrder->otf_agent_commission > 0) {
@@ -108,7 +110,7 @@ abstract class TopUpCommission
         } else {
             $log_message = $this->getBasicTopUpLog();
         }
-        $commission_amount = $this->topUpOrder->otf_id ? $this->topUpOrder->otf_agent_commission : $this->topUpOrder->agent_commission;
+        $commission_amount = $this->topUpOrder->otf_agent_commission ?? $this->topUpOrder->agent_commission;
         $transaction = (new TopUpTransaction())
             ->setAmount($this->amount -  $commission_amount)
             ->setLog($log_message)
