@@ -12,12 +12,39 @@ class SectionListResponse implements Arrayable
     private $message = '';
     private $partner;
 
+    public function setPartner($partner): SectionListResponse
+    {
+        $this->partner = $partner;
+        return $this;
+    }
+
+    private function overAllCompletion()
+    {
+        $categories_length = count($this->categories);
+        $nid_status = $this->partner->getFirstAdminResource()->profile->nid_verified ?? 0;
+
+        if ($nid_status) {
+            return $this->overall_completion;
+        }
+
+        if ($this->overall_completion['en'] == 100.0) {
+            $completion = ($this->overall_completion['en'] / $categories_length) * ($categories_length - 1);
+            return [
+                "en" => $completion,
+                "bn" => convertNumbersToBangla($completion, false)
+            ];
+
+        }
+        return $this->overall_completion;
+    }
+
     public function toArray(): array
     {
+        $completetion = $this->overAllCompletion();
         return [
             "categories" => $this->categories,
             "can_apply" => $this->can_apply,
-            "overall_completion" => $this->overall_completion,
+            "overall_completion" => $completetion,
             "nid_status" => $this->partner->getFirstAdminResource()->profile->nid_verified ?? 0,
             "message" => $this->message,
         ];
@@ -33,11 +60,6 @@ class SectionListResponse implements Arrayable
         return $this;
     }
 
-    public function setPartner($partner): SectionListResponse
-    {
-        $this->partner = $partner;
-        return $this;
-    }
 
     /**
      * @param mixed $completion
@@ -45,7 +67,7 @@ class SectionListResponse implements Arrayable
      */
     public function setCanApply($completion): SectionListResponse
     {
-        $this->can_apply = $completion == 100 ? 1 : 0;
+        $this->can_apply = $this->overAllCompletion()['en'] == 100.0 ? 1 : 0;
         return $this;
     }
 
