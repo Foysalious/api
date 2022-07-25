@@ -187,7 +187,7 @@ class DynamicForm
         $thanaInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
         $filtered_array = array();
         foreach ($thanaInformation as $value) {
-            if ($value->division == $division) {
+            if (ucfirst(strtolower($value->division)) == $division) {
                 $filtered_array[] = $value;
             }
         }
