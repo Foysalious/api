@@ -47,7 +47,7 @@ class ReminderNotificationHandler
             "title"       => $title,
             "description" => $message,
             "type" => "Info",
-            "event_type" => "due_tracker"
+            "event_type" => $event_type
         ]);
     }
 }
