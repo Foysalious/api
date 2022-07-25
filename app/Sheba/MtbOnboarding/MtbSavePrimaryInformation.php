@@ -14,7 +14,7 @@ use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
 use Sheba\PushNotificationHandler;
-
+use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 
 class MtbSavePrimaryInformation
 {
@@ -122,15 +122,20 @@ class MtbSavePrimaryInformation
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         $divisionDistrictThana = $this->separateDivisionDistrictThana($this->partnerMefInformation->presentDivision);
         $englishDivisionDistrict = $this->translateDivisionDistrictThana($divisionDistrictThana);
+        $nidInformation = ProfileNIDSubmissionLog::where('profile_id', $this->partner->getFirstAdminResource()->profile->id)
+            ->where('verification_status', 'approved')->whereNotNull('porichy_data')->last();
+        if (isset($nidInformation->porichy_data)) {
+            $porichoyData = json_decode($nidInformation->porichy_data);
+        } else $porichoyData = null;
         if ($this->partnerMefInformation->tradeLicenseExists == "হ্যা") $tradeLicenseExist = "Y";
         else $tradeLicenseExist = "N";
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
                 'orgCode' => MtbConstants::CHANNEL_ID,
-                'name' => $this->mutateName($this->partner->getFirstAdminResource()->profile->name),
+                'name' => $porichoyData ? $this->mutateName($porichoyData->porichoy_data->name_en) : $this->mutateName($this->partner->getFirstAdminResource()->profile->name),
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
-                'nid' => $this->partner->getFirstAdminResource()->profile->nid_no,
+                'nid' => $porichoyData ? $porichoyData->porichoy_data->nid_no : $this->partner->getFirstAdminResource()->profile->nid_no,
                 'dob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->dob)),
                 'gender' => $this->partner->getFirstAdminResource()->profile->gender,
                 'fatherName' => $this->partnerMefInformation->fatherName,
