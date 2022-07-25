@@ -170,6 +170,18 @@ class DynamicForm
         return $this;
     }
 
+    private function getDivision()
+    {
+        $divisionInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
+        $filtered_array = array();
+        foreach ($divisionInformation as $value) {
+            if (!in_array($value, $filtered_array)) {
+                $filtered_array[] = $value;
+            }
+        }
+        return $filtered_array;
+    }
+
     private function getDistrict($division)
     {
         $thanaInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
@@ -245,10 +257,8 @@ class DynamicForm
             }
         }
         if ($this->type == "division") {
-            $division = Division::get();
+            $division = $this->getDivision();
             $division = (new CollectionFormatter())->setData($division)->formatCollectionUpdated();
-            $division[0]['name'] = 'Barisal';
-            $division[0]['key'] = 'Barisal';
             $data = [
                 'division' => ['list' => $division]
             ];
