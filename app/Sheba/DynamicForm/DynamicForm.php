@@ -49,9 +49,9 @@ class DynamicForm
         $categories = $this->sectionDetails();
         $finalCompletion = (new CompletionCalculation())->getFinalCompletion($categories);
 
-        return (new SectionListResponse())->setCategories($categories)
+        return (new SectionListResponse())->setCategories($categories)->setPartner($this->partner)
             ->setMessage(PaymentMethodStatics::dynamicCompletionPageMessage($this->formKey))
-            ->setOverallCompletion($finalCompletion)->setCanApply($finalCompletion)->setPartner($this->partner)->toArray();
+            ->setOverallCompletion($finalCompletion)->setCanApply($finalCompletion)->toArray();
     }
 
     private function sectionDetails(): array
@@ -114,6 +114,7 @@ class DynamicForm
     {
         $fields = array();
         $form_builder = (new FormFieldBuilder())->setPartner($this->partner);
+
         foreach ($this->section->fields as $field)
             $fields[] = $form_builder->setField($field)->build()->toArray();
         return $fields;
