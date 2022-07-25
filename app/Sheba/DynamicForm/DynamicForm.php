@@ -51,7 +51,7 @@ class DynamicForm
 
         return (new SectionListResponse())->setCategories($categories)
             ->setMessage(PaymentMethodStatics::dynamicCompletionPageMessage($this->formKey))
-            ->setOverallCompletion($finalCompletion)->setCanApply($finalCompletion)->toArray();
+            ->setOverallCompletion($finalCompletion)->setCanApply($finalCompletion)->setPartner($this->partner)->toArray();
     }
 
     private function sectionDetails(): array

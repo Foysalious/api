@@ -10,6 +10,7 @@ class SectionListResponse implements Arrayable
     private $can_apply;
     private $overall_completion;
     private $message = '';
+    private $partner;
 
     public function toArray(): array
     {
@@ -17,6 +18,7 @@ class SectionListResponse implements Arrayable
             "categories" => $this->categories,
             "can_apply" => $this->can_apply,
             "overall_completion" => $this->overall_completion,
+            "nid_status" => $this->partner->getFirstAdminResource()->profile->nid_verified ?? 0,
             "message" => $this->message,
         ];
     }
@@ -28,6 +30,12 @@ class SectionListResponse implements Arrayable
     public function setCategories($categories): SectionListResponse
     {
         $this->categories = $categories;
+        return $this;
+    }
+
+    public function setPartner($partner): SectionListResponse
+    {
+        $this->partner = $partner;
         return $this;
     }
 
