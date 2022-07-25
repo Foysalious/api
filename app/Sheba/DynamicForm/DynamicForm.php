@@ -259,8 +259,14 @@ class DynamicForm
         if ($this->type == "division") {
             $division = $this->getDivision();
             $division = (new CollectionFormatter())->setData($division)->formatCollectionUpdated();
+            $final = array();
+            foreach ($division as $current) {
+                if (!in_array($current, $final)) {
+                    $final[] = $current;
+                }
+            }
             $data = [
-                'division' => ['list' => $division]
+                'division' => ['list' => $final]
             ];
             return $data['division'];
         }
