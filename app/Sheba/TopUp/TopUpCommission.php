@@ -99,9 +99,9 @@ abstract class TopUpCommission
         }
 
         $this->topUpOrder->otf_id = $otf_details['otf_id'] ?? 0;
-        $this->topUpOrder->otf_agent_commission = $this->topUpOrder->otf_agent_commission ?? $otf_details['agent_commisssion'];
-        $this->topUpOrder->otf_sheba_commission = $otf_details['sheba_commisssion'] ?? 0;
-        $this->topUpOrder->agent_commission = $this->topUpOrder->otf_agent_commission ? 0 : $this->topUpOrder->agent_commission;
+        $this->topUpOrder->otf_agent_commission = $this->topUpOrder->otf_id ? $otf_details['agent_commisssion'] : 0;
+        $this->topUpOrder->otf_sheba_commission = $this->topUpOrder->otf_id ? $otf_details['sheba_commisssion'] : 0;
+        $this->topUpOrder->agent_commission = $this->topUpOrder->otf_agent_commission > 0 ? 0 : $this->topUpOrder->agent_commission;
 
         $this->topUpOrder->save();
 
