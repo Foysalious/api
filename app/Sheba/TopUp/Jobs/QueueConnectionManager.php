@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp\Jobs;
 
+use Illuminate\Support\Facades\Redis;
 use Sheba\TopUp\TopUpAgent;
 
 class QueueConnectionManager
@@ -90,12 +91,11 @@ class QueueConnectionManager
             "topup_partner_chunk_5"  => [ "from" =>  800001, "to" => 1100000 ],
             "topup_partner_chunk_6"  => [ "from" => 1100001, "to" => 1200000 ],
             "topup_partner_chunk_7"  => [ "from" => 1200001, "to" => 1250000 ],
-            "topup_partner_chunk_8"  => [ "from" => 1250001, "to" => 1600000 ],
-            "topup_partner_chunk_9"  => [ "from" => 1600001, "to" => 1800000 ],
-            "topup_partner_chunk_10" => [ "from" => 1800001, "to" => 2000000 ],
-            "topup_partner_chunk_11" => [ "from" => 2000001, "to" => 2200000 ],
+            "topup_partner_chunk_8"  => [ "from" => 1250001, "to" => 1300000 ],
+            "topup_partner_chunk_9"  => [ "from" => 1300001, "to" => 1360050 ],
+            "topup_partner_chunk_10" => [ "from" => 1360051, "to" => 1600000 ],
+            "topup_partner_chunk_11" => [ "from" => 1600001, "to" => 2200000 ],
             "topup_partner_chunk_12" => [ "from" => 2200001, "to" => 2400000 ],
-
             "topup_partner_default" => null,
 
             /**

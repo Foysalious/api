@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\CoWorker\Filter\CoWorkerInfoFilter;
+use Sheba\Dal\TrackingLocation\TrackingLocationRepository;
 use Sheba\Location\Geo;
 use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
@@ -31,8 +32,7 @@ class TrackingController extends Controller
      */
     public function insertLocation(Request $request)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $business = $this->getBusiness($request);
         $manager_member = $this->getMember($request);
         $this->setModifier($manager_member);
@@ -83,13 +83,12 @@ class TrackingController extends Controller
 
     /**
      * @param Request $request
-     * @param CoWorkerInfoFilter $co_worker_info_filter
+     * @param TrackingLocationRepository $tracking_location_repository
      * @return JsonResponse
      */
-    public function getManagerSubordinateList(Request $request)
+    public function getManagerSubordinateList(Request $request, TrackingLocationRepository $tracking_location_repository)
     {
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
         $managers = [];
         (new ManagerSubordinateEmployeeList())->getManager($business_member->id, $managers, $business_member->id);
         $managers_subordinate_ids = array_keys($managers);
@@ -104,10 +103,11 @@ class TrackingController extends Controller
         }
 
         $data = [];
+        $business_member_ids = $business_members->pluck('id')->toArray();
+        $business_members_last_location = $tracking_location_repository->getBusinessMembersLastLocation($business_member_ids);
         foreach ($business_members->get() as $business_member) {
-            $tracking_location = $business_member->liveLocationFilterByDate()->first();
-            if (!$tracking_location) continue;
-
+            if (!array_key_exists($business_member->id, $business_members_last_location)) continue;
+            $tracking_location = $business_members_last_location[$business_member->id];
             $location = $tracking_location->location;
             $profile = $business_member->profile();
             /** @var BusinessRole $role */
@@ -133,7 +133,6 @@ class TrackingController extends Controller
                 'last_activity_raw' => $tracking_location->created_at
             ];
         }
-
         if ($request->has('activity') && $request->activity != "null") $data = $this->getEmployeeOfNoActivityForCertainHour($data, $request->activity);
         if ($request->has('search')) $data = $this->searchEmployee($data, $request);
         $data = collect($data)->values();
@@ -148,8 +147,7 @@ class TrackingController extends Controller
     public function lastTrackedDate(Request $request, DateDropDown $date_drop_down)
     {
         /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
-        if (!$business_member) return api_response($request, null, 404);
+        $business_member = $request->business_member;
 
         $last_tracked_location = $business_member->liveLocationFilterByDate()->first();
         if (!$last_tracked_location) return api_response($request, null, 404);
