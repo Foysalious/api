@@ -108,7 +108,7 @@ class PaymentService
                     'banner' => PaymentMethodStatics::getMtbBannerURL(),
                     'faq' => PaymentMethodStatics::detailsFAQ(),
                     'status' => 'completed' ?? null,
-                    'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : 'আবেদন সফল হয়েছে !',
+                    'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] . $account_details->Description : 'আবেদন সফল হয়েছে !',
                     'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
                     'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
                     'details' => [
@@ -119,7 +119,8 @@ class PaymentService
                         'mid' => $account_details->Mid,
                         'account_number' => $account_details->AccountNum,
                         'customer_number' => $account_details->CustomerNum,
-                        'name' => $this->partner->getFirstAdminResource()->profile->name
+                        'name' => $this->partner->getFirstAdminResource()->profile->name,
+                        'description' => $account_details->Description
                     ]
                 ];
             }
@@ -128,7 +129,7 @@ class PaymentService
             'banner' => PaymentMethodStatics::getMtbBannerURL(),
             'faq' => PaymentMethodStatics::detailsFAQ(),
             'status' => $this->status ?? null,
-            'disclaimer_message' => isset($mtb_status) ? $mtb_status['description'] : '',
+            'disclaimer_message' => isset($mtb_status) ? $mtb_status['description']. $account_details->Description : '',
             'how_to_use_link' => PaymentLinkStatics::how_to_use_webview(),
             'payment_service_info_link' => PaymentLinkStatics::payment_setup_faq_webview(),
             'details' => [
@@ -150,7 +151,7 @@ class PaymentService
      * @throws NotFoundAndDoNotReportException
      * @throws MtbServiceServerError
      */
-    private function getMtbAccountStatus($mtb_information)
+    public function getMtbAccountStatus($mtb_information)
     {
         if (isset($mtb_information->mtb_account_status)) {
             $mtb_status = $mtb_information;

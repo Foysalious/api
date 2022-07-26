@@ -9,7 +9,7 @@ return [
     'wallet_url' => env('SHEBA_WALLET_URL', 'https://wallet.sheba.xyz'),
     'payment_link_url' => env('SHEBA_PAYMENT_LINK_URL'),
     'payment_link_web_url' => env('SHEBA_PAYMENT_LINK_WEB_URL', 'https://payments.sheba.xyz'),
-    'services_api_url' => env('SHEBA_SERVICES_URL', 'http://services.dev-sheba.xyz'),
+    'services_api_url' => env('SHEBA_SERVICES_URL', 'https://services.dev-sheba.xyz'),
     's3_url' => env('S3_URL'),
     'socket_url' => env('SHEBA_SOCKET_URL'),
     'ebl_url' => env('EBL_URL'),
@@ -33,16 +33,19 @@ return [
         'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
         'manager_new' => env('MANAGER_TOPIC_NAME_NEW', 'manager_new_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
+        'affiliate' => env('AFFILIATE_TOPIC_NAME', 'affiliate_')
     ],
     'push_notification_channel_name' => [
         'customer' => 'customer_channel',
         'manager' => 'manager_channel',
         'resource' => 'resource_channel',
-        'employee' => 'employee_channel'
+        'employee' => 'employee_channel',
+        'affiliate' => 'affiliate_channel'
     ],
     'push_notification_sound' => [
         'customer' => 'default',
         'manager' => 'notification_sound',
+        'affiliate' => 'default',
         'employee' => 'notification_sound.aiff'
     ],
     'partner_packages' => [

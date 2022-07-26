@@ -192,8 +192,8 @@ class EventDataConverter
         return [
             'rating' => [
                 'name' => 'Rating',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\Rating\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\Rating\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\Rating\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\Rating\Rule::class,
                 'parameters' => [
                     'rate' => [
                         'type' => 'number',
@@ -201,33 +201,33 @@ class EventDataConverter
                     ]
                 ]
             ],
-            'partner_wallet_recharge' => [
+            'wallet_recharge' => [
                 'name' => 'Partner Wallet Recharge',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\WalletRecharge\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\WalletRecharge\Rule::class,
                 'parameters' => [
                     'amount' => [
                         'type' => 'number',
                         'min' => 0,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Parameter\Amount'
+                        'class' => \Sheba\Reward\Event\Partner\Action\WalletRecharge\Parameter\Amount::class
                     ]
                 ]
             ],
             'order_serve' => [
                 'name' => 'Order Serve',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Rule::class,
                 'parameters' => [
                     'amount' => [
                         'type' => 'number',
                         'min' => 0,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\Amount'
+                        'class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\Amount::class
                     ],
                     'portals' => [
                         'type' => 'select',
                         'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\Portal'
+                        'class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\Portal::class
                     ],
                     'excluded_status' => [
                         'type' => 'select',
@@ -237,32 +237,32 @@ class EventDataConverter
                             'Serve_Due' => 'Serve Due'
                         ],
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\ExcludedStatus'
+                        'class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\ExcludedStatus::class
                     ],
                     'created_from' => [
                         'type' => 'select',
                         'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\CreatedFrom'
+                        'class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\CreatedFrom::class
                     ],
                     'sales_channels' => [
                         'type' => 'select',
                         'possible_value' => getSalesChannels(),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\SalesChannel'
+                        'class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\SalesChannel::class
                     ],
                     'excluded_sales_channels' => [
                         'type' => 'select',
                         'possible_value' => getSalesChannels(),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\ExcludedSalesChannel'
+                        'class' => \Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\ExcludedSalesChannel::class
                     ]
                 ]
             ],
             'partner_creation_bonus' => [
                 'name' => 'Partner Creation Bonus',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\PartnerCreationBonus\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\PartnerCreationBonus\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\PartnerCreationBonus\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\PartnerCreationBonus\Rule::class,
                 'parameters' => [
                     'registration_channel' => [
                         'type' => 'select',
@@ -273,76 +273,76 @@ class EventDataConverter
             ],
             'pos_inventory_create' => [
                 'name' => 'Pos Inventory Create',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Rule::class,
                 'parameters' => [
                     'created_from' => [
                         'type' => 'select',
                         'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Parameter\CreatedFrom'
+                        'class' => \Sheba\Reward\Event\Partner\Action\PosInventoryCreate\Parameter\CreatedFrom::class
                     ]
                 ]
             ],
             'pos_customer_create' => [
                 'name' => 'Pos Customer Create',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Rule::class,
                 'parameters' => [
                     'created_from' => [
                         'type' => 'select',
                         'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Parameter\CreatedFrom'
+                        'class' => \Sheba\Reward\Event\Partner\Action\PosCustomerCreate\Parameter\CreatedFrom::class
                     ]
                 ]
             ],
             'daily_usage' => [
                 'name' => 'Daily Usage',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\DailyUsage\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\DailyUsage\Rule::class,
                 'parameters' => [
                     'count' => [
                         'type' => 'number',
                         'min' => 0,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Parameter\Count'
+                        'class' => \Sheba\Reward\Event\Partner\Action\DailyUsage\Parameter\Count::class
                     ],
                     'created_from' => [
                         'type' => 'select',
                         'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Parameter\CreatedFrom'
+                        'class' => \Sheba\Reward\Event\Partner\Action\DailyUsage\Parameter\CreatedFrom::class
                     ]
 
                 ]
             ],
             'payment_link_usage' => [
                 'name' => 'Payment Link Usage',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Rule::class,
                 'parameters' => [
                     'amount' => [
                         'type' => 'number',
                         'min' => 0,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\Amount'
+                        'class' => \Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\Amount::class
                     ],
                 ]
             ],
             'pos_order_create' => [
                 'name' => 'Pos Order Create',
-                'event_class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Event',
-                'rule_class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Rule',
+                'event_class' => \Sheba\Reward\Event\Partner\Action\PosOrderCreate\Event::class,
+                'rule_class' => \Sheba\Reward\Event\Partner\Action\PosOrderCreate\Rule::class,
                 'parameters' => [
                     'amount' => [
                         'type' => 'number',
                         'min' => 0,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\Amount'
+                        'class' => \Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\Amount::class
                     ],
                     'created_from' => [
                         'type' => 'select',
                         'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
                         'is_multi_selectable' => 1,
-                        'class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\CreatedFrom'
+                        'class' => \Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\CreatedFrom::class
                     ]
                 ]
             ],

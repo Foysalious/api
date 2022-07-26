@@ -8,11 +8,13 @@ use App\Sheba\QRPayment\DTO\QRGeneratePayload;
 use App\Sheba\QRPayment\QRPayableGenerator;
 use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\QRPayment\QRValidator;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
 use Sheba\QRPayment\Exceptions\QRException;
 use Throwable;
+use Illuminate\Support\Facades\Redis;
 
 class QRPaymentController extends Controller
 {
@@ -32,7 +34,8 @@ class QRPaymentController extends Controller
 
         return http_response($request, null, 200, ["qr" => [
             "qr_code" => $qr_payable->getQRString(),
-            "qr_id" => $qr_payable->qr_id
+            "qr_id" => $qr_payable->qr_id,
+            "mtb_account_number" => json_decode($partner->partnerMefInformation->mtb_account_status)->AccountNum
         ]]);
     }
 
@@ -47,6 +50,7 @@ class QRPaymentController extends Controller
      */
     public function validatePayment($payment_method, Request $request, QRValidator $validator): JsonResponse
     {
+        Redis::set('MTB_' . Carbon::now()->timestamp, json_encode($request->all()));
         $this->validate($request, QRPaymentStatics::getValidationForValidatePayment());
         $validator->setRequest($request->all())->setGateway($payment_method)
             ->setQrId($request->qr_id)->setAmount($request->amount)->setMerchantId($request->merchant_id)->complete();

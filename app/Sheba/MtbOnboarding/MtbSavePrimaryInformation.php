@@ -1,9 +1,7 @@
 <?php namespace App\Sheba\MtbOnboarding;
 
-use App\Models\District;
-use App\Models\Division;
+
 use App\Models\Partner;
-use App\Models\Thana;
 use App\Sheba\DynamicForm\PartnerMefInformation;
 use App\Sheba\MTB\AuthTypes;
 use App\Sheba\MTB\Exceptions\MtbServiceServerError;
@@ -14,7 +12,9 @@ use App\Sheba\QRPayment\QRPaymentStatics;
 use App\Sheba\ResellerPayment\MORServiceClient;
 use App\Sheba\ResellerPayment\PaymentService;
 use Illuminate\Http\JsonResponse;
-
+use Illuminate\Support\Facades\App;
+use Sheba\PushNotificationHandler;
+use Sheba\Dal\ProfileNIDSubmissionLog\Model as ProfileNIDSubmissionLog;
 
 class MtbSavePrimaryInformation
 {
@@ -122,15 +122,20 @@ class MtbSavePrimaryInformation
         $this->setPartnerMefInformation(json_decode($this->partner->partnerMefInformation->partner_information));
         $divisionDistrictThana = $this->separateDivisionDistrictThana($this->partnerMefInformation->presentDivision);
         $englishDivisionDistrict = $this->translateDivisionDistrictThana($divisionDistrictThana);
+        $nidInformation = ProfileNIDSubmissionLog::where('profile_id', $this->partner->getFirstAdminResource()->profile->id)
+            ->where('verification_status', 'approved')->whereNotNull('porichy_data')->last();
+        if (isset($nidInformation->porichy_data)) {
+            $porichoyData = json_decode($nidInformation->porichy_data);
+        } else $porichoyData = null;
         if ($this->partnerMefInformation->tradeLicenseExists == "হ্যা") $tradeLicenseExist = "Y";
         else $tradeLicenseExist = "N";
         return [
             'RequestData' => [
                 'retailerId' => strval($this->partner->id),
                 'orgCode' => MtbConstants::CHANNEL_ID,
-                'name' => $this->mutateName($this->partner->getFirstAdminResource()->profile->name),
+                'name' => $porichoyData ? $this->mutateName($porichoyData->porichoy_data->name_en) : $this->mutateName($this->partner->getFirstAdminResource()->profile->name),
                 'phoneNum' => $this->partner->getFirstAdminResource()->profile->mobile,
-                'nid' => $this->partner->getFirstAdminResource()->profile->nid_no,
+                'nid' => $porichoyData ? $porichoyData->porichoy_data->nid_no : $this->partner->getFirstAdminResource()->profile->nid_no,
                 'dob' => date("Ymd", strtotime($this->partner->getFirstAdminResource()->profile->dob)),
                 'gender' => $this->partner->getFirstAdminResource()->profile->gender,
                 'fatherName' => $this->partnerMefInformation->fatherName,
@@ -217,5 +222,30 @@ class MtbSavePrimaryInformation
         $morClient = app(MORServiceClient::class);
         $morClient->post("api/v1/application/users/" . $this->partner->id, $this->makeDataForMorStore());
         return http_response($request, null, 200, ['message' => 'Successful', 'data' => $bannerMtb]);
+    }
+
+    private function sendPushNotification($partner)
+    {
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+        $event_type = 'MtbAccountCreate';
+
+        $title = "একাউন্ট ওপেনিং সফল হয়েছে";
+        $message = "এমটিবি তে আপনার একাউন্ট সফলভাবে তৈরি হয়েছে। একাউন্ট সম্পর্কে বিস্তারিত জানতে এখানে ক্লিক করুন";
+        (new PushNotificationHandler())->send([
+            "title" => $title,
+            "message" => $message,
+            "event_type" => $event_type,
+            "sound" => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel, $sound);
+    }
+
+    public function validateMtbAccountStatus($merchant_id)
+    {
+        $partner = Partner::where('id', $merchant_id)->first();
+        App::make(PaymentService::class)->getMtbAccountStatus($partner->partnerMefInformation);
+        $this->sendPushNotification($partner->id);
     }
 }

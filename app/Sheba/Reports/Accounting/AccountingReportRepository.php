@@ -143,15 +143,9 @@ class AccountingReportRepository extends BaseRepository
     }
 
 
-    public function getAccountingReportsList(): array
+    public function getAccountingReportsList($version_code): array
     {
-        return [
-//            [
-//                'key' => AccountingReport::DIGITAL_TRANSACTION_LIST,
-//                'report_bangla_name' => 'ডিজিটাল ট্রানজেকশন লিস্ট',
-//                'url' => config('sheba.api_url') . '/v2/accounting/reports/online-transactions',
-//                'icon' => config('accounting_entry.icon_url') . '/' . 'digital_transaction_list_report.png'
-//            ],
+        $list = [
             [
                 'key' => AccountingReport::PRODUCT_WISE_SALES_REPORT,
                 'report_bangla_name' => 'পণ্য অনুযায়ী বিক্রয় রিপোর্ট',
@@ -183,12 +177,28 @@ class AccountingReportRepository extends BaseRepository
                 'icon' => config('accounting_entry.icon_url') . '/' . 'loss_profit_report.png'
             ],
         ];
+        if (intval($version_code) < 300600) {
+            return $list;
+        } else {
+            $qr_list = [[
+                'key' => AccountingReport::DIGITAL_TRANSACTION_LIST,
+                'report_bangla_name' => 'ডিজিটাল ট্রানজেকশন লিস্ট',
+                'url' => config('sheba.api_url') . '/v2/accounting/reports/online-transactions',
+                'icon' => config('accounting_entry.icon_url') . '/' . 'digital_transaction_list_report.png'
+            ]];
+            return array_merge($qr_list, $list);
+        }
     }
 
     public function transactionList($userId, $userType = UserType::PARTNER)
     {
         return $this->client->setUserType($userType)->setUserId($userId)->get($this->api . "accounting-report/payments_report?" . ($this->limit ? "limit={$this->limit}" : "") . ($this->offset ? "&offset={$this->offset}" : "&offset=0")
             . ($this->startDate ? "&start_date={$this->startDate}" : "") . ($this->endDate ? "&end_date={$this->endDate}" : "") . ($this->transactionType ? "&transaction_type={$this->transactionType}" : "")
-            . ($this->reconcile ? "&reconcile={$this->reconcile}" : "") . ($this->gateway ? "&gateway={$this->gateway}" : "") . ($this->q ? "&q={$this->q}+" : ""));
+            . ($this->reconcile ? "&reconcile={$this->reconcile}" : "") . ($this->gateway ? "&gateway={$this->gateway}" : "") . ($this->q ? "&q={$this->q}" : ""));
+    }
+
+    public function tranactionDetails($transactionId, $userId, $userType = UserType::PARTNER)
+    {
+        return $this->client->setUserType($userType)->setUserId($userId)->get('api/entries/online-transactions/' . $transactionId);
     }
 }
