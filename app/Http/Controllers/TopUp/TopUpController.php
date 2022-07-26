@@ -246,9 +246,9 @@ class TopUpController extends Controller
         $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
         $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
         $name_field = TopUpExcel::NAME_COLUMN_TITLE;
-        $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
+
         $data->each(function ($value, $key) use (
-            $request, $creator, $vendor, $agent, $top_up_request, $total, $bulk_request,
+            $request, $creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request,
             $operator_field, $type_field, $mobile_field, $amount_field, $name_field
         ) {
             if (!$value->$operator_field) return;
@@ -259,7 +259,9 @@ class TopUpController extends Controller
                 ->setMobile(BDMobileFormatter::format($value->$mobile_field))
                 ->setAmount($value->$amount_field)
                 ->setAgent($agent)
-                ->setVendorId($vendor_id);
+                ->setVendorId($vendor_id)
+                ->setName($value->$name_field);
+            $top_up_request->setIsOtfAllow(!$request->is_otf_allow);
 
             if (property_exists($value, $name_field)) $top_up_request->setName($value->$name_field);
 
