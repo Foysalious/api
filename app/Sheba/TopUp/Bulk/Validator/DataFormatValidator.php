@@ -27,6 +27,8 @@ class DataFormatValidator extends Validator
     private $data;
     /** @var mixed $total */
     private $total;
+    /** @var string $filePath */
+    private $filePath;
     /** @var string $bulkExcelCdnFilePath */
     private $bulkExcelCdnFilePath;
     /** @var OtfAmountCheck */
@@ -223,6 +225,14 @@ class DataFormatValidator extends Validator
     public function getTotal()
     {
         return $this->total;
+    }
+
+    /**
+     * @return string
+     */
+    public function getFilePath(): string
+    {
+        return $this->filePath;
     }
 
     /**

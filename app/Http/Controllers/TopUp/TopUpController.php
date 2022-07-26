@@ -240,6 +240,7 @@ class TopUpController extends Controller
 
         $data = $data_validator->getData();
         $total = $data_validator->getTotal();
+        $file_path = $data_validator->getFilePath();
 
         $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
         $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
