@@ -27,10 +27,16 @@ class CollectionFormatter
     public function formatCollectionUpdated()
     {
         for ($i = 0; $i < count($this->data); $i++) {
-            $this->data[$i]['key'] = $this->data[$i]['name'];
-            unset($this->data[$i]['id']);
-            $this->data[$i]['value'] = $this->data[$i]['bn_name'];
-            unset($this->data[$i]['bn_name']);
+            $this->data[$i]->key = ucfirst(strtolower($this->data[$i]->division));
+            unset($this->data[$i]->id);
+            $this->data[$i]->value = ucfirst(strtolower($this->data[$i]->division));
+            $this->data[$i]->name = ucfirst(strtolower($this->data[$i]->division));
+            unset($this->data[$i]->bn_name);
+            unset($this->data[$i]->thana);
+            unset($this->data[$i]->district);
+            unset($this->data[$i]->branch_name);
+            unset($this->data[$i]->branch_code);
+            unset($this->data[$i]->division);
         }
         return $this->data;
     }

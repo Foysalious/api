@@ -49,7 +49,7 @@ class DynamicForm
         $categories = $this->sectionDetails();
         $finalCompletion = (new CompletionCalculation())->getFinalCompletion($categories);
 
-        return (new SectionListResponse())->setCategories($categories)
+        return (new SectionListResponse())->setCategories($categories)->setPartner($this->partner)
             ->setMessage(PaymentMethodStatics::dynamicCompletionPageMessage($this->formKey))
             ->setOverallCompletion($finalCompletion)->setCanApply($finalCompletion)->toArray();
     }
@@ -114,6 +114,7 @@ class DynamicForm
     {
         $fields = array();
         $form_builder = (new FormFieldBuilder())->setPartner($this->partner);
+
         foreach ($this->section->fields as $field)
             $fields[] = $form_builder->setField($field)->build()->toArray();
         return $fields;
@@ -170,12 +171,24 @@ class DynamicForm
         return $this;
     }
 
+    private function getDivision()
+    {
+        $divisionInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
+        $filtered_array = array();
+        foreach ($divisionInformation as $value) {
+            if (!in_array($value, $filtered_array)) {
+                $filtered_array[] = $value;
+            }
+        }
+        return $filtered_array;
+    }
+
     private function getDistrict($division)
     {
         $thanaInformation = json_decode(file_get_contents(public_path() . "/mtbThana.json"));
         $filtered_array = array();
         foreach ($thanaInformation as $value) {
-            if ($value->division == $division) {
+            if (ucfirst(strtolower($value->division)) == $division) {
                 $filtered_array[] = $value;
             }
         }
@@ -245,17 +258,21 @@ class DynamicForm
             }
         }
         if ($this->type == "division") {
-            $division = Division::get();
+            $division = $this->getDivision();
             $division = (new CollectionFormatter())->setData($division)->formatCollectionUpdated();
-            $division[0]['name'] = 'Barisal';
-            $division[0]['key'] = 'Barisal';
+            $final = array();
+            foreach ($division as $current) {
+                if (!in_array($current, $final)) {
+                    $final[] = $current;
+                }
+            }
             $data = [
-                'division' => ['list' => $division]
+                'division' => ['list' => $final]
             ];
             return $data['division'];
         }
         if ($this->type == "district") {
-            $district = $this->getDistrict($request->division);
+            $district = $this->getDistrict(ucfirst(strtolower($request->division)));
             $district = (new CollectionFormatter())->setData($district)->formatCollectionDistrict();
             $final = array();
             foreach ($district as $current) {
